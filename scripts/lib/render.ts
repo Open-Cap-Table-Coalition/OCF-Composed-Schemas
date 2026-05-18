@@ -1,5 +1,6 @@
+import path from "node:path";
 import { detectEnumValues } from "./enum-detection.js";
-import { Registry } from "./registry.js";
+import { RawSchema, Registry } from "./registry.js";
 
 export interface FrontmatterInput {
   $id: string;
@@ -68,4 +69,65 @@ export function renderMappingBlock(
 
   lines.push("```");
   return lines.join("\n");
+}
+
+export interface RenderInput {
+  schema: RawSchema;
+  schemaRelPath: string;
+  registry: Registry;
+  generatedDate: string;
+}
+
+const NO_DESCRIPTION = "_(no description in source schema)_";
+
+export function renderMappingMarkdown(input: RenderInput): string {
+  const { schema, schemaRelPath, registry, generatedDate } = input;
+
+  const kind: "object" | "type" = schemaRelPath.startsWith("objects/") ? "object" : "type";
+  const title = schema.title ?? "Untitled";
+  const description = typeof schema.description === "string" ? schema.description : null;
+  const objectTypeProp = schema.properties?.object_type as { const?: unknown } | undefined;
+  const objectType = typeof objectTypeProp?.const === "string" ? objectTypeProp.const : null;
+  const required = Array.isArray(schema.required) ? schema.required : [];
+  const properties = (schema.properties ?? {}) as Record<string, unknown>;
+  const basename = path.basename(schemaRelPath);
+
+  const sections: string[] = [
+    renderFrontmatter({
+      $id: schema.$id,
+      objectType,
+      title,
+      kind,
+      requiredFields: required,
+      generatedDate,
+    }),
+    "",
+    `# ${title} → TBD`,
+    "",
+    `> ${description ?? NO_DESCRIPTION}`,
+    "",
+    "## OCF schema",
+    "",
+    `Source: [\`${basename}\`](./${basename})`,
+    "",
+    "<details>",
+    "<summary>Composed schema (click to expand)</summary>",
+    "",
+    "```json",
+    JSON.stringify(schema, null, 2),
+    "```",
+    "",
+    "</details>",
+    "",
+    "## Mapping",
+    "",
+    renderMappingBlock(properties, registry),
+    "",
+    "## Notes / open questions",
+    "",
+    "- ",
+    "",
+  ];
+
+  return sections.join("\n");
 }
