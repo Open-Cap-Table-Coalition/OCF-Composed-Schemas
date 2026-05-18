@@ -24,15 +24,21 @@ async function main(argv: Args): Promise<number> {
     return 1;
   }
 
-  const result = await walkAndWrite({
-    repoRoot: cwd,
-    registry,
-    force: argv.force,
-    dryRun: argv.dryRun,
-    filter: argv.filter,
-    generatedDate: today,
-    verbose: argv.verbose,
-  });
+  let result;
+  try {
+    result = await walkAndWrite({
+      repoRoot: cwd,
+      registry,
+      force: argv.force,
+      dryRun: argv.dryRun,
+      filter: argv.filter,
+      generatedDate: today,
+      verbose: argv.verbose,
+    });
+  } catch (err) {
+    console.error(`Failed to write mapping skeletons: ${(err as Error).message}`);
+    return 1;
+  }
 
   const verb = argv.dryRun ? "Would write" : "Wrote";
   console.log(
