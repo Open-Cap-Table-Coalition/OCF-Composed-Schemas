@@ -63,13 +63,20 @@ export async function walkAndWrite(options: WalkAndWriteOptions): Promise<WalkAn
         skipped.push(mappingRel);
         if (verbose) console.log(`skip   ${mappingRel}`);
         continue;
-      } catch {
-        // not present — fall through to write
+      } catch (err) {
+        if ((err as NodeJS.ErrnoException).code !== "ENOENT") throw err;
+        // ENOENT: file doesn't exist, fall through to write
       }
     }
 
     const schemaAbs = path.join(repoRoot, schemaRel);
-    const json = JSON.parse(await readFile(schemaAbs, "utf8"));
+    const raw = await readFile(schemaAbs, "utf8");
+    let json: unknown;
+    try {
+      json = JSON.parse(raw);
+    } catch (err) {
+      throw new Error(`Failed to parse ${schemaRel}: ${(err as Error).message}`);
+    }
     const md = renderMappingMarkdown({
       schema: json,
       schemaRelPath: schemaRel,
