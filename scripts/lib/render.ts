@@ -33,3 +33,39 @@ function yamlScalar(s: string): string {
   }
   return s;
 }
+
+import { detectEnumValues } from "./enum-detection.js";
+import { Registry } from "./registry.js";
+
+const KIND_VOCAB =
+  "# kind vocabulary: rename | split | combine | enum-remap | computed | unmappable | TODO";
+
+export function renderMappingBlock(
+  properties: Record<string, unknown>,
+  registry: Registry
+): string {
+  const propertyNames = Object.keys(properties);
+  const lines: string[] = ["```yaml", KIND_VOCAB, "status: draft"];
+  lines.push(`coverage: 0/${propertyNames.length}`);
+  lines.push("");
+  lines.push("fields:");
+
+  for (const name of propertyNames) {
+    const prop = properties[name];
+    const enumValues = detectEnumValues(prop, registry);
+    lines.push(`  ${name}:`);
+    if (enumValues) {
+      lines.push("    kind: TODO          # likely enum-remap");
+    } else {
+      lines.push("    kind: TODO");
+    }
+    lines.push("    target: TODO");
+    if (enumValues) {
+      lines.push("    values:");
+      for (const v of enumValues) lines.push(`      ${v}: TODO`);
+    }
+  }
+
+  lines.push("```");
+  return lines.join("\n");
+}
