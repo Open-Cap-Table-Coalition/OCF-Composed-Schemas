@@ -43,9 +43,10 @@ async function collectSchemaFiles(root: string): Promise<string[]> {
     if (!e.isFile()) continue;
     if (!e.name.endsWith(".schema.json")) continue;
     // Node 20+: Dirent.parentPath holds the directory; fall back to .path on older types.
-    const dir = (e as unknown as { parentPath?: string; path?: string }).parentPath
-      ?? (e as unknown as { path?: string }).path
-      ?? root;
+    const dir =
+      (e as unknown as { parentPath?: string; path?: string }).parentPath ??
+      (e as unknown as { path?: string }).path ??
+      root;
     const full = path.join(dir, e.name);
     const rel = path.relative(root, full);
     if (rel.split(path.sep).includes("node_modules")) continue;

@@ -19,16 +19,12 @@ describe("detectEnumValues", () => {
   });
 
   it("resolves $ref to an enum schema", () => {
-    const reg = makeRegistry([
-      { $id: "test://e", enum: ["X", "Y"] },
-    ]);
+    const reg = makeRegistry([{ $id: "test://e", enum: ["X", "Y"] }]);
     expect(detectEnumValues({ $ref: "test://e" }, reg)).toEqual(["X", "Y"]);
   });
 
   it("returns null when $ref resolves to a non-enum schema", () => {
-    const reg = makeRegistry([
-      { $id: "test://obj", title: "Some object", properties: {} },
-    ]);
+    const reg = makeRegistry([{ $id: "test://obj", title: "Some object", properties: {} }]);
     expect(detectEnumValues({ $ref: "test://obj" }, reg)).toBeNull();
   });
 
@@ -39,21 +35,18 @@ describe("detectEnumValues", () => {
 
   it("handles arrays of inline-enum items", () => {
     const reg = makeRegistry([]);
-    expect(
-      detectEnumValues({ type: "array", items: { enum: ["P", "Q"] } }, reg)
-    ).toEqual(["P", "Q"]);
+    expect(detectEnumValues({ type: "array", items: { enum: ["P", "Q"] } }, reg)).toEqual([
+      "P",
+      "Q",
+    ]);
   });
 
   it("handles arrays whose items are a $ref to an enum", () => {
-    const reg = makeRegistry([
-      { $id: "test://e", enum: ["U", "V"] },
+    const reg = makeRegistry([{ $id: "test://e", enum: ["U", "V"] }]);
+    expect(detectEnumValues({ type: "array", items: { $ref: "test://e" } }, reg)).toEqual([
+      "U",
+      "V",
     ]);
-    expect(
-      detectEnumValues(
-        { type: "array", items: { $ref: "test://e" } },
-        reg
-      )
-    ).toEqual(["U", "V"]);
   });
 
   it("returns null for plain typed properties", () => {

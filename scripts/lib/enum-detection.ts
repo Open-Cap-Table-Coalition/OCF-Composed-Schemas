@@ -5,10 +5,7 @@ import { Registry } from "./registry.js";
  * JSON Schema fragment, else null. Walks one $ref step against the
  * registry; arrays delegate to their `items`.
  */
-export function detectEnumValues(
-  property: unknown,
-  registry: Registry
-): string[] | null {
+export function detectEnumValues(property: unknown, registry: Registry): string[] | null {
   if (!property || typeof property !== "object") return null;
   const p = property as Record<string, unknown>;
 

@@ -1,3 +1,6 @@
+import { detectEnumValues } from "./enum-detection.js";
+import { Registry } from "./registry.js";
+
 export interface FrontmatterInput {
   $id: string;
   objectType: string | null;
@@ -33,9 +36,6 @@ function yamlScalar(s: string): string {
   }
   return s;
 }
-
-import { detectEnumValues } from "./enum-detection.js";
-import { Registry } from "./registry.js";
 
 const KIND_VOCAB =
   "# kind vocabulary: rename | split | combine | enum-remap | computed | unmappable | TODO";

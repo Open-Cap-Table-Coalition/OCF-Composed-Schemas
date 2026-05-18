@@ -83,10 +83,7 @@ describe("renderMappingBlock", () => {
   });
 
   it("expands inline enum values into a values: map", () => {
-    const out = renderMappingBlock(
-      { kind_field: { enum: ["A", "B", "C"] } },
-      EMPTY_REGISTRY
-    );
+    const out = renderMappingBlock({ kind_field: { enum: ["A", "B", "C"] } }, EMPTY_REGISTRY);
     expect(out).toContain("    kind: TODO          # likely enum-remap");
     expect(out).toContain("    values:");
     expect(out).toContain("      A: TODO");
@@ -95,21 +92,13 @@ describe("renderMappingBlock", () => {
   });
 
   it("expands const into a single-key values map", () => {
-    const out = renderMappingBlock(
-      { object_type: { const: "TX_FOO" } },
-      EMPTY_REGISTRY
-    );
+    const out = renderMappingBlock({ object_type: { const: "TX_FOO" } }, EMPTY_REGISTRY);
     expect(out).toContain("      TX_FOO: TODO");
   });
 
   it("expands $ref to an enum schema via the registry", () => {
-    const reg: Registry = new Map([
-      ["test://e", { $id: "test://e", enum: ["P", "Q"] }],
-    ]);
-    const out = renderMappingBlock(
-      { kind_field: { $ref: "test://e" } },
-      reg
-    );
+    const reg: Registry = new Map([["test://e", { $id: "test://e", enum: ["P", "Q"] }]]);
+    const out = renderMappingBlock({ kind_field: { $ref: "test://e" } }, reg);
     expect(out).toContain("      P: TODO");
     expect(out).toContain("      Q: TODO");
   });
@@ -125,10 +114,7 @@ describe("renderMappingBlock", () => {
         },
       ],
     ]);
-    const out = renderMappingBlock(
-      { price: { $ref: "test://monetary" } },
-      reg
-    );
+    const out = renderMappingBlock({ price: { $ref: "test://monetary" } }, reg);
     expect(out).toContain("  price:");
     expect(out).not.toContain("    values:");
     expect(out).not.toContain("    amount:");
