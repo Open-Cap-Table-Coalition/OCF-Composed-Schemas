@@ -178,6 +178,8 @@ describe("renderMappingMarkdown", () => {
     });
     expect(out).toContain("> _(no description in source schema)_");
     expect(out).toContain("ocf_kind: type");
+    expect(out).toContain("coverage: 0/0");
+    expect(out).toMatch(/fields:\s*\n```/);
   });
 
   it("determines ocf_kind from path prefix", () => {

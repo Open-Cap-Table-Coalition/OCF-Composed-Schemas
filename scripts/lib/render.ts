@@ -86,7 +86,7 @@ export function renderMappingMarkdown(input: RenderInput): string {
   const kind: "object" | "type" = schemaRelPath.startsWith("objects/") ? "object" : "type";
   const title = schema.title ?? "Untitled";
   const description = typeof schema.description === "string" ? schema.description : null;
-  const objectTypeProp = schema.properties?.object_type as { const?: unknown } | undefined;
+  const objectTypeProp = schema.properties?.object_type;
   const objectType = typeof objectTypeProp?.const === "string" ? objectTypeProp.const : null;
   const required = Array.isArray(schema.required) ? schema.required : [];
   const properties = (schema.properties ?? {}) as Record<string, unknown>;
