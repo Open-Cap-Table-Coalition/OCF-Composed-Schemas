@@ -2,7 +2,7 @@ import path from "node:path";
 import { readdir, readFile, writeFile, stat } from "node:fs/promises";
 import { minimatch } from "minimatch";
 
-import { Registry } from "./registry.js";
+import { RawSchema, Registry } from "./registry.js";
 import { renderMappingMarkdown } from "./render.js";
 
 export interface WalkAndWriteOptions {
@@ -71,9 +71,9 @@ export async function walkAndWrite(options: WalkAndWriteOptions): Promise<WalkAn
 
     const schemaAbs = path.join(repoRoot, schemaRel);
     const raw = await readFile(schemaAbs, "utf8");
-    let json: unknown;
+    let json: RawSchema;
     try {
-      json = JSON.parse(raw);
+      json = JSON.parse(raw) as RawSchema;
     } catch (err) {
       throw new Error(`Failed to parse ${schemaRel}: ${(err as Error).message}`);
     }
