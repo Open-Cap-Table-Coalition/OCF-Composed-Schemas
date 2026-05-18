@@ -1,0 +1,77 @@
+---
+ocf_schema_id: https://raw.githubusercontent.com/Open-Cap-Table-Coalition/Open-Cap-Format-OCF/main/schema/types/Name.schema.json
+ocf_object_type: null
+ocf_title: Type - Name
+ocf_kind: type
+required_fields:
+  - legal_name
+target_standard: TBD
+target_version: TBD
+status: draft
+last_generated: 2026-05-18
+---
+
+# Type - Name → TBD
+
+> Type comprising of multiple name components
+
+## OCF schema
+
+Source: [`Name.schema.json`](./Name.schema.json)
+
+<details>
+<summary>Composed schema (click to expand)</summary>
+
+```json
+{
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "$id": "https://raw.githubusercontent.com/Open-Cap-Table-Coalition/Open-Cap-Format-OCF/main/schema/types/Name.schema.json",
+  "title": "Type - Name",
+  "description": "Type comprising of multiple name components",
+  "type": "object",
+  "properties": {
+    "legal_name": {
+      "description": "Legal full name for the individual/institution",
+      "type": "string"
+    },
+    "first_name": {
+      "description": "First/given name for the individual",
+      "type": "string"
+    },
+    "last_name": {
+      "description": "Last/family name for the individual",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "required": [
+    "legal_name"
+  ],
+  "$comment": "Copyright © 2026 Open Cap Table Coalition (https://opencaptablecoalition.com) / Original File: https://github.com/Open-Cap-Table-Coalition/Open-Cap-Format-OCF/tree/main/schema/types/Name.schema.json"
+}
+```
+
+</details>
+
+## Mapping
+
+```yaml
+# kind vocabulary: rename | split | combine | enum-remap | computed | unmappable | TODO
+status: draft
+coverage: 0/3
+
+fields:
+  legal_name:
+    kind: TODO
+    target: TODO
+  first_name:
+    kind: TODO
+    target: TODO
+  last_name:
+    kind: TODO
+    target: TODO
+```
+
+## Notes / open questions
+
+- 
