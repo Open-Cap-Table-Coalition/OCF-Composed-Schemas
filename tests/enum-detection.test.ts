@@ -3,7 +3,10 @@ import { RawSchema, Registry } from "../scripts/lib/registry.js";
 
 function makeRegistry(entries: Array<RawSchema>): Registry {
   const r: Registry = new Map();
-  for (const e of entries) r.set(e.$id, e);
+  for (const e of entries) {
+    if (typeof e.$id !== "string") throw new Error("test fixture missing $id");
+    r.set(e.$id, e);
+  }
   return r;
 }
 

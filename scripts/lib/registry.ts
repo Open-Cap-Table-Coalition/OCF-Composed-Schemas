@@ -2,7 +2,7 @@ import path from "node:path";
 import { readdir, readFile } from "node:fs/promises";
 
 export interface RawSchema {
-  $id: string;
+  $id?: string;
   title?: string;
   description?: string;
   type?: string | string[];

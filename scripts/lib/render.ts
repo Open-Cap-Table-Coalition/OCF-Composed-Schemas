@@ -92,6 +92,9 @@ export function renderMappingMarkdown(input: RenderInput): string {
   const properties = (schema.properties ?? {}) as Record<string, unknown>;
   const basename = path.basename(schemaRelPath);
 
+  if (typeof schema.$id !== "string") {
+    throw new Error(`renderMappingMarkdown: schema for ${schemaRelPath} has no $id`);
+  }
   const sections: string[] = [
     renderFrontmatter({
       $id: schema.$id,

@@ -73,7 +73,7 @@ export async function walkAndWrite(options: WalkAndWriteOptions): Promise<WalkAn
     const raw = await readFile(schemaAbs, "utf8");
     let json: RawSchema;
     try {
-      json = JSON.parse(raw) as RawSchema;
+      json = JSON.parse(raw);
     } catch (err) {
       throw new Error(`Failed to parse ${schemaRel}: ${(err as Error).message}`);
     }

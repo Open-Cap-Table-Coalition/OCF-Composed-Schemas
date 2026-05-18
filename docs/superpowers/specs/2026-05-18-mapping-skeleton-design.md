@@ -246,7 +246,8 @@ The repo is a standalone Node.js + TypeScript project mirroring the OCF
 repo's conventions where reasonable:
 
 - `package.json` with `scripts.mapping:skeleton`, `scripts.test`,
-  `scripts.lint`; dependencies on `yargs`, `js-yaml`; devDependencies on
+  `scripts.lint`, `scripts.typecheck`; dependencies on `yargs` and
+  `minimatch` (YAML output is hand-rolled — no `js-yaml`); devDependencies on
   `typescript`, `ts-node`, `jest`, `ts-jest`, `@types/*`, `prettier`.
 - `.nvmrc` pinning Node `v24.11.0` (matches OCF).
 - `tsconfig.json` for ESM TypeScript output.
