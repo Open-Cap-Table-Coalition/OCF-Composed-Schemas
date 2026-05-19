@@ -6,13 +6,13 @@ ocf_kind: type
 required_fields:
   - amount
   - currency
-target_standard: TBD
-target_version: TBD
-status: draft
+target_standard: Carta
+target_version: v1alpha1 (2026-04-30)
+status: complete
 last_generated: 2026-05-18
 ---
 
-# Type - Monetary → TBD
+# Type - Monetary → Carta Money
 
 > Type representation of an amount of money in a specified currency
 
@@ -55,16 +55,16 @@ Source: [`Monetary.schema.json`](./Monetary.schema.json)
 
 ```yaml
 # kind vocabulary: rename | split | combine | enum-remap | computed | unmappable | TODO
-status: draft
-coverage: 0/2
+status: complete
+coverage: 2/2
 
 fields:
   amount:
-    kind: TODO
-    target: TODO
+    kind: rename
+    target: "#/$defs/Money/properties/amount"
   currency:
-    kind: TODO
-    target: TODO
+    kind: rename
+    target: "#/$defs/Money/properties/currencyCode"
 ```
 
 ## Notes / open questions
