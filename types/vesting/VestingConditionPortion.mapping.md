@@ -6,13 +6,13 @@ ocf_kind: type
 required_fields:
   - numerator
   - denominator
-target_standard: TBD
-target_version: TBD
-status: draft
+target_standard: Carta
+target_version: v1alpha1 (2026-04-30)
+status: complete
 last_generated: 2026-05-18
 ---
 
-# Type - Vesting Condition Portion → TBD
+# Type - Vesting Condition Portion → Carta
 
 > Describes a fractional portion (ratio) of shares associated with a Vesting Condition
 
@@ -60,21 +60,21 @@ Source: [`VestingConditionPortion.schema.json`](./VestingConditionPortion.schema
 
 ```yaml
 # kind vocabulary: rename | split | combine | enum-remap | computed | unmappable | TODO
-status: draft
-coverage: 0/3
+status: complete
+coverage: 3/3
 
 fields:
   numerator:
-    kind: TODO
-    target: TODO
+    kind: unmappable
+    target: null
   denominator:
-    kind: TODO
-    target: TODO
+    kind: unmappable
+    target: null
   remainder:
-    kind: TODO
-    target: TODO
+    kind: unmappable
+    target: null
 ```
 
 ## Notes / open questions
 
-- 
+- OCF abandoned vesting machinery (no Carta counterpart). The canonical vesting layer at `canonical/vesting/` is the proposed replacement.

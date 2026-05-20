@@ -7,13 +7,13 @@ required_fields:
   - length
   - type
   - occurrences
-target_standard: TBD
-target_version: TBD
-status: draft
+target_standard: Carta
+target_version: v1alpha1 (2026-04-30)
+status: complete
 last_generated: 2026-05-18
 ---
 
-# Type - Vesting Period in Days → TBD
+# Type - Vesting Period in Days → Carta
 
 > Describes a period of time expressed in days (e.g. 365 days) for use in Vesting Terms
 
@@ -72,26 +72,26 @@ Source: [`VestingPeriodInDays.schema.json`](./VestingPeriodInDays.schema.json)
 
 ```yaml
 # kind vocabulary: rename | split | combine | enum-remap | computed | unmappable | TODO
-status: draft
-coverage: 0/4
+status: complete
+coverage: 4/4
 
 fields:
   length:
-    kind: TODO
-    target: TODO
+    kind: unmappable
+    target: null
   type:
-    kind: TODO          # likely enum-remap
-    target: TODO
+    kind: unmappable
+    target: null
     values:
-      DAYS: TODO
+      DAYS: null
   occurrences:
-    kind: TODO
-    target: TODO
+    kind: unmappable
+    target: null
   cliff_installment:
-    kind: TODO
-    target: TODO
+    kind: unmappable
+    target: null
 ```
 
 ## Notes / open questions
 
-- 
+- OCF abandoned vesting machinery (no Carta counterpart). The canonical vesting layer at `canonical/vesting/` is the proposed replacement.

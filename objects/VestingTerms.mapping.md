@@ -10,13 +10,13 @@ required_fields:
   - vesting_conditions
   - id
   - object_type
-target_standard: TBD
-target_version: TBD
-status: draft
+target_standard: Carta
+target_version: v1alpha1 (2026-04-30)
+status: complete
 last_generated: 2026-05-18
 ---
 
-# Object - Vesting Terms → TBD
+# Object - Vesting Terms → Carta
 
 > Object describing the terms under which a security vests
 
@@ -94,43 +94,43 @@ Source: [`VestingTerms.schema.json`](./VestingTerms.schema.json)
 
 ```yaml
 # kind vocabulary: rename | split | combine | enum-remap | computed | unmappable | TODO
-status: draft
-coverage: 0/7
+status: complete
+coverage: 7/7
 
 fields:
   id:
-    kind: TODO
-    target: TODO
+    kind: unmappable
+    target: null
   comments:
-    kind: TODO
-    target: TODO
+    kind: unmappable
+    target: null
   object_type:
-    kind: TODO          # likely enum-remap
-    target: TODO
+    kind: unmappable
+    target: null
     values:
-      VESTING_TERMS: TODO
+      VESTING_TERMS: null
   name:
-    kind: TODO
-    target: TODO
+    kind: unmappable
+    target: null
   description:
-    kind: TODO
-    target: TODO
+    kind: unmappable
+    target: null
   allocation_type:
-    kind: TODO          # likely enum-remap
-    target: TODO
+    kind: unmappable
+    target: null
     values:
-      CUMULATIVE_ROUNDING: TODO
-      CUMULATIVE_ROUND_DOWN: TODO
-      FRONT_LOADED: TODO
-      BACK_LOADED: TODO
-      FRONT_LOADED_TO_SINGLE_TRANCHE: TODO
-      BACK_LOADED_TO_SINGLE_TRANCHE: TODO
-      FRACTIONAL: TODO
+      CUMULATIVE_ROUNDING: null
+      CUMULATIVE_ROUND_DOWN: null
+      FRONT_LOADED: null
+      BACK_LOADED: null
+      FRONT_LOADED_TO_SINGLE_TRANCHE: null
+      BACK_LOADED_TO_SINGLE_TRANCHE: null
+      FRACTIONAL: null
   vesting_conditions:
-    kind: TODO
-    target: TODO
+    kind: unmappable
+    target: null
 ```
 
 ## Notes / open questions
 
-- 
+- OCF abandoned vesting machinery (no Carta counterpart). The canonical vesting layer at `canonical/vesting/` is the proposed replacement.

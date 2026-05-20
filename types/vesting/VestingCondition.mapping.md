@@ -7,13 +7,13 @@ required_fields:
   - id
   - trigger
   - next_condition_ids
-target_standard: TBD
-target_version: TBD
-status: draft
+target_standard: Carta
+target_version: v1alpha1 (2026-04-30)
+status: complete
 last_generated: 2026-05-18
 ---
 
-# Type - Vesting Condition → TBD
+# Type - Vesting Condition → Carta
 
 > Describes condition / triggers to be satisfied for vesting to occur
 
@@ -103,30 +103,30 @@ Source: [`VestingCondition.schema.json`](./VestingCondition.schema.json)
 
 ```yaml
 # kind vocabulary: rename | split | combine | enum-remap | computed | unmappable | TODO
-status: draft
-coverage: 0/6
+status: complete
+coverage: 6/6
 
 fields:
   id:
-    kind: TODO
-    target: TODO
+    kind: unmappable
+    target: null
   description:
-    kind: TODO
-    target: TODO
+    kind: unmappable
+    target: null
   portion:
-    kind: TODO
-    target: TODO
+    kind: unmappable
+    target: null
   quantity:
-    kind: TODO
-    target: TODO
+    kind: unmappable
+    target: null
   trigger:
-    kind: TODO
-    target: TODO
+    kind: unmappable
+    target: null
   next_condition_ids:
-    kind: TODO
-    target: TODO
+    kind: unmappable
+    target: null
 ```
 
 ## Notes / open questions
 
-- 
+- OCF abandoned vesting machinery (no Carta counterpart). The canonical vesting layer at `canonical/vesting/` is the proposed replacement.
