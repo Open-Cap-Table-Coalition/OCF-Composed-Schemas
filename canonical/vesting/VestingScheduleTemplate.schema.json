@@ -1,0 +1,65 @@
+{
+  "$schema": "http://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/Open-Cap-Table-Coalition/OCF-Composed-Schemas/main/canonical/vesting/VestingScheduleTemplate.schema.json",
+  "title": "Canonical - Vesting",
+  "description": "Canonical (hypothetical OCF) representation of time-based vesting: a reusable schedule template (VestingScheduleTemplate), per-grant application (VestingSchedule), and the vesting statements that together describe how a grant vests over time. Assumes CUMULATIVE_ROUND_DOWN allocation throughout.",
+  "$defs": {
+    "VestingScheduleTemplate": {
+      "type": "object",
+      "description": "Reusable vesting schedule shape, independent of any specific grant.",
+      "properties": {
+        "id":         { "type": "string" },
+        "statements": {
+          "type": "array",
+          "items":    { "$ref": "#/$defs/VestingStatement" },
+          "minItems": 1
+        }
+      },
+      "required": ["id", "statements"],
+      "additionalProperties": false
+    },
+    "VestingSchedule": {
+      "type": "object",
+      "description": "Per-grant application of a VestingScheduleTemplate.",
+      "properties": {
+        "template_id": { "type": "string" },
+        "start_date":  { "$ref": "https://raw.githubusercontent.com/Open-Cap-Table-Coalition/Open-Cap-Format-OCF/main/schema/types/Date.schema.json" }
+      },
+      "required": ["template_id", "start_date"],
+      "additionalProperties": false
+    },
+    "VestingStatement": {
+      "type": "object",
+      "description": "One segment within a template; produces a sequence of vesting events at the given cadence.",
+      "properties": {
+        "order":       { "type": "integer", "minimum": 1 },
+        "occurrences": { "type": "integer", "minimum": 1 },
+        "period":      { "type": "integer", "minimum": 0, "description": "Length of one installment, in period_type units. Total segment duration is occurrences * period." },
+        "period_type": { "$ref": "https://raw.githubusercontent.com/Open-Cap-Table-Coalition/Open-Cap-Format-OCF/main/schema/enums/PeriodType.schema.json" },
+        "cliff":       { "$ref": "#/$defs/Cliff" },
+        "percentage":  { "$ref": "#/$defs/Fraction" }
+      },
+      "required": ["order", "occurrences", "period", "period_type", "percentage"],
+      "additionalProperties": false
+    },
+    "Fraction": {
+      "type": "object",
+      "properties": {
+        "numerator":   { "type": "integer" },
+        "denominator": { "type": "integer", "minimum": 1 }
+      },
+      "required": ["numerator", "denominator"],
+      "additionalProperties": false
+    },
+    "Cliff": {
+      "type": "object",
+      "description": "Optional cliff on a VestingStatement. `occurrence` is the 1-indexed installment at which the cliff applies (must be <= the containing VestingStatement.occurrences).",
+      "properties": {
+        "occurrence": { "type": "integer", "minimum": 1 },
+        "percentage": { "$ref": "#/$defs/Fraction" }
+      },
+      "required": ["occurrence", "percentage"],
+      "additionalProperties": false
+    }
+  }
+}
