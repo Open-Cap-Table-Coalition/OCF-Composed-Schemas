@@ -6,13 +6,13 @@ ocf_kind: type
 required_fields:
   - parent_object_type
   - parent_object_id
-target_standard: TBD
-target_version: TBD
-status: draft
+target_standard: Carta
+target_version: v1alpha1 (2026-04-30)
+status: complete
 last_generated: 2026-05-18
 ---
 
-# Type - Stock Parent → TBD
+# Type - Stock Parent → Carta
 
 > Type representation of the parent security of a given stock issuance (e.g. if a stock issuance came from a plan, such as an RSA, or if a stock came from a previous stock entry)
 
@@ -55,23 +55,23 @@ Source: [`StockParent.schema.json`](./StockParent.schema.json)
 
 ```yaml
 # kind vocabulary: rename | split | combine | enum-remap | computed | unmappable | TODO
-status: draft
-coverage: 0/2
+status: complete
+coverage: 2/2
 
 fields:
   parent_object_type:
-    kind: TODO          # likely enum-remap
-    target: TODO
+    kind: unmappable
+    target: null
     values:
-      STOCK_PLAN: TODO
-      STOCK: TODO
-      WARRANT: TODO
-      CONVERTIBLE: TODO
+      STOCK_PLAN: null
+      STOCK: null
+      WARRANT: null
+      CONVERTIBLE: null
   parent_object_id:
-    kind: TODO
-    target: TODO
+    kind: unmappable
+    target: null
 ```
 
 ## Notes / open questions
 
-- 
+- OCF's `StockParent` is a generic parent-security reference (a stock issuance came from a stock plan, a prior stock entry, a warrant exercise, or a convertible conversion). Carta represents these lineage relationships positionally via specific typed transaction and `*PrecededBy` shapes (`CertificatePrecededBy`/`CertificatePrecededByReason`, `RestrictedStockAwardPrecededBy`/`RestrictedStockAwardPrecededByReason`, and the various `*ExerciseTransaction`/`*ConversionTransaction` types) rather than via a single polymorphic `parent` reference. There is no Carta type that corresponds to `StockParent` itself.

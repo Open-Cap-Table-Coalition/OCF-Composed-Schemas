@@ -6,13 +6,13 @@ ocf_kind: type
 required_fields:
   - phone_type
   - phone_number
-target_standard: TBD
-target_version: TBD
-status: draft
+target_standard: Carta
+target_version: v1alpha1 (2026-04-30)
+status: complete
 last_generated: 2026-05-18
 ---
 
-# Type - Phone → TBD
+# Type - Phone → Carta
 
 > Type representation of a phone number
 
@@ -56,23 +56,23 @@ Source: [`Phone.schema.json`](./Phone.schema.json)
 
 ```yaml
 # kind vocabulary: rename | split | combine | enum-remap | computed | unmappable | TODO
-status: draft
-coverage: 0/2
+status: complete
+coverage: 2/2
 
 fields:
   phone_type:
-    kind: TODO          # likely enum-remap
-    target: TODO
+    kind: unmappable
+    target: null
     values:
-      HOME: TODO
-      MOBILE: TODO
-      BUSINESS: TODO
-      OTHER: TODO
+      HOME: null
+      MOBILE: null
+      BUSINESS: null
+      OTHER: null
   phone_number:
-    kind: TODO
-    target: TODO
+    kind: unmappable
+    target: null
 ```
 
 ## Notes / open questions
 
-- 
+- Carta has no phone-number fields anywhere in the bundled schema. Stakeholder and Issuer carry only an `email`. OCF fields that reference `Phone` (e.g. `Issuer.phone`, `ContactInfo.phone_numbers`, `ContactInfoWithoutName.phone_numbers`) are all unmappable on the Carta side; phone data is dropped on transfer.
