@@ -1,0 +1,33 @@
+{
+  "$schema": "http://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/Open-Cap-Table-Coalition/OCF-Composed-Schemas/main/canonical/transactions/vesting/VestingEvent.schema.json",
+  "title": "Canonical - Vesting Event Transaction",
+  "description": "Canonical (hypothetical OCF) representation of an event-firing transaction. Witnesses that a named vesting event has fired for a given security on a given date. Any VestingStatement whose `vesting_base.type` is `EVENT` and whose `event_id` matches this transaction's `event_id` resolves its anchor at this firing. The witness is canonical's runtime input for non-deterministic triggers, symmetric with TX_CANONICAL_VESTING_START for date anchors.",
+  "$defs": {
+    "TxCanonicalVestingEvent": {
+      "type": "object",
+      "properties": {
+        "id":          { "type": "string", "description": "Identifier for this transaction." },
+        "object_type": { "const": "TX_CANONICAL_VESTING_EVENT" },
+        "date":        {
+          "$ref": "https://raw.githubusercontent.com/Open-Cap-Table-Coalition/Open-Cap-Format-OCF/main/schema/types/Date.schema.json",
+          "description": "Date the event fired."
+        },
+        "security_id": {
+          "type": "string",
+          "description": "Identifier of the security whose VestingStatement(s) reference this event. The firing is scoped to a single security; cross-grant fan-out of one underlying event is represented by emitting one transaction per affected security."
+        },
+        "event_id": {
+          "type": "string",
+          "description": "Identifier of the named event that fired. Matches `event_id` on a `VestingBaseEvent` of some VestingStatement on this security's template."
+        },
+        "realized_fraction": {
+          "$ref": "https://raw.githubusercontent.com/Open-Cap-Table-Coalition/OCF-Composed-Schemas/main/canonical/vesting/VestingScheduleTemplate.schema.json#/$defs/Fraction",
+          "description": "Optional. Fraction of each matching statement's maximum amount that actually vested. Absent means binary firing (the full max amount vests). Present means partial payout — e.g., for performance grants where achievement scales with a metric. Carta's `PerformanceCondition.payoutPercentage` projects onto this field."
+        }
+      },
+      "required": ["id", "object_type", "date", "security_id", "event_id"],
+      "additionalProperties": false
+    }
+  }
+}

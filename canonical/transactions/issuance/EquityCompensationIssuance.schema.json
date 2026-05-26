@@ -2,7 +2,7 @@
   "$schema": "http://json-schema.org/draft/2020-12/schema",
   "$id": "https://raw.githubusercontent.com/Open-Cap-Table-Coalition/OCF-Composed-Schemas/main/canonical/transactions/issuance/EquityCompensationIssuance.schema.json",
   "title": "Canonical - Equity Compensation Issuance Transaction",
-  "description": "Canonical (hypothetical OCF) representation of an equity-compensation issuance. Field-for-field equivalent to OCF's TX_EQUITY_COMPENSATION_ISSUANCE except that `vesting_terms_id` (DAG-based) is replaced with `vesting_template_id` (refs a canonical VestingScheduleTemplate), and the per-grant vesting commencement date is carried out-of-band on a separate TX_CANONICAL_VESTING_START transaction.",
+  "description": "Canonical (hypothetical OCF) representation of an equity-compensation issuance. Field-for-field equivalent to OCF's TX_EQUITY_COMPENSATION_ISSUANCE except that `vesting_terms_id` (DAG-based) is replaced with `vesting_template_id` (refs a canonical VestingScheduleTemplate), and the per-grant resolution of the template's anchors is carried out-of-band — DATE-anchored statements via TX_CANONICAL_VESTING_START, EVENT-anchored statements via TX_CANONICAL_VESTING_EVENT.",
   "$defs": {
     "TxCanonicalEquityCompensationIssuance": {
       "type": "object",
@@ -83,7 +83,7 @@
         },
         "vesting_template_id": {
           "type": "string",
-          "description": "Identifier of the canonical VestingScheduleTemplate the security is subject to. If neither `vesting_template_id` nor `vestings` is present, the security is fully vested at issuance. Anchoring this template to a wall-clock date is the role of TX_CANONICAL_VESTING_START."
+          "description": "Identifier of the canonical VestingScheduleTemplate the security is subject to. If neither `vesting_template_id` nor `vestings` is present, the security is fully vested at issuance. The template's statements anchor either to a per-grant date supplied by TX_CANONICAL_VESTING_START (for DATE-anchored statements) or to named events whose firings are recorded by TX_CANONICAL_VESTING_EVENT (for EVENT-anchored statements)."
         },
         "vestings": {
           "type": "array",

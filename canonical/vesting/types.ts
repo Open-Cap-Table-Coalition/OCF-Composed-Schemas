@@ -12,11 +12,23 @@ interface VestingScheduleTemplate {
 
 interface VestingStatement {
   order: number; // 1-based sequence position
+  vesting_base: VestingBase; // anchor: date (per-grant from TX_CANONICAL_VESTING_START) or named event (from TX_CANONICAL_VESTING_EVENT)
   occurrences: number; // integer >= 1; number of vesting events in segment
   period: number; // integer >= 0; length of one installment, in period_type units
   period_type: PeriodType;
   cliff?: Cliff;
   percentage: Fraction; // share of total grant this vesting statement covers
+}
+
+type VestingBase = VestingBaseDate | VestingBaseEvent;
+
+interface VestingBaseDate {
+  type: "DATE";
+}
+
+interface VestingBaseEvent {
+  type: "EVENT";
+  event_id: string; // refs a named event; firing recorded by TX_CANONICAL_VESTING_EVENT
 }
 
 interface Fraction {

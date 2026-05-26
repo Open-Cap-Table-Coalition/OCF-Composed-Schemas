@@ -2,7 +2,7 @@
   "$schema": "http://json-schema.org/draft/2020-12/schema",
   "$id": "https://raw.githubusercontent.com/Open-Cap-Table-Coalition/OCF-Composed-Schemas/main/canonical/vesting/VestingScheduleTemplate.schema.json",
   "title": "Canonical - Vesting",
-  "description": "Canonical (hypothetical OCF) representation of time-based vesting: a reusable schedule template (VestingScheduleTemplate) composed of vesting statements that describe how a grant vests over time. Per-grant binding is carried by TX_CANONICAL_EQUITY_COMPENSATION_ISSUANCE (refs a template) plus TX_CANONICAL_VESTING_START (anchors it to a date). Assumes CUMULATIVE_ROUND_DOWN allocation throughout.",
+  "description": "Canonical (hypothetical OCF) representation of vesting: a reusable schedule template (VestingScheduleTemplate) composed of one or more VestingStatements. Each statement is anchored either to a date (the per-grant anchor supplied by TX_CANONICAL_VESTING_START) or to a named event (whose firing is recorded by TX_CANONICAL_VESTING_EVENT). Assumes CUMULATIVE_ROUND_DOWN allocation throughout.",
   "$defs": {
     "VestingScheduleTemplate": {
       "type": "object",
@@ -20,16 +20,42 @@
     },
     "VestingStatement": {
       "type": "object",
-      "description": "One segment within a template; produces a sequence of vesting events at the given cadence.",
+      "description": "One segment within a template; produces a sequence of vesting events at the given cadence. The segment's clock begins when its `vesting_base` resolves — either when the per-grant date anchor is set (via TX_CANONICAL_VESTING_START) for a DATE base, or when the named event fires (via TX_CANONICAL_VESTING_EVENT) for an EVENT base.",
       "properties": {
-        "order":       { "type": "integer", "minimum": 1 },
-        "occurrences": { "type": "integer", "minimum": 1 },
-        "period":      { "type": "integer", "minimum": 0, "description": "Length of one installment, in period_type units. Total segment duration is occurrences * period." },
-        "period_type": { "$ref": "https://raw.githubusercontent.com/Open-Cap-Table-Coalition/Open-Cap-Format-OCF/main/schema/enums/PeriodType.schema.json" },
-        "cliff":       { "$ref": "#/$defs/Cliff" },
-        "percentage":  { "$ref": "#/$defs/Fraction" }
+        "order":        { "type": "integer", "minimum": 1 },
+        "vesting_base": {
+          "oneOf": [
+            { "$ref": "#/$defs/VestingBaseDate" },
+            { "$ref": "#/$defs/VestingBaseEvent" }
+          ],
+          "description": "What the statement's vesting clock is anchored to. DATE statements anchor to the per-grant date supplied by TX_CANONICAL_VESTING_START. EVENT statements anchor to a named event whose firing is recorded by TX_CANONICAL_VESTING_EVENT; the firing's date becomes the statement's anchor."
+        },
+        "occurrences":  { "type": "integer", "minimum": 1 },
+        "period":       { "type": "integer", "minimum": 0, "description": "Length of one installment, in period_type units. Total segment duration is occurrences * period." },
+        "period_type":  { "$ref": "https://raw.githubusercontent.com/Open-Cap-Table-Coalition/Open-Cap-Format-OCF/main/schema/enums/PeriodType.schema.json" },
+        "cliff":        { "$ref": "#/$defs/Cliff" },
+        "percentage":   { "$ref": "#/$defs/Fraction" }
       },
-      "required": ["order", "occurrences", "period", "period_type", "percentage"],
+      "required": ["order", "vesting_base", "occurrences", "period", "period_type", "percentage"],
+      "additionalProperties": false
+    },
+    "VestingBaseDate": {
+      "type": "object",
+      "description": "Anchor that resolves from the per-grant date supplied by TX_CANONICAL_VESTING_START. Carries no payload; the anchor date is held by the start transaction, not the spec.",
+      "properties": {
+        "type": { "const": "DATE" }
+      },
+      "required": ["type"],
+      "additionalProperties": false
+    },
+    "VestingBaseEvent": {
+      "type": "object",
+      "description": "Anchor that resolves when a named event fires (witnessed by TX_CANONICAL_VESTING_EVENT). The event's definition (what it means, how it is achieved) is not modeled by canonical; consumers maintain that meaning out-of-band. Multiple VestingStatements may reference the same event_id.",
+      "properties": {
+        "type":     { "const": "EVENT" },
+        "event_id": { "type": "string", "description": "Identifier of the event this statement is anchored to. Matches `event_id` on a TX_CANONICAL_VESTING_EVENT." }
+      },
+      "required": ["type", "event_id"],
       "additionalProperties": false
     },
     "Fraction": {
