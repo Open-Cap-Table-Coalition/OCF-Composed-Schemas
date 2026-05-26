@@ -1,0 +1,25 @@
+{
+  "$schema": "http://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/Open-Cap-Table-Coalition/OCF-Composed-Schemas/main/canonical/transactions/vesting/VestingStart.schema.json",
+  "title": "Canonical - Vesting Start Transaction",
+  "description": "Canonical (hypothetical OCF) representation of a vesting-start transaction. Anchors the vesting schedule of a security to a wall-clock date. The security's `VestingScheduleTemplate` reference lives on the issuance transaction; this transaction supplies only the per-security anchor date. One per security (per schedule, in a hypothetical future where a security could carry multiple schedules).",
+  "$defs": {
+    "TxCanonicalVestingStart": {
+      "type": "object",
+      "properties": {
+        "id":           { "type": "string", "description": "Identifier for this transaction." },
+        "object_type":  { "const": "TX_CANONICAL_VESTING_START" },
+        "date":         {
+          "$ref": "https://raw.githubusercontent.com/Open-Cap-Table-Coalition/Open-Cap-Format-OCF/main/schema/types/Date.schema.json",
+          "description": "The vesting commencement date for the referenced security."
+        },
+        "security_id":  {
+          "type": "string",
+          "description": "Identifier of the security whose vesting clock starts on `date`. The security's `vesting_template_id` is read from the issuance transaction; this transaction does not re-carry it."
+        }
+      },
+      "required": ["id", "object_type", "date", "security_id"],
+      "additionalProperties": false
+    }
+  }
+}

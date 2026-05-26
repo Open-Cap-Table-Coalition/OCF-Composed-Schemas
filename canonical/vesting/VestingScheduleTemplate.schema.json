@@ -6,7 +6,7 @@
   "$defs": {
     "VestingScheduleTemplate": {
       "type": "object",
-      "description": "Reusable vesting schedule shape, independent of any specific grant.",
+      "description": "Reusable vesting schedule shape, independent of any specific grant. Per-grant binding is carried on TX_CANONICAL_EQUITY_COMPENSATION_ISSUANCE (refs a template) plus a separate TX_CANONICAL_VESTING_START that anchors the schedule to a wall-clock date.",
       "properties": {
         "id":         { "type": "string" },
         "statements": {
@@ -16,16 +16,6 @@
         }
       },
       "required": ["id", "statements"],
-      "additionalProperties": false
-    },
-    "VestingSchedule": {
-      "type": "object",
-      "description": "Per-grant application of a VestingScheduleTemplate.",
-      "properties": {
-        "template_id": { "type": "string" },
-        "start_date":  { "$ref": "https://raw.githubusercontent.com/Open-Cap-Table-Coalition/Open-Cap-Format-OCF/main/schema/types/Date.schema.json" }
-      },
-      "required": ["template_id", "start_date"],
       "additionalProperties": false
     },
     "VestingStatement": {

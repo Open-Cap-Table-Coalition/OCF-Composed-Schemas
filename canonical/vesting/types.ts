@@ -5,11 +5,6 @@ type OCFDate = string;
 // From enums/PeriodType.schema.json
 type PeriodType = "DAYS" | "MONTHS" | "YEARS";
 
-interface VestingSchedule {
-  template_id: string; // refs a VestingScheduleTemplate
-  start_date: OCFDate;
-}
-
 interface VestingScheduleTemplate {
   id: string;
   statements: VestingStatement[]; // chained implicitly by order

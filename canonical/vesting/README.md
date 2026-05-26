@@ -2,7 +2,7 @@
 
 This directory holds canonical normalization schemas — internal intermediate shapes that mapping work points at when neither the OCF source nor the target schema is the right anchor.
 
-Today: `vesting/` only.
+Today: `vesting/` (the spec layer) and `transactions/` (issuance + the vesting-start anchor).
 
 ## Why the canonical layer exists (for vesting)
 
@@ -18,8 +18,7 @@ OCF's `types/Vesting.schema.json` (`{ date, amount }`) is the **projection layer
 
 `vesting/VestingScheduleTemplate.schema.json` defines:
 
-- `VestingScheduleTemplate` — `{ id, statements: VestingStatement[] }` — the reusable schedule shape
-- `VestingSchedule` — `{ template_id, start_date }` — per-grant application of a template
+- `VestingScheduleTemplate` — `{ id, statements: VestingStatement[] }` — the reusable schedule shape. Per-grant binding is no longer carried by a `VestingSchedule` object; instead, the issuance transaction (`TX_CANONICAL_EQUITY_COMPENSATION_ISSUANCE`) refs the template, and a separate `TX_CANONICAL_VESTING_START` transaction anchors that template to a wall-clock date.
 - `VestingStatement` — `{ order, occurrences, period: integer, period_type: PeriodType, cliff?: Cliff, percentage: Fraction }` — a segment of a template, producing a sequence of vesting events; total segment duration is `occurrences * period` in `period_type` units
 - `Cliff` — `{ occurrence: integer, percentage: Fraction }` — optional cliff within a statement (`occurrence` is the 1-indexed installment at which the cliff applies)
 - `Fraction` — `{ numerator: integer, denominator: integer (≥ 1) }` — rational fraction (avoids decimal drift)
@@ -49,7 +48,7 @@ OCF's `types/Vesting.schema.json` (`{ date, amount }`) is the **projection layer
 
 The two coexist:
 
-- A grant can carry both — a canonical `VestingScheduleTemplate` + `VestingSchedule` (spec) and a list of `Vesting` events (projection).
+- A grant can carry both — the spec (an issuance referencing a `VestingScheduleTemplate`, plus a `TX_CANONICAL_VESTING_START` to anchor it) and a list of `Vesting` events (projection).
 - Or only the projection, if the spec was lost or never materialized to canonical.
 - Or only the spec, if events haven't been computed yet.
 
