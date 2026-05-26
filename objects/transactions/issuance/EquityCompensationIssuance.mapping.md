@@ -15,13 +15,13 @@ required_fields:
   - security_law_exemptions
   - stakeholder_id
   - custom_id
-target_standard: TBD
-target_version: TBD
-status: draft
-last_generated: 2026-05-18
+target_standard: Carta
+target_version: v1alpha1 (2026-04-30)
+status: complete
+last_generated: 2026-05-26
 ---
 
-# Object - Equity Compensation Issuance Transaction → TBD
+# Object - Equity Compensation Issuance Transaction → Carta
 
 > Object describing securities issuance transaction by the issuer and held by a stakeholder as a form of compensation (as noted elsewhere, RSAs are not included here intentionally and should be modelled using Stock Issuances).
 
@@ -264,95 +264,96 @@ Source: [`EquityCompensationIssuance.schema.json`](./EquityCompensationIssuance.
 
 ```yaml
 # kind vocabulary: rename | split | combine | enum-remap | computed | unmappable | TODO
-status: draft
-coverage: 0/23
+status: complete
+coverage: 23/23
 
 fields:
   id:
-    kind: TODO
-    target: TODO
+    kind: unmappable
+    target: null
   comments:
-    kind: TODO
-    target: TODO
+    kind: unmappable
+    target: null
   object_type:
-    kind: TODO          # likely enum-remap
-    target: TODO
+    kind: unmappable
+    target: null
     values:
-      TX_PLAN_SECURITY_ISSUANCE: TODO
-      TX_EQUITY_COMPENSATION_ISSUANCE: TODO
+      TX_PLAN_SECURITY_ISSUANCE: null
+      TX_EQUITY_COMPENSATION_ISSUANCE: null
   date:
-    kind: TODO
-    target: TODO
+    kind: unmappable
+    target: null
   security_id:
-    kind: TODO
-    target: TODO
+    kind: unmappable
+    target: null
   custom_id:
-    kind: TODO
-    target: TODO
+    kind: unmappable
+    target: null
   stakeholder_id:
-    kind: TODO
-    target: TODO
+    kind: unmappable
+    target: null
   board_approval_date:
-    kind: TODO
-    target: TODO
+    kind: unmappable
+    target: null
   stockholder_approval_date:
-    kind: TODO
-    target: TODO
+    kind: unmappable
+    target: null
   consideration_text:
-    kind: TODO
-    target: TODO
+    kind: unmappable
+    target: null
   security_law_exemptions:
-    kind: TODO
-    target: TODO
+    kind: unmappable
+    target: null
   stock_plan_id:
-    kind: TODO
-    target: TODO
+    kind: unmappable
+    target: null
   stock_class_id:
-    kind: TODO
-    target: TODO
+    kind: unmappable
+    target: null
   compensation_type:
-    kind: TODO          # likely enum-remap
-    target: TODO
+    kind: unmappable
+    target: null
     values:
-      OPTION_NSO: TODO
-      OPTION_ISO: TODO
-      OPTION: TODO
-      RSU: TODO
-      CSAR: TODO
-      SSAR: TODO
+      OPTION_NSO: null
+      OPTION_ISO: null
+      OPTION: null
+      RSU: null
+      CSAR: null
+      SSAR: null
   option_grant_type:
-    kind: TODO          # likely enum-remap
-    target: TODO
+    kind: unmappable
+    target: null
     values:
-      NSO: TODO
-      ISO: TODO
-      INTL: TODO
+      NSO: null
+      ISO: null
+      INTL: null
   quantity:
-    kind: TODO
-    target: TODO
+    kind: unmappable
+    target: null
   exercise_price:
-    kind: TODO
-    target: TODO
+    kind: unmappable
+    target: null
   base_price:
-    kind: TODO
-    target: TODO
+    kind: unmappable
+    target: null
   early_exercisable:
-    kind: TODO
-    target: TODO
+    kind: unmappable
+    target: null
   vesting_terms_id:
-    kind: TODO
-    target: TODO
+    kind: unmappable
+    target: null
   vestings:
-    kind: TODO
-    target: TODO
+    kind: unmappable
+    target: null
   expiration_date:
-    kind: TODO
-    target: TODO
+    kind: unmappable
+    target: null
   termination_exercise_windows:
-    kind: TODO
-    target: TODO
+    kind: unmappable
+    target: null
 ```
 
 ## Notes / open questions
 
-- 
+- OCF's `TX_EQUITY_COMPENSATION_ISSUANCE` is superseded by a hypothetical replacement at [`canonical/transactions/issuance/EquityCompensationIssuance.schema.json`](../../../canonical/transactions/issuance/EquityCompensationIssuance.schema.json) (the canonical `TX_CANONICAL_EQUITY_COMPENSATION_ISSUANCE`). The canonical version is field-for-field equivalent to OCF's with one substantive change: `vesting_terms_id` (which references OCF's DAG-based `VestingTerms`) is replaced with `vesting_template_id` (which references the canonical `VestingScheduleTemplate`). The Carta mapping lives on the canonical side; see [`canonical/transactions/issuance/EquityCompensationIssuance.mapping.md`](../../../canonical/transactions/issuance/EquityCompensationIssuance.mapping.md).
+- This OCF object is therefore left unmapped here. Implementers should use the canonical replacement and its Carta mapping. Per `compensation_type`, the canonical mapping fans out to Carta's `OptionGrant` (option variants), `RestrictedStockUnit` (RSU), or `SarIssuanceTransaction` (CSAR/SSAR).

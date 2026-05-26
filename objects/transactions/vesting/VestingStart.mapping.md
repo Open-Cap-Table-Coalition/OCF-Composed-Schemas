@@ -9,13 +9,13 @@ required_fields:
   - object_type
   - date
   - security_id
-target_standard: TBD
-target_version: TBD
-status: draft
-last_generated: 2026-05-18
+target_standard: Carta
+target_version: v1alpha1 (2026-04-30)
+status: complete
+last_generated: 2026-05-26
 ---
 
-# Object - Vesting Start Transaction → TBD
+# Object - Vesting Start Transaction → Carta
 
 > Object describing the transaction of vesting schedule start / commencement associated with a security
 
@@ -90,32 +90,33 @@ Source: [`VestingStart.schema.json`](./VestingStart.schema.json)
 
 ```yaml
 # kind vocabulary: rename | split | combine | enum-remap | computed | unmappable | TODO
-status: draft
-coverage: 0/6
+status: complete
+coverage: 6/6
 
 fields:
   id:
-    kind: TODO
-    target: TODO
+    kind: unmappable
+    target: null
   comments:
-    kind: TODO
-    target: TODO
+    kind: unmappable
+    target: null
   object_type:
-    kind: TODO          # likely enum-remap
-    target: TODO
+    kind: unmappable
+    target: null
     values:
-      TX_VESTING_START: TODO
+      TX_VESTING_START: null
   date:
-    kind: TODO
-    target: TODO
+    kind: unmappable
+    target: null
   security_id:
-    kind: TODO
-    target: TODO
+    kind: unmappable
+    target: null
   vesting_condition_id:
-    kind: TODO
-    target: TODO
+    kind: unmappable
+    target: null
 ```
 
 ## Notes / open questions
 
-- 
+- OCF's `TX_VESTING_START` is superseded by a hypothetical replacement at [`canonical/transactions/vesting/VestingStart.schema.json`](../../../canonical/transactions/vesting/VestingStart.schema.json) (the canonical `TX_CANONICAL_VESTING_START`). The canonical version drops OCF's `vesting_condition_id` (canonical does not model the DAG of `VestingCondition` nodes that OCF references) and otherwise carries the same shape. The Carta mapping work lives on the canonical side; see [`canonical/transactions/vesting/VestingStart.mapping.md`](../../../canonical/transactions/vesting/VestingStart.mapping.md).
+- This OCF object is therefore left unmapped here. Implementers should use the canonical replacement and its Carta mapping.

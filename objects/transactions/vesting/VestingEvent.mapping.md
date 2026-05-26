@@ -9,13 +9,13 @@ required_fields:
   - object_type
   - date
   - security_id
-target_standard: TBD
-target_version: TBD
-status: draft
-last_generated: 2026-05-18
+target_standard: Carta
+target_version: v1alpha1 (2026-04-30)
+status: complete
+last_generated: 2026-05-26
 ---
 
-# Object - Vesting Event Transaction → TBD
+# Object - Vesting Event Transaction → Carta
 
 > Object describing the transaction of an non-schedule-driven vesting event associated with a security
 
@@ -90,32 +90,33 @@ Source: [`VestingEvent.schema.json`](./VestingEvent.schema.json)
 
 ```yaml
 # kind vocabulary: rename | split | combine | enum-remap | computed | unmappable | TODO
-status: draft
-coverage: 0/6
+status: complete
+coverage: 6/6
 
 fields:
   id:
-    kind: TODO
-    target: TODO
+    kind: unmappable
+    target: null
   comments:
-    kind: TODO
-    target: TODO
+    kind: unmappable
+    target: null
   object_type:
-    kind: TODO          # likely enum-remap
-    target: TODO
+    kind: unmappable
+    target: null
     values:
-      TX_VESTING_EVENT: TODO
+      TX_VESTING_EVENT: null
   date:
-    kind: TODO
-    target: TODO
+    kind: unmappable
+    target: null
   security_id:
-    kind: TODO
-    target: TODO
+    kind: unmappable
+    target: null
   vesting_condition_id:
-    kind: TODO
-    target: TODO
+    kind: unmappable
+    target: null
 ```
 
 ## Notes / open questions
 
-- 
+- OCF's `TX_VESTING_EVENT` is superseded by a hypothetical replacement at [`canonical/transactions/vesting/VestingEvent.schema.json`](../../../canonical/transactions/vesting/VestingEvent.schema.json) (the canonical `TX_CANONICAL_VESTING_EVENT`). The canonical version replaces OCF's `vesting_condition_id` (which references a node in OCF's DAG of `VestingCondition`s) with `event_id` (a named event in the canonical AST) and adds an optional `realized_fraction` for partial-payout firings. The Carta mapping lives on the canonical side; see [`canonical/transactions/vesting/VestingEvent.mapping.md`](../../../canonical/transactions/vesting/VestingEvent.mapping.md).
+- This OCF object is therefore left unmapped here. Implementers should use the canonical replacement and its Carta mapping.
