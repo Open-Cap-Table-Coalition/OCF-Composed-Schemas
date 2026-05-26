@@ -2,7 +2,7 @@
   "$schema": "http://json-schema.org/draft/2020-12/schema",
   "$id": "https://raw.githubusercontent.com/Open-Cap-Table-Coalition/OCF-Composed-Schemas/main/canonical/vesting/VestingScheduleTemplate.schema.json",
   "title": "Canonical - Vesting",
-  "description": "Canonical (hypothetical OCF) representation of time-based vesting: a reusable schedule template (VestingScheduleTemplate), per-grant application (VestingSchedule), and the vesting statements that together describe how a grant vests over time. Assumes CUMULATIVE_ROUND_DOWN allocation throughout.",
+  "description": "Canonical (hypothetical OCF) representation of time-based vesting: a reusable schedule template (VestingScheduleTemplate) composed of vesting statements that describe how a grant vests over time. Per-grant binding is carried by TX_CANONICAL_EQUITY_COMPENSATION_ISSUANCE (refs a template) plus TX_CANONICAL_VESTING_START (anchors it to a date). Assumes CUMULATIVE_ROUND_DOWN allocation throughout.",
   "$defs": {
     "VestingScheduleTemplate": {
       "type": "object",

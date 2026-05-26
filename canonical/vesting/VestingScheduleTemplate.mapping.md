@@ -11,7 +11,7 @@ last_generated: 2026-05-20
 
 # Canonical - Vesting → Carta
 
-> Canonical (hypothetical OCF) representation of time-based vesting: a reusable schedule template (`VestingScheduleTemplate`), per-grant application (`VestingSchedule`), and the vesting statements that together describe how a grant vests over time. Assumes CUMULATIVE_ROUND_DOWN allocation throughout.
+> Canonical (hypothetical OCF) representation of time-based vesting: a reusable schedule template (`VestingScheduleTemplate`) composed of vesting statements that describe how a grant vests over time. Per-grant binding is carried by `TX_CANONICAL_EQUITY_COMPENSATION_ISSUANCE` (refs a template) plus `TX_CANONICAL_VESTING_START` (anchors it to a date). Assumes CUMULATIVE_ROUND_DOWN allocation throughout.
 
 ## Canonical schema
 
@@ -25,11 +25,11 @@ Source: [`VestingScheduleTemplate.schema.json`](./VestingScheduleTemplate.schema
   "$schema": "http://json-schema.org/draft/2020-12/schema",
   "$id": "https://raw.githubusercontent.com/Open-Cap-Table-Coalition/OCF-Composed-Schemas/main/canonical/vesting/VestingScheduleTemplate.schema.json",
   "title": "Canonical - Vesting",
-  "description": "Canonical (hypothetical OCF) representation of time-based vesting: a reusable schedule template (VestingScheduleTemplate), per-grant application (VestingSchedule), and the vesting statements that together describe how a grant vests over time. Assumes CUMULATIVE_ROUND_DOWN allocation throughout.",
+  "description": "Canonical (hypothetical OCF) representation of time-based vesting: a reusable schedule template (VestingScheduleTemplate) composed of vesting statements that describe how a grant vests over time. Per-grant binding is carried by TX_CANONICAL_EQUITY_COMPENSATION_ISSUANCE (refs a template) plus TX_CANONICAL_VESTING_START (anchors it to a date). Assumes CUMULATIVE_ROUND_DOWN allocation throughout.",
   "$defs": {
     "VestingScheduleTemplate": {
       "type": "object",
-      "description": "Reusable vesting schedule shape, independent of any specific grant.",
+      "description": "Reusable vesting schedule shape, independent of any specific grant. Per-grant binding is carried on TX_CANONICAL_EQUITY_COMPENSATION_ISSUANCE (refs a template) plus a separate TX_CANONICAL_VESTING_START that anchors the schedule to a wall-clock date.",
       "properties": {
         "id":         { "type": "string" },
         "statements": {
@@ -39,16 +39,6 @@ Source: [`VestingScheduleTemplate.schema.json`](./VestingScheduleTemplate.schema
         }
       },
       "required": ["id", "statements"],
-      "additionalProperties": false
-    },
-    "VestingSchedule": {
-      "type": "object",
-      "description": "Per-grant application of a VestingScheduleTemplate.",
-      "properties": {
-        "template_id": { "type": "string" },
-        "start_date":  { "$ref": "https://raw.githubusercontent.com/Open-Cap-Table-Coalition/Open-Cap-Format-OCF/main/schema/types/Date.schema.json" }
-      },
-      "required": ["template_id", "start_date"],
       "additionalProperties": false
     },
     "VestingStatement": {
@@ -95,7 +85,7 @@ Source: [`VestingScheduleTemplate.schema.json`](./VestingScheduleTemplate.schema
 ```yaml
 # kind vocabulary: rename | split | combine | enum-remap | computed | unmappable | TODO
 status: complete
-coverage: 10/10
+coverage: 8/8
 
 fields:
   # === VestingScheduleTemplate → Carta VestingScheduleTemplate ===
@@ -105,14 +95,6 @@ fields:
   "VestingScheduleTemplate.statements":
     kind: rename
     target: "#/$defs/VestingScheduleTemplate/properties/periods"
-
-  # === VestingSchedule → Carta Vesting (per-grant application) ===
-  "VestingSchedule.template_id":
-    kind: rename
-    target: "#/$defs/Vesting/properties/templateId"
-  "VestingSchedule.start_date":
-    kind: rename
-    target: "#/$defs/Vesting/properties/startDate"
 
   # === VestingStatement → Carta VestingPeriod ===
   "VestingStatement.order":
@@ -164,7 +146,7 @@ fields:
 
 ## Notes / open questions
 
-Each canonical `VestingStatement` maps to one Carta `VestingPeriod`; the array becomes Carta's `VestingScheduleTemplate.periods[]`. Per-grant `VestingSchedule` maps to Carta's `Vesting`.
+Each canonical `VestingStatement` maps to one Carta `VestingPeriod`; the array becomes Carta's `VestingScheduleTemplate.periods[]`. The per-grant binding to Carta's `Vesting` object (the `templateId` reference and the `startDate` anchor) is sourced from the canonical transactions — `TX_CANONICAL_EQUITY_COMPENSATION_ISSUANCE.vesting_template_id` and `TX_CANONICAL_VESTING_START.date` respectively — and lives in those transactions' mapping docs (a follow-up).
 
 ### Per-statement rule
 
@@ -174,7 +156,7 @@ For each `VestingStatement` in `VestingScheduleTemplate.statements`:
 2. The `period` field, together with `occurrences` and `period_type`, produces Carta's `length`, `lengthUnit`, and `vestingMethod` (the three Carta-side period fields).
 3. The optional `cliff` field, if present, produces Carta's `cliffLength`, `cliffLengthUnit`, and `cliffPercentage`.
 
-Statements chain implicitly by `order` — statement 2 starts where statement 1 ended. The grant-level `VestingSchedule.start_date` anchors the whole sequence.
+Statements chain implicitly by `order` — statement 2 starts where statement 1 ended. The grant-level anchor date (supplied by `TX_CANONICAL_VESTING_START`) anchors the whole sequence.
 
 ### Normalization note
 
@@ -182,7 +164,7 @@ Statements chain implicitly by `order` — statement 2 starts where statement 1 
 
 ### Worked examples
 
-Each example shows canonical input → Carta output.
+Each example shows the canonical `VestingScheduleTemplate` and the Carta `VestingScheduleTemplate` it produces. The per-grant binding to Carta's `Vesting` object — `templateId` and `startDate` — is sourced from the canonical transactions (`TX_CANONICAL_EQUITY_COMPENSATION_ISSUANCE.vesting_template_id` and `TX_CANONICAL_VESTING_START.date`) and is not shown here.
 
 #### 1. Standard 4-year monthly with 1-year 25% cliff
 
@@ -203,8 +185,7 @@ Canonical input:
       },
       "percentage": { "numerator": 1, "denominator": 1 }
     }]
-  },
-  "VestingSchedule": { "template_id": "tmpl-standard", "start_date": "2025-01-01" }
+  }
 }
 ```
 
@@ -225,8 +206,7 @@ Carta output:
       "cliffPercentage": 0.25,
       "percentage": 1.0
     }]
-  },
-  "Vesting": { "templateId": "tmpl-standard", "startDate": "2025-01-01" }
+  }
 }
 ```
 
@@ -249,8 +229,7 @@ Canonical input — same as #1 but with `cliff.percentage` of 3/10 instead of 1/
       },
       "percentage": { "numerator": 1, "denominator": 1 }
     }]
-  },
-  "VestingSchedule": { "template_id": "tmpl-30-cliff", "start_date": "2025-01-01" }
+  }
 }
 ```
 
@@ -271,8 +250,7 @@ Carta output — `cliffPercentage` carries the 30% directly:
       "cliffPercentage": 0.30,
       "percentage": 1.0
     }]
-  },
-  "Vesting": { "templateId": "tmpl-30-cliff", "startDate": "2025-01-01" }
+  }
 }
 ```
 
@@ -294,8 +272,7 @@ Canonical input — four chained statements, each a single annual vest:
       { "order": 4, "occurrences": 1, "period": 12, "period_type": "MONTHS",
         "percentage": { "numerator": 2, "denominator": 5 } }
     ]
-  },
-  "VestingSchedule": { "template_id": "tmpl-bespoke", "start_date": "2025-01-01" }
+  }
 }
 ```
 
@@ -312,8 +289,7 @@ Carta output:
       { "order": 3, "length": 12, "lengthUnit": "MONTH", "vestingMethod": "ANNUALLY", "percentage": 0.40 },
       { "order": 4, "length": 12, "lengthUnit": "MONTH", "vestingMethod": "ANNUALLY", "percentage": 0.40 }
     ]
-  },
-  "Vesting": { "templateId": "tmpl-bespoke", "startDate": "2025-01-01" }
+  }
 }
 ```
 
@@ -326,4 +302,4 @@ These Carta fields/types have no canonical counterpart and are either omitted fr
 - `vestingScheduleType: MILESTONE | HYBRID` — only `DATE` is produced
 - `VestingPeriod.{vestingOccurs, milestoneName, immediatePercentage, performanceCondition}` — day-anchor + milestone + immediate-vest + performance metadata
 - `VestingScheduleTemplate.{uuid, issuerId, description, name}` — Carta-internal metadata
-- `VestingSchedule` (Carta's *materialized instance* type, not the template) — Carta computes this from the template + start date
+- `Vesting` (Carta's per-grant materialized instance) — the `templateId` and `startDate` fields are sourced from canonical transactions (see this doc's "Per-statement rule" section); the mapping for those lives in the transaction mapping docs (forthcoming)
