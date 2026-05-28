@@ -195,9 +195,22 @@ Where an event fires "partially" — e.g., revenue hit $15M against a $10M-to-$2
 
 The compiler multiplies the matching statement's amount by `realized_fraction` to produce the vested quantity. If `realized_fraction` is absent, the firing is binary and the statement's full max amount vests.
 
-### Hybrid templates
+### How statements are anchored, and `order`
 
-A template can mix DATE-anchored and EVENT-anchored statements freely. The compiler resolves each statement's anchor independently from the matching transaction. Order is preserved by `VestingStatement.order` but does not enforce dependency between statements — they each fire when their own conditions are met.
+The two `vesting_base` kinds resolve their start differently:
+
+- **DATE-anchored statements chain by `order`.** Because the start date is hoisted to a single per-grant anchor (`TX_CANONICAL_VESTING_START` supplies exactly one date), multiple DATE-anchored statements cannot all originate at that date. Instead they chain: statement 1 begins at the anchor, statement 2 begins where statement 1 ended (anchor + statement 1's `occurrences × period`), statement 3 where statement 2 ended, and so on. So for DATE-anchored statements `order` is load-bearing — each statement's start offset is the cumulative duration of all prior statements. (The bespoke "5/15/40/40 over 4 years" example in [`vesting/VestingScheduleTemplate.mapping.md`](./vesting/VestingScheduleTemplate.mapping.md) is four DATE statements chained this way.)
+- **EVENT-anchored statements anchor to their own event firing.** An EVENT-anchored statement begins when its `TX_CANONICAL_VESTING_EVENT` fires, not where a prior statement ended.
+
+### Hybrid templates — open question
+
+A template can mix DATE-anchored and EVENT-anchored statements. The DATE-chaining rule above is well-defined for an all-DATE template, and EVENT-anchored statements are well-defined in isolation. **What is not yet decided is how the two interact when interleaved in one template.** Specifically:
+
+- Does an EVENT-anchored statement's duration count toward the chain offset of a *later* DATE-anchored statement? (Problematic — the event may fire late, or never, leaving the later statement's start undefined.)
+- Does an EVENT-anchored statement interrupt or reset the DATE chain?
+- Or do DATE-anchored statements chain only among themselves (off the single hoisted anchor), with EVENT-anchored statements treated as fully independent tranches?
+
+The last interpretation is the most tractable, but this is an open design question, not a settled rule. Until it is resolved, hybrid templates that interleave the two base kinds should be considered under-specified.
 
 ---
 
