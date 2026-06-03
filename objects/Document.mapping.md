@@ -7,13 +7,13 @@ required_fields:
   - md5
   - id
   - object_type
-target_standard: TBD
-target_version: TBD
-status: draft
+target_standard: Carta
+target_version: v1alpha1 (2026-04-30)
+status: complete
 last_generated: 2026-05-18
 ---
 
-# Object - Document → TBD
+# Object - Document → Carta
 
 > Object describing a document
 
@@ -100,35 +100,39 @@ Source: [`Document.schema.json`](./Document.schema.json)
 
 ```yaml
 # kind vocabulary: rename | split | combine | enum-remap | computed | unmappable | TODO
-status: draft
-coverage: 0/7
+status: complete
+coverage: 7/7
 
 fields:
   id:
-    kind: TODO
-    target: TODO
+    kind: unmappable
+    target: null
   comments:
-    kind: TODO
-    target: TODO
+    kind: unmappable
+    target: null
   object_type:
-    kind: TODO          # likely enum-remap
-    target: TODO
+    kind: unmappable
+    target: null
     values:
-      DOCUMENT: TODO
+      DOCUMENT: null
   path:
-    kind: TODO
-    target: TODO
+    kind: computed
+    target: "#/$defs/Document/properties/fileId"
   related_objects:
-    kind: TODO
-    target: TODO
+    kind: unmappable
+    target: null
   uri:
-    kind: TODO
-    target: TODO
+    kind: computed
+    target: "#/$defs/Document/properties/fileId"
   md5:
-    kind: TODO
-    target: TODO
+    kind: unmappable
+    target: null
 ```
 
 ## Notes / open questions
 
-- 
+- OCF Document and Carta Document represent the same concept (a file attached to cap-table objects), but express it differently. OCF carries descriptive metadata inline (`path`/`uri`, `md5`, `related_objects`); Carta carries only a reference (`fileId`) to a file uploaded out-of-band, plus output-only `name` and `url`.
+- `path` / `uri` → `fileId`: not a value-preserving rename. The OCF `path` or `uri` identifies a file to upload via Carta's [Upload File](https://docs.carta.com/carta/reference/v1alpha1filesuploadfile) endpoint; that endpoint returns a `fileId` which populates Carta's `Document.fileId`. Marked `kind: computed` (stretching the vocabulary: target value is derived from the source via an external process, not a direct copy). The OCF schema's `oneOf` constraint guarantees exactly one of `path`/`uri` is present per Document, so both rows pointing at `fileId` is not a collision.
+- `md5`: no Carta counterpart. Useful for verifying upload integrity, but not stored on Carta's `Document`.
+- `related_objects`: no Carta counterpart on the Document side. Carta represents document relationships from the other side (e.g., a Grant carries a `documentList` referencing its Documents).
+- Carta's `name` and `url` are server-computed read-only outputs; no OCF counterpart is needed on the inbound direction.
