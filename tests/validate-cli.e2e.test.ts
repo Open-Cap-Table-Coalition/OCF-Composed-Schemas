@@ -100,6 +100,14 @@ describe("validate-mappings CLI (temp tree)", () => {
     expect(stdout).toMatch(/OK: checked 1 mapping file\(s\), 0 errors/);
   });
 
+  it("prints a per-file mapping tree in --verbose mode", async () => {
+    await writeFile(path.join(root, "objects", "Thing.mapping.md"), mappingDoc({}));
+    const { stdout } = await runCli(root, ["--verbose"]);
+    expect(stdout).toContain("objects/Thing.mapping.md  complete 1/1 → Carta");
+    expect(stdout).toContain("└── name → #/$defs/Thing/properties/name (rename)");
+    expect(stdout).toMatch(/OK: checked 1 mapping file\(s\), 0 errors/);
+  });
+
   it("exits 1 and reports field-level errors on a broken mapping", async () => {
     await writeFile(
       path.join(root, "objects", "Thing.mapping.md"),

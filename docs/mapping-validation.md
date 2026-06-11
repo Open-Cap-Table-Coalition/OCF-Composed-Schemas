@@ -13,7 +13,8 @@ coverage counters never lie, and enum remaps are checked value-by-value.
 - `scripts/lib/mapping-validator.ts` is pure rules: `validateMapping(parsed, sourceSchema,
   registry, targetBundle) → ValidationError[]`.
 - `scripts/validate-mappings.ts` is the CLI walker (`--filter <glob>`, `--verbose`); errors are
-  grouped per file and exit code is non-zero on any error.
+  grouped per file and exit code is non-zero on any error. `--verbose` prints a per-file mapping
+  tree (field → target, split fan-outs, enum value remaps, unmappable reasons, TODO counts).
 
 ## Rules
 
