@@ -1,0 +1,182 @@
+#!/usr/bin/env node
+import path from "node:path";
+import { readdir, readFile, stat } from "node:fs/promises";
+import yargs from "yargs";
+import { hideBin } from "yargs/helpers";
+import { minimatch } from "minimatch";
+
+import { loadRegistry, RawSchema } from "./lib/registry.js";
+import { parseMappingDocument, MappingParseError } from "./lib/mapping-parser.js";
+import { validateMapping, ValidationError, TARGET_BUNDLES } from "./lib/mapping-validator.js";
+
+const MAPPING_DIRS = ["objects", "types", "canonical"] as const;
+
+interface Args {
+  filter?: string;
+  verbose: boolean;
+}
+
+async function collectMappingFiles(repoRoot: string): Promise<string[]> {
+  const out: string[] = [];
+  for (const dir of MAPPING_DIRS) {
+    const abs = path.join(repoRoot, dir);
+    try {
+      await stat(abs);
+    } catch {
+      continue;
+    }
+    const entries = await readdir(abs, { recursive: true, withFileTypes: true });
+    for (const e of entries) {
+      if (!e.isFile()) continue;
+      if (!e.name.endsWith(".mapping.md")) continue;
+      const direntDir =
+        (e as unknown as { parentPath?: string; path?: string }).parentPath ??
+        (e as unknown as { path?: string }).path ??
+        abs;
+      out.push(path.relative(repoRoot, path.join(direntDir, e.name)));
+    }
+  }
+  return out.sort();
+}
+
+async function main(argv: Args): Promise<number> {
+  const repoRoot = process.cwd();
+
+  let registry;
+  try {
+    registry = await loadRegistry(repoRoot);
+  } catch (err) {
+    console.error(`Failed to load schema registry: ${(err as Error).message}`);
+    return 1;
+  }
+
+  const all = await collectMappingFiles(repoRoot);
+  const files = argv.filter ? all.filter((rel) => minimatch(rel, argv.filter as string)) : all;
+
+  const bundleCache = new Map<string, unknown>();
+  const errors: ValidationError[] = [];
+
+  for (const rel of files) {
+    if (argv.verbose) console.log(`check  ${rel}`);
+    const markdown = await readFile(path.join(repoRoot, rel), "utf8");
+
+    let parsed;
+    try {
+      parsed = parseMappingDocument(markdown, rel);
+    } catch (err) {
+      if (err instanceof MappingParseError) {
+        errors.push({ file: rel, field: null, message: err.message });
+        continue;
+      }
+      throw err;
+    }
+
+    const schemaRel = rel.replace(/\.mapping\.md$/, ".schema.json");
+    let sourceSchema: RawSchema;
+    try {
+      sourceSchema = JSON.parse(
+        await readFile(path.join(repoRoot, schemaRel), "utf8")
+      ) as RawSchema;
+    } catch (err) {
+      errors.push({
+        file: rel,
+        field: null,
+        message: `cannot read sibling schema ${schemaRel}: ${(err as Error).message}`,
+      });
+      continue;
+    }
+
+    const standard = parsed.frontmatter.target_standard;
+    let targetBundle: unknown | null = null;
+    if (typeof standard === "string" && standard !== "TBD") {
+      const bundleRel = TARGET_BUNDLES[standard];
+      if (!bundleRel) {
+        errors.push({
+          file: rel,
+          field: null,
+          message: `unknown target_standard "${standard}" (known: ${Object.keys(
+            TARGET_BUNDLES
+          ).join(", ")})`,
+        });
+        continue;
+      }
+      if (!bundleCache.has(bundleRel)) {
+        try {
+          bundleCache.set(
+            bundleRel,
+            JSON.parse(await readFile(path.join(repoRoot, bundleRel), "utf8"))
+          );
+        } catch (err) {
+          console.error(`Failed to load target bundle ${bundleRel}: ${(err as Error).message}`);
+          return 1;
+        }
+      }
+      targetBundle = bundleCache.get(bundleRel) ?? null;
+    }
+
+    errors.push(
+      ...validateMapping(
+        {
+          file: rel,
+          frontmatter: parsed.frontmatter,
+          mapping: parsed.mapping,
+          sourceSchema,
+          registry,
+          targetBundle,
+        },
+        { requireUnmappableReason: false }
+      )
+    );
+  }
+
+  const byFile = new Map<string, ValidationError[]>();
+  for (const e of errors) {
+    const list = byFile.get(e.file) ?? [];
+    list.push(e);
+    byFile.set(e.file, list);
+  }
+  for (const [file, list] of byFile) {
+    console.error(file);
+    for (const e of list) {
+      console.error(`  ${e.field ? `fields.${e.field}: ` : ""}${e.message}`);
+    }
+  }
+
+  if (errors.length > 0) {
+    console.error(
+      `\n${errors.length} error(s) across ${byFile.size} file(s); checked ${files.length} mapping file(s)`
+    );
+    return 1;
+  }
+  console.log(`OK: checked ${files.length} mapping file(s), 0 errors`);
+  return 0;
+}
+
+const parsed = yargs(hideBin(process.argv))
+  .scriptName("mapping:validate")
+  .usage("$0 [options]")
+  .option("filter", {
+    type: "string",
+    describe: "Glob (relative to repo root) restricting which .mapping.md files are checked",
+  })
+  .option("verbose", {
+    type: "boolean",
+    default: false,
+    describe: "Print per-file progress",
+  })
+  .strict()
+  .help()
+  .parseSync();
+
+const argv: Args = {
+  filter: typeof parsed.filter === "string" ? parsed.filter : undefined,
+  verbose: Boolean(parsed.verbose),
+};
+
+main(argv).then(
+  (code) => process.exit(code),
+  (err) => {
+    console.error(err);
+    process.exit(1);
+  }
+);
