@@ -128,7 +128,7 @@ async function main(argv: Args): Promise<number> {
           registry,
           targetBundle,
         },
-        { requireUnmappableReason: false }
+        { requireUnmappableReason: true }
       )
     );
   }
