@@ -67,6 +67,7 @@ describe("renderMappingBlock", () => {
       [
         "```yaml",
         "# kind vocabulary: rename | split | combine | enum-remap | computed | unmappable | TODO",
+        "# unmappable reason vocabulary: no-equivalent | excluded-from-snapshot | out-of-scope | ocf-internal",
         "status: draft",
         "coverage: 0/2",
         "",
@@ -80,6 +81,18 @@ describe("renderMappingBlock", () => {
         "```",
       ].join("\n")
     );
+  });
+
+  it("quotes enum values that would not round-trip as YAML plain scalars", () => {
+    const out = renderMappingBlock(
+      { day: { enum: ["01", "10", "29_OR_LAST", "TRUE", "SAFE_VALUE"] } },
+      EMPTY_REGISTRY
+    );
+    expect(out).toContain('      "01": TODO');
+    expect(out).toContain('      "10": TODO');
+    expect(out).toContain('      "29_OR_LAST": TODO');
+    expect(out).toContain('      "TRUE": TODO');
+    expect(out).toContain("      SAFE_VALUE: TODO");
   });
 
   it("expands inline enum values into a values: map", () => {
