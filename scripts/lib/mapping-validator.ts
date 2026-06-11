@@ -1,3 +1,4 @@
+import jsonpointer from "jsonpointer";
 import { detectEnumValues } from "./enum-detection.js";
 import { RawSchema, Registry } from "./registry.js";
 
@@ -9,31 +10,22 @@ export interface PointerResult {
 /**
  * Resolve a "#/a/b" JSON pointer (RFC 6901, with the leading "#" fragment
  * marker) against a parsed JSON document. Purely structural — does not
- * follow $ref.
+ * follow $ref. Delegates to the `jsonpointer` package; `undefined` is a
+ * reliable not-found sentinel because JSON.parse output cannot contain
+ * undefined values.
  */
 export function resolveJsonPointer(doc: unknown, pointer: string): PointerResult {
   if (pointer === "#") return { found: true, value: doc };
   if (!pointer.startsWith("#/")) return { found: false };
-
-  const parts = pointer
-    .slice(2)
-    .split("/")
-    .map((p) => p.replace(/~1/g, "/").replace(/~0/g, "~"));
-
-  let cur: unknown = doc;
-  for (const part of parts) {
-    if (Array.isArray(cur)) {
-      if (!/^\d+$/.test(part)) return { found: false };
-      const idx = Number(part);
-      if (idx >= cur.length) return { found: false };
-      cur = cur[idx];
-    } else if (isPlainObject(cur) && part in cur) {
-      cur = cur[part];
-    } else {
-      return { found: false };
-    }
+  if (typeof doc !== "object" || doc === null) return { found: false };
+  let value: unknown;
+  try {
+    value = jsonpointer.get(doc, pointer.slice(1));
+  } catch {
+    return { found: false };
   }
-  return { found: true, value: cur };
+  if (value === undefined) return { found: false };
+  return { found: true, value };
 }
 
 /** Follow $ref chains within the bundle, bounded against cycles. */

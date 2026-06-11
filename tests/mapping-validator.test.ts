@@ -54,6 +54,17 @@ describe("resolveJsonPointer", () => {
     expect(resolveJsonPointer(doc, "#/list/2").found).toBe(false);
     expect(resolveJsonPointer(doc, "#/list/x").found).toBe(false);
   });
+
+  it("rejects leading-zero array indices per RFC 6901", () => {
+    const doc = { list: ["a", "b"] };
+    expect(resolveJsonPointer(doc, "#/list/01").found).toBe(false);
+  });
+
+  it("treats present null/false values as found", () => {
+    const doc = { a: null, b: false };
+    expect(resolveJsonPointer(doc, "#/a")).toEqual({ found: true, value: null });
+    expect(resolveJsonPointer(doc, "#/b")).toEqual({ found: true, value: false });
+  });
 });
 
 describe("targetEnumValuesAt", () => {
