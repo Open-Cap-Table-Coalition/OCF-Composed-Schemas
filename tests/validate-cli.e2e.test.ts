@@ -125,6 +125,8 @@ describe("validate-mappings CLI (temp tree)", () => {
     const err = (await runCli(root).catch((e) => e)) as { code: number; stderr: string };
     expect(err.code).toBe(1);
     expect(err.stderr).toContain("frontmatter");
+    const occurrences = err.stderr.split("objects/Thing.mapping.md").length - 1;
+    expect(occurrences).toBe(1);
   });
 
   it("reports a missing sibling schema as an error", async () => {

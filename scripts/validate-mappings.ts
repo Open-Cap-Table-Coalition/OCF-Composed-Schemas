@@ -65,7 +65,11 @@ async function main(argv: Args): Promise<number> {
       parsed = parseMappingDocument(markdown, rel);
     } catch (err) {
       if (err instanceof MappingParseError) {
-        errors.push({ file: rel, field: null, message: err.message });
+        const prefix = `${rel}: `;
+        const message = err.message.startsWith(prefix)
+          ? err.message.slice(prefix.length)
+          : err.message;
+        errors.push({ file: rel, field: null, message });
         continue;
       }
       throw err;
