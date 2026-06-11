@@ -1,4 +1,10 @@
-import { resolveJsonPointer, targetEnumValuesAt } from "../scripts/lib/mapping-validator.js";
+import {
+  resolveJsonPointer,
+  targetEnumValuesAt,
+  validateMapping,
+  ValidateInput,
+} from "../scripts/lib/mapping-validator.js";
+import { RawSchema, Registry } from "../scripts/lib/registry.js";
 
 const BUNDLE = {
   $defs: {
@@ -71,5 +77,329 @@ describe("targetEnumValuesAt", () => {
 
   it("survives $ref cycles", () => {
     expect(targetEnumValuesAt(BUNDLE, { $ref: "#/$defs/Loop" })).toBeNull();
+  });
+});
+
+const SOURCE_SCHEMA: RawSchema = {
+  $id: "test://thing",
+  title: "Thing",
+  properties: {
+    name: { type: "string" },
+    color: { $ref: "test://color-enum" },
+  },
+  required: ["name"],
+};
+
+const REGISTRY: Registry = new Map([
+  ["test://color-enum", { $id: "test://color-enum", enum: ["RED", "BLUE"] }],
+]);
+
+function frontmatter(over: Record<string, unknown> = {}): Record<string, unknown> {
+  return {
+    ocf_schema_id: "test://thing",
+    ocf_object_type: null,
+    ocf_title: "Thing",
+    ocf_kind: "type",
+    required_fields: ["name"],
+    target_standard: "Carta",
+    target_version: "v1alpha1",
+    status: "complete",
+    last_generated: "2026-06-11",
+    ...over,
+  };
+}
+
+function mapping(over: Record<string, unknown> = {}): Record<string, unknown> {
+  return {
+    status: "complete",
+    coverage: "2/2",
+    fields: {
+      name: { kind: "rename", target: "#/$defs/Thing/properties/name" },
+      color: {
+        kind: "enum-remap",
+        target: "#/$defs/Thing/properties/color",
+        values: { RED: "red", BLUE: "blue" },
+      },
+    },
+    ...over,
+  };
+}
+
+function makeInput(over: Partial<ValidateInput> = {}): ValidateInput {
+  return {
+    file: "types/Thing.mapping.md",
+    frontmatter: frontmatter(),
+    mapping: mapping(),
+    sourceSchema: SOURCE_SCHEMA,
+    registry: REGISTRY,
+    targetBundle: BUNDLE,
+    ...over,
+  };
+}
+
+function messages(input: ValidateInput, requireUnmappableReason = false): string[] {
+  return validateMapping(input, { requireUnmappableReason }).map((e) =>
+    e.field ? `${e.field}: ${e.message}` : e.message
+  );
+}
+
+describe("validateMapping — frontmatter and top level", () => {
+  it("accepts a fully valid complete mapping", () => {
+    expect(messages(makeInput())).toEqual([]);
+  });
+
+  it("reports each missing required frontmatter key", () => {
+    const fm = frontmatter();
+    delete fm.ocf_schema_id;
+    delete fm.last_generated;
+    const errs = messages(makeInput({ frontmatter: fm }));
+    expect(errs).toContain('frontmatter is missing required key "ocf_schema_id"');
+    expect(errs).toContain('frontmatter is missing required key "last_generated"');
+  });
+
+  it("rejects an unknown frontmatter status", () => {
+    const errs = messages(makeInput({ frontmatter: frontmatter({ status: "done" }) }));
+    expect(errs.some((m) => m.includes('frontmatter status "done"'))).toBe(true);
+  });
+
+  it("rejects an unknown mapping block status", () => {
+    const errs = messages(makeInput({ mapping: mapping({ status: "finished" }) }));
+    expect(errs.some((m) => m.includes('mapping block status "finished"'))).toBe(true);
+  });
+
+  it("rejects a frontmatter/mapping status mismatch", () => {
+    const errs = messages(makeInput({ frontmatter: frontmatter({ status: "draft" }) }));
+    expect(errs.some((m) => m.includes("does not match"))).toBe(true);
+  });
+
+  it("treats fields: null as an empty map (property-less schemas)", () => {
+    const input = makeInput({
+      sourceSchema: { $id: "test://scalar", title: "Scalar" },
+      mapping: { status: "complete", coverage: "0/0", fields: null },
+    });
+    expect(messages(input)).toEqual([]);
+  });
+
+  it("rejects a fields value that is not a map", () => {
+    const errs = messages(makeInput({ mapping: mapping({ fields: "nope" }) }));
+    expect(errs.some((m) => m.includes("fields"))).toBe(true);
+  });
+
+  it("rejects field keys that are not source schema properties", () => {
+    const m = mapping();
+    (m.fields as Record<string, unknown>).bogus = {
+      kind: "rename",
+      target: "#/$defs/Thing/properties/name",
+    };
+    const errs = messages(makeInput({ mapping: { ...m, coverage: "3/2" } }));
+    expect(errs.some((s) => s.startsWith("bogus: "))).toBe(true);
+  });
+});
+
+describe("validateMapping — entry shapes", () => {
+  function withField(entry: Record<string, unknown>, coverage = "2/2"): ValidateInput {
+    const m = mapping({ coverage });
+    (m.fields as Record<string, unknown>).name = entry;
+    return makeInput({ mapping: m });
+  }
+
+  it("rejects kinds outside the vocabulary", () => {
+    const errs = messages(withField({ kind: "renamed", target: "#/$defs/Thing/properties/name" }));
+    expect(errs.some((m) => m.includes('kind "renamed"'))).toBe(true);
+  });
+
+  it("requires string targets for rename/combine/enum-remap/computed", () => {
+    const errs = messages(withField({ kind: "rename", target: null }));
+    expect(errs.some((m) => m.includes("string target"))).toBe(true);
+  });
+
+  it("requires split targets to be arrays of at least 2 strings", () => {
+    expect(
+      messages(withField({ kind: "split", target: ["#/$defs/Thing/properties/name"] })).some((m) =>
+        m.includes("at least 2")
+      )
+    ).toBe(true);
+    expect(
+      messages(
+        withField({
+          kind: "split",
+          target: ["#/$defs/Thing/properties/name", "#/$defs/Thing/properties/color"],
+        })
+      )
+    ).toEqual([]);
+  });
+
+  it("requires unmappable targets to be null", () => {
+    const errs = messages(withField({ kind: "unmappable", target: "#/$defs/Thing" }));
+    expect(errs.some((m) => m.includes("target: null"))).toBe(true);
+  });
+
+  it("rejects reason on non-unmappable entries", () => {
+    const errs = messages(
+      withField({
+        kind: "rename",
+        target: "#/$defs/Thing/properties/name",
+        reason: "no-equivalent",
+      })
+    );
+    expect(errs.some((m) => m.includes("only valid on unmappable"))).toBe(true);
+  });
+
+  it("rejects reasons outside the vocabulary", () => {
+    const errs = messages(withField({ kind: "unmappable", target: null, reason: "because" }));
+    expect(errs.some((m) => m.includes('reason "because"'))).toBe(true);
+  });
+
+  it("accepts each vocabulary reason on unmappable", () => {
+    for (const reason of [
+      "no-equivalent",
+      "excluded-from-snapshot",
+      "out-of-scope",
+      "ocf-internal",
+    ]) {
+      expect(messages(withField({ kind: "unmappable", target: null, reason }))).toEqual([]);
+    }
+  });
+
+  it("does not require reason by default, but does when the option is set", () => {
+    const input = withField({ kind: "unmappable", target: null });
+    expect(messages(input, false)).toEqual([]);
+    expect(messages(input, true).some((m) => m.includes("require a reason"))).toBe(true);
+  });
+
+  it("does not require reason in draft files even when the option is set", () => {
+    const m = mapping({ status: "draft", coverage: "2/2" });
+    (m.fields as Record<string, unknown>).name = { kind: "unmappable", target: null };
+    const input = makeInput({ frontmatter: frontmatter({ status: "draft" }), mapping: m });
+    expect(messages(input, true)).toEqual([]);
+  });
+});
+
+describe("validateMapping — values blocks", () => {
+  it("requires a values map on enum-remap", () => {
+    const m = mapping();
+    (m.fields as Record<string, unknown>).color = {
+      kind: "enum-remap",
+      target: "#/$defs/Thing/properties/color",
+    };
+    const errs = messages(makeInput({ mapping: m }));
+    expect(errs.some((s) => s.includes("requires a values"))).toBe(true);
+  });
+
+  it("rejects values on a non-enum-typed property", () => {
+    const m = mapping();
+    (m.fields as Record<string, unknown>).name = {
+      kind: "rename",
+      target: "#/$defs/Thing/properties/name",
+      values: { A: "b" },
+    };
+    const errs = messages(makeInput({ mapping: m }));
+    expect(errs.some((s) => s.includes("not enum-typed"))).toBe(true);
+  });
+
+  it("allows values on unmappable entries for enum-typed properties, keys still checked", () => {
+    const m = mapping();
+    (m.fields as Record<string, unknown>).color = {
+      kind: "unmappable",
+      target: null,
+      values: { RED: null, BLUE: null },
+    };
+    expect(messages(makeInput({ mapping: { ...m, coverage: "2/2" } }))).toEqual([]);
+
+    (m.fields as Record<string, unknown>).color = {
+      kind: "unmappable",
+      target: null,
+      values: { RED: null, GREEN: null },
+    };
+    const errs = messages(makeInput({ mapping: m }));
+    expect(errs.some((s) => s.includes('"GREEN"'))).toBe(true);
+    expect(errs.some((s) => s.includes('missing OCF enum value "BLUE"'))).toBe(true);
+  });
+
+  it("flags values keys that are not OCF enum values and missing OCF values", () => {
+    const m = mapping();
+    (m.fields as Record<string, unknown>).color = {
+      kind: "enum-remap",
+      target: "#/$defs/Thing/properties/color",
+      values: { RED: "red", GREEN: "green" },
+    };
+    const errs = messages(makeInput({ mapping: m }));
+    expect(errs.some((s) => s.includes('values key "GREEN"'))).toBe(true);
+    expect(errs.some((s) => s.includes('missing OCF enum value "BLUE"'))).toBe(true);
+  });
+
+  it("allows null values (dropped enum members)", () => {
+    const m = mapping();
+    (m.fields as Record<string, unknown>).color = {
+      kind: "enum-remap",
+      target: "#/$defs/Thing/properties/color",
+      values: { RED: "red", BLUE: null },
+    };
+    expect(messages(makeInput({ mapping: m }))).toEqual([]);
+  });
+});
+
+describe("validateMapping — coverage and status strictness", () => {
+  it("rejects malformed coverage", () => {
+    const errs = messages(makeInput({ mapping: mapping({ coverage: "all" }) }));
+    expect(errs.some((m) => m.includes('"X/N"'))).toBe(true);
+  });
+
+  it("rejects a denominator that disagrees with the property count", () => {
+    const errs = messages(makeInput({ mapping: mapping({ coverage: "2/3" }) }));
+    expect(errs.some((m) => m.includes("denominator"))).toBe(true);
+  });
+
+  it("rejects a numerator that disagrees with the non-TODO count", () => {
+    const errs = messages(makeInput({ mapping: mapping({ coverage: "1/2" }) }));
+    expect(errs.some((m) => m.includes("numerator"))).toBe(true);
+  });
+
+  it("accepts a draft skeleton with TODO kinds and TODO values", () => {
+    const input = makeInput({
+      frontmatter: frontmatter({ status: "draft", target_standard: "TBD", target_version: "TBD" }),
+      mapping: {
+        status: "draft",
+        coverage: "0/2",
+        fields: {
+          name: { kind: "TODO", target: "TODO" },
+          color: { kind: "TODO", target: "TODO", values: { RED: "TODO", BLUE: "TODO" } },
+        },
+      },
+      targetBundle: null,
+    });
+    expect(messages(input)).toEqual([]);
+  });
+
+  it("rejects TODO kinds in complete files", () => {
+    const m = mapping({ coverage: "1/2" });
+    (m.fields as Record<string, unknown>).name = { kind: "TODO", target: "TODO" };
+    const errs = messages(makeInput({ mapping: m }));
+    expect(errs.some((s) => s.includes("TODO"))).toBe(true);
+  });
+
+  it("rejects TODO enum values in complete files", () => {
+    const m = mapping();
+    (m.fields as Record<string, unknown>).color = {
+      kind: "enum-remap",
+      target: "#/$defs/Thing/properties/color",
+      values: { RED: "red", BLUE: "TODO" },
+    };
+    const errs = messages(makeInput({ mapping: m }));
+    expect(errs.some((s) => s.includes("TODO"))).toBe(true);
+  });
+
+  it("requires complete files to cover every property", () => {
+    const m = mapping({ coverage: "1/2" });
+    delete (m.fields as Record<string, unknown>).color;
+    const errs = messages(makeInput({ mapping: m }));
+    expect(errs.some((s) => s.startsWith("color: missing"))).toBe(true);
+  });
+
+  it("allows partial files to omit properties", () => {
+    const m = mapping({ status: "partial", coverage: "1/2" });
+    delete (m.fields as Record<string, unknown>).color;
+    const input = makeInput({ frontmatter: frontmatter({ status: "partial" }), mapping: m });
+    expect(messages(input)).toEqual([]);
   });
 });
