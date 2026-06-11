@@ -158,12 +158,15 @@ fields:
   id:
     kind: unmappable
     target: null
+    reason: ocf-internal
   comments:
     kind: unmappable
     target: null
+    reason: ocf-internal
   object_type:
     kind: unmappable
     target: null
+    reason: ocf-internal
     values:
       ISSUER: null
   legal_name:
@@ -175,30 +178,39 @@ fields:
   formation_date:
     kind: unmappable
     target: null
+    reason: no-equivalent
   country_of_formation:
     kind: unmappable
     target: null
+    reason: no-equivalent
   country_subdivision_of_formation:
     kind: unmappable
     target: null
+    reason: no-equivalent
   country_subdivision_name_of_formation:
     kind: unmappable
     target: null
+    reason: no-equivalent
   tax_ids:
     kind: unmappable
     target: null
+    reason: no-equivalent
   email:
     kind: unmappable
     target: null
+    reason: no-equivalent
   phone:
     kind: unmappable
     target: null
+    reason: no-equivalent
   address:
     kind: unmappable
     target: null
+    reason: no-equivalent
   initial_shares_authorized:
     kind: unmappable
     target: null
+    reason: no-equivalent
 ```
 
 ## Notes / open questions

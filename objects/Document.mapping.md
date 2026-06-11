@@ -107,12 +107,15 @@ fields:
   id:
     kind: unmappable
     target: null
+    reason: ocf-internal
   comments:
     kind: unmappable
     target: null
+    reason: ocf-internal
   object_type:
     kind: unmappable
     target: null
+    reason: ocf-internal
     values:
       DOCUMENT: null
   path:
@@ -121,12 +124,14 @@ fields:
   related_objects:
     kind: unmappable
     target: null
+    reason: no-equivalent
   uri:
     kind: computed
     target: "#/$defs/Document/properties/fileId"
   md5:
     kind: unmappable
     target: null
+    reason: no-equivalent
 ```
 
 ## Notes / open questions
