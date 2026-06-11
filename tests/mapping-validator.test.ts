@@ -403,3 +403,75 @@ describe("validateMapping — coverage and status strictness", () => {
     expect(messages(input)).toEqual([]);
   });
 });
+
+describe("validateMapping — semantic target checks", () => {
+  function withField(entry: Record<string, unknown>, coverage = "2/2"): ValidateInput {
+    const m = mapping({ coverage });
+    (m.fields as Record<string, unknown>).name = entry;
+    return makeInput({ mapping: m });
+  }
+
+  it("rejects targets that are not #/ JSON pointers", () => {
+    const errs = messages(withField({ kind: "rename", target: "$defs.Thing.name" }));
+    expect(errs.some((m) => m.includes('"#/..." JSON pointer'))).toBe(true);
+  });
+
+  it("rejects targets that do not resolve in the bundle", () => {
+    const errs = messages(withField({ kind: "rename", target: "#/$defs/Thing/properties/nope" }));
+    expect(errs.some((m) => m.includes("does not resolve"))).toBe(true);
+  });
+
+  it("checks every element of a split target", () => {
+    const errs = messages(
+      withField({ kind: "split", target: ["#/$defs/Thing/properties/name", "#/$defs/Missing"] })
+    );
+    expect(errs.some((m) => m.includes("#/$defs/Missing"))).toBe(true);
+  });
+
+  it("rejects targets resolving to true (excluded from the snapshot)", () => {
+    const errs = messages(withField({ kind: "rename", target: "#/$defs/Excluded" }));
+    expect(errs.some((m) => m.includes("excluded-from-snapshot"))).toBe(true);
+  });
+
+  it("rejects enum-remap values not in the target enum", () => {
+    const m = mapping();
+    (m.fields as Record<string, unknown>).color = {
+      kind: "enum-remap",
+      target: "#/$defs/Thing/properties/color",
+      values: { RED: "red", BLUE: "magenta" },
+    };
+    const errs = messages(makeInput({ mapping: m }));
+    expect(errs.some((s) => s.includes('"magenta"'))).toBe(true);
+  });
+
+  it("accepts enum-remap values that are in the target enum", () => {
+    expect(messages(makeInput())).toEqual([]);
+  });
+
+  it("skips all semantic checks when targetBundle is null (TBD drafts)", () => {
+    const input = makeInput({
+      frontmatter: frontmatter({ target_standard: "TBD", target_version: "TBD", status: "draft" }),
+      mapping: {
+        status: "draft",
+        coverage: "1/2",
+        fields: {
+          name: { kind: "rename", target: "#/this/will/not/resolve/anywhere" },
+        },
+      },
+      targetBundle: null,
+    });
+    expect(messages(input)).toEqual([]);
+  });
+
+  it("does not pointer-check TODO targets", () => {
+    const input = makeInput({
+      frontmatter: frontmatter({ status: "draft" }),
+      mapping: {
+        status: "draft",
+        coverage: "0/2",
+        fields: { name: { kind: "TODO", target: "TODO" } },
+      },
+    });
+    expect(messages(input)).toEqual([]);
+  });
+});

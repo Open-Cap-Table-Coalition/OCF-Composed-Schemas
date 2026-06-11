@@ -341,5 +341,50 @@ function validateEntryTargets(
   bundle: unknown,
   err: ErrFn
 ): void {
-  // Implemented in the semantic-checks task.
+  const target = entry.target;
+  const pointers: string[] = [];
+  if (kind === "split" && Array.isArray(target)) {
+    for (const t of target) if (typeof t === "string") pointers.push(t);
+  } else if (typeof target === "string" && target !== "TODO") {
+    pointers.push(target);
+  }
+
+  let lastResolved: unknown;
+  for (const ptr of pointers) {
+    if (!ptr.startsWith("#/")) {
+      err(name, `target "${ptr}" must be a "#/..." JSON pointer into the target bundle`);
+      continue;
+    }
+    const res = resolveJsonPointer(bundle, ptr);
+    if (!res.found) {
+      err(name, `target "${ptr}" does not resolve in the target bundle`);
+      continue;
+    }
+    const node = derefNode(bundle, res.value);
+    if (node === true) {
+      err(
+        name,
+        `target "${ptr}" resolves to \`true\` (excluded from the bundle snapshot); ` +
+          "use kind: unmappable with reason: excluded-from-snapshot instead"
+      );
+      continue;
+    }
+    lastResolved = node;
+  }
+
+  if (kind === "enum-remap" && sourceEnumValues !== null && lastResolved !== undefined) {
+    const targetEnum = targetEnumValuesAt(bundle, lastResolved);
+    const values = entry.values;
+    if (targetEnum !== null && isPlainObject(values)) {
+      for (const [key, v] of Object.entries(values)) {
+        if (typeof v !== "string" || v === "TODO") continue;
+        if (!targetEnum.includes(v)) {
+          err(
+            name,
+            `values.${key} = "${v}" is not a member of the target enum at the mapped target`
+          );
+        }
+      }
+    }
+  }
 }
