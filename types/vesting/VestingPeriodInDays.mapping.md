@@ -79,17 +79,21 @@ fields:
   length:
     kind: unmappable
     target: null
+    reason: no-equivalent
   type:
     kind: unmappable
     target: null
+    reason: no-equivalent
     values:
       DAYS: null
   occurrences:
     kind: unmappable
     target: null
+    reason: no-equivalent
   cliff_installment:
     kind: unmappable
     target: null
+    reason: no-equivalent
 ```
 
 ## Notes / open questions
