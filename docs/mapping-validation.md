@@ -25,6 +25,15 @@ TODO` with the matching target shape (string; array of ≥2 strings for `split`;
 `unmappable`; literal `TODO` for `TODO`); `coverage: X/N` where `N` = source property count and
 `X` = non-`TODO` entry count — the counter is machine-checked, never hand-trusted.
 
+**Source kind:** a mapping declares its source schema with an identity block — `ocf_schema_id` +
+`ocf_object_type` + `ocf_title` + `ocf_kind` for OCF object/type sources, or `canonical_schema_id`
++ `canonical_title` + `canonical_kind` for canonical sources (e.g. `canonical/vesting/`); the file
+self-selects by which `*_schema_id` key it carries. Flat OCF schemas key `fields:` by bare property
+name; canonical schemas have no top-level `properties` and instead declare their objects under
+`$defs`, addressed by dotted `Def.prop` field names. Coverage for a `$defs` source counts every
+property of each def a field references — nested value-object defs that no field targets directly
+are excluded.
+
 **Semantic (when `target_standard` ≠ `TBD`):** every string target must be a `#/...` JSON pointer
 that resolves in the target bundle (`target_standard` → bundle file via `TARGET_BUNDLES` in the
 validator). A pointer resolving to literal `true` (the bundle's rewrite for excluded schemas) is

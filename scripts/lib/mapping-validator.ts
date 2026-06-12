@@ -58,6 +58,89 @@ export function isPlainObject(v: unknown): v is Record<string, unknown> {
   return typeof v === "object" && v !== null && !Array.isArray(v);
 }
 
+/**
+ * Whether a source schema keys its mappable fields under `$defs` rather than as
+ * top-level `properties`. Flat OCF object/type schemas have top-level
+ * `properties`; the composed canonical schemas (e.g. `canonical/vesting/`) have
+ * none and instead declare several named objects under `$defs`. An OCF schema
+ * that merely uses `$defs` for reusable subtypes alongside its own top-level
+ * `properties` is still flat-keyed — the absence of top-level properties is the
+ * deciding signal.
+ */
+export function isDefsKeyedSchema(schema: RawSchema): boolean {
+  const topProps = (schema as Record<string, unknown>).properties;
+  const hasTopProps = isPlainObject(topProps) && Object.keys(topProps).length > 0;
+  return !hasTopProps && isPlainObject((schema as Record<string, unknown>).$defs);
+}
+
+export interface SourcePropertyLookup {
+  found: boolean;
+  node?: unknown;
+}
+
+/**
+ * Resolve a mapping field name to its schema node in the source schema.
+ *
+ * Flat schemas key fields by bare name (`allocation_type`) under top-level
+ * `properties`. `$defs`-keyed schemas key them with a dotted `Def.prop` path
+ * (`VestingStatement.period`) addressing a property of a `$defs` entry.
+ */
+export function resolveSourceProperty(
+  schema: RawSchema,
+  name: string,
+  defsKeyed: boolean
+): SourcePropertyLookup {
+  if (!defsKeyed) {
+    const props = (schema as Record<string, unknown>).properties;
+    if (isPlainObject(props) && name in props) return { found: true, node: props[name] };
+    return { found: false };
+  }
+  const dot = name.indexOf(".");
+  if (dot === -1) return { found: false };
+  const defName = name.slice(0, dot);
+  const propName = name.slice(dot + 1);
+  const defs = (schema as Record<string, unknown>).$defs;
+  const def = isPlainObject(defs) ? defs[defName] : undefined;
+  const props = isPlainObject(def) ? def.properties : undefined;
+  if (isPlainObject(props) && propName in props) return { found: true, node: props[propName] };
+  return { found: false };
+}
+
+/**
+ * The full set of source property names that coverage is measured against.
+ *
+ * For a flat schema this is its top-level property names. For a `$defs`-keyed
+ * schema the "entry" $defs are those a field key references via a `Def.` prefix;
+ * every property of a referenced def must be covered. Nested value-object defs
+ * (e.g. a Fraction folded into a parent field's transform) are never referenced
+ * directly and so are correctly excluded.
+ */
+export function sourcePropertyUniverse(
+  schema: RawSchema,
+  fieldNames: string[],
+  defsKeyed: boolean
+): string[] {
+  if (!defsKeyed) {
+    const props = (schema as Record<string, unknown>).properties;
+    return isPlainObject(props) ? Object.keys(props) : [];
+  }
+  const defs = (schema as Record<string, unknown>).$defs;
+  const defsMap = isPlainObject(defs) ? defs : {};
+  const referenced = new Set<string>();
+  for (const fn of fieldNames) {
+    const dot = fn.indexOf(".");
+    if (dot !== -1) referenced.add(fn.slice(0, dot));
+  }
+  const universe: string[] = [];
+  for (const defName of referenced) {
+    const def = defsMap[defName];
+    const props = isPlainObject(def) ? def.properties : undefined;
+    if (!isPlainObject(props)) continue;
+    for (const propName of Object.keys(props)) universe.push(`${defName}.${propName}`);
+  }
+  return universe;
+}
+
 export const KIND_VOCABULARY = [
   "rename",
   "split",
@@ -77,16 +160,39 @@ export const REASON_VOCABULARY = [
   "ocf-internal",
 ] as const;
 
-export const REQUIRED_FRONTMATTER_KEYS = [
-  "ocf_schema_id",
-  "ocf_object_type",
-  "ocf_title",
-  "ocf_kind",
+/** Frontmatter keys required of every mapping, regardless of source kind. */
+export const COMMON_FRONTMATTER_KEYS = [
   "required_fields",
   "target_standard",
   "target_version",
   "status",
   "last_generated",
+] as const;
+
+/** Identity keys for a mapping whose source is an OCF object/type schema. */
+export const OCF_IDENTITY_KEYS = [
+  "ocf_schema_id",
+  "ocf_object_type",
+  "ocf_title",
+  "ocf_kind",
+] as const;
+
+/**
+ * Identity keys for a mapping whose source is a canonical schema (e.g.
+ * `canonical/vesting/`). Canonical schemas are not OCF objects, so they carry
+ * no `*_object_type`. A file self-declares this kind by using
+ * `canonical_schema_id` in place of `ocf_schema_id`.
+ */
+export const CANONICAL_IDENTITY_KEYS = [
+  "canonical_schema_id",
+  "canonical_title",
+  "canonical_kind",
+] as const;
+
+/** The default (OCF) identity block plus the common keys. */
+export const REQUIRED_FRONTMATTER_KEYS = [
+  ...OCF_IDENTITY_KEYS,
+  ...COMMON_FRONTMATTER_KEYS,
 ] as const;
 
 /** target_standard frontmatter value → repo-relative bundle path. */
@@ -128,7 +234,13 @@ export function validateMapping(input: ValidateInput, opts: ValidateOptions): Va
   const err = (field: string | null, message: string) =>
     errors.push({ file: input.file, field, message });
 
-  for (const key of REQUIRED_FRONTMATTER_KEYS) {
+  // A mapping self-declares its source kind by which identity block it carries:
+  // `canonical_schema_id` marks a canonical source, otherwise the OCF block is
+  // expected. This is independent of schema shape (resolved separately below).
+  const identityKeys = "canonical_schema_id" in input.frontmatter
+    ? CANONICAL_IDENTITY_KEYS
+    : OCF_IDENTITY_KEYS;
+  for (const key of [...identityKeys, ...COMMON_FRONTMATTER_KEYS]) {
     if (!(key in input.frontmatter)) err(null, `frontmatter is missing required key "${key}"`);
   }
 
@@ -161,11 +273,14 @@ export function validateMapping(input: ValidateInput, opts: ValidateOptions): Va
   }
   const fields = rawFields;
 
-  const properties = (input.sourceSchema.properties ?? {}) as Record<string, unknown>;
-  const propertyNames = Object.keys(properties);
+  const defsKeyed = isDefsKeyedSchema(input.sourceSchema);
+  const fieldNames = Object.keys(fields);
+  const propertyNames = sourcePropertyUniverse(input.sourceSchema, fieldNames, defsKeyed);
 
-  for (const name of Object.keys(fields)) {
-    if (!(name in properties)) err(name, "is not a property of the source schema");
+  for (const name of fieldNames) {
+    if (!resolveSourceProperty(input.sourceSchema, name, defsKeyed).found) {
+      err(name, "is not a property of the source schema");
+    }
   }
   if (strict) {
     for (const name of propertyNames) {
@@ -190,7 +305,10 @@ export function validateMapping(input: ValidateInput, opts: ValidateOptions): Va
     if (kind !== "TODO") nonTodoCount += 1;
 
     validateEntryShape(entry, name, kind, strict, opts, err);
-    const sourceEnumValues = detectEnumValues(properties[name], input.registry);
+    const sourceEnumValues = detectEnumValues(
+      resolveSourceProperty(input.sourceSchema, name, defsKeyed).node,
+      input.registry
+    );
     validateValuesBlock(entry, name, kind, strict, sourceEnumValues, err);
     if (input.targetBundle !== null) {
       validateEntryTargets(entry, name, kind, strict, sourceEnumValues, input.targetBundle, err);

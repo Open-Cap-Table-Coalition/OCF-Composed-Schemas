@@ -486,3 +486,112 @@ describe("validateMapping — semantic target checks", () => {
     expect(messages(input)).toEqual([]);
   });
 });
+
+describe("validateMapping — canonical ($defs-keyed) sources", () => {
+  // A canonical-style source: no top-level `properties`, several named objects
+  // under `$defs`, addressed by the mapping with dotted `Def.prop` field names.
+  // `Unreferenced` stands in for a nested value-object def (e.g. a Fraction)
+  // that no field targets directly and so must be excluded from coverage.
+  const DEFS_SOURCE: RawSchema = {
+    $id: "test://canonical",
+    title: "Canonical",
+    $defs: {
+      Outer: {
+        type: "object",
+        properties: { id: { type: "string" }, kind: { $ref: "test://color-enum" } },
+      },
+      Inner: { type: "object", properties: { a: { type: "string" }, b: { type: "string" } } },
+      Unreferenced: { type: "object", properties: { x: { type: "string" } } },
+    },
+  };
+
+  function canonicalFrontmatter(over: Record<string, unknown> = {}): Record<string, unknown> {
+    return {
+      canonical_schema_id: "test://canonical",
+      canonical_title: "Canonical",
+      canonical_kind: "type",
+      required_fields: [],
+      target_standard: "Carta",
+      target_version: "v1alpha1",
+      status: "complete",
+      last_generated: "2026-06-11",
+      ...over,
+    };
+  }
+
+  function canonicalMapping(over: Record<string, unknown> = {}): Record<string, unknown> {
+    return {
+      status: "complete",
+      coverage: "4/4",
+      fields: {
+        "Outer.id": { kind: "rename", target: "#/$defs/Thing/properties/name" },
+        "Outer.kind": {
+          kind: "enum-remap",
+          target: "#/$defs/Thing/properties/color",
+          values: { RED: "red", BLUE: "blue" },
+        },
+        "Inner.a": { kind: "rename", target: "#/$defs/Thing/properties/name" },
+        "Inner.b": { kind: "rename", target: "#/$defs/Thing/properties/name" },
+      },
+      ...over,
+    };
+  }
+
+  function canonicalInput(over: Partial<ValidateInput> = {}): ValidateInput {
+    return makeInput({
+      file: "canonical/Thing.mapping.md",
+      frontmatter: canonicalFrontmatter(),
+      mapping: canonicalMapping(),
+      sourceSchema: DEFS_SOURCE,
+      ...over,
+    });
+  }
+
+  it("accepts a $defs-keyed mapping with dotted Def.prop field names", () => {
+    expect(messages(canonicalInput())).toEqual([]);
+  });
+
+  it("requires the canonical_* identity block, not the ocf_* one", () => {
+    const fm = canonicalFrontmatter();
+    delete fm.canonical_title;
+    const errs = messages(canonicalInput({ frontmatter: fm }));
+    expect(errs).toContain('frontmatter is missing required key "canonical_title"');
+    // The OCF identity keys must NOT be demanded of a canonical file.
+    expect(errs.some((m) => m.includes("ocf_"))).toBe(false);
+  });
+
+  it("flags dotted field names whose def or property does not exist", () => {
+    const m = canonicalMapping({ coverage: "6/4" });
+    (m.fields as Record<string, unknown>)["Outer.bogus"] = {
+      kind: "rename",
+      target: "#/$defs/Thing/properties/name",
+    };
+    (m.fields as Record<string, unknown>)["Missing.x"] = {
+      kind: "rename",
+      target: "#/$defs/Thing/properties/name",
+    };
+    const errs = messages(canonicalInput({ mapping: m }));
+    expect(errs).toContain("Outer.bogus: is not a property of the source schema");
+    expect(errs).toContain("Missing.x: is not a property of the source schema");
+  });
+
+  it("excludes unreferenced value-object defs from the coverage universe", () => {
+    // Universe is Outer.{id,kind} + Inner.{a,b} = 4; Unreferenced.x is not counted.
+    expect(messages(canonicalInput())).toEqual([]);
+    const errs = messages(canonicalInput({ mapping: canonicalMapping({ coverage: "4/6" }) }));
+    expect(errs.some((m) => m.includes("denominator 6"))).toBe(true);
+  });
+
+  it("detects source-side enums through $defs for dotted fields", () => {
+    // Outer.kind $refs the color enum; a bad target enum value must be caught,
+    // proving the property node was resolved through $defs.
+    const m = canonicalMapping();
+    (m.fields as Record<string, unknown>)["Outer.kind"] = {
+      kind: "enum-remap",
+      target: "#/$defs/Thing/properties/color",
+      values: { RED: "red", BLUE: "magenta" },
+    };
+    const errs = messages(canonicalInput({ mapping: m }));
+    expect(errs.some((s) => s.includes('"magenta"'))).toBe(true);
+  });
+});
