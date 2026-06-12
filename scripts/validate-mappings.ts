@@ -8,6 +8,7 @@ import { minimatch } from "minimatch";
 import { loadRegistry, RawSchema } from "./lib/registry.js";
 import { parseMappingDocument, MappingParseError } from "./lib/mapping-parser.js";
 import { validateMapping, ValidationError, TARGET_BUNDLES } from "./lib/mapping-validator.js";
+import { renderMappingReport } from "./lib/mapping-report.js";
 
 const MAPPING_DIRS = ["objects", "types", "canonical"] as const;
 
@@ -57,7 +58,6 @@ async function main(argv: Args): Promise<number> {
   const errors: ValidationError[] = [];
 
   for (const rel of files) {
-    if (argv.verbose) console.log(`check  ${rel}`);
     const markdown = await readFile(path.join(repoRoot, rel), "utf8");
 
     let parsed;
@@ -73,6 +73,16 @@ async function main(argv: Args): Promise<number> {
         continue;
       }
       throw err;
+    }
+
+    if (argv.verbose) {
+      console.log(
+        renderMappingReport({
+          file: rel,
+          frontmatter: parsed.frontmatter,
+          mapping: parsed.mapping,
+        }) + "\n"
+      );
     }
 
     const schemaRel = rel.replace(/\.mapping\.md$/, ".schema.json");
