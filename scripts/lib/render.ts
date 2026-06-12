@@ -38,15 +38,26 @@ function yamlScalar(s: string): string {
   return s;
 }
 
+// YAML 1.2 core-schema words and any non-identifier-shaped string (leading
+// digits, punctuation) must be quoted or they round-trip as non-strings.
+const YAML_WORDS = /^(?:true|false|null)$/i;
+
+function yamlKey(s: string): string {
+  if (/^[A-Za-z_][A-Za-z0-9_-]*$/.test(s) && !YAML_WORDS.test(s)) return s;
+  return JSON.stringify(s);
+}
+
 const KIND_VOCAB =
   "# kind vocabulary: rename | split | combine | enum-remap | computed | unmappable | TODO";
+const REASON_VOCAB =
+  "# unmappable reason vocabulary: no-equivalent | excluded-from-snapshot | out-of-scope | ocf-internal";
 
 export function renderMappingBlock(
   properties: Record<string, unknown>,
   registry: Registry
 ): string {
   const propertyNames = Object.keys(properties);
-  const lines: string[] = ["```yaml", KIND_VOCAB, "status: draft"];
+  const lines: string[] = ["```yaml", KIND_VOCAB, REASON_VOCAB, "status: draft"];
   lines.push(`coverage: 0/${propertyNames.length}`);
   lines.push("");
   lines.push("fields:");
@@ -63,7 +74,7 @@ export function renderMappingBlock(
     lines.push("    target: TODO");
     if (enumValues) {
       lines.push("    values:");
-      for (const v of enumValues) lines.push(`      ${v}: TODO`);
+      for (const v of enumValues) lines.push(`      ${yamlKey(v)}: TODO`);
     }
   }
 

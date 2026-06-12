@@ -155,6 +155,18 @@ describe("validate-mappings CLI (temp tree)", () => {
     const { stdout } = await runCli(root, ["--filter", "objects/**"]);
     expect(stdout).toMatch(/OK: checked 1 mapping file\(s\), 0 errors/);
   });
+
+  it("requires reason: on unmappable entries in complete mappings", async () => {
+    await writeFile(
+      path.join(root, "objects", "Thing.mapping.md"),
+      mappingDoc({
+        fieldsYaml: ["fields:", "  name:", "    kind: unmappable", "    target: null"].join("\n"),
+      })
+    );
+    const err = (await runCli(root).catch((e) => e)) as { code: number; stderr: string };
+    expect(err.code).toBe(1);
+    expect(err.stderr).toContain("require a reason");
+  });
 });
 
 describe("validate-mappings CLI (real repo)", () => {
