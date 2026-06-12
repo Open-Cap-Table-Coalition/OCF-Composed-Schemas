@@ -62,4 +62,23 @@ describe("loadRegistry", () => {
 
     await expect(loadRegistry(root)).rejects.toThrow(/Duplicate \$id/);
   });
+
+  it("ignores schemas outside the five OCF schema directories", async () => {
+    await mkdir(path.join(root, "objects"), { recursive: true });
+    await mkdir(path.join(root, "target-schema"), { recursive: true });
+    await writeFile(
+      path.join(root, "objects", "Foo.schema.json"),
+      JSON.stringify({ $id: "test://foo", title: "Foo" })
+    );
+    // The pinned target bundle has no $id; it must not break registry loading.
+    await writeFile(
+      path.join(root, "target-schema", "Carta.schema.json"),
+      JSON.stringify({ title: "Carta Cap Table Data Schema" })
+    );
+
+    const registry = await loadRegistry(root);
+
+    expect(registry.size).toBe(1);
+    expect(registry.get("test://foo")?.title).toBe("Foo");
+  });
 });
