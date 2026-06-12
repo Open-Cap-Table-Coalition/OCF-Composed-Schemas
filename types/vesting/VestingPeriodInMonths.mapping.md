@@ -8,13 +8,13 @@ required_fields:
   - length
   - type
   - occurrences
-target_standard: TBD
-target_version: TBD
-status: draft
+target_standard: Carta
+target_version: v1alpha1 (2026-04-30)
+status: complete
 last_generated: 2026-05-18
 ---
 
-# Type - Vesting Period in Months → TBD
+# Type - Vesting Period in Months → Carta
 
 > Describes a period of time expressed in months (e.g. 3 months) for use in Vesting Terms.
 
@@ -78,27 +78,27 @@ Source: [`VestingPeriodInMonths.schema.json`](./VestingPeriodInMonths.schema.jso
 
 ```yaml
 # kind vocabulary: rename | split | combine | enum-remap | computed | unmappable | TODO
-status: draft
-coverage: 0/5
+status: complete
+coverage: 5/5
 
 fields:
   length:
-    kind: TODO
-    target: TODO
+    kind: unmappable
+    target: null
   type:
-    kind: TODO          # likely enum-remap
-    target: TODO
+    kind: unmappable
+    target: null
     values:
-      MONTHS: TODO
+      MONTHS: null
   occurrences:
-    kind: TODO
-    target: TODO
+    kind: unmappable
+    target: null
   cliff_installment:
-    kind: TODO
-    target: TODO
+    kind: unmappable
+    target: null
   day_of_month:
-    kind: TODO          # likely enum-remap
-    target: TODO
+    kind: unmappable
+    target: null
     values:
       "01": TODO
       "02": TODO
@@ -131,9 +131,9 @@ fields:
       29_OR_LAST_DAY_OF_MONTH: TODO
       30_OR_LAST_DAY_OF_MONTH: TODO
       31_OR_LAST_DAY_OF_MONTH: TODO
-      VESTING_START_DAY_OR_LAST_DAY_OF_MONTH: TODO
+      VESTING_START_DAY_OR_LAST_DAY_OF_MONTH: null
 ```
 
 ## Notes / open questions
 
-- 
+- OCF abandoned vesting machinery (no Carta counterpart). The canonical vesting layer at `canonical/vesting/` is the proposed replacement.

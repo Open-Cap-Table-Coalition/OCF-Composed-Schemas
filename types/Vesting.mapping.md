@@ -6,13 +6,13 @@ ocf_kind: type
 required_fields:
   - date
   - amount
-target_standard: TBD
-target_version: TBD
-status: draft
+target_standard: Carta
+target_version: v1alpha1 (2026-04-30)
+status: complete
 last_generated: 2026-05-18
 ---
 
-# Type - Vesting → TBD
+# Type - Vesting → Carta
 
 > Describes an exact vesting date and amount
 
@@ -55,18 +55,29 @@ Source: [`Vesting.schema.json`](./Vesting.schema.json)
 
 ```yaml
 # kind vocabulary: rename | split | combine | enum-remap | computed | unmappable | TODO
-status: draft
-coverage: 0/2
+status: complete
+coverage: 2/2
 
 fields:
   date:
-    kind: TODO
-    target: TODO
+    kind: rename
+    target: "#/$defs/OptionGrantVestingEvent/properties/vestDate"
   amount:
-    kind: TODO
-    target: TODO
+    kind: computed
+    target: "#/$defs/OptionGrantVestingEvent/properties/quantity"
+    transform: |
+      OCF Numeric (bare string, e.g. "10000") -> Carta Decimal (object, e.g. { "value": "10000" }).
 ```
 
 ## Notes / open questions
 
-- 
+- **Parent-context polymorphism.** OCF Vesting is generic; Carta has three nearly-identical vesting event types. The Carta target type for any specific OCF Vesting depends on the containing OCF object:
+
+  | OCF parent | Carta target |
+  |---|---|
+  | `EquityCompensationIssuance` (option-class) | `OptionGrantVestingEvent` |
+  | `EquityCompensationIssuance` (RSU-class) | `RestrictedStockUnitVestingEvent` |
+  | `StockIssuance` | `RestrictedStockAwardVestingEvent` |
+  | `WarrantIssuance` | unmappable — Carta has no warrant vesting event |
+
+  Field names (`vestDate`, `quantity`) are identical across the three Carta event types, so the per-field mapping above holds regardless. The `target:` paths above reference `OptionGrantVestingEvent` as a representative; the actual selection happens in the containing OCF object's mapping.

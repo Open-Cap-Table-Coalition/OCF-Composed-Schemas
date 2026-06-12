@@ -5,13 +5,13 @@ ocf_title: Type - Vesting Event Trigger
 ocf_kind: type
 required_fields:
   - type
-target_standard: TBD
-target_version: TBD
-status: draft
+target_standard: Carta
+target_version: v1alpha1 (2026-04-30)
+status: complete
 last_generated: 2026-05-18
 ---
 
-# Type - Vesting Event Trigger → TBD
+# Type - Vesting Event Trigger → Carta
 
 > Describes a vesting condition satisfied when a particular unscheduled event occurs
 
@@ -53,17 +53,17 @@ Source: [`VestingEventTrigger.schema.json`](./VestingEventTrigger.schema.json)
 
 ```yaml
 # kind vocabulary: rename | split | combine | enum-remap | computed | unmappable | TODO
-status: draft
-coverage: 0/1
+status: complete
+coverage: 1/1
 
 fields:
   type:
-    kind: TODO          # likely enum-remap
-    target: TODO
+    kind: unmappable
+    target: null
     values:
-      VESTING_EVENT: TODO
+      VESTING_EVENT: null
 ```
 
 ## Notes / open questions
 
-- 
+- OCF abandoned vesting machinery (no Carta counterpart). The canonical vesting layer at `canonical/vesting/` is the proposed replacement.

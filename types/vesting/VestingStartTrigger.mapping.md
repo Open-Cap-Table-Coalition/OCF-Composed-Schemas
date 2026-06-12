@@ -5,13 +5,13 @@ ocf_title: Type - Vesting Start Trigger
 ocf_kind: type
 required_fields:
   - type
-target_standard: TBD
-target_version: TBD
-status: draft
+target_standard: Carta
+target_version: v1alpha1 (2026-04-30)
+status: complete
 last_generated: 2026-05-18
 ---
 
-# Type - Vesting Start Trigger → TBD
+# Type - Vesting Start Trigger → Carta
 
 > Describes a vesting condition satisfied at the security's vesting commencement date
 
@@ -53,17 +53,17 @@ Source: [`VestingStartTrigger.schema.json`](./VestingStartTrigger.schema.json)
 
 ```yaml
 # kind vocabulary: rename | split | combine | enum-remap | computed | unmappable | TODO
-status: draft
-coverage: 0/1
+status: complete
+coverage: 1/1
 
 fields:
   type:
-    kind: TODO          # likely enum-remap
-    target: TODO
+    kind: unmappable
+    target: null
     values:
-      VESTING_START_DATE: TODO
+      VESTING_START_DATE: null
 ```
 
 ## Notes / open questions
 
-- 
+- OCF abandoned vesting machinery (no Carta counterpart). The canonical vesting layer at `canonical/vesting/` is the proposed replacement.
