@@ -17,21 +17,18 @@
     },
     "cliff": {
       "type": "object",
-      "description": "Optional cliff on this statement, expressed as a duration. length/lengthUnit give the time until the cliff; percentage is the share that vests at the cliff. Expressing the cliff as a duration (rather than an installment index) lets it fall between installments.",
+      "description": "Optional cliff on this statement. occurrence is the 1-indexed installment at which the cliff applies (must be <= occurrences).",
       "properties": {
-        "length": {
+        "occurrence": {
           "type": "integer",
-          "minimum": 0,
-          "description": "Duration until the cliff, in lengthUnit units."
-        },
-        "lengthUnit": {
-          "$ref": "https://raw.githubusercontent.com/Open-Cap-Table-Coalition/Open-Cap-Format-OCF/main/schema/enums/PeriodType.schema.json"
+          "minimum": 1,
+          "description": "1-indexed installment at which the cliff applies."
         },
         "percentage": {
           "$ref": "https://raw.githubusercontent.com/Open-Cap-Table-Coalition/OCF-Composed-Schemas/main/canonical/vesting/Fraction.schema.json"
         }
       },
-      "required": ["length", "lengthUnit", "percentage"],
+      "required": ["occurrence", "percentage"],
       "additionalProperties": false
     },
     "percentage": {

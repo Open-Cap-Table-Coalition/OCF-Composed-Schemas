@@ -32,7 +32,6 @@ interface Fraction {
 }
 
 interface Cliff {
-  length: number; // integer >= 0; duration until the cliff, in lengthUnit units
-  lengthUnit: PeriodType; // unit for length; lets a cliff fall between installments
-  percentage: Fraction; // share that vests at the cliff
+  occurrence: number; // 1-indexed installment at which the cliff applies (must be <= containing statement's occurrences)
+  percentage: Fraction; // share of the PERIOD that vests at cliff
 }

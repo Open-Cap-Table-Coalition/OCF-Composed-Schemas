@@ -21,7 +21,7 @@ Each entity is its own OCF-native schema file (one file per entity, cross-refere
 - [`VestingScheduleTemplate.schema.json`](./VestingScheduleTemplate.schema.json) — `{ id, statements: VestingStatement[] }` — the reusable schedule shape
 - [`VestingSchedule.schema.json`](./VestingSchedule.schema.json) — `{ template_id, start_date }` — per-grant application of a template
 - [`VestingStatement.schema.json`](./VestingStatement.schema.json) — `{ order, occurrences, period: integer, period_type: PeriodType, cliff?, percentage: Fraction }` — a segment of a template, producing a sequence of vesting events; total segment duration is `occurrences * period` in `period_type` units
-  - `cliff?` — optional, inlined on the statement, **time-based**: `{ length: integer, lengthUnit: PeriodType, percentage: Fraction }`. `length`/`lengthUnit` give the duration until the cliff (so a cliff can fall between installments); `percentage` is the share that vests at the cliff.
+  - `cliff?` — optional, inlined on the statement: `{ occurrence: integer, percentage: Fraction }` — `occurrence` is the 1-indexed installment at which the cliff applies; `percentage` is the share that vests at the cliff.
 - [`Fraction.schema.json`](./Fraction.schema.json) — `{ numerator: integer, denominator: integer (≥ 1) }` — rational fraction, integer-only by design so exact rational percentages survive without decimal drift
 - `PeriodType` — OCF's existing enum at `enums/PeriodType.schema.json`: `"DAYS" | "MONTHS" | "YEARS"`
 
@@ -53,9 +53,9 @@ For each `VestingStatement` in `VestingScheduleTemplate.statements`:
 
 1. Produce one Carta `VestingPeriod`.
 2. `period`, together with `occurrences` and `period_type`, produces Carta's `length`, `lengthUnit`, and `vestingMethod`.
-3. The optional `cliff`, if present, produces Carta's `cliffLength`/`cliffLengthUnit`/`cliffPercentage` by a direct field-for-field copy — no installment-index reconstruction:
-   - `cliffLength = cliff.length`
-   - `cliffLengthUnit = cliff.lengthUnit` (DAYS → DAY; MONTHS → MONTH; YEARS → YEAR)
+3. The optional `cliff`, if present, produces Carta's `cliffLength`/`cliffLengthUnit`/`cliffPercentage`:
+   - `cliffLength = cliff.occurrence * period`
+   - `cliffLengthUnit = period_type` (DAYS → DAY; MONTHS → MONTH; YEARS → YEAR)
    - `cliffPercentage = cliff.percentage.numerator / cliff.percentage.denominator`
 
 Statements chain implicitly by `order` — statement 2 starts where statement 1 ended. The grant-level `VestingSchedule.start_date` anchors the whole sequence.
@@ -82,8 +82,7 @@ Canonical input:
       "period": 1,
       "period_type": "MONTHS",
       "cliff": {
-        "length": 12,
-        "lengthUnit": "MONTHS",
+        "occurrence": 12,
         "percentage": { "numerator": 1, "denominator": 4 }
       },
       "percentage": { "numerator": 1, "denominator": 1 }
@@ -129,8 +128,7 @@ Canonical input — same as #1 but with `cliff.percentage` of 3/10 instead of 1/
       "period": 1,
       "period_type": "MONTHS",
       "cliff": {
-        "length": 12,
-        "lengthUnit": "MONTHS",
+        "occurrence": 12,
         "percentage": { "numerator": 3, "denominator": 10 }
       },
       "percentage": { "numerator": 1, "denominator": 1 }

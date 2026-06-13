@@ -161,11 +161,18 @@ describe("validateMapping — frontmatter and top level", () => {
 
   it("reports each missing required frontmatter key", () => {
     const fm = frontmatter();
-    delete fm.ocf_schema_id;
+    delete fm.ocf_object_type;
     delete fm.last_generated;
     const errs = messages(makeInput({ frontmatter: fm }));
-    expect(errs).toContain('frontmatter is missing required key "ocf_schema_id"');
+    expect(errs).toContain('frontmatter is missing required key "ocf_object_type"');
     expect(errs).toContain('frontmatter is missing required key "last_generated"');
+  });
+
+  it("errors when neither an ocf_ nor canonical_ schema id is declared", () => {
+    const fm = frontmatter();
+    delete fm.ocf_schema_id;
+    const errs = messages(makeInput({ frontmatter: fm }));
+    expect(errs.some((m) => m.includes("must declare a source schema"))).toBe(true);
   });
 
   it("rejects an unknown frontmatter status", () => {
@@ -511,9 +518,9 @@ describe("validateMapping — canonical dialect", () => {
 
   it("reports a missing canonical_* key", () => {
     const fm = canonicalFrontmatter();
-    delete fm.canonical_schema_id;
+    delete fm.canonical_title;
     expect(messages(canonicalInput({ frontmatter: fm }))).toContain(
-      'frontmatter is missing required key "canonical_schema_id"'
+      'frontmatter is missing required key "canonical_title"'
     );
   });
 

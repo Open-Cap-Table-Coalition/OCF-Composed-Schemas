@@ -36,7 +36,7 @@ export async function loadRegistry(repoRoot: string): Promise<Registry> {
   return registry;
 }
 
-const SCHEMA_DIRS = ["enums", "files", "objects", "primitives", "types"] as const;
+const SCHEMA_DIRS = ["enums", "files", "objects", "primitives", "types", "canonical"] as const;
 
 async function collectSchemaFiles(root: string): Promise<string[]> {
   const out: string[] = [];
