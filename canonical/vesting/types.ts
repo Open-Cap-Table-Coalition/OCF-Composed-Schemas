@@ -15,6 +15,8 @@ interface VestingScheduleTemplate {
   statements: VestingStatement[]; // chained implicitly by order
 }
 
+// In the JSON schema, cliff is inlined on VestingStatement (Carta has no
+// standalone cliff type); it is a named interface here only for readability.
 interface VestingStatement {
   order: number; // 1-based sequence position
   occurrences: number; // integer >= 1; number of vesting events in segment
@@ -30,6 +32,7 @@ interface Fraction {
 }
 
 interface Cliff {
-  occurrence: number; // 1-indexed installment at which the cliff applies (must be <= containing statement's occurrences)
-  percentage: Fraction; // share of the PERIOD that vests at cliff
+  length: number; // integer >= 0; duration until the cliff, in lengthUnit units
+  lengthUnit: PeriodType; // unit for length; lets a cliff fall between installments
+  percentage: Fraction; // share that vests at the cliff
 }

@@ -110,21 +110,27 @@ fields:
   id:
     kind: unmappable
     target: null
+    reason: ocf-internal
   description:
     kind: unmappable
     target: null
+    reason: no-equivalent
   portion:
     kind: unmappable
     target: null
+    reason: no-equivalent
   quantity:
     kind: unmappable
     target: null
+    reason: no-equivalent
   trigger:
     kind: unmappable
     target: null
+    reason: no-equivalent
   next_condition_ids:
     kind: unmappable
     target: null
+    reason: no-equivalent
 ```
 
 ## Notes / open questions

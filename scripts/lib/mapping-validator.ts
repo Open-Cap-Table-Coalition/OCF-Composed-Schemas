@@ -77,16 +77,28 @@ export const REASON_VOCABULARY = [
   "ocf-internal",
 ] as const;
 
-export const REQUIRED_FRONTMATTER_KEYS = [
-  "ocf_schema_id",
-  "ocf_object_type",
-  "ocf_title",
-  "ocf_kind",
+/** Frontmatter keys required of every mapping, regardless of dialect. */
+export const SHARED_FRONTMATTER_KEYS = [
   "required_fields",
   "target_standard",
   "target_version",
   "status",
   "last_generated",
+] as const;
+
+/** Source-side keys required of OCF mappings (objects/, types/). */
+export const OCF_FRONTMATTER_KEYS = [
+  "ocf_schema_id",
+  "ocf_object_type",
+  "ocf_title",
+  "ocf_kind",
+] as const;
+
+/** Source-side keys required of canonical mappings (canonical/). */
+export const CANONICAL_FRONTMATTER_KEYS = [
+  "canonical_schema_id",
+  "canonical_title",
+  "canonical_kind",
 ] as const;
 
 /** target_standard frontmatter value → repo-relative bundle path. */
@@ -128,7 +140,12 @@ export function validateMapping(input: ValidateInput, opts: ValidateOptions): Va
   const err = (field: string | null, message: string) =>
     errors.push({ file: input.file, field, message });
 
-  for (const key of REQUIRED_FRONTMATTER_KEYS) {
+  // Canonical mappings (canonical/) declare a canonical_* source schema; OCF
+  // mappings (objects/, types/) declare an ocf_* one. Detect by path so a file
+  // that omits its dialect's id key still gets the right "missing key" error.
+  const isCanonical = input.file.startsWith("canonical/");
+  const dialectKeys = isCanonical ? CANONICAL_FRONTMATTER_KEYS : OCF_FRONTMATTER_KEYS;
+  for (const key of [...SHARED_FRONTMATTER_KEYS, ...dialectKeys]) {
     if (!(key in input.frontmatter)) err(null, `frontmatter is missing required key "${key}"`);
   }
 

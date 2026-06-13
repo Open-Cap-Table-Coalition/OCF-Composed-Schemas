@@ -101,23 +101,29 @@ fields:
   id:
     kind: unmappable
     target: null
+    reason: ocf-internal
   comments:
     kind: unmappable
     target: null
+    reason: ocf-internal
   object_type:
     kind: unmappable
     target: null
+    reason: ocf-internal
     values:
       VESTING_TERMS: null
   name:
     kind: unmappable
     target: null
+    reason: no-equivalent
   description:
     kind: unmappable
     target: null
+    reason: no-equivalent
   allocation_type:
     kind: unmappable
     target: null
+    reason: no-equivalent
     values:
       CUMULATIVE_ROUNDING: null
       CUMULATIVE_ROUND_DOWN: null
@@ -129,6 +135,7 @@ fields:
   vesting_conditions:
     kind: unmappable
     target: null
+    reason: no-equivalent
 ```
 
 ## Notes / open questions

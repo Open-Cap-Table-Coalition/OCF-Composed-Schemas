@@ -67,12 +67,15 @@ fields:
   numerator:
     kind: unmappable
     target: null
+    reason: no-equivalent
   denominator:
     kind: unmappable
     target: null
+    reason: no-equivalent
   remainder:
     kind: unmappable
     target: null
+    reason: no-equivalent
 ```
 
 ## Notes / open questions

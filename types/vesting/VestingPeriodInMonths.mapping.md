@@ -85,52 +85,57 @@ fields:
   length:
     kind: unmappable
     target: null
+    reason: no-equivalent
   type:
     kind: unmappable
     target: null
+    reason: no-equivalent
     values:
       MONTHS: null
   occurrences:
     kind: unmappable
     target: null
+    reason: no-equivalent
   cliff_installment:
     kind: unmappable
     target: null
+    reason: no-equivalent
   day_of_month:
     kind: unmappable
     target: null
+    reason: no-equivalent
     values:
-      "01": TODO
-      "02": TODO
-      "03": TODO
-      "04": TODO
-      "05": TODO
-      "06": TODO
-      "07": TODO
-      "08": TODO
-      "09": TODO
-      10: TODO
-      11: TODO
-      12: TODO
-      13: TODO
-      14: TODO
-      15: TODO
-      16: TODO
-      17: TODO
-      18: TODO
-      19: TODO
-      20: TODO
-      21: TODO
-      22: TODO
-      23: TODO
-      24: TODO
-      25: TODO
-      26: TODO
-      27: TODO
-      28: TODO
-      29_OR_LAST_DAY_OF_MONTH: TODO
-      30_OR_LAST_DAY_OF_MONTH: TODO
-      31_OR_LAST_DAY_OF_MONTH: TODO
+      "01": null
+      "02": null
+      "03": null
+      "04": null
+      "05": null
+      "06": null
+      "07": null
+      "08": null
+      "09": null
+      10: null
+      11: null
+      12: null
+      13: null
+      14: null
+      15: null
+      16: null
+      17: null
+      18: null
+      19: null
+      20: null
+      21: null
+      22: null
+      23: null
+      24: null
+      25: null
+      26: null
+      27: null
+      28: null
+      29_OR_LAST_DAY_OF_MONTH: null
+      30_OR_LAST_DAY_OF_MONTH: null
+      31_OR_LAST_DAY_OF_MONTH: null
       VESTING_START_DAY_OR_LAST_DAY_OF_MONTH: null
 ```
 

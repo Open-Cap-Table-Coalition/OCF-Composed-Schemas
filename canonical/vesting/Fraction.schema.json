@@ -1,0 +1,13 @@
+{
+  "$schema": "http://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/Open-Cap-Table-Coalition/OCF-Composed-Schemas/main/canonical/vesting/Fraction.schema.json",
+  "title": "Canonical - Fraction",
+  "description": "Rational fraction with integer numerator and denominator. Integer-only by design so exact rational percentages survive without decimal drift.",
+  "type": "object",
+  "properties": {
+    "numerator": { "type": "integer" },
+    "denominator": { "type": "integer", "minimum": 1 }
+  },
+  "required": ["numerator", "denominator"],
+  "additionalProperties": false
+}

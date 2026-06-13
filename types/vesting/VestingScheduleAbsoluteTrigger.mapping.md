@@ -66,11 +66,13 @@ fields:
   type:
     kind: unmappable
     target: null
+    reason: no-equivalent
     values:
       VESTING_SCHEDULE_ABSOLUTE: null
   date:
     kind: unmappable
     target: null
+    reason: no-equivalent
 ```
 
 ## Notes / open questions
