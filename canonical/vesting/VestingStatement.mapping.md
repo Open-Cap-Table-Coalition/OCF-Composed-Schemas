@@ -45,18 +45,21 @@ Source: [`VestingStatement.schema.json`](./VestingStatement.schema.json)
     },
     "cliff": {
       "type": "object",
-      "description": "Optional cliff on this statement. occurrence is the 1-indexed installment at which the cliff applies (must be <= occurrences).",
+      "description": "Optional cliff on this statement, expressed as a duration. length/lengthUnit give the time until the cliff; percentage is the share that vests at the cliff. Expressing the cliff as a duration (rather than an installment index) lets it fall between installments.",
       "properties": {
-        "occurrence": {
+        "length": {
           "type": "integer",
-          "minimum": 1,
-          "description": "1-indexed installment at which the cliff applies."
+          "minimum": 0,
+          "description": "Duration until the cliff, in lengthUnit units."
+        },
+        "lengthUnit": {
+          "$ref": "https://raw.githubusercontent.com/Open-Cap-Table-Coalition/Open-Cap-Format-OCF/main/schema/enums/PeriodType.schema.json"
         },
         "percentage": {
           "$ref": "https://raw.githubusercontent.com/Open-Cap-Table-Coalition/OCF-Composed-Schemas/main/canonical/vesting/Fraction.schema.json"
         }
       },
-      "required": ["occurrence", "percentage"],
+      "required": ["length", "lengthUnit", "percentage"],
       "additionalProperties": false
     },
     "percentage": {
@@ -115,8 +118,8 @@ fields:
       - "#/$defs/VestingPeriod/properties/cliffLengthUnit"
       - "#/$defs/VestingPeriod/properties/cliffPercentage"
     transform: |
-      cliffLength     = cliff.occurrence * period
-      cliffLengthUnit = period_type (DAYS -> DAY; MONTHS -> MONTH; YEARS -> YEAR)
+      cliffLength     = cliff.length
+      cliffLengthUnit = cliff.lengthUnit (DAYS -> DAY; MONTHS -> MONTH; YEARS -> YEAR)
       cliffPercentage = cliff.percentage.numerator / cliff.percentage.denominator
   percentage:
     kind: computed
@@ -127,4 +130,4 @@ fields:
 
 ## Notes / open questions
 
-Each `VestingStatement` produces one Carta `VestingPeriod`. The `period`/`occurrences`/`period_type` triple produces Carta's `length`, `lengthUnit`, and `vestingMethod`; the optional `cliff` produces `cliffLength`/`cliffLengthUnit`/`cliffPercentage`. For the per-statement projection rule, the `period_type` normalization note, and worked examples, see [`../README.md`](../README.md).
+Each `VestingStatement` produces one Carta `VestingPeriod`. The `period`/`occurrences`/`period_type` triple produces Carta's `length`, `lengthUnit`, and `vestingMethod`; the optional `cliff` produces `cliffLength`/`cliffLengthUnit`/`cliffPercentage` directly (the cliff is time-based, so no installment-index reconstruction). For the per-statement projection rule, the `period_type` normalization note, and worked examples, see [`../README.md`](../README.md).
