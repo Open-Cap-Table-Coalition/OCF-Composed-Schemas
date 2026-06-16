@@ -148,12 +148,15 @@ fields:
   id:
     kind: unmappable
     target: null
+    reason: ocf-internal
   comments:
     kind: unmappable
     target: null
+    reason: ocf-internal
   object_type:
     kind: unmappable
     target: null
+    reason: ocf-internal
     values:
       STOCK_CLASS: null
   name:
@@ -174,30 +177,33 @@ fields:
   board_approval_date:
     kind: unmappable
     target: null
+    reason: no-equivalent
   stockholder_approval_date:
     kind: unmappable
     target: null
+    reason: no-equivalent
   votes_per_share:
     kind: unmappable
     target: null
+    reason: no-equivalent
   par_value:
     kind: rename
     target: "#/$defs/ShareClass/properties/parValue"
   price_per_share:
     kind: rename
-    target: "#/$defs/ShareClass/properties/preferredShareClassDetails/properties/rightsAndPreferences/properties/originalIssuePrice"
+    target: "#/$defs/ShareClassRightsAndPreferences/properties/originalIssuePrice"
   seniority:
     kind: computed
     target: "#/$defs/ShareClass/properties/seniority"
   conversion_rights:
     kind: computed
-    target: "#/$defs/ShareClass/properties/preferredShareClassDetails/properties/rightsAndPreferences"
+    target: "#/$defs/ShareClassRightsAndPreferences"
   liquidation_preference_multiple:
     kind: rename
-    target: "#/$defs/ShareClass/properties/preferredShareClassDetails/properties/rightsAndPreferences/properties/multiplier"
+    target: "#/$defs/ShareClassRightsAndPreferences/properties/multiplier"
   participation_cap_multiple:
     kind: rename
-    target: "#/$defs/ShareClass/properties/preferredShareClassDetails/properties/rightsAndPreferences/properties/participationCap"
+    target: "#/$defs/ShareClassRightsAndPreferences/properties/participationCap"
 ```
 
 ## Notes / open questions
