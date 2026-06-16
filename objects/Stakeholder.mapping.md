@@ -130,12 +130,15 @@ fields:
   id:
     kind: unmappable
     target: null
+    reason: ocf-internal
   comments:
     kind: unmappable
     target: null
+    reason: ocf-internal
   object_type:
     kind: unmappable
     target: null
+    reason: ocf-internal
     values:
       STAKEHOLDER: null
   name:
@@ -187,6 +190,7 @@ fields:
   current_status:
     kind: unmappable
     target: null
+    reason: no-equivalent
     values:
       ACTIVE: null
       LEAVE_OF_ABSENCE: null
@@ -209,6 +213,7 @@ fields:
   tax_ids:
     kind: unmappable
     target: null
+    reason: no-equivalent
 ```
 
 ## Notes / open questions
