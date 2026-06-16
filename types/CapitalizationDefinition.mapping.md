@@ -86,15 +86,19 @@ fields:
   include_stock_class_ids:
     kind: unmappable
     target: null
+    reason: no-equivalent
   include_stock_plans_ids:
     kind: unmappable
     target: null
+    reason: no-equivalent
   include_security_ids:
     kind: unmappable
     target: null
+    reason: no-equivalent
   exclude_security_ids:
     kind: unmappable
     target: null
+    reason: no-equivalent
 ```
 
 ## Notes / open questions

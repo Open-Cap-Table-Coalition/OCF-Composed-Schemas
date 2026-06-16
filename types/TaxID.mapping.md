@@ -62,9 +62,11 @@ fields:
   tax_id:
     kind: unmappable
     target: null
+    reason: no-equivalent
   country:
     kind: unmappable
     target: null
+    reason: no-equivalent
 ```
 
 ## Notes / open questions

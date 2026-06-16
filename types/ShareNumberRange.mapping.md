@@ -62,9 +62,11 @@ fields:
   starting_share_number:
     kind: unmappable
     target: null
+    reason: no-equivalent
   ending_share_number:
     kind: unmappable
     target: null
+    reason: no-equivalent
 ```
 
 ## Notes / open questions

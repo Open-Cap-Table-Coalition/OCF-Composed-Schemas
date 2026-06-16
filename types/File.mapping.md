@@ -62,9 +62,11 @@ fields:
   filepath:
     kind: unmappable
     target: null
+    reason: no-equivalent
   md5:
     kind: unmappable
     target: null
+    reason: no-equivalent
 ```
 
 ## Notes / open questions

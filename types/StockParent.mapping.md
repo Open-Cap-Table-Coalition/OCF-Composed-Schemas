@@ -62,6 +62,7 @@ fields:
   parent_object_type:
     kind: unmappable
     target: null
+    reason: no-equivalent
     values:
       STOCK_PLAN: null
       STOCK: null
@@ -70,6 +71,7 @@ fields:
   parent_object_id:
     kind: unmappable
     target: null
+    reason: no-equivalent
 ```
 
 ## Notes / open questions

@@ -98,27 +98,35 @@ fields:
   include_outstanding_shares:
     kind: unmappable
     target: null
+    reason: no-equivalent
   include_outstanding_options:
     kind: unmappable
     target: null
+    reason: no-equivalent
   include_outstanding_unissued_options:
     kind: unmappable
     target: null
+    reason: no-equivalent
   include_this_security:
     kind: unmappable
     target: null
+    reason: no-equivalent
   include_other_converting_securities:
     kind: unmappable
     target: null
+    reason: no-equivalent
   include_option_pool_topup_for_promised_options:
     kind: unmappable
     target: null
+    reason: no-equivalent
   include_additional_option_pool_topup:
     kind: unmappable
     target: null
+    reason: no-equivalent
   include_new_money:
     kind: unmappable
     target: null
+    reason: no-equivalent
 ```
 
 ## Notes / open questions

@@ -63,6 +63,7 @@ fields:
   phone_type:
     kind: unmappable
     target: null
+    reason: no-equivalent
     values:
       HOME: null
       MOBILE: null
@@ -71,6 +72,7 @@ fields:
   phone_number:
     kind: unmappable
     target: null
+    reason: no-equivalent
 ```
 
 ## Notes / open questions
