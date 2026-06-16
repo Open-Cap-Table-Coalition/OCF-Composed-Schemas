@@ -161,11 +161,18 @@ describe("validateMapping — frontmatter and top level", () => {
 
   it("reports each missing required frontmatter key", () => {
     const fm = frontmatter();
-    delete fm.ocf_schema_id;
+    delete fm.ocf_object_type;
     delete fm.last_generated;
     const errs = messages(makeInput({ frontmatter: fm }));
-    expect(errs).toContain('frontmatter is missing required key "ocf_schema_id"');
+    expect(errs).toContain('frontmatter is missing required key "ocf_object_type"');
     expect(errs).toContain('frontmatter is missing required key "last_generated"');
+  });
+
+  it("errors when neither an ocf_ nor canonical_ schema id is declared", () => {
+    const fm = frontmatter();
+    delete fm.ocf_schema_id;
+    const errs = messages(makeInput({ frontmatter: fm }));
+    expect(errs.some((m) => m.includes("must declare a source schema"))).toBe(true);
   });
 
   it("rejects an unknown frontmatter status", () => {
@@ -484,5 +491,52 @@ describe("validateMapping — semantic target checks", () => {
       },
     });
     expect(messages(input)).toEqual([]);
+  });
+});
+
+describe("validateMapping — canonical dialect", () => {
+  function canonicalFrontmatter(over: Record<string, unknown> = {}): Record<string, unknown> {
+    return {
+      canonical_schema_id: "test://thing",
+      canonical_title: "Thing",
+      canonical_kind: "type",
+      required_fields: ["name"],
+      target_standard: "Carta",
+      target_version: "v1alpha1",
+      status: "complete",
+      last_generated: "2026-06-11",
+      ...over,
+    };
+  }
+
+  const canonicalInput = (over: Partial<ValidateInput> = {}): ValidateInput =>
+    makeInput({ file: "canonical/Thing.mapping.md", frontmatter: canonicalFrontmatter(), ...over });
+
+  it("accepts a canonical file declaring canonical_* frontmatter", () => {
+    expect(messages(canonicalInput())).toEqual([]);
+  });
+
+  it("reports a missing canonical_* key", () => {
+    const fm = canonicalFrontmatter();
+    delete fm.canonical_title;
+    expect(messages(canonicalInput({ frontmatter: fm }))).toContain(
+      'frontmatter is missing required key "canonical_title"'
+    );
+  });
+
+  it("does not demand ocf_* keys of a canonical file", () => {
+    expect(messages(canonicalInput()).some((m) => m.includes("ocf_schema_id"))).toBe(false);
+  });
+
+  it("does not demand canonical_* keys of an OCF file", () => {
+    expect(messages(makeInput()).some((m) => m.includes("canonical_"))).toBe(false);
+  });
+
+  it("still requires shared keys in the canonical dialect", () => {
+    const fm = canonicalFrontmatter();
+    delete fm.last_generated;
+    expect(messages(canonicalInput({ frontmatter: fm }))).toContain(
+      'frontmatter is missing required key "last_generated"'
+    );
   });
 });

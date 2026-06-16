@@ -1,0 +1,40 @@
+{
+  "$schema": "http://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/Open-Cap-Table-Coalition/OCF-Composed-Schemas/main/canonical/vesting/VestingStatement.schema.json",
+  "title": "Canonical - Vesting Statement",
+  "description": "One segment within a template; produces a sequence of vesting events at the given cadence. Total segment duration is occurrences * period in period_type units.",
+  "type": "object",
+  "properties": {
+    "order": { "type": "integer", "minimum": 1 },
+    "occurrences": { "type": "integer", "minimum": 1 },
+    "period": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Length of one installment, in period_type units. Total segment duration is occurrences * period."
+    },
+    "period_type": {
+      "$ref": "https://raw.githubusercontent.com/Open-Cap-Table-Coalition/Open-Cap-Format-OCF/main/schema/enums/PeriodType.schema.json"
+    },
+    "cliff": {
+      "type": "object",
+      "description": "Optional cliff on this statement. occurrence is the 1-indexed installment at which the cliff applies (must be <= occurrences).",
+      "properties": {
+        "occurrence": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "1-indexed installment at which the cliff applies."
+        },
+        "percentage": {
+          "$ref": "https://raw.githubusercontent.com/Open-Cap-Table-Coalition/OCF-Composed-Schemas/main/canonical/vesting/Fraction.schema.json"
+        }
+      },
+      "required": ["occurrence", "percentage"],
+      "additionalProperties": false
+    },
+    "percentage": {
+      "$ref": "https://raw.githubusercontent.com/Open-Cap-Table-Coalition/OCF-Composed-Schemas/main/canonical/vesting/Fraction.schema.json"
+    }
+  },
+  "required": ["order", "occurrences", "period", "period_type", "percentage"],
+  "additionalProperties": false
+}

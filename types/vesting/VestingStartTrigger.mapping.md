@@ -60,6 +60,7 @@ fields:
   type:
     kind: unmappable
     target: null
+    reason: no-equivalent
     values:
       VESTING_START_DATE: null
 ```

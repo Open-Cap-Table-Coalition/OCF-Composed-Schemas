@@ -77,16 +77,28 @@ export const REASON_VOCABULARY = [
   "ocf-internal",
 ] as const;
 
-export const REQUIRED_FRONTMATTER_KEYS = [
-  "ocf_schema_id",
-  "ocf_object_type",
-  "ocf_title",
-  "ocf_kind",
+/** Frontmatter keys required of every mapping, regardless of dialect. */
+export const SHARED_FRONTMATTER_KEYS = [
   "required_fields",
   "target_standard",
   "target_version",
   "status",
   "last_generated",
+] as const;
+
+/** Source-side keys an OCF mapping declares (identified by ocf_schema_id). */
+export const OCF_FRONTMATTER_KEYS = [
+  "ocf_schema_id",
+  "ocf_object_type",
+  "ocf_title",
+  "ocf_kind",
+] as const;
+
+/** Source-side keys a canonical mapping declares (identified by canonical_schema_id). */
+export const CANONICAL_FRONTMATTER_KEYS = [
+  "canonical_schema_id",
+  "canonical_title",
+  "canonical_kind",
 ] as const;
 
 /** target_standard frontmatter value → repo-relative bundle path. */
@@ -128,8 +140,25 @@ export function validateMapping(input: ValidateInput, opts: ValidateOptions): Va
   const err = (field: string | null, message: string) =>
     errors.push({ file: input.file, field, message });
 
-  for (const key of REQUIRED_FRONTMATTER_KEYS) {
+  // A mapping declares its source dialect by which identity key it carries:
+  // canonical_schema_id (canonical layer) or ocf_schema_id (OCF objects/types).
+  // Validate by what the file declares, not where it lives.
+  for (const key of SHARED_FRONTMATTER_KEYS) {
     if (!(key in input.frontmatter)) err(null, `frontmatter is missing required key "${key}"`);
+  }
+  if ("canonical_schema_id" in input.frontmatter) {
+    for (const key of CANONICAL_FRONTMATTER_KEYS) {
+      if (!(key in input.frontmatter)) err(null, `frontmatter is missing required key "${key}"`);
+    }
+  } else if ("ocf_schema_id" in input.frontmatter) {
+    for (const key of OCF_FRONTMATTER_KEYS) {
+      if (!(key in input.frontmatter)) err(null, `frontmatter is missing required key "${key}"`);
+    }
+  } else {
+    err(
+      null,
+      'frontmatter must declare a source schema: "ocf_schema_id" (OCF) or "canonical_schema_id" (canonical)'
+    );
   }
 
   const fmStatus = input.frontmatter.status;

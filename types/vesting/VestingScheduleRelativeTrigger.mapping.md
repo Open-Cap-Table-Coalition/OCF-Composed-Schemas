@@ -79,14 +79,17 @@ fields:
   type:
     kind: unmappable
     target: null
+    reason: no-equivalent
     values:
       VESTING_SCHEDULE_RELATIVE: null
   period:
     kind: unmappable
     target: null
+    reason: no-equivalent
   relative_to_condition_id:
     kind: unmappable
     target: null
+    reason: no-equivalent
 ```
 
 ## Notes / open questions

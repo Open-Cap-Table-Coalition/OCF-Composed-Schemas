@@ -15,6 +15,8 @@ interface VestingScheduleTemplate {
   statements: VestingStatement[]; // chained implicitly by order
 }
 
+// In the JSON schema, cliff is inlined on VestingStatement (Carta has no
+// standalone cliff type); it is a named interface here only for readability.
 interface VestingStatement {
   order: number; // 1-based sequence position
   occurrences: number; // integer >= 1; number of vesting events in segment
