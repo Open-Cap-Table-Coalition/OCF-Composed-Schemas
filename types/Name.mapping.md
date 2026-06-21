@@ -5,13 +5,13 @@ ocf_title: Type - Name
 ocf_kind: type
 required_fields:
   - legal_name
-target_standard: TBD
-target_version: TBD
-status: draft
+target_standard: Carta
+target_version: v1alpha1 (2026-04-30)
+status: complete
 last_generated: 2026-05-18
 ---
 
-# Type - Name → TBD
+# Type - Name → Carta
 
 > Type comprising of multiple name components
 
@@ -57,21 +57,25 @@ Source: [`Name.schema.json`](./Name.schema.json)
 
 ```yaml
 # kind vocabulary: rename | split | combine | enum-remap | computed | unmappable | TODO
-status: draft
-coverage: 0/3
+status: complete
+coverage: 3/3
 
 fields:
   legal_name:
-    kind: TODO
-    target: TODO
+    kind: rename
+    target: "#/$defs/Stakeholder/properties/fullName"
   first_name:
-    kind: TODO
-    target: TODO
+    kind: unmappable
+    target: null
+    reason: no-equivalent
   last_name:
-    kind: TODO
-    target: TODO
+    kind: unmappable
+    target: null
+    reason: no-equivalent
 ```
 
 ## Notes / open questions
 
-- 
+- OCF `Name` is a reusable type. Its dominant consumer is `Stakeholder.name` (`$ref: Name`), and Carta's `Stakeholder` carries exactly one name field — `fullName`, described as "The stakeholder's full legal name." OCF's `legal_name` ("Legal full name for the individual/institution") is therefore a direct rename onto `#/$defs/Stakeholder/properties/fullName` (a `string`, `maxLength: 1000`, resolves in the pinned bundle). This is the representative inline target: Carta does not model a reusable "name" type, it inlines a flat name string per entity. The same flat-string pattern recurs as `Issuer.legalName`, `Corporation.legalName`, and `PointOfContact.userFullName`, but `Stakeholder.fullName` is the only one fed by the OCF `Name` type, so it is the correct anchor.
+- `first_name` and `last_name` are genuinely `no-equivalent`. Carta has **no** given-name/family-name decomposition anywhere in the bundle — a case-insensitive search of `target-schema/Carta.schema.json` for `firstName`, `lastName`, `givenName`, `familyName`, `forename`, `surname`, and `middleName` returns zero hits. Every name Carta stores (`Stakeholder.fullName`, `Issuer.legalName`, `Corporation.legalName`, `PointOfContact.userFullName`) is a single undivided string. Folding `first_name`/`last_name` into `fullName` would be a lossy concatenation with no canonical ordering or separator defined by either schema, so they are left unmapped rather than forced into the legal-name field (which already receives `legal_name`). The individual name components are dropped on transfer; only the full legal name survives.
+- No `combine` was used: `legal_name` already populates `fullName` on its own, and OCF treats `legal_name` (not the assembled first+last) as the authoritative full name, so combining would double-write the target.
