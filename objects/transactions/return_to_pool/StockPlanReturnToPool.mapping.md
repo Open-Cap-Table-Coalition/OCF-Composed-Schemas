@@ -12,13 +12,13 @@ required_fields:
   - reason_text
   - stock_plan_id
   - quantity
-target_standard: TBD
-target_version: TBD
-status: draft
+target_standard: Carta
+target_version: "v1alpha1 (2026-04-30)"
+status: complete
 last_generated: 2026-05-18
 ---
 
-# Object - Stock Plan Return to Pool Transaction → TBD
+# Object - Stock Plan Return to Pool Transaction → Carta
 
 > Object describing which stock plan pool a particular security's shares were returned to upon cancellation.
 
@@ -110,38 +110,55 @@ Source: [`StockPlanReturnToPool.schema.json`](./StockPlanReturnToPool.schema.jso
 
 ```yaml
 # kind vocabulary: rename | split | combine | enum-remap | computed | unmappable | TODO
-status: draft
-coverage: 0/8
+status: complete
+coverage: 8/8
 
 fields:
   id:
-    kind: TODO
-    target: TODO
+    kind: unmappable
+    target: null
+    reason: ocf-internal
   comments:
-    kind: TODO
-    target: TODO
+    kind: unmappable
+    target: null
+    reason: ocf-internal
   object_type:
-    kind: TODO          # likely enum-remap
-    target: TODO
+    kind: unmappable
+    target: null
+    reason: ocf-internal
     values:
-      TX_STOCK_PLAN_RETURN_TO_POOL: TODO
+      TX_STOCK_PLAN_RETURN_TO_POOL: null
   date:
-    kind: TODO
-    target: TODO
+    kind: unmappable
+    target: null
+    reason: no-equivalent
   security_id:
-    kind: TODO
-    target: TODO
+    kind: unmappable
+    target: null
+    reason: no-equivalent
   stock_plan_id:
-    kind: TODO
-    target: TODO
+    kind: unmappable
+    target: null
+    reason: no-equivalent
   reason_text:
-    kind: TODO
-    target: TODO
+    kind: unmappable
+    target: null
+    reason: no-equivalent
   quantity:
-    kind: TODO
-    target: TODO
+    kind: unmappable
+    target: null
+    reason: no-equivalent
 ```
 
 ## Notes / open questions
 
-- 
+- **Bucket: n/a-object — whole transaction unmappable (no Carta equivalent).** OCF `TX_STOCK_PLAN_RETURN_TO_POOL` is a discrete event recording that, upon a security's cancellation/forfeiture, a specific `quantity` of shares was returned to a named stock-plan pool (`stock_plan_id`) so they become re-issuable. Carta's transaction set has no return-to-pool transaction. Carta's transaction `$def`s are issuance / cancellation / exercise / settlement / transfer only (e.g. `OptionIssuanceTransaction`, `OptionCancellationTransaction`, `OptionExerciseTransaction`, plus the Certificate/Convertible/Warrant/Rsa/Rsu/Sar/Phantom/Piu families). None models replenishing a pool, so there is no Carta object whose fields can host any of this OCF transaction's properties.
+- **Why pool replenishment is implicit in Carta, not a transaction.** Carta represents an option pool as a read-model summary, `#/$defs/OptionPoolSummary` — `{optionPoolId, shareClassId, fullyDilutedShares, outstandingEquityAwardDerivatives, outstandingCommittedRestrictedStockAwards, name, authorizedShares (Decimal), terminatedDatetime}` — plus the stakeholder-scoped `#/$defs/StakeholderOptionPoolSummary`. These are *aggregate states*, not event records: when a grant is cancelled, the shares re-enter the available pool implicitly via Carta's recomputed `authorizedShares` / `outstandingEquityAwardDerivatives`, with no discrete "return" line item. There is therefore no slot to record *which* event returned *how many* shares to *which* pool.
+- **The cancellation that triggers the return carries no return-to-pool data either.** The nearest Carta transaction, `#/$defs/OptionCancellationTransaction`, exposes only `{effectiveDatetime, reason (OptionCancellationReason enum), quantity (Decimal), terminationDatetime, forfeitureDatetime}`. It records the *cancellation* of a grant, not a return to a *destination pool*; it has no field for a target `stock_plan_id` and is a different event than OCF's separate return-to-pool transaction. Mapping OCF `quantity`/`security_id` onto it would conflate two distinct OCF transactions, so it is not used as a target here.
+- **Per-field justification (all unmappable):**
+    - `quantity` (`Numeric`, shares returned): no-equivalent. Carta has no return-to-pool transaction to carry it; the analogous figure only exists as a recomputed aggregate inside `OptionPoolSummary` (e.g. `authorizedShares` / `outstandingEquityAwardDerivatives`), not as a per-event delta. `OptionPoolSummary` carries no `securityId`/`securityLabel` or event date, so it cannot represent "these N shares from this security on this date returned to this pool."
+    - `stock_plan_id` (target pool): no-equivalent. Carta identifies pools by `OptionPoolSummary.optionPoolId`, but that lives on a summary object, not on any transaction, and there is no transaction here to reference it. OCF notes the return pool need not be the issuing pool (plan rollovers), a distinction Carta's summary model does not record per event.
+    - `security_id` (the cancelled security whose shares are returned): no-equivalent. The Carta transactions reference a security via `securityId`/`securityLabel`, but none of those is a return-to-pool transaction, so there is no Carta home for this reference in this context.
+    - `reason_text` (free-text reason for the return): no-equivalent. Carta has no return-to-pool record and no free-text reason field for one. (`OptionCancellationTransaction.reason` is a constrained `OptionCancellationReason` enum on the *cancellation*, not a free-text return reason.)
+    - `date` (calendar date of the return): no-equivalent. No Carta transaction exists to date. Note also the granularity gap: OCF transaction `date` is a calendar `Date`, whereas Carta transaction timestamps are `Iso8601CompleteCalendarDateTime` (datetime) — but moot here since there is no target transaction.
+    - `id`, `comments`, `object_type`: ocf-internal. `id` is OCF's object identifier (Carta assigns its own server-side); `comments` has no Carta slot; `object_type` (`TX_STOCK_PLAN_RETURN_TO_POOL`) is OCF's transaction discriminator — Carta types transactions positionally per `$def`/endpoint and has no return-to-pool member to remap the constant onto, so it is recorded as `values: { TX_STOCK_PLAN_RETURN_TO_POOL: null }`.
