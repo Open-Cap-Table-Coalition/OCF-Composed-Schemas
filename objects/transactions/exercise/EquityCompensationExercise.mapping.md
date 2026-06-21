@@ -10,13 +10,13 @@ required_fields:
   - date
   - security_id
   - resulting_security_ids
-target_standard: TBD
-target_version: TBD
-status: draft
+target_standard: Carta
+target_version: "v1alpha1 (2026-04-30)"
+status: complete
 last_generated: 2026-05-18
 ---
 
-# Object - Equity Compensation Exercise Transaction → TBD
+# Object - Equity Compensation Exercise Transaction → Carta
 
 > Object describing equity compensation exercise transaction
 
@@ -111,39 +111,52 @@ Source: [`EquityCompensationExercise.schema.json`](./EquityCompensationExercise.
 
 ```yaml
 # kind vocabulary: rename | split | combine | enum-remap | computed | unmappable | TODO
-status: draft
-coverage: 0/8
+status: complete
+coverage: 8/8
 
 fields:
   id:
-    kind: TODO
-    target: TODO
+    kind: unmappable
+    target: null
+    reason: ocf-internal
   comments:
-    kind: TODO
-    target: TODO
+    kind: unmappable
+    target: null
+    reason: ocf-internal
   object_type:
-    kind: TODO          # likely enum-remap
-    target: TODO
+    kind: unmappable
+    target: null
+    reason: ocf-internal
     values:
-      TX_PLAN_SECURITY_EXERCISE: TODO
-      TX_EQUITY_COMPENSATION_EXERCISE: TODO
+      TX_PLAN_SECURITY_EXERCISE: null
+      TX_EQUITY_COMPENSATION_EXERCISE: null
   date:
-    kind: TODO
-    target: TODO
+    kind: rename
+    target: "#/$defs/OptionExerciseTransaction/properties/sharesAcquiredDatetime"
   security_id:
-    kind: TODO
-    target: TODO
+    kind: unmappable
+    target: null
+    reason: no-equivalent
   consideration_text:
-    kind: TODO
-    target: TODO
+    kind: unmappable
+    target: null
+    reason: no-equivalent
   resulting_security_ids:
-    kind: TODO
-    target: TODO
+    kind: rename
+    target: "#/$defs/OptionExerciseTransaction/properties/resultingSecurityId"
   quantity:
-    kind: TODO
-    target: TODO
+    kind: rename
+    target: "#/$defs/OptionExerciseTransaction/properties/quantity"
 ```
 
 ## Notes / open questions
 
-- 
+- **Carta home = `OptionExerciseTransaction`.** OCF's `EquityCompensationExercise` (and its v1 alias `PlanSecurityExercise`) records the exercise of a plan/equity-compensation security — i.e. the conversion of vested options into shares. Carta models exactly this as `#/$defs/OptionExerciseTransaction` ("An exercise transaction for an option grant. Represents the conversion of options into shares."), which is the destination per the transaction surface. Carta's `OptionExerciseTransaction` carries only 8 fields: `id`, `sharesAcquiredDatetime`, `quantity`, `exerciseMethod` (enum), `recordType` (StockOptionType enum), `resultingSecurityId`, `resultingSecurityType`, `resultingSecurityLabel`.
+- `date` → `sharesAcquiredDatetime`: OCF's `date` is the date on which the exercise occurred (`types/Date.schema.json`, a calendar **date**, `YYYY-MM-DD`). Carta's `sharesAcquiredDatetime` is `#/$defs/Iso8601CompleteCalendarDateTime` — a full **datetime**. This is the standard OCF-date → Carta-datetime granularity mismatch: OCF carries no time-of-day, so a serializer must widen the date to a datetime (e.g. append midnight UTC); the reverse direction truncates. The semantic event ("shares acquired on exercise") is the same.
+- `quantity` → `quantity`: OCF `quantity` is `types/Numeric.schema.json` (a stringified decimal, "Quantity of shares exercised"); Carta `quantity` is `#/$defs/Decimal`. Same concept (shares exercised), straight rename with a numeric-string ↔ Decimal representation change only.
+- `resulting_security_ids` → `resultingSecurityId`: **cardinality narrowing.** OCF allows an *array* of resulting security IDs (one exercise can spawn multiple resulting securities), whereas Carta's `OptionExerciseTransaction.resultingSecurityId` is a single string. The common case (one option exercise → one resulting share certificate) round-trips cleanly; an OCF exercise that lists multiple `resulting_security_ids` cannot be represented without loss / splitting into multiple Carta records. Carta additionally exposes `resultingSecurityType` and `resultingSecurityLabel` describing that single resulting security (e.g. "certificate" / "CS-42"), which have no OCF counterpart on this object.
+- `security_id` → unmappable / `no-equivalent`: OCF's `security_id` points back to the *source* security being exercised (the plan/option security). Carta's `OptionExerciseTransaction` has **no field that references the source option grant** — its only `id` field is documented as "the identifier of the **exercise request** that initiated the exercise," not the grant's security id, and `resultingSecurityId` describes the *output* security, not the source. In Carta's model the linkage to the source grant is structural/positional: an exercise is carried under the grant it belongs to (`OptionGrant.securityId` identifies the grant, and `OptionGrant.exercises` is the array of that grant's exercises — note that array is typed as Carta's `Exercise` object, a separate richer shape than `OptionExerciseTransaction`, not this transaction). The source-security reference is therefore held by the parent container, not by any property on the exercise transaction itself. There is no leaf property on `OptionExerciseTransaction` to receive `security_id`; it is reconstructed at the object-graph level, not field-mapped.
+- `consideration_text` → unmappable / `no-equivalent`: OCF stores free-text describing the consideration provided for the exercise. Carta has no free-text consideration field on the exercise transaction. The nearest structured Carta concept is `exerciseMethod` (`OptionExerciseMethod` enum: CASH / CASHLESS / PUBLIC_NET / BLENDED / PUBLIC_CASHLESS) — but that is a constrained enum describing *how the exercise was funded*, not a free-text description of consideration, so OCF's unstructured `consideration_text` cannot be losslessly remapped onto it. Conversely Carta's `exerciseMethod` has no OCF counterpart on this object.
+- `object_type` → unmappable / `ocf-internal`: OCF's discriminator enum (`TX_PLAN_SECURITY_EXERCISE`, the v1 alias kept for backward compatibility and deprecated in v2.0.0, and `TX_EQUITY_COMPENSATION_EXERCISE`). Both values denote the same exercise concept, which Carta types positionally as `OptionExerciseTransaction` — there is no per-record type discriminator to remap onto, so both enum values route to `null`. (Carta's `recordType` on this object is a `StockOptionType` — ISO/NSO/etc. — describing the option's tax character, which is unrelated to OCF's `object_type` discriminator and has no OCF source field here.)
+- `id`, `comments` → unmappable / `ocf-internal`: standard OCF object scaffolding. OCF's `id` identifies the OCF transaction object and Carta assigns its own server-side identifiers; note that Carta's same-named `OptionExerciseTransaction.id` is semantically *different* ("identifier of the exercise request"), so mapping OCF `id` onto it would be wrong. `comments` has no Carta slot.
+- **Unused Carta fields:** `exerciseMethod`, `recordType`, `resultingSecurityType`, and `resultingSecurityLabel` have no source field on this OCF object and are left unpopulated.
