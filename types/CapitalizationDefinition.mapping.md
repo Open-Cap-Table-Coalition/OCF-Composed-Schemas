@@ -8,13 +8,13 @@ required_fields:
   - include_stock_plans_ids
   - include_security_ids
   - exclude_security_ids
-target_standard: TBD
-target_version: TBD
-status: draft
+target_standard: Carta
+target_version: v1alpha1 (2026-04-30)
+status: complete
 last_generated: 2026-05-18
 ---
 
-# Type - Capitalization Definition → TBD
+# Type - Capitalization Definition → Carta
 
 > Type represents a group of securities that constitutes some formally defined part of the company (e.g. post-money capitalization vs pre-money for a security)
 
@@ -79,24 +79,28 @@ Source: [`CapitalizationDefinition.schema.json`](./CapitalizationDefinition.sche
 
 ```yaml
 # kind vocabulary: rename | split | combine | enum-remap | computed | unmappable | TODO
-status: draft
-coverage: 0/4
+status: complete
+coverage: 4/4
 
 fields:
   include_stock_class_ids:
-    kind: TODO
-    target: TODO
+    kind: unmappable
+    target: null
+    reason: no-equivalent
   include_stock_plans_ids:
-    kind: TODO
-    target: TODO
+    kind: unmappable
+    target: null
+    reason: no-equivalent
   include_security_ids:
-    kind: TODO
-    target: TODO
+    kind: unmappable
+    target: null
+    reason: no-equivalent
   exclude_security_ids:
-    kind: TODO
-    target: TODO
+    kind: unmappable
+    target: null
+    reason: no-equivalent
 ```
 
 ## Notes / open questions
 
-- 
+- Carta has no concept of a named, configurable capitalization-rule definition. OCF uses `CapitalizationDefinition` (and `CapitalizationDefinitionRules`) to express *which* stock classes/plans/securities are included or excluded when calculating fully-diluted capitalization. Carta exposes aggregate quantities (e.g. `fullyDilutedShares` on `OptionPoolSummary`, `CapitalizationTableSummary`) but not the rule definitions that produced them. The README also notes that Carta capitalization-summary types are an excluded part of the bundle in any case.

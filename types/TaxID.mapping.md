@@ -6,13 +6,13 @@ ocf_kind: type
 required_fields:
   - tax_id
   - country
-target_standard: TBD
-target_version: TBD
-status: draft
+target_standard: Carta
+target_version: v1alpha1 (2026-04-30)
+status: complete
 last_generated: 2026-05-18
 ---
 
-# Type - Tax Identifier → TBD
+# Type - Tax Identifier → Carta
 
 > Type representation of a government identifier for tax purposes (e.g. EIN) and corresponding country code (ISO-3166)
 
@@ -55,18 +55,20 @@ Source: [`TaxID.schema.json`](./TaxID.schema.json)
 
 ```yaml
 # kind vocabulary: rename | split | combine | enum-remap | computed | unmappable | TODO
-status: draft
-coverage: 0/2
+status: complete
+coverage: 2/2
 
 fields:
   tax_id:
-    kind: TODO
-    target: TODO
+    kind: unmappable
+    target: null
+    reason: no-equivalent
   country:
-    kind: TODO
-    target: TODO
+    kind: unmappable
+    target: null
+    reason: no-equivalent
 ```
 
 ## Notes / open questions
 
-- 
+- Carta has no tax-identifier fields anywhere in the bundled schema. The closest tax-related concepts (`OptionExerciseTaxWithholdingLineItem`, `Jurisdiction.country`) are about tax *withholding* on transactions, not stakeholder/issuer tax IDs. Both OCF Issuer and Stakeholder consequently mark their `tax_ids` arrays as unmappable.

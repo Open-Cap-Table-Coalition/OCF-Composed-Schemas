@@ -6,13 +6,13 @@ ocf_kind: type
 required_fields:
   - starting_share_number
   - ending_share_number
-target_standard: TBD
-target_version: TBD
-status: draft
+target_standard: Carta
+target_version: v1alpha1 (2026-04-30)
+status: complete
 last_generated: 2026-05-18
 ---
 
-# Type - Share Number Range → TBD
+# Type - Share Number Range → Carta
 
 > Type representation of a range of share numbers associated with an event (such as the share numbers associated with an issuance) - for use where shares are not fungible and need unique identifiers *per share*
 
@@ -55,18 +55,20 @@ Source: [`ShareNumberRange.schema.json`](./ShareNumberRange.schema.json)
 
 ```yaml
 # kind vocabulary: rename | split | combine | enum-remap | computed | unmappable | TODO
-status: draft
-coverage: 0/2
+status: complete
+coverage: 2/2
 
 fields:
   starting_share_number:
-    kind: TODO
-    target: TODO
+    kind: unmappable
+    target: null
+    reason: no-equivalent
   ending_share_number:
-    kind: TODO
-    target: TODO
+    kind: unmappable
+    target: null
+    reason: no-equivalent
 ```
 
 ## Notes / open questions
 
-- 
+- Carta's `Certificate` carries a quantity but not numbered share-range bounds (no `startingShareNumber`/`endingShareNumber` fields anywhere in the bundle). OCF uses `ShareNumberRange` primarily on stock issuance transactions to describe which specific share numbers were issued on a certificate; that level of granularity is not represented in Carta.

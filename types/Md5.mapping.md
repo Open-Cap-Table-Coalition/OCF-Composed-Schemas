@@ -4,13 +4,13 @@ ocf_object_type: null
 ocf_title: Type - MD5 Hash
 ocf_kind: type
 required_fields: []
-target_standard: TBD
-target_version: TBD
-status: draft
+target_standard: Carta
+target_version: v1alpha1 (2026-04-30)
+status: complete
 last_generated: 2026-05-18
 ---
 
-# Type - MD5 Hash → TBD
+# Type - MD5 Hash → Carta
 
 > String representation of MD5 hash with basic validation for a string of 32 characters composed of letters (uppercase or lowercase) and numbers
 
@@ -41,12 +41,12 @@ Source: [`Md5.schema.json`](./Md5.schema.json)
 
 ```yaml
 # kind vocabulary: rename | split | combine | enum-remap | computed | unmappable | TODO
-status: draft
+status: complete
 coverage: 0/0
 
-fields:
+fields: {}
 ```
 
 ## Notes / open questions
 
-- 
+- Carta records no checksums. Files transferred via the Carta Upload File endpoint are referenced by a `fileId` only — file integrity is not exposed at the data-schema level. See also `objects/Document.mapping.md`.

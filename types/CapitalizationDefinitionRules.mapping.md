@@ -12,13 +12,13 @@ required_fields:
   - include_option_pool_topup_for_promised_options
   - include_additional_option_pool_topup
   - include_new_money
-target_standard: TBD
-target_version: TBD
-status: draft
+target_standard: Carta
+target_version: v1alpha1 (2026-04-30)
+status: complete
 last_generated: 2026-05-18
 ---
 
-# Type - Capitalization Definition Rules → TBD
+# Type - Capitalization Definition Rules → Carta
 
 > Type represents the rules for determining the capitalization definition for a security
 
@@ -91,36 +91,44 @@ Source: [`CapitalizationDefinitionRules.schema.json`](./CapitalizationDefinition
 
 ```yaml
 # kind vocabulary: rename | split | combine | enum-remap | computed | unmappable | TODO
-status: draft
-coverage: 0/8
+status: complete
+coverage: 8/8
 
 fields:
   include_outstanding_shares:
-    kind: TODO
-    target: TODO
+    kind: unmappable
+    target: null
+    reason: no-equivalent
   include_outstanding_options:
-    kind: TODO
-    target: TODO
+    kind: unmappable
+    target: null
+    reason: no-equivalent
   include_outstanding_unissued_options:
-    kind: TODO
-    target: TODO
+    kind: unmappable
+    target: null
+    reason: no-equivalent
   include_this_security:
-    kind: TODO
-    target: TODO
+    kind: unmappable
+    target: null
+    reason: no-equivalent
   include_other_converting_securities:
-    kind: TODO
-    target: TODO
+    kind: unmappable
+    target: null
+    reason: no-equivalent
   include_option_pool_topup_for_promised_options:
-    kind: TODO
-    target: TODO
+    kind: unmappable
+    target: null
+    reason: no-equivalent
   include_additional_option_pool_topup:
-    kind: TODO
-    target: TODO
+    kind: unmappable
+    target: null
+    reason: no-equivalent
   include_new_money:
-    kind: TODO
-    target: TODO
+    kind: unmappable
+    target: null
+    reason: no-equivalent
 ```
 
 ## Notes / open questions
 
-- 
+- Same reason as `types/CapitalizationDefinition.mapping.md`: Carta does not represent fully-diluted *rule definitions* — the booleans here (whether to include outstanding shares, unissued options, promised-option top-ups, new money, etc.) have no counterpart in the bundle. Carta exposes aggregate share counts but not the inclusion/exclusion policy used to compute them.
