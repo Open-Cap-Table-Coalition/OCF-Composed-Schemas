@@ -10,13 +10,13 @@ required_fields:
   - date
   - security_id
   - reason_text
-target_standard: TBD
-target_version: TBD
-status: draft
+target_standard: Carta
+target_version: "v1alpha1 (2026-04-30)"
+status: complete
 last_generated: 2026-05-18
 ---
 
-# Object - Convertible Cancellation Transaction → TBD
+# Object - Convertible Cancellation Transaction → Carta
 
 > Object describing a cancellation of a convertible security
 
@@ -103,38 +103,49 @@ Source: [`ConvertibleCancellation.schema.json`](./ConvertibleCancellation.schema
 
 ```yaml
 # kind vocabulary: rename | split | combine | enum-remap | computed | unmappable | TODO
-status: draft
-coverage: 0/8
+status: complete
+coverage: 8/8
 
 fields:
   id:
-    kind: TODO
-    target: TODO
+    kind: unmappable
+    target: null
+    reason: ocf-internal
   comments:
-    kind: TODO
-    target: TODO
+    kind: unmappable
+    target: null
+    reason: ocf-internal
   object_type:
-    kind: TODO          # likely enum-remap
-    target: TODO
+    kind: unmappable
+    target: null
+    reason: ocf-internal
     values:
-      TX_CONVERTIBLE_CANCELLATION: TODO
+      TX_CONVERTIBLE_CANCELLATION: null
   date:
-    kind: TODO
-    target: TODO
+    kind: rename
+    target: "#/$defs/ConvertibleCancellationTransaction/properties/effectiveDatetime"
   security_id:
-    kind: TODO
-    target: TODO
+    kind: rename
+    target: "#/$defs/ConvertibleTransactionItem/properties/securityId"
   balance_security_id:
-    kind: TODO
-    target: TODO
+    kind: unmappable
+    target: null
+    reason: no-equivalent
   reason_text:
-    kind: TODO
-    target: TODO
+    kind: computed
+    target: "#/$defs/ConvertibleCancellationTransaction/properties/reason"
   amount:
-    kind: TODO
-    target: TODO
+    kind: rename
+    target: "#/$defs/ConvertibleCancellationTransaction/properties/principal"
 ```
 
 ## Notes / open questions
 
-- 
+- This is an OCF transaction object (`ocf_kind: object`), so it is `n/a-object`: its own properties map directly to fields of the corresponding Carta object, `#/$defs/ConvertibleCancellationTransaction` ("A cancellation transaction for a convertible note."). That Carta transaction object is intentionally minimal — it exposes only three properties: `effectiveDatetime`, `reason`, and `principal`. The convertible reference is supplied not by the transaction object but by its enclosing `#/$defs/ConvertibleTransactionItem` (which groups a note's issuance + cancellations and carries `securityId`), so OCF's `security_id` lands there; the rest of OCF's transaction scaffolding and bookkeeping has no home.
+- `date` → `effectiveDatetime` (rename). Granularity differs: OCF `date` is a calendar **date** (`types/Date.schema.json`, `YYYY-MM-DD`), while Carta `effectiveDatetime` is `#/$defs/Iso8601CompleteCalendarDateTime` (a full date-time). Loading OCF into Carta requires widening the date to a datetime (e.g. midnight UTC on the OCF date); reading Carta back into OCF requires truncating to the date. Same date↔datetime caveat applies to every OCF transaction.
+- `amount` → `principal` (rename). OCF `amount` is `types/Monetary.schema.json` and Carta `principal` is `#/$defs/Money`; both carry an amount + currency, and Monetary↔Money is the established bucket-1 type correspondence (see `types/Monetary.mapping.md`). Note the *semantic* gap: OCF `amount` is described as "Amount of monetary value cancelled," whereas Carta `principal` is the convertible note's principal. For a full cancellation these coincide; for a partial cancellation OCF's cancelled amount is a delta, not the remaining/whole principal, so this mapping is exact only for full cancellations and is approximate for partials.
+- `reason_text` → `reason` (computed, lossy). OCF `reason_text` is **free text** ("Reason for the cancellation"); Carta `reason` is the closed 2-value enum `#/$defs/ConvertibleCancellationReason` = {`CONVERTIBLE_CANCELLATION_REASON_CANCELED`, `CONVERTIBLE_CANCELLATION_REASON_CONVERTED`}. Because the OCF property is not itself an enum, this is not a clean `enum-remap`; it requires classifying the free-text reason into one of Carta's two buckets (and the original prose is dropped). Default to `..._CANCELED` unless the text clearly indicates a conversion to equity, in which case use `..._CONVERTED`. Conversion is interesting here: in OCF a convertible that converts is typically modelled with a `TX_CONVERTIBLE_CANCELLATION` (cancelling the note) alongside the resulting issuance, so the `..._CONVERTED` value is reachable; whether OCF data populates `reason_text` with enough signal to pick it is a per-dataset question.
+- `security_id` → `#/$defs/ConvertibleTransactionItem/properties/securityId` (rename). OCF `security_id` is the foreign key identifying the convertible the cancellation acts on ("Identifier for the security ... by which it can be referenced by other transaction objects"). The Carta `ConvertibleCancellationTransaction` `$def` itself carries no security reference (it exposes only `effectiveDatetime`, `reason`, `principal`), but Carta does not orphan the cancellation: `#/$defs/ConvertibleTransactionItem` ("A convertible note with its full transaction history. Groups all lifecycle events (issuance, cancellation) for a single convertible note.") holds the cancellations in its `cancellations` array and carries the `securityId` ("The identifier of the convertible note") that links the whole item — including each cancellation — to its convertible. That `ConvertibleTransactionItem.securityId` is the precise home for OCF's `security_id`, exactly paralleling `StockCancellation` → `#/$defs/CertificateTransactionItem/properties/securityId` and `EquityCompensationCancellation` → `#/$defs/OptionGrant/properties/securityId`. (The same UUID also appears on `#/$defs/ConvertibleNote/properties/securityId`; the transaction-item link is chosen as the closer, per-transaction-grouping analogue.) `WarrantCancellation` differs only because Carta's warrant lifecycle is modelled without an equivalent transaction-item grouping in this snapshot, so its `security_id` stays unmappable.
+- `balance_security_id` → unmappable / `no-equivalent`. This OCF field names the new security that holds the remainder balance after a **partial** cancellation. Carta's cancellation transaction models neither partial-balance splitting nor a pointer to a successor security, so there is no field for it.
+- `id`, `comments`, `object_type` → unmappable / `ocf-internal`. These are OCF object scaffolding: `id` is OCF's internal object identifier, `comments` is free-form annotation, and `object_type` is the discriminant const `TX_CONVERTIBLE_CANCELLATION` (Carta encodes the transaction kind by *which* `$def` is used, not by a stored value). The single `object_type` value `TX_CONVERTIBLE_CANCELLATION` maps to `null` for the same reason. This matches the `objects/Issuer.mapping.md` precedent for `id`/`comments`/`object_type`.
+- Net coverage: all three Carta `ConvertibleCancellationTransaction` fields have an OCF source — `effectiveDatetime` ← `date`, `principal` ← `amount`, `reason` ← `reason_text` (lossy) — plus `security_id` lands on the enclosing `#/$defs/ConvertibleTransactionItem/properties/securityId`. The remaining unmapped OCF fields are either internal scaffolding (`id`, `comments`, `object_type`) or partial-balance/successor-security data (`balance_security_id`) Carta does not record here.
