@@ -6,13 +6,13 @@ ocf_kind: type
 required_fields:
   - description
   - jurisdiction
-target_standard: TBD
-target_version: TBD
-status: draft
+target_standard: Carta
+target_version: v1alpha1 (2026-04-30)
+status: complete
 last_generated: 2026-05-18
 ---
 
-# Type - Security Exemption → TBD
+# Type - Security Exemption → Carta
 
 > Type representation of a securities issuance exemption that includes an unstructured description and a country code for ease of processing and analysis
 
@@ -55,18 +55,26 @@ Source: [`SecurityExemption.schema.json`](./SecurityExemption.schema.json)
 
 ```yaml
 # kind vocabulary: rename | split | combine | enum-remap | computed | unmappable | TODO
-status: draft
-coverage: 0/2
+status: complete
+coverage: 2/2
 
 fields:
   description:
-    kind: TODO
-    target: TODO
+    kind: computed
+    target: "#/$defs/Compliance/properties/federalExemption"
   jurisdiction:
-    kind: TODO
-    target: TODO
+    kind: unmappable
+    target: null
+    reason: no-equivalent
 ```
 
 ## Notes / open questions
 
-- 
+- Bucket: type-to-type (1). OCF's `SecurityExemption` is a structured securities-law exemption type, and Carta has one unambiguous home for the concept: `#/$defs/Compliance/properties/federalExemption` (a `FederalExemption` enum). That is exactly the destination called out in the methodology (`SecurityExemption.description -> Compliance.federalExemption`), so this is bucket-1, not bucket-2 — we map the field that has a home and only mark the genuinely-absent field unmappable.
+- `description` → `#/$defs/Compliance/properties/federalExemption`. The kind is `computed`, **not** `rename` and **not** `enum-remap`:
+  - It is not `enum-remap` because `enum-remap` requires the OCF *source* property to be enum-typed (the validator demands a `values:` map keyed by source enum members). Here the OCF source is a **free-text string** (`"type": "string"`, no `$ref` to an OCF enum), so there is no fixed source value-set to remap onto Carta's `FederalExemption` members.
+  - It is not `rename` because `rename` denotes a value-preserving copy. This mapping is **lossy and requires a classification transform at materialization time**: OCF stores the exemption as prose (e.g. "Sold pursuant to Rule 506(b) of Regulation D"), whereas Carta stores a single coded enum value (`REG_D_506_B`, `RULE_701`, `SECTION_4_A_2`, `REG_S`, `REG_CF`, … or `OTHER`). An importer must parse / classify the free-text description into one of the `FederalExemption` members and fall back to `OTHER` (or `NON_US` for non-U.S. exemptions) when no member matches. The derived-from-source-via-transform shape is why `computed` is used, consistent with the precedent in `types/Ratio.mapping.md` and `objects/Document.mapping.md` (both stretch the vocabulary to `computed` when the target value is produced by a transform rather than copied).
+  - The mapping is lossy and not round-trippable: the original prose cannot be reconstructed from Carta because the enum discards the unstructured detail. Carta's `FederalExemption` is also effectively US-federal-centric (only `SECTION_756` / `SCHEDULE_11A` are GBR, with `NON_US` as the catch-all), so non-US exemptions generally collapse to `NON_US` / `OTHER`.
+- `jurisdiction` → unmappable (`no-equivalent`). The `Compliance` object that hosts `federalExemption` has no field for the **jurisdiction of the exemption itself**; the `FederalExemption` enum is implicitly US-federal and carries no separate jurisdiction slot. Carta does define a `Jurisdiction` type, but it is semantically unrelated: it is the tax-withholding jurisdiction (city / country-subdivision / country used to compute tax withholding on an option exercise, referenced by `TaxWithholding.jurisdiction`), not the jurisdiction whose securities law supplies the exemption. `Compliance.countryOfResidency` / `stateOfResidency` describe the *stakeholder's* residency, not the *exemption's* governing jurisdiction, so they are not a valid home either. There is therefore no Carta field for this OCF property and the jurisdiction context is dropped on import.
+- Object-level routing: OCF `SecurityExemption` is `$ref`'d (as an array `security_law_exemptions`) by the issuance transactions `objects/transactions/issuance/StockIssuance`, `EquityCompensationIssuance`, `ConvertibleIssuance`, and `WarrantIssuance`. Carta has no per-issuance exemption collection; the exemption concept lives on the stakeholder-level `Compliance.federalExemption`. Because Carta exposes a single scalar enum while OCF allows a *list* of exemptions per issuance, only one exemption can be represented faithfully and any additional list entries are lossy at the object level — to be resolved when those issuance objects are mapped.
+```
