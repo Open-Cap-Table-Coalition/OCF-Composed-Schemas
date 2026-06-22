@@ -117,8 +117,10 @@ Source: [`StockTransfer.schema.json`](./StockTransfer.schema.json)
 # security_id and NO discriminator, so the stock family (RSA vs founders/plain
 # stock) is undecidable from the record alone: it is resolved by joining
 # security_id back to the StockIssuance and reading that issuance's
-# issuance_type. Both families are all-unmappable here — Carta has no stock
-# transfer transaction at all (see Notes). See
+# issuance_type. Carta has no stock transfer transaction at all, so the transfer
+# *event* is unmappable in both families; but the transferred-in / remainder
+# securities are stock securities that carry precededBy, so the transfer
+# *lineage* round-trips losslessly (see Notes). See
 # docs/polymorphic-transaction-routing.md §2.2/§4.3.
 status: complete
 
@@ -129,10 +131,13 @@ route_by_security:
   source_mapping: ../issuance/StockIssuance.mapping.md
   exhaustive: true
 
-# shared: every source property. Carta has no stock transfer transaction, so
-# every field is unmappable in BOTH families — no per-variant target maps are
-# needed (a per-variant map only appears where a field's Carta home diverges by
-# family, and here there is no Carta home in either family).
+# shared: every source property. Carta has no stock transfer transaction, so the
+# transfer *event* fields (date/quantity/consideration_text/...) are unmappable in
+# both families. The lineage fields (resulting_security_ids, balance_security_id)
+# do have a home: the transferred-in / remainder securities are stock securities
+# (Certificate / RestrictedStockAward) that carry precededBy.securities, so they
+# carry a per-variant target map (the precededBy $def diverges by family —
+# RestrictedStockAwardPrecededBy for Rsa, CertificatePrecededBy for Default).
 shared:
   id:                     { kind: unmappable, target: null, reason: ocf-internal }
   comments:               { kind: unmappable, target: null, reason: ocf-internal }
@@ -140,8 +145,16 @@ shared:
   date:                   { kind: unmappable, target: null, reason: no-equivalent }
   security_id:            { kind: unmappable, target: null, reason: ocf-internal }
   consideration_text:     { kind: unmappable, target: null, reason: no-equivalent }
-  balance_security_id:    { kind: unmappable, target: null, reason: no-equivalent }
-  resulting_security_ids: { kind: unmappable, target: null, reason: no-equivalent }
+  balance_security_id:
+    kind: computed                 # lineage: the remainder security precededBy
+    target:
+      Rsa:     "#/$defs/RestrictedStockAwardPrecededBy/properties/securities"
+      Default: "#/$defs/CertificatePrecededBy/properties/securities"
+  resulting_security_ids:
+    kind: computed                 # lineage: the transferred-in security precededBy
+    target:
+      Rsa:     "#/$defs/RestrictedStockAwardPrecededBy/properties/securities"
+      Default: "#/$defs/CertificatePrecededBy/properties/securities"
   quantity:               { kind: unmappable, target: null, reason: no-equivalent }
 
 variants:
@@ -163,14 +176,16 @@ coverage:
 
 ## Notes / open questions
 
-- **Join-dependent (downstream), and all-unmappable.** A `StockTransfer` carries no
-  discriminator — only `security_id` — so the stock family it belongs to (`RSA` vs
-  `FOUNDERS_STOCK`/plain stock) is fixed at issuance, not on the transfer record. An
-  importer must resolve `issuance_type` by joining `security_id` back to the
-  `StockIssuance` (the two-pass requirement, §2.2). Here the resolution changes
-  nothing about the field mapping: **both** families route to `primary_targets: null`,
-  because Carta has no stock transfer transaction in either case. The routing block is
-  present for shape consistency with the rest of the family and to document the join.
+- **Join-dependent (downstream); the transfer *event* is unmappable, the lineage is not.**
+  A `StockTransfer` carries no discriminator — only `security_id` — so the stock family it
+  belongs to (`RSA` vs `FOUNDERS_STOCK`/plain stock) is fixed at issuance, not on the
+  transfer record. An importer must resolve `issuance_type` by joining `security_id` back
+  to the `StockIssuance` (the two-pass requirement, §2.2). The resolution does matter for
+  the lineage fields: it selects which precededBy `$def` the resulting/balance securities
+  carry. Both families still route to `primary_targets: null` because Carta has no stock
+  transfer transaction in either case, so the transfer event itself is unrepresentable —
+  but the security lineage (`resulting_security_ids`, `balance_security_id`) round-trips
+  losslessly onto those securities' `precededBy.securities` (see below).
 - **Carta has no stock/certificate transfer transaction.** Carta's stock-security
   transaction surface is the `Certificate*Transaction` family —
   `CertificateIssuanceTransaction` (issuance) and `CertificateCancellationTransaction`
@@ -178,8 +193,9 @@ coverage:
   (`target-schema/Carta.schema.json`) contains exactly one `*TransferTransaction`,
   `#/$defs/WarrantTransferTransaction`, and it is **warrant-specific** (the destination
   for `WarrantTransfer` / `TX_WARRANT_TRANSFER`); re-pointing a stock transfer onto it
-  would mis-type the security. So no field of `TX_STOCK_TRANSFER` has a Carta home and
-  the whole object maps all-unmappable in every variant.
+  would mis-type the security. So no *event*-level field of `TX_STOCK_TRANSFER`
+  (`date`, `quantity`, `consideration_text`, `object_type`) has a Carta home — only the
+  lineage fields land, via the resulting/balance securities' `precededBy` (next bullet).
 - **How Carta represents a stock transfer (object-level recreation).** Carta records the
   resulting **ledger state**, not OCF's per-event log. A secondary sale surfaces as two
   certificate events: the source certificate is cancelled with
@@ -188,6 +204,19 @@ coverage:
   `issuanceReason = CERTIFICATE_ISSUANCE_REASON_TRANSFERRED`. OCF's single `StockTransfer`
   has no 1:1 target in that pair, and per the "never invent a representative target" rule
   the data is reconstructed at import time rather than via a field-level mapping.
+- **The security lineage round-trips losslessly (kind `computed`).** OCF records the
+  transferred-in (`resulting_security_ids`) and remainder (`balance_security_id`)
+  securities as fields *on the transaction*; Carta records the same information as reverse
+  lineage edges *on the resulting/balance security*. The transferred-in and remainder
+  securities here are always stock securities — `Certificate` (plain/founders stock) or
+  `RestrictedStockAward` (RSAs) — and both carry `precededBy -> { reason, securities:
+  [PrecededBySecurity] }`. So the importer derives the placement: it writes the source
+  security's id into each resulting/balance security's `precededBy.securities`, and the
+  OCF *array* becomes a set of reverse lineage edges with no loss. This is `computed`
+  (importer-derived placement onto records the transfer *references*), per-variant
+  because the `$def` diverges by family (`RestrictedStockAwardPrecededBy` for `Rsa`,
+  `CertificatePrecededBy` for `Default`). Only the transfer *event* is unrepresentable
+  in Carta — the security lineage is not.
 - Per-field justification:
     - `object_type` (const `TX_STOCK_TRANSFER`): the discriminator for the stock-transfer
       concept itself. With no Carta stock transfer transaction there is no target enum to
@@ -201,17 +230,24 @@ coverage:
       resolving `issuance_type` on the joined `StockIssuance`; it is not itself a stored
       Carta field on a transfer — `ocf-internal`.
     - `resulting_security_ids` (array, `minItems: 1`): identifiers of the new securities
-      created by the transfer. Carta's only field of this shape is
-      `WarrantTransferTransaction.resultingSecurityId` (single string, warrant-only);
-      there is no stock analogue, and OCF allows multiple resulting securities. In the
-      recreation these become the freshly-issued certificates — no transfer field holds
-      the id list. `no-equivalent`.
+      created by the transfer (the transferred-in shares). These resulting securities are
+      stock securities (`Certificate` for plain/founders stock, `RestrictedStockAward` for
+      RSAs), and each carries `precededBy.securities` — a `PrecededBySecurity` array of
+      reverse lineage edges. The OCF *array* therefore round-trips **losslessly**:
+      the importer writes the transferred security's id into every resulting security's
+      `precededBy.securities`. `computed`, per-variant
+      (`RestrictedStockAwardPrecededBy` for `Rsa`, `CertificatePrecededBy` for `Default`).
+      (Carta's tx-level `WarrantTransferTransaction.resultingSecurityId` is single-valued
+      and warrant-only, so it is not the target here.)
     - `quantity` (`types/Numeric.schema.json`): share units transferred. Carta has
       quantity fields on the transactions it supports (issuance/cancellation), but none on
       a stock transfer transaction. `no-equivalent`.
-    - `balance_security_id`: remainder security for a *partial* transfer. Carta has no
-      transfer-remainder concept; in the recreation the balance is simply another issued
-      certificate retained by the holder. `no-equivalent`.
+    - `balance_security_id`: remainder security for a *partial* transfer. Like the
+      resulting securities, the remainder is a freshly-issued stock security
+      (`Certificate` / `RestrictedStockAward`) that carries `precededBy.securities`, so its
+      origin lineage round-trips losslessly: the importer writes the source security's id
+      into the remainder security's `precededBy.securities`. `computed`, per-variant
+      (`RestrictedStockAwardPrecededBy` for `Rsa`, `CertificatePrecededBy` for `Default`).
     - `consideration_text`: free-text consideration for the secondary sale. Carta has no
       consideration/price slot on any transfer pathway (`acquisitionCost` models cost basis
       on issuance, not free-text consideration). `no-equivalent`.
