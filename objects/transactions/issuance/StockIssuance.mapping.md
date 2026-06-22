@@ -265,7 +265,16 @@ variants:
       board_approval_date: { kind: unmappable, target: null, reason: no-equivalent }
       share_price:         { kind: rename, target: "#/$defs/Certificate/properties/pricePerShare" }
       cost_basis:          { kind: rename, target: "#/$defs/CertificateIssuanceTransaction/properties/acquisitionCost" }
-      vestings:            { kind: unmappable, target: null, reason: no-equivalent }
+      vestings:
+        kind: unmappable
+        target: null
+        reason: no-equivalent
+        note: >-
+          Carta's Certificate has no vestingEvents array (only vestingScheduleTemplateId),
+          so OCF's explicit vesting events have no home for founders/certificate stock — the
+          template ref still maps via vesting_terms_id. RSA keeps both (RestrictedStockAward
+          carries vestingEvents). Carta-side asymmetry: Certificate is the only security object
+          without an events array.
       issuance_type:       { kind: unmappable, target: null, reason: no-equivalent }
 
 coverage:

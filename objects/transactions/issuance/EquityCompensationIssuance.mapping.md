@@ -343,6 +343,10 @@ shared:
       Option: "#/$defs/OptionGrant/properties/vestingEvents"
       Rsu:    "#/$defs/RestrictedStockUnit/properties/vestingEvents"
       Sar:    null
+    note: >-
+      SAR has no Carta security object, so OCF's explicit vesting events have no home for the
+      Sar variant — the template ref still maps via vesting_terms_id →
+      SarIssuanceTransaction.vestingScheduleTemplateId. Option/RSU keep both.
 
 variants:
 
