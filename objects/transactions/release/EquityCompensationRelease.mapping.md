@@ -174,11 +174,10 @@ shared:
       Option: null
       Sar:    null
   resulting_security_ids:
-    # cardinality narrowing: OCF array -> Carta scalar resultingSecurityId.
-    kind: rename
+    kind: computed                 # lineage: importer records the resulting certificate precededBy
     target:
-      Rsu:    "#/$defs/RsuSettlementTransaction/properties/resultingSecurityId"
       Option: null
+      Rsu:    "#/$defs/CertificatePrecededBy/properties/securities"
       Sar:    null
 
 variants:
@@ -217,8 +216,9 @@ coverage:
 - **Only RSUs release.** "Release" here means a vested equity-comp security settling
   into shares. Carta models this *only* as RSU settlement — there is no
   `…ReleaseTransaction` for options or SARs — so the **Option** and **Sar** variants
-  have `primary_targets: null` (whole family unmappable) and every shared field routes
-  to `null` for them. The **Rsu** variant lands on the two Carta defs that describe the
+  have `primary_targets: null` (the release *event* is unmappable for them) and every
+  shared field routes to `null` for them; options and SARs simply do not release. The
+  **Rsu** variant lands on the two Carta defs that describe the
   same RSU-settlement event from two angles: `RsuSettlementTransaction` (the transaction
   record) and `RestrictedStockUnitSettlement` (the settlement line-item carrying the
   economics, nested under `RestrictedStockUnit.settlements`).
@@ -228,10 +228,16 @@ coverage:
   a distinct node from the transaction `date`); `release_price` →
   `RestrictedStockUnitSettlement.settlementPrice` (the only Carta home for the price —
   `RsuSettlementTransaction` has no price field; Monetary ↔ Money); `quantity` →
-  `RsuSettlementTransaction.settledQuantity` (shares released; numeric-string ↔ Decimal);
-  `resulting_security_ids` → `RsuSettlementTransaction.resultingSecurityId`, a
-  **cardinality narrowing** (OCF array → Carta scalar) — the one-release-one-result case
-  round-trips cleanly, multiple resulting IDs cannot be represented without loss.
+  `RsuSettlementTransaction.settledQuantity` (shares released; numeric-string ↔ Decimal).
+- **`resulting_security_ids` round-trips as reverse lineage (kind `computed`).** An RSU
+  release/settlement produces shares — a Carta `Certificate` — and each resulting
+  certificate records its origin in `Certificate.precededBy.securities` (a
+  `PrecededBySecurity` array). The OCF *array* therefore round-trips **losslessly** as a
+  set of reverse lineage edges: the importer writes the released RSU's id into every
+  resulting certificate's `precededBy.securities`. This is `computed` (importer-derived
+  placement onto the records the release *references*), not the lossy tx-level scalar
+  `RsuSettlementTransaction.resultingSecurityId` (a single id that cannot represent
+  multiple results). **Option** and **Sar** stay `null` — they do not release.
 - **`consideration_text` has no home.** OCF stores free text describing consideration
   given for the release; Carta exposes no free-text consideration field on either RSU
   settlement def, so `no-equivalent` in every variant.
