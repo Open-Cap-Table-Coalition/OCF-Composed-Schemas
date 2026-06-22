@@ -107,48 +107,87 @@ Source: [`StockConversion.schema.json`](./StockConversion.schema.json)
 
 ```yaml
 # kind vocabulary: rename | split | combine | enum-remap | computed | unmappable | TODO
+# routing: route_by_security (downstream join). A stock conversion carries only
+# security_id and NO discriminator, so the source security's family is fixed at
+# issuance: join security_id back to the StockIssuance and read its issuance_type
+# (RSA vs FOUNDERS_STOCK / absent). See docs/polymorphic-transaction-routing.md §2.2.
+# Routing is moot for the *outputs* here, though: Carta has no stock-conversion
+# transaction in EITHER family, so every variant is all-unmappable (primary_targets:
+# null). The route block still declares the join so the conversion verb is recorded
+# against the same enum its siblings (issuance/cancellation) partition.
 status: complete
-coverage: 8/8
 
-fields:
-  id:
-    kind: unmappable
-    target: null
-    reason: ocf-internal
-  comments:
-    kind: unmappable
-    target: null
-    reason: ocf-internal
-  object_type:
-    kind: unmappable
-    target: null
-    reason: ocf-internal
-    values:
-      TX_STOCK_CONVERSION: null
-  date:
-    kind: rename
-    target: "#/$defs/CertificateIssuanceTransaction/properties/issueDatetime"
-  security_id:
-    kind: rename
-    target: "#/$defs/CertificateIssuanceTransaction/properties/precededBySecurityId"
-  resulting_security_ids:
-    kind: rename
-    target: "#/$defs/Certificate/properties/securityId"
-  balance_security_id:
-    kind: rename
-    target: "#/$defs/Certificate/properties/securityId"
-  quantity_converted:
-    kind: rename
-    target: "#/$defs/CertificateCancellationTransaction/properties/quantity"
+route_by_security:
+  via: security_id
+  resolve: issuance_type
+  resolve_enum: "https://raw.githubusercontent.com/Open-Cap-Table-Coalition/Open-Cap-Format-OCF/main/schema/enums/StockIssuanceType.schema.json"
+  source_mapping: ../issuance/StockIssuance.mapping.md
+  exhaustive: true
+
+# shared: every source property. There is no Carta conversion home in any family,
+# so all eight are plain unmappable (no per-variant target map is needed — a
+# divergent home would require at least one variant where the field lands).
+shared:
+  id:                     { kind: unmappable, target: null, reason: ocf-internal }
+  comments:               { kind: unmappable, target: null, reason: no-equivalent }
+  object_type:            { kind: unmappable, target: null, reason: ocf-internal }
+  date:                   { kind: unmappable, target: null, reason: no-equivalent }
+  security_id:            { kind: unmappable, target: null, reason: ocf-internal }
+  resulting_security_ids: { kind: unmappable, target: null, reason: no-equivalent }
+  balance_security_id:    { kind: unmappable, target: null, reason: no-equivalent }
+  quantity_converted:     { kind: unmappable, target: null, reason: no-equivalent }
+
+variants:
+
+  Rsa:
+    when: [RSA]
+    primary_targets: null
+    fields: {}
+
+  Default:
+    when: [FOUNDERS_STOCK]
+    primary_targets: null
+    fields: {}
+
+coverage:
+  Rsa: 8/8
+  Default: 8/8
 ```
 
 ## Notes / open questions
 
-- **Carta has no stock-conversion transaction.** OCF treats a stock-class conversion as a first-class transaction object (`TX_STOCK_CONVERSION`) that points at the converted security and the securities it became. Carta's transaction surface is issuance/cancellation only — there is no `StockConversionTransaction`, no conversion `$def` of any kind for certificates, and no transaction-type discriminator value for a conversion (Carta's `CertificateTransactionItem` groups exactly two lifecycle events: `issuance` and `cancellations[]`). Instead, Carta records the *same economic event* as a pair of ordinary certificate transactions: the converted (source) certificate is **cancelled** and a **new certificate is issued** for the resulting share class. Both the cancellation-reason and issuance-reason enums carry a dedicated `..._SHARE_CLASS_CONVERTED` member (`CertificateCancellationReason.CERTIFICATE_CANCELLATION_REASON_SHARE_CLASS_CONVERTED`, `CertificateIssuanceReason.CERTIFICATE_ISSUANCE_REASON_SHARE_CLASS_CONVERTED`), and the resulting certificate's provenance is recorded by `CertificateIssuanceTransaction.precededBySecurityId` / `Certificate.precededBy` (`CertificatePrecededByReason.CERTIFICATE_PRECEDED_BY_REASON_SHARE_CLASS_CONVERTED`). So this single OCF object fans out across two Carta transactions plus the resulting `Certificate` (and, for a partial conversion, a second re-issued `Certificate` carrying the `BALANCE_REISSUED` reason for the remainder); there is no one Carta object that holds all of its fields, and the conversion is **inferred** from the `SHARE_CLASS_CONVERTED` / `BALANCE_REISSUED` reason codes rather than stored as a typed event. The per-field mappings below name the Carta property that genuinely carries each datum on whichever of those records is its natural home.
-- `date` → `CertificateIssuanceTransaction.issueDatetime`. OCF's conversion `date` is the date the conversion occurred; in Carta the conversion is materialised by issuing the resulting certificate, whose issue datetime is that same date. Two caveats: (a) **date-vs-datetime** — OCF `date` is a calendar `Date` (`Iso8601CompleteCalendarDate`-equivalent) while `issueDatetime` is `Iso8601CompleteCalendarDateTime`, so a (UTC) time-of-day must be synthesised on export and is dropped on import; (b) the same date also belongs on the source certificate's `CertificateCancellationTransaction.effectiveDatetime` — both Carta records carry the conversion date, and there is no single conversion-level date field. Pointed at the issuance side because that is where `precededBySecurityId` (the source-security link) also lives.
-- `security_id` → `CertificateIssuanceTransaction.precededBySecurityId`. OCF `security_id` identifies the security being converted (the source stock). On the Carta side that source security is referenced by the resulting certificate's issuance transaction as `precededBySecurityId` ("the identifier of the security that preceded this certificate"), paired with `CertificatePrecededByReason.CERTIFICATE_PRECEDED_BY_REASON_SHARE_CLASS_CONVERTED`. (It is the *same* id that the source certificate's `CertificateCancellationTransaction` operates on; Carta keys the cancellation by the security being cancelled rather than by a stored field, so the issuance-side `precededBySecurityId` is the explicit, queryable home for the converted-security reference.)
-- `resulting_security_ids` → `Certificate/properties/securityId`. OCF allows a conversion to produce *one or more* resulting securities (array). Each resulting security in Carta is a `Certificate`, identified by `Certificate.securityId`. This is an **array→scalar fan-out**: OCF's single array maps to one `securityId` per issued resulting certificate; Carta has no single field holding the *set* of resulting securities for a conversion. If a stock conversion ever yields more than one resulting security, it becomes multiple Carta certificate issuances (each with its own `precededBySecurityId` back to the same source).
-- `quantity_converted` → `CertificateCancellationTransaction.quantity`. OCF's `quantity_converted` is the number of *source* units consumed by the conversion. The natural Carta home is the source certificate's cancellation `quantity` (the units removed from the converted security), not the resulting certificate's issuance `quantity` — for a stock-class conversion at a 1:1 ratio those coincide, but OCF's stock-conversion object carries no conversion ratio, so the resulting-certificate quantity is not guaranteed equal and the *converted* count is unambiguously the cancelled-from-source count. (Type note: OCF `Numeric` → Carta `Decimal`; both are arbitrary-precision decimal strings, no transform.)
-- `balance_security_id` → `Certificate/properties/securityId` (the *balance* certificate, distinguished by reason `BALANCE_REISSUED`). For a *partial* conversion, OCF records a separate security holding the unconverted remainder. Carta materialises that remainder as its own re-issued `Certificate`, and the dedicated reason code `CertificatePrecededByReason.CERTIFICATE_PRECEDED_BY_REASON_BALANCE_REISSUED` ("the certificate was issued representing the remainder of a certificate that had been partially transacted") is exactly this concept; the same value also exists as `CertificateIssuanceReason`/`CertificatePrecededByReason` members on the bundle. The balance security's own id is therefore the balance certificate's `Certificate.securityId` — the *same* property that `resulting_security_ids` targets, so the two are disambiguated purely by the preceded-by/issuance reason on the issuing transaction: the converted-share certificate carries `SHARE_CLASS_CONVERTED`, the remainder certificate carries `BALANCE_REISSUED`. (`Certificate.precededBy` / `PrecededBySecurity.id` holds the *predecessor* (source) security id, not the balance certificate's own id, so `securityId` — not `precededBy` — is the correct home for `balance_security_id` itself.) The only loss is that Carta has no single field linking a conversion to "its" balance certificate; the link is reconstructed from `precededBySecurityId` + the `BALANCE_REISSUED` reason, exactly as the conversion itself is reconstructed.
-- `id`, `comments`, `object_type` → unmappable / `ocf-internal`. Standard OCF object scaffolding. `id` is OCF's own object identifier (Carta assigns server-side ids); `object_type` is the fixed discriminator `TX_STOCK_CONVERSION` (Carta types transactions positionally per endpoint and has no conversion discriminator at all — its nearest analogue is the `SHARE_CLASS_CONVERTED` reason codes, not a transaction type, so this const has no enum target and `values:` maps to null); `comments` has no Carta slot.
-- Open question: because Carta reconstructs a stock conversion from a cancel+issue pair joined by `SHARE_CLASS_CONVERTED` reason codes and `precededBySecurityId`, a round-trip OCF→Carta→OCF cannot recover the original single `TX_STOCK_CONVERSION` object deterministically without a convention for pairing the two Carta transactions (e.g., matching `precededBySecurityId` on the issuance to the cancelled source security and requiring both reason codes to be `SHARE_CLASS_CONVERTED`). This pairing/identity convention is an export-tooling concern, not expressible in the schema.
+- **Downstream join (no discriminator on the record).** A stock conversion carries
+  only `security_id` and the fixed `object_type` const — it has no `issuance_type` of
+  its own. The source security's family was fixed at issuance, so an importer must
+  resolve `issuance_type` by joining `security_id` back to the `StockIssuance`
+  (RSA → `RestrictedStockAward` family; FOUNDERS_STOCK / absent → plain `Certificate`),
+  the two-pass requirement in docs/polymorphic-transaction-routing.md §2.2. The
+  `route_by_security:` block declares that join and partitions the
+  `StockIssuanceType` enum (`{RSA, FOUNDERS_STOCK}`) exactly, just as the sibling
+  `StockIssuance` mapping does at issuance time.
+- **All variants are unmappable — Carta has no stock-conversion transaction in
+  either family.** OCF models a stock-class conversion as a first-class transaction
+  object (`TX_STOCK_CONVERSION`) pointing at the converted security and the securities
+  it became. Carta's transaction surface is issuance / cancellation only: there is no
+  `StockConversionTransaction`, no conversion `$def`, and no transaction-type for a
+  conversion in the `RestrictedStockAward` family or the `Certificate` family. (Carta
+  instead reconstructs the economic event as a cancel-of-source + issue-of-resulting
+  pair joined by `SHARE_CLASS_CONVERTED` reason codes and `precededBySecurityId` — a
+  reason-code convention, not a typed event, so there is no single Carta `$def` that
+  is "the conversion." It cannot be a `primary_target`.) Hence `primary_targets: null`
+  for both `Rsa` and `Default`, and every field is `unmappable`.
+- **Per field, why no home.** `date`, `resulting_security_ids`, `balance_security_id`,
+  and `quantity_converted` would each only land on the *synthesised* cancel/issue
+  Carta records that no conversion `$def` owns, so they have no conversion-level
+  Carta target (`no-equivalent`). `security_id` is the `route_by_security.via` join
+  key — it routes the family, it is not itself a stored Carta field (`ocf-internal`).
+  `id` is OCF's own object identifier and `object_type` is the fixed discriminator
+  const `TX_STOCK_CONVERSION` (Carta types transactions positionally and has no
+  conversion discriminator at all) — both `ocf-internal`.
+- **Coverage.** Both variants are `8/8`: all eight source properties are shared and
+  non-TODO (every one is a resolved `unmappable`), and neither variant adds any
+  variant-specific fields, so X = shared (8) + own (0) = N = 8.
+- Open question: representing a stock conversion on Carta at all requires the
+  cancel+issue reason-code convention described above; that pairing/identity logic is
+  export-tooling territory, not expressible in this static mapping. The mapping here
+  faithfully records that no in-schema Carta home exists.
