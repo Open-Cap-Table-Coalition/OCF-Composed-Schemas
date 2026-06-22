@@ -183,6 +183,9 @@ Source: [`StockIssuance.schema.json`](./StockIssuance.schema.json)
 # kind vocabulary: rename | split | combine | enum-remap | computed | unmappable | TODO
 # routing: discriminator (issuance-time) — issuance_type routes an RSA to Carta's
 # RestrictedStockAward family; FOUNDERS_STOCK / absent is a plain Certificate.
+# shared: fields common to both variants. A field whose Carta home differs by
+# variant carries a per-variant target map { Rsa/Default: pointer }; the validator
+# enforces the keys stay in sync with the variant set.
 status: complete
 
 discriminator:
@@ -193,18 +196,50 @@ shared:
   id:                        { kind: unmappable, target: null, reason: ocf-internal }
   comments:                  { kind: unmappable, target: null, reason: no-equivalent }
   object_type:               { kind: unmappable, target: null, reason: ocf-internal }
-  date:                      { kind: rename, target: "#/$defs/CertificateIssuanceTransaction/properties/issueDatetime" }
-  security_id:               { kind: rename, target: "#/$defs/Certificate/properties/securityId" }
-  custom_id:                 { kind: rename, target: "#/$defs/Certificate/properties/securityLabel" }
-  stakeholder_id:            { kind: rename, target: "#/$defs/Certificate/properties/stakeholderId" }
+  date:
+    kind: rename
+    target:
+      Rsa:     "#/$defs/RsaIssuanceTransaction/properties/issueDatetime"
+      Default: "#/$defs/CertificateIssuanceTransaction/properties/issueDatetime"
+  security_id:
+    kind: rename
+    target:
+      Rsa:     "#/$defs/RestrictedStockAward/properties/securityId"
+      Default: "#/$defs/Certificate/properties/securityId"
+  custom_id:
+    kind: rename
+    target:
+      Rsa:     "#/$defs/RestrictedStockAward/properties/securityLabel"
+      Default: "#/$defs/Certificate/properties/securityLabel"
+  stakeholder_id:
+    kind: rename
+    target:
+      Rsa:     "#/$defs/RestrictedStockAward/properties/stakeholderId"
+      Default: "#/$defs/Certificate/properties/stakeholderId"
   stockholder_approval_date: { kind: unmappable, target: null, reason: no-equivalent }
   consideration_text:        { kind: unmappable, target: null, reason: no-equivalent }
   security_law_exemptions:   { kind: unmappable, target: null, reason: no-equivalent }
-  stock_class_id:            { kind: rename, target: "#/$defs/Certificate/properties/shareClassId" }
-  stock_plan_id:             { kind: rename, target: "#/$defs/CertificateIssuanceTransaction/properties/equityPlanId" }
+  stock_class_id:
+    kind: rename
+    target:
+      Rsa:     "#/$defs/RestrictedStockAward/properties/shareClassId"
+      Default: "#/$defs/Certificate/properties/shareClassId"
+  stock_plan_id:
+    kind: rename
+    target:
+      Rsa:     "#/$defs/RsaIssuanceTransaction/properties/equityPlanId"
+      Default: "#/$defs/CertificateIssuanceTransaction/properties/equityPlanId"
   share_numbers_issued:      { kind: unmappable, target: null, reason: no-equivalent }
-  quantity:                  { kind: rename, target: "#/$defs/CertificateIssuanceTransaction/properties/quantity" }
-  vesting_terms_id:          { kind: rename, target: "#/$defs/CertificateIssuanceTransaction/properties/vestingScheduleTemplateId" }
+  quantity:
+    kind: rename
+    target:
+      Rsa:     "#/$defs/RsaIssuanceTransaction/properties/quantity"
+      Default: "#/$defs/CertificateIssuanceTransaction/properties/quantity"
+  vesting_terms_id:
+    kind: rename
+    target:
+      Rsa:     "#/$defs/RsaIssuanceTransaction/properties/vestingScheduleTemplateId"
+      Default: "#/$defs/CertificateIssuanceTransaction/properties/vestingScheduleTemplateId"
   stock_legend_ids:          { kind: unmappable, target: null, reason: no-equivalent }
 
 variants:
@@ -251,8 +286,11 @@ coverage:
   `RestrictedStockAward` but **not** on `Certificate` (which carries only
   `vestingScheduleTemplateId`), so they are RSA-only; `share_price`/`cost_basis` land on the
   resolved family's security/transaction object.
-- **`shared:` targets are pinned to the Certificate family as representative** (routing doc §6.1);
-  the importer writes the resolved variant's objects.
+- **`shared:` fields use per-variant target maps where the home diverges** (`date`/`security_id`/
+  `custom_id`/`stakeholder_id`/`stock_class_id`/`stock_plan_id`/`quantity`/`vesting_terms_id`): each
+  is a `target: { Rsa/Default: pointer }` map landing on the resolved family's transaction/security
+  object. Both families carry every divergent field (unlike SAR in `EquityCompensationIssuance`), so
+  no `null` columns are needed; the validator enforces the keys stay in sync with the variant set.
 - **Genuinely unmappable.** `share_numbers_issued` (no Carta range type), `stock_legend_ids`
   (OCF-required; no Carta legend store), and `issuance_type` itself (no Carta field records the
   RSA/founders flavor; `CertificateIssuanceReason` is a *why-issued* enum, a different concept) have

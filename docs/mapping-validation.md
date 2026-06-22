@@ -85,6 +85,35 @@ route_by_security:
 variants: { ... }                  # as above
 ```
 
+**Per-variant target maps.** A `shared:` field is common to every variant, but its Carta *home*
+may differ by variant (e.g. `quantity` lands on `OptionIssuanceTransaction` for options but
+`RsuIssuanceTransaction` for RSUs). Rather than pinning such a field to one representative family,
+give it a `target:` **map** keyed by variant label instead of a single pointer:
+
+```yaml
+shared:
+  quantity:
+    kind: rename
+    target:
+      Option: "#/$defs/OptionIssuanceTransaction/properties/quantity"
+      Rsu:    "#/$defs/RsuIssuanceTransaction/properties/quantity"
+      Sar:    "#/$defs/SarIssuanceTransaction/properties/quantity"
+  security_id:
+    kind: rename
+    target:
+      Option: "#/$defs/OptionGrant/properties/securityId"
+      Rsu:    "#/$defs/RestrictedStockUnit/properties/securityId"
+      Sar:    null   # no Carta security object for SARs → unmappable in this variant
+```
+
+The validator enforces the keys **stay in sync** with the variant set: every variant must have an
+entry (none missing) and no key may name a non-existent variant. Each value is a resolving `#/...`
+pointer (not the `true` sentinel) or `null` (= unmappable in that variant; still counts as a
+covered, non-`TODO` entry). Map targets are allowed only on `rename` / `computed` / `combine`
+`shared:` entries — not on `enum-remap` (route enum values in `variants.fields`) and not inside a
+variant's own `fields:`. `--verbose` prints each variant's target (or `✗ unmappable`) beneath the
+field.
+
 **Checks (in addition to the per-field rules above):** the discriminator is enum-typed; the
 variants' `when:` sets **partition** the routed enum — pairwise disjoint, and with
 `exhaustive: true` every enum value is claimed by some variant (handled or explicitly unroutable);

@@ -39,7 +39,16 @@ function renderItem(name: string, entry: unknown, routeTargets?: Record<string, 
     case "rename":
     case "computed":
     case "combine":
-      item = { label: `${name} → ${asStringOr(target, "?")} (${kind})`, children: [] };
+      // A per-variant target map (shared field with a divergent home): render each
+      // variant's own target (or ✗ where it has none) instead of one borrowed pointer.
+      item = isPlainObject(target)
+        ? {
+            label: `${name} (${kind} · per variant)`,
+            children: Object.entries(target).map(([variant, ptr]) =>
+              ptr === null ? `${variant} ✗ unmappable` : `${variant} → ${asStringOr(ptr, "?")}`
+            ),
+          }
+        : { label: `${name} → ${asStringOr(target, "?")} (${kind})`, children: [] };
       break;
 
     case "split":

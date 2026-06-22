@@ -322,6 +322,109 @@ describe("routed_to: (verified round-trip edges)", () => {
   });
 });
 
+describe("per-variant target maps (divergent shared targets)", () => {
+  // A shared field whose Carta home differs per variant: instead of pinning it to
+  // one representative family, target: is a { variantLabel → pointer|null } map.
+  const BOTH = {
+    Option: "#/$defs/OptionTx/properties/quantity",
+    Rsu: "#/$defs/RsuTx/properties/quantity",
+  };
+
+  function withSharedQuantity(
+    target: unknown,
+    over: Record<string, unknown> = {}
+  ): Record<string, unknown> {
+    return issuanceMapping({ shared: { quantity: { kind: "rename", target } }, ...over });
+  }
+
+  it("accepts a per-variant target map that covers every variant", () => {
+    expect(messages(input({ mapping: withSharedQuantity(BOTH) }))).toEqual([]);
+  });
+
+  it("rejects a per-variant target map that is missing a variant (keys must stay in sync)", () => {
+    const m = withSharedQuantity({ Option: "#/$defs/OptionTx/properties/quantity" });
+    const errs = messages(input({ mapping: m }));
+    expect(errs.some((s) => /target map is missing variant "Rsu"/i.test(s))).toBe(true);
+  });
+
+  it("rejects a per-variant target map with an unknown variant key", () => {
+    const m = withSharedQuantity({ ...BOTH, Bogus: "#/$defs/RsuTx/properties/quantity" });
+    const errs = messages(input({ mapping: m }));
+    expect(errs.some((s) => /target map key "Bogus" is not a variant/i.test(s))).toBe(true);
+  });
+
+  it("rejects a per-variant target value that does not resolve", () => {
+    const m = withSharedQuantity({
+      Option: "#/$defs/OptionTx/properties/quantity",
+      Rsu: "#/$defs/Nope",
+    });
+    const errs = messages(input({ mapping: m }));
+    expect(errs.some((s) => /quantity/.test(s) && /does not resolve/.test(s))).toBe(true);
+  });
+
+  it("rejects a per-variant target value that is neither a pointer nor null", () => {
+    const m = withSharedQuantity({ Option: "#/$defs/OptionTx/properties/quantity", Rsu: 42 });
+    const errs = messages(input({ mapping: m }));
+    expect(errs.some((s) => /quantity/.test(s) && /pointer or null/i.test(s))).toBe(true);
+  });
+
+  it("accepts null for a variant (field unmappable in that variant only)", () => {
+    const m = withSharedQuantity({ Option: "#/$defs/OptionTx/properties/quantity", Rsu: null });
+    expect(messages(input({ mapping: m }))).toEqual([]);
+  });
+
+  it("counts a null per-variant target as a covered (non-TODO) entry", () => {
+    // quantity is null in Rsu but is still one of the 3 covered properties → 3/3 holds, 2/3 fails.
+    const m = withSharedQuantity(
+      { Option: "#/$defs/OptionTx/properties/quantity", Rsu: null },
+      { coverage: { Option: "3/3", Rsu: "2/3" } }
+    );
+    const errs = messages(input({ mapping: m }));
+    expect(errs.some((s) => /Rsu/.test(s) && /numerator/i.test(s))).toBe(true);
+  });
+
+  it("rejects a per-variant target map on an enum-remap entry", () => {
+    const m = issuanceMapping({ shared: { quantity: { kind: "enum-remap", target: BOTH } } });
+    const errs = messages(input({ mapping: m }));
+    expect(errs.some((s) => /per-variant target map.*enum-remap/i.test(s))).toBe(true);
+  });
+
+  it("rejects a per-variant target map used in variants.fields (shared-only)", () => {
+    const m = issuanceMapping();
+    (m.variants as { Option: { fields: Record<string, unknown> } }).Option.fields.exercise_price = {
+      kind: "rename",
+      target: BOTH,
+    };
+    const errs = messages(input({ mapping: m }));
+    expect(errs.some((s) => /per-variant target map.*only valid on shared/i.test(s))).toBe(true);
+  });
+
+  it("renders each variant's target (or ✗) under the shared field in the verbose report", () => {
+    const out = renderMappingReport({
+      file: "f.mapping.md",
+      frontmatter: { target_standard: "Carta" },
+      mapping: {
+        status: "complete",
+        discriminator: { field: "comp_type", exhaustive: true },
+        shared: {
+          quantity: {
+            kind: "rename",
+            target: { Option: "#/$defs/OptionTx/properties/quantity", Rsu: null },
+          },
+        },
+        variants: {
+          Option: { when: ["OPT"], primary_targets: ["#/$defs/OptionTx"], fields: {} },
+          Rsu: { when: ["RSU"], primary_targets: ["#/$defs/RsuTx"], fields: {} },
+        },
+        coverage: { Option: "1/1", Rsu: "1/1" },
+      },
+    });
+    expect(out).toContain("Option → #/$defs/OptionTx/properties/quantity");
+    expect(out).toContain("Rsu ✗ unmappable");
+    expect(out).not.toMatch(/quantity → \? \(rename\)/);
+  });
+});
+
 describe("polymorphic mapping — downstream (route_by_security)", () => {
   function dinput(over: Partial<ValidateInput> = {}): ValidateInput {
     return input({

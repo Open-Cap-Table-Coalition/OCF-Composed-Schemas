@@ -373,6 +373,21 @@ function validatePolymorphicMapping(
   }
   const shared = rawShared as Record<string, unknown>;
 
+  // Per-variant target maps: a shared field whose Carta home differs by variant
+  // carries `target: { <variantLabel>: pointer|null }`. Validate the maps (keys in
+  // sync with the variant set; values resolve) once, and keep the projected
+  // scalar-target entry to splice into each variant's effective field map below.
+  // `simpleShared` is every other (uniform-target) shared field.
+  const variantLabels = Object.keys(variants);
+  const { mapped: mappedShared, projected: projectedShared } = validateSharedTargetMaps(
+    shared,
+    variantLabels,
+    input.targetBundle,
+    err
+  );
+  const simpleShared: Record<string, unknown> = {};
+  for (const [k, v] of Object.entries(shared)) if (!mappedShared.has(k)) simpleShared[k] = v;
+
   // 3. Partition the routed enum across variants' `when:` sets.
   const claimedBy: Record<string, string[]> = {};
   for (const [label, rawV] of Object.entries(variants)) {
@@ -470,17 +485,27 @@ function validatePolymorphicMapping(
       err(null, `variant "${label}" fields must be a map`);
       continue;
     }
-    for (const k of Object.keys(rawVFields)) {
+    const vFields: Record<string, unknown> = {};
+    for (const [k, fe] of Object.entries(rawVFields as Record<string, unknown>)) {
       if (k in shared) {
         err(
           null,
           `variant "${label}" field "${k}" also appears in shared: (a field is either shared or variant-specific)`
         );
       }
+      // A per-variant target map expresses "shared field, divergent home"; inside
+      // a variant (already variant-specific) it is meaningless — flag and neutralize.
+      if (isPlainObject(fe) && isPlainObject(fe.target)) {
+        err(`${label}.${k}`, "a per-variant target map is only valid on shared: entries");
+        vFields[k] = unmappableProjection();
+      } else {
+        vFields[k] = fe;
+      }
     }
     const effective: Record<string, unknown> = {
-      ...shared,
-      ...(rawVFields as Record<string, unknown>),
+      ...simpleShared,
+      ...(projectedShared[label] ?? {}),
+      ...vFields,
     };
     const variantErr: ErrFn = (field, message) => err(field ? `${label}.${field}` : null, message);
     const nonTodo = validateFieldMap(effective, properties, strict, opts, input, variantErr);
@@ -536,6 +561,104 @@ function validatePolymorphicMapping(
       err(null, `coverage has an entry for "${label}" but there is no such variant`);
     }
   }
+}
+
+/**
+ * A per-variant `null`/absent target: the field has no Carta home in this
+ * variant. Projected to an `unmappable` so coverage counts it (non-TODO) and the
+ * per-field validator does not re-flag it. The reason is implicit — the target
+ * object is simply absent from this variant's family — so it carries a blanket
+ * `no-equivalent`, which never surfaces (the report renders it from the map).
+ */
+function unmappableProjection(): Record<string, unknown> {
+  return { kind: "unmappable", target: null, reason: "no-equivalent" };
+}
+
+/** Kinds whose `target:` is a single pointer and so may diverge per variant. */
+const PER_VARIANT_TARGET_KINDS = new Set(["rename", "computed", "combine"]);
+
+/**
+ * Validate per-variant target maps on `shared:` entries. A shared field whose
+ * Carta home differs by variant carries `target: { <variantLabel>: pointer|null }`
+ * instead of a single pointer — so RSU/SAR fields name their own objects instead
+ * of borrowing a representative family's. The map's keys must stay in sync with
+ * the variant set (every variant present, none unknown); each value is a resolving
+ * `#/...` pointer or `null` (= unmappable in that variant). Returns the set of
+ * fields that used a map and, per variant, the projected scalar-target entry to
+ * splice into that variant's effective field map.
+ */
+function validateSharedTargetMaps(
+  shared: Record<string, unknown>,
+  variantLabels: string[],
+  bundle: unknown | null,
+  err: ErrFn
+): { mapped: Set<string>; projected: Record<string, Record<string, unknown>> } {
+  const mapped = new Set<string>();
+  const projected: Record<string, Record<string, unknown>> = {};
+  for (const label of variantLabels) projected[label] = {};
+
+  for (const [field, rawEntry] of Object.entries(shared)) {
+    if (!isPlainObject(rawEntry) || !isPlainObject(rawEntry.target)) continue;
+    mapped.add(field);
+    const entry = rawEntry;
+    const map = entry.target as Record<string, unknown>;
+    const kind = typeof entry.kind === "string" ? entry.kind : String(entry.kind);
+
+    if (!PER_VARIANT_TARGET_KINDS.has(kind)) {
+      err(
+        field,
+        `a per-variant target map is not supported for kind ${kind} ` +
+          "(only rename/computed/combine; route enum values in variants.fields)"
+      );
+      for (const label of variantLabels) projected[label]![field] = unmappableProjection();
+      continue;
+    }
+
+    // Keys must be exactly the variant set: every variant present, none unknown.
+    for (const key of Object.keys(map)) {
+      if (!variantLabels.includes(key)) {
+        err(field, `target map key "${key}" is not a variant (have: ${variantLabels.join(", ")})`);
+      }
+    }
+    for (const label of variantLabels) {
+      if (!(label in map)) err(field, `target map is missing variant "${label}"`);
+    }
+
+    // Each value: null (= unmappable here) or a resolving "#/..." pointer.
+    for (const label of variantLabels) {
+      const val = label in map ? map[label] : null;
+      if (val === null) {
+        projected[label]![field] = unmappableProjection();
+        continue;
+      }
+      if (typeof val !== "string" || !val.startsWith("#/")) {
+        err(field, `target for variant "${label}" must be a "#/..." pointer or null`);
+        projected[label]![field] = unmappableProjection();
+        continue;
+      }
+      if (bundle !== null) {
+        const res = resolveJsonPointer(bundle, val);
+        if (!res.found) {
+          err(
+            field,
+            `target for variant "${label}" "${val}" does not resolve in the target bundle`
+          );
+          projected[label]![field] = unmappableProjection();
+          continue;
+        }
+        if (derefNode(bundle, res.value) === true) {
+          err(
+            field,
+            `target for variant "${label}" "${val}" resolves to \`true\` (excluded from the bundle snapshot)`
+          );
+          projected[label]![field] = unmappableProjection();
+          continue;
+        }
+      }
+      projected[label]![field] = { ...entry, target: val };
+    }
+  }
+  return { mapped, projected };
 }
 
 function validateEntryShape(
