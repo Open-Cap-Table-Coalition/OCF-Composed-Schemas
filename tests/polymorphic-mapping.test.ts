@@ -292,7 +292,7 @@ describe("routed_to: (verified round-trip edges)", () => {
     expect(errs.some((s) => /routed_to.*must be a map/i.test(s))).toBe(true);
   });
 
-  it("renders a routed_to value as '→ variant (routed)', not dropped", () => {
+  it("renders a routed_to value with the destination variant's Carta targets", () => {
     const out = renderMappingReport({
       file: "f.mapping.md",
       frontmatter: { target_standard: "Carta" },
@@ -317,7 +317,7 @@ describe("routed_to: (verified round-trip edges)", () => {
         coverage: { Option: "1/1", Rsu: "1/1" },
       },
     });
-    expect(out).toContain("RSU → Rsu (routed)");
+    expect(out).toContain('RSU → routed to "Rsu" variant: #/$defs/RsuTx');
     expect(out).not.toMatch(/RSU ✗ dropped/);
   });
 });

@@ -29,7 +29,8 @@ polymorphic mapping (below), an entry may also carry a **`routed_to:`** map
 (`{ discriminator value → variant label }`) — a *verified round-trip edge*: a value `null`-ed in
 this variant because it belongs to another. The validator confirms each named variant actually
 *claims* that value (a real, deterministic route), and `--verbose` renders it as
-`VALUE → Variant (routed)` instead of `VALUE ✗ dropped`.
+`VALUE → routed to "Variant" variant: <that variant's Carta primary_targets>` instead of
+`VALUE ✗ dropped` — so it is clear which Carta objects the value actually lands in.
 
 **Semantic (when `target_standard` ≠ `TBD`):** every string target must be a `#/...` JSON pointer
 that resolves in the target bundle (`target_standard` → bundle file via `TARGET_BUNDLES` in the

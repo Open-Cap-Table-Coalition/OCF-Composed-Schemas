@@ -27,7 +27,7 @@ interface Item {
   children: string[];
 }
 
-function renderItem(name: string, entry: unknown): Item {
+function renderItem(name: string, entry: unknown, routeTargets?: Record<string, string[]>): Item {
   if (!isPlainObject(entry)) {
     return { label: `${name} ⚠ malformed entry`, children: [] };
   }
@@ -58,7 +58,11 @@ function renderItem(name: string, entry: unknown): Item {
             children: Object.entries(values).map(([key, value]) => {
               if (value !== null) return `${key} → ${String(value)}`;
               const route = routedTo[key];
-              return typeof route === "string" ? `${key} → ${route} (routed)` : `${key} ✗ dropped`;
+              if (typeof route !== "string") return `${key} ✗ dropped`;
+              const tgts = routeTargets?.[route] ?? [];
+              return tgts.length
+                ? `${key} → routed to "${route}" variant: ${tgts.join(", ")}`
+                : `${key} → routed to "${route}" variant`;
             }),
           }
         : { label, children: [] };
@@ -107,9 +111,11 @@ function renderTree(nodes: Tree[], prefix = ""): string[] {
   return out;
 }
 
-function fieldTrees(fields: unknown): Tree[] {
+function fieldTrees(fields: unknown, routeTargets?: Record<string, string[]>): Tree[] {
   return isPlainObject(fields)
-    ? Object.entries(fields).map(([name, entry]) => itemToTree(renderItem(name, entry)))
+    ? Object.entries(fields).map(([name, entry]) =>
+        itemToTree(renderItem(name, entry, routeTargets))
+      )
     : [];
 }
 
@@ -132,10 +138,22 @@ export function renderMappingReport(input: MappingReportInput): string {
       : "variants";
     const coverageMap = isPlainObject(input.mapping.coverage) ? input.mapping.coverage : {};
 
+    // variant label → its primary_targets, so routed_to edges can name the
+    // actual Carta destination ("routed to Rsu variant: RsuIssuanceTransaction").
+    const variantTargets: Record<string, string[]> = {};
+    for (const [label, rawV] of Object.entries(rawVariants)) {
+      const pts =
+        isPlainObject(rawV) && Array.isArray(rawV.primary_targets) ? rawV.primary_targets : [];
+      variantTargets[label] = pts.filter((p): p is string => typeof p === "string");
+    }
+
     const roots: Tree[] = [{ label: routing, children: [] }];
     const shared = input.mapping.shared;
     if (isPlainObject(shared) && Object.keys(shared).length > 0) {
-      roots.push({ label: `shared (${Object.keys(shared).length})`, children: fieldTrees(shared) });
+      roots.push({
+        label: `shared (${Object.keys(shared).length})`,
+        children: fieldTrees(shared, variantTargets),
+      });
     }
     for (const [label, rawV] of Object.entries(rawVariants)) {
       const v = isPlainObject(rawV) ? rawV : {};
@@ -144,7 +162,7 @@ export function renderMappingReport(input: MappingReportInput): string {
         : "";
       roots.push({
         label: `${label} (${asStringOr(coverageMap[label], "?")})${targets}`,
-        children: fieldTrees(v.fields),
+        children: fieldTrees(v.fields, variantTargets),
       });
     }
     return [`${input.file}  ${status} polymorphic → ${target}`, ...renderTree(roots)].join("\n");
