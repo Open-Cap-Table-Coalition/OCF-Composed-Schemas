@@ -27,59 +27,156 @@ interface Item {
   children: string[];
 }
 
-function renderItem(name: string, entry: unknown): Item {
+function renderItem(name: string, entry: unknown, routeTargets?: Record<string, string[]>): Item {
   if (!isPlainObject(entry)) {
     return { label: `${name} ⚠ malformed entry`, children: [] };
   }
   const kind = entry.kind;
   const target = entry.target;
 
+  let item: Item;
   switch (kind) {
     case "rename":
     case "computed":
     case "combine":
-      return { label: `${name} → ${asStringOr(target, "?")} (${kind})`, children: [] };
+      // A per-variant target map (shared field with a divergent home): render each
+      // variant's own target (or ✗ where it has none) instead of one borrowed pointer.
+      item = isPlainObject(target)
+        ? {
+            label: `${name} (${kind} · per variant)`,
+            children: Object.entries(target).map(([variant, ptr]) =>
+              ptr === null ? `${variant} ✗ unmappable` : `${variant} → ${asStringOr(ptr, "?")}`
+            ),
+          }
+        : { label: `${name} → ${asStringOr(target, "?")} (${kind})`, children: [] };
+      break;
 
-    case "split": {
-      if (!Array.isArray(target)) {
-        return { label: `${name} → ? (split)`, children: [] };
-      }
-      return {
-        label: `${name} (split)`,
-        children: target.map((el) => asStringOr(el, "?")),
-      };
-    }
+    case "split":
+      item = !Array.isArray(target)
+        ? { label: `${name} → ? (split)`, children: [] }
+        : { label: `${name} (split)`, children: target.map((el) => asStringOr(el, "?")) };
+      break;
 
     case "enum-remap": {
       const label = `${name} → ${asStringOr(target, "?")} (enum-remap)`;
       const values = entry.values;
-      if (!isPlainObject(values)) {
-        return { label, children: [] };
-      }
-      const children = Object.entries(values).map(([key, value]) =>
-        value === null ? `${key} ✗ dropped` : `${key} → ${String(value)}`
-      );
-      return { label, children };
+      const routedTo = isPlainObject(entry.routed_to) ? entry.routed_to : {};
+      item = isPlainObject(values)
+        ? {
+            label,
+            children: Object.entries(values).map(([key, value]) => {
+              if (value !== null) return `${key} → ${String(value)}`;
+              const route = routedTo[key];
+              if (typeof route !== "string") return `${key} ✗ dropped`;
+              const tgts = routeTargets?.[route] ?? [];
+              return tgts.length
+                ? `${key} → routed to "${route}" variant: ${tgts.join(", ")}`
+                : `${key} → routed to "${route}" variant`;
+            }),
+          }
+        : { label, children: [] };
+      break;
     }
 
     case "unmappable": {
       const reason = entry.reason;
-      return {
+      item = {
         label:
           typeof reason === "string" ? `${name} ✗ unmappable: ${reason}` : `${name} ✗ unmappable`,
         children: [],
       };
+      break;
     }
 
     default:
-      return { label: `${name} ⚠ kind: ${String(kind)}`, children: [] };
+      item = { label: `${name} ⚠ kind: ${String(kind)}`, children: [] };
   }
+
+  // A free-text note: renders as the field's last child line (e.g. to record that a
+  // value dropped in this variant is routed to another — round-trip preserved).
+  if (typeof entry.note === "string") item.children.push(`ℹ ${entry.note}`);
+  return item;
+}
+
+/** A node in a (possibly nested) ASCII tree. */
+interface Tree {
+  label: string;
+  children: Tree[];
+}
+
+/** Lift a flat {label, children: string[]} Item into a Tree. */
+function itemToTree(item: Item): Tree {
+  return { label: item.label, children: item.children.map((c) => ({ label: c, children: [] })) };
+}
+
+/** Recursively draw an ASCII tree from the given root nodes. */
+function renderTree(nodes: Tree[], prefix = ""): string[] {
+  const out: string[] = [];
+  nodes.forEach((node, i) => {
+    const last = i === nodes.length - 1;
+    out.push(`${prefix}${last ? "└── " : "├── "}${node.label}`);
+    out.push(...renderTree(node.children, prefix + (last ? "    " : "│   ")));
+  });
+  return out;
+}
+
+function fieldTrees(fields: unknown, routeTargets?: Record<string, string[]>): Tree[] {
+  return isPlainObject(fields)
+    ? Object.entries(fields).map(([name, entry]) =>
+        itemToTree(renderItem(name, entry, routeTargets))
+      )
+    : [];
 }
 
 export function renderMappingReport(input: MappingReportInput): string {
   const status = asStringOr(input.mapping.status, "?");
   const coverage = asStringOr(input.mapping.coverage, "?");
   const target = asStringOr(input.frontmatter.target_standard, "?");
+
+  // Polymorphic mappings (discriminator / route_by_security + variants) carry no
+  // top-level fields:/coverage; render the routing plus each variant's per-field
+  // routes (shared fields shown once).
+  const rawVariants = input.mapping.variants;
+  if (isPlainObject(rawVariants)) {
+    const disc = input.mapping.discriminator;
+    const rbs = input.mapping.route_by_security;
+    const routing = isPlainObject(disc)
+      ? `discriminator: ${asStringOr(disc.field, "?")}`
+      : isPlainObject(rbs)
+      ? `route_by_security: ${asStringOr(rbs.via, "?")} → ${asStringOr(rbs.resolve, "?")}`
+      : "variants";
+    const coverageMap = isPlainObject(input.mapping.coverage) ? input.mapping.coverage : {};
+
+    // variant label → its primary_targets, so routed_to edges can name the
+    // actual Carta destination ("routed to Rsu variant: RsuIssuanceTransaction").
+    const variantTargets: Record<string, string[]> = {};
+    for (const [label, rawV] of Object.entries(rawVariants)) {
+      const pts =
+        isPlainObject(rawV) && Array.isArray(rawV.primary_targets) ? rawV.primary_targets : [];
+      variantTargets[label] = pts.filter((p): p is string => typeof p === "string");
+    }
+
+    const roots: Tree[] = [{ label: routing, children: [] }];
+    const shared = input.mapping.shared;
+    if (isPlainObject(shared) && Object.keys(shared).length > 0) {
+      roots.push({
+        label: `shared (${Object.keys(shared).length})`,
+        children: fieldTrees(shared, variantTargets),
+      });
+    }
+    for (const [label, rawV] of Object.entries(rawVariants)) {
+      const v = isPlainObject(rawV) ? rawV : {};
+      const targets = Array.isArray(v.primary_targets)
+        ? ` → ${(v.primary_targets as unknown[]).map((p) => asStringOr(p, "?")).join(", ")}`
+        : "";
+      roots.push({
+        label: `${label} (${asStringOr(coverageMap[label], "?")})${targets}`,
+        children: fieldTrees(v.fields, variantTargets),
+      });
+    }
+    return [`${input.file}  ${status} polymorphic → ${target}`, ...renderTree(roots)].join("\n");
+  }
+
   const header = `${input.file}  ${status} ${coverage} → ${target}`;
 
   const rawFields = input.mapping.fields;
