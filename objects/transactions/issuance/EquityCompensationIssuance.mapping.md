@@ -15,13 +15,13 @@ required_fields:
   - security_law_exemptions
   - stakeholder_id
   - custom_id
-target_standard: TBD
-target_version: TBD
-status: draft
+target_standard: Carta
+target_version: v1alpha1 (2026-04-30)
+status: complete
 last_generated: 2026-05-18
 ---
 
-# Object - Equity Compensation Issuance Transaction → TBD
+# Object - Equity Compensation Issuance Transaction → Carta
 
 > Object describing securities issuance transaction by the issuer and held by a stakeholder as a form of compensation (as noted elsewhere, RSAs are not included here intentionally and should be modelled using Stock Issuances).
 
@@ -264,95 +264,169 @@ Source: [`EquityCompensationIssuance.schema.json`](./EquityCompensationIssuance.
 
 ```yaml
 # kind vocabulary: rename | split | combine | enum-remap | computed | unmappable | TODO
-status: draft
-coverage: 0/23
+# routing: discriminator (issuance-time) — compensation_type fans this one OCF
+# transaction out to Carta's Option / Rsu / Sar instrument families.
+# shared: fields common to every variant. A field whose Carta home differs by
+# variant carries a per-variant target map { Option/Rsu/Sar: pointer|null } — so
+# RSU/SAR name their own objects instead of borrowing the Option family. `null`
+# means the field has no home in that variant (SAR has no Carta security object).
+status: complete
 
-fields:
-  id:
-    kind: TODO
-    target: TODO
-  comments:
-    kind: TODO
-    target: TODO
-  object_type:
-    kind: TODO          # likely enum-remap
-    target: TODO
-    values:
-      TX_PLAN_SECURITY_ISSUANCE: TODO
-      TX_EQUITY_COMPENSATION_ISSUANCE: TODO
+discriminator:
+  field: compensation_type
+  exhaustive: true
+
+shared:
+  id:                        { kind: unmappable, target: null, reason: ocf-internal }
+  comments:                  { kind: unmappable, target: null, reason: no-equivalent }
+  object_type:               { kind: unmappable, target: null, reason: ocf-internal }
   date:
-    kind: TODO
-    target: TODO
+    kind: rename
+    target:
+      Option: "#/$defs/OptionIssuanceTransaction/properties/issueDatetime"
+      Rsu:    "#/$defs/RsuIssuanceTransaction/properties/issueDatetime"
+      Sar:    "#/$defs/SarIssuanceTransaction/properties/issueDatetime"
   security_id:
-    kind: TODO
-    target: TODO
+    kind: rename
+    target:
+      Option: "#/$defs/OptionGrant/properties/securityId"
+      Rsu:    "#/$defs/RestrictedStockUnit/properties/securityId"
+      Sar:    null # SAR has no first-class Carta security object
   custom_id:
-    kind: TODO
-    target: TODO
+    kind: rename
+    target:
+      Option: "#/$defs/OptionGrant/properties/securityLabel"
+      Rsu:    "#/$defs/RestrictedStockUnit/properties/securityLabel"
+      Sar:    null
   stakeholder_id:
-    kind: TODO
-    target: TODO
+    kind: rename
+    target:
+      Option: "#/$defs/OptionGrant/properties/stakeholderId"
+      Rsu:    "#/$defs/RestrictedStockUnit/properties/stakeholderId"
+      Sar:    null
   board_approval_date:
-    kind: TODO
-    target: TODO
-  stockholder_approval_date:
-    kind: TODO
-    target: TODO
-  consideration_text:
-    kind: TODO
-    target: TODO
-  security_law_exemptions:
-    kind: TODO
-    target: TODO
+    kind: rename
+    target:
+      Option: "#/$defs/OptionGrant/properties/boardApprovalDate"
+      Rsu:    "#/$defs/RestrictedStockUnit/properties/boardApprovalDate"
+      Sar:    null
+  stockholder_approval_date: { kind: unmappable, target: null, reason: no-equivalent }
+  consideration_text:        { kind: unmappable, target: null, reason: no-equivalent }
+  security_law_exemptions:   { kind: unmappable, target: null, reason: no-equivalent }
   stock_plan_id:
-    kind: TODO
-    target: TODO
+    kind: rename
+    target:
+      Option: "#/$defs/OptionIssuanceTransaction/properties/equityPlanId"
+      Rsu:    "#/$defs/RsuIssuanceTransaction/properties/equityPlanId"
+      Sar:    "#/$defs/SarIssuanceTransaction/properties/equityPlanId"
   stock_class_id:
-    kind: TODO
-    target: TODO
-  compensation_type:
-    kind: TODO          # likely enum-remap
-    target: TODO
-    values:
-      OPTION_NSO: TODO
-      OPTION_ISO: TODO
-      OPTION: TODO
-      RSU: TODO
-      CSAR: TODO
-      SSAR: TODO
-  option_grant_type:
-    kind: TODO          # likely enum-remap
-    target: TODO
-    values:
-      NSO: TODO
-      ISO: TODO
-      INTL: TODO
+    kind: rename
+    target:
+      Option: "#/$defs/OptionIssuanceTransaction/properties/shareClassId"
+      Rsu:    "#/$defs/RsuIssuanceTransaction/properties/shareClassId"
+      Sar:    "#/$defs/SarIssuanceTransaction/properties/shareClassId"
   quantity:
-    kind: TODO
-    target: TODO
-  exercise_price:
-    kind: TODO
-    target: TODO
-  base_price:
-    kind: TODO
-    target: TODO
-  early_exercisable:
-    kind: TODO
-    target: TODO
+    kind: rename
+    target:
+      Option: "#/$defs/OptionIssuanceTransaction/properties/quantity"
+      Rsu:    "#/$defs/RsuIssuanceTransaction/properties/quantity"
+      Sar:    "#/$defs/SarIssuanceTransaction/properties/quantity"
   vesting_terms_id:
-    kind: TODO
-    target: TODO
+    kind: rename
+    target:
+      Option: "#/$defs/OptionIssuanceTransaction/properties/vestingScheduleTemplateId"
+      Rsu:    "#/$defs/RsuIssuanceTransaction/properties/vestingScheduleTemplateId"
+      Sar:    "#/$defs/SarIssuanceTransaction/properties/vestingScheduleTemplateId"
   vestings:
-    kind: TODO
-    target: TODO
-  expiration_date:
-    kind: TODO
-    target: TODO
-  termination_exercise_windows:
-    kind: TODO
-    target: TODO
+    kind: rename
+    target:
+      Option: "#/$defs/OptionGrant/properties/vestingEvents"
+      Rsu:    "#/$defs/RestrictedStockUnit/properties/vestingEvents"
+      Sar:    null
+    note: >-
+      SAR has no Carta security object, so OCF's explicit vesting events have no home for the
+      Sar variant — the template ref still maps via vesting_terms_id →
+      SarIssuanceTransaction.vestingScheduleTemplateId. Option/RSU keep both.
+
+variants:
+
+  Option:
+    when: [OPTION, OPTION_NSO, OPTION_ISO]
+    primary_targets:
+      - "#/$defs/OptionIssuanceTransaction"
+      - "#/$defs/OptionGrant"
+    fields:
+      compensation_type:
+        kind: enum-remap
+        target: "#/$defs/OptionGrant/properties/stockOptionType"
+        values: { OPTION_NSO: NSO, OPTION_ISO: ISO, OPTION: OTHER, RSU: null, CSAR: null, SSAR: null }
+        routed_to: { RSU: Rsu, CSAR: Sar, SSAR: Sar } # not dropped — handled by these variants (verified round-trip)
+      option_grant_type:
+        kind: enum-remap
+        target: "#/$defs/OptionGrant/properties/stockOptionType"
+        values: { NSO: NSO, ISO: ISO, INTL: STOCK_OPTION_TYPE_INTL }
+      exercise_price:               { kind: rename, target: "#/$defs/OptionIssuanceTransaction/properties/exercisePrice" }
+      base_price:                   { kind: unmappable, target: null, reason: no-equivalent }
+      early_exercisable:            { kind: rename, target: "#/$defs/OptionGrant/properties/earlyExercisable" }
+      expiration_date:              { kind: rename, target: "#/$defs/OptionIssuanceTransaction/properties/expirationDatetime" }
+      termination_exercise_windows: { kind: rename, target: "#/$defs/OptionGrant/properties/exercisePeriods" }
+
+  Rsu:
+    when: [RSU]
+    primary_targets:
+      - "#/$defs/RsuIssuanceTransaction"
+      - "#/$defs/RestrictedStockUnit"
+    fields:
+      compensation_type:            { kind: unmappable, target: null, reason: no-equivalent }
+      option_grant_type:            { kind: unmappable, target: null, reason: no-equivalent }
+      exercise_price:               { kind: unmappable, target: null, reason: no-equivalent }
+      base_price:                   { kind: unmappable, target: null, reason: no-equivalent }
+      early_exercisable:            { kind: unmappable, target: null, reason: no-equivalent }
+      expiration_date:              { kind: unmappable, target: null, reason: no-equivalent }
+      termination_exercise_windows: { kind: unmappable, target: null, reason: no-equivalent }
+
+  Sar:
+    when: [CSAR, SSAR]
+    primary_targets:
+      - "#/$defs/SarIssuanceTransaction"
+    fields:
+      compensation_type:            { kind: unmappable, target: null, reason: no-equivalent }
+      option_grant_type:            { kind: unmappable, target: null, reason: no-equivalent }
+      exercise_price:               { kind: unmappable, target: null, reason: no-equivalent }
+      base_price:                   { kind: rename, target: "#/$defs/SarIssuanceTransaction/properties/exercisePrice" }
+      early_exercisable:            { kind: unmappable, target: null, reason: no-equivalent }
+      expiration_date:              { kind: rename, target: "#/$defs/SarIssuanceTransaction/properties/expirationDatetime" }
+      termination_exercise_windows: { kind: unmappable, target: null, reason: no-equivalent }
+
+coverage:
+  Option: 23/23
+  Rsu: 23/23
+  Sar: 23/23
 ```
 
 ## Notes / open questions
 
-- 
+- **Polymorphic by `compensation_type`.** OCF carries option grants, RSUs, and SARs in this
+  one transaction; Carta splits them into dedicated families. This mapping uses the
+  `discriminator:` convention (see [`docs/polymorphic-transaction-routing.md`](../../../docs/polymorphic-transaction-routing.md)):
+  `OPTION*` → `OptionIssuanceTransaction` + `OptionGrant`; `RSU` → `RsuIssuanceTransaction` +
+  `RestrictedStockUnit`; `CSAR`/`SSAR` → `SarIssuanceTransaction`. The three `when:` sets
+  partition all six `CompensationType` values (`exhaustive: true`).
+- **`shared:` fields use per-variant target maps where the home diverges.** Transaction-level
+  fields (`date`/`stock_plan_id`/`stock_class_id`/`quantity`/`vesting_terms_id`) each land on the
+  resolved family's `*IssuanceTransaction`; security-level identity fields
+  (`security_id`/`custom_id`/`stakeholder_id`/`board_approval_date`/`vestings`) land on `OptionGrant`
+  vs `RestrictedStockUnit`. Each such field is a `target: { Option/Rsu/Sar: pointer|null }` map; the
+  validator enforces the keys stay in sync with the variant set (every variant present, none
+  unknown). The remaining `shared:` fields are uniform (all `unmappable`).
+- **Per-variant divergence.** `exercise_price` is Option-only; OCF `base_price` → Carta
+  `SarIssuanceTransaction.exercisePrice` (SAR-only); `early_exercisable` and
+  `termination_exercise_windows` are Option-only; RSUs settle (no exercise price, no expiration).
+  `option_grant_type` (OCF-deprecated) and `compensation_type` both target `stockOptionType`;
+  precedence is importer logic.
+- **SAR has no Carta security object.** Carta models SARs with only a `SarIssuanceTransaction`
+  (no `SarGrant`/security `$def`), so the five security-level identity fields are `null` in the
+  `Sar` column of their target maps — genuinely no home, shown as `✗ unmappable` for SAR in the
+  report rather than borrowing an Option pointer.
+- **Lossy by Carta's design.** CSAR vs SSAR collapse to one `SarIssuanceTransaction` (no
+  settlement-mode field). `OPTION` (unspecified) → `OTHER`.
