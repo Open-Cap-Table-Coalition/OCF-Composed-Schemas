@@ -1,6 +1,6 @@
 # Polymorphic Transaction Routing: OCF → Carta Per-Instrument Families
 
-A design proposal for extending the `.mapping.md` convention to express how one OCF *polymorphic* transaction routes onto Carta's *dedicated* per-instrument transaction and security families. Design document, not an implementation. Every Carta type and field named below was confirmed against the pinned bundle `target-schema/Carta.schema.json`; every parser/validator claim against `scripts/lib/{mapping-validator,mapping-parser}.ts`. Where no Carta home exists, that gap is called out rather than papered over.
+A design proposal for extending the `.mapping.md` convention to express how one OCF *polymorphic* transaction routes onto Carta's *dedicated* per-instrument transaction and security families. Design document; a working prototype — the additive validator, the `--verbose` route report, and migrated `EquityCompensationIssuance` / `StockIssuance` mappings — lands in a companion implementation PR. Every Carta type and field named below was confirmed against the pinned bundle `target-schema/Carta.schema.json`; every parser/validator claim against `scripts/lib/{mapping-validator,mapping-parser}.ts`. Where no Carta home exists, that gap is called out rather than papered over.
 
 ---
 
@@ -197,7 +197,9 @@ shared:                                        # fields identical across all var
 route_by_security:
   via: security_id                                    # FK on THIS transaction
   resolve: compensation_type                          # discriminator on the joined issuance
+  resolve_enum: ".../enums/CompensationType.schema.json"  # registry $id of that enum, so routes are counted
   source_mapping: ../issuance/EquityCompensationIssuance.mapping.md
+  exhaustive: true                                    # every CompensationType value must be routed (or unmappable)
 variants:
   Option: { when: [OPTION, OPTION_NSO, OPTION_ISO], primary_targets: ["#/$defs/OptionCancellationTransaction"], fields: { ... } }
   Rsu:    { when: [RSU],  primary_targets: ["#/$defs/RsuCancellationTransaction"], fields: { ... } }
@@ -206,7 +208,7 @@ variants:
 
 For *Exercise* and *Release* the same grammar applies but some variants resolve to `unmappable` (RSUs settle rather than exercise; options/SARs do not release — §2.3).
 
-`route_by_security:` declares "this mapping is **join-dependent**; an importer must resolve `resolve` from the referenced issuance first." The validator checks only structure (`via` is a source property; `resolve`/`source_mapping` present; `when` values consistent with the issuance mapping's discriminator). It deliberately does not execute the join.
+`route_by_security:` declares "this mapping is **join-dependent**; an importer must resolve `resolve` from the referenced issuance first." The validator checks structure **and counts the routes**: `via` is a source property; `resolve`/`source_mapping` are present; and given `resolve_enum` (a registry `$id`) the variants' `when:` sets must **partition that enum** — with `exhaustive: true`, every instrument value is routed or explicitly marked unroutable, exactly like the issuance side. It deliberately does not *execute* the join (a real `security_id`'s resolvability is unprovable from static text).
 
 ### 4.4 Unmappable discriminator values
 
@@ -241,7 +243,10 @@ coverage:
 | `primary_targets` resolve | `resolveJsonPointer` + `derefNode`; reject `true` exactly as `validateEntryTargets` does today |
 | Per-variant field targets | run `validateEntryShape` / `validateValuesBlock` / `validateEntryTargets` **once per variant's `fields:`** — zero new target logic |
 | Per-variant coverage | for `complete`/`reviewed`, every source property in `shared:` ∪ `variant.fields` for each variant; numerator == non-`TODO` count (reuses the strict loop, ll. 199–205, scoped per variant) |
-| Join declared, not faked | if `route_by_security:` present: `via` ∈ source properties; `resolve`/`source_mapping` non-empty; emit an info note |
+| Join declared **and routes counted** | if `route_by_security:` present: `via` ∈ source properties; `resolve`/`source_mapping` non-empty; and given `resolve_enum` (a registry `$id`) the variants partition that enum just like the issuance side |
+
+`--verbose` renders the routing line plus **each variant's per-field routes** as a nested tree
+(`shared:` shown once), so the routes are auditable in CI output, not just pass/fail.
 
 ### 4.6 Minimal parser + validator changes
 
