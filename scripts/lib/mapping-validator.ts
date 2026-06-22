@@ -182,6 +182,18 @@ export function validateMapping(input: ValidateInput, opts: ValidateOptions): Va
   }
   const strict = blockStatus === "complete" || blockStatus === "reviewed";
 
+  // Polymorphic dispatch: a `discriminator:` block (issuance-time routing) or a
+  // `route_by_security:` block (downstream join routing) selects the per-instrument
+  // Carta family. With neither, this is a plain single-target mapping and the legacy
+  // path below runs unchanged (full backward compatibility).
+  if (
+    isPlainObject(input.mapping.discriminator) ||
+    isPlainObject(input.mapping.route_by_security)
+  ) {
+    validatePolymorphicMapping(input, strict, opts, err);
+    return errors;
+  }
+
   // fields: with no entries parses as null (property-less schemas) — treat as {}.
   const rawFields = input.mapping.fields ?? {};
   if (!isPlainObject(rawFields)) {
@@ -193,6 +205,52 @@ export function validateMapping(input: ValidateInput, opts: ValidateOptions): Va
   const properties = (input.sourceSchema.properties ?? {}) as Record<string, unknown>;
   const propertyNames = Object.keys(properties);
 
+  const nonTodoCount = validateFieldMap(fields, properties, strict, opts, input, err);
+
+  const coverage = input.mapping.coverage;
+  const match = typeof coverage === "string" ? /^(\d+)\/(\d+)$/.exec(coverage) : null;
+  if (!match) {
+    err(null, `coverage "${String(coverage)}" must look like "X/N"`);
+  } else {
+    const x = Number(match[1]);
+    const n = Number(match[2]);
+    if (n !== propertyNames.length) {
+      err(
+        null,
+        `coverage denominator ${n} does not match source schema property count ${propertyNames.length}`
+      );
+    }
+    if (x !== nonTodoCount) {
+      err(
+        null,
+        `coverage numerator ${x} does not match the count of non-TODO entries (${nonTodoCount})`
+      );
+    }
+  }
+
+  return errors;
+}
+
+function isStatus(v: unknown): v is typeof STATUS_VOCABULARY[number] {
+  return typeof v === "string" && (STATUS_VOCABULARY as readonly string[]).includes(v);
+}
+
+type ErrFn = (field: string | null, message: string) => void;
+
+/**
+ * Validate one field map — the `fields:` of a simple mapping, or a variant's
+ * effective `shared:` ∪ `fields:` map. Reports key/coverage/entry errors via
+ * `err` and returns the count of non-TODO entries (the coverage numerator).
+ */
+function validateFieldMap(
+  fields: Record<string, unknown>,
+  properties: Record<string, unknown>,
+  strict: boolean,
+  opts: ValidateOptions,
+  input: ValidateInput,
+  err: ErrFn
+): number {
+  const propertyNames = Object.keys(properties);
   for (const name of Object.keys(fields)) {
     if (!(name in properties)) err(name, "is not a property of the source schema");
   }
@@ -225,36 +283,238 @@ export function validateMapping(input: ValidateInput, opts: ValidateOptions): Va
       validateEntryTargets(entry, name, kind, strict, sourceEnumValues, input.targetBundle, err);
     }
   }
+  return nonTodoCount;
+}
 
-  const coverage = input.mapping.coverage;
-  const match = typeof coverage === "string" ? /^(\d+)\/(\d+)$/.exec(coverage) : null;
-  if (!match) {
-    err(null, `coverage "${String(coverage)}" must look like "X/N"`);
-  } else {
-    const x = Number(match[1]);
-    const n = Number(match[2]);
-    if (n !== propertyNames.length) {
+/**
+ * Validate a polymorphic mapping: a `discriminator:` (issuance-time routing) or
+ * `route_by_security:` (downstream join routing) block plus a `variants:` map
+ * whose `when:` value sets partition the routed enum. Each variant carries its
+ * own `primary_targets:` (the Carta family roots) and a `shared:`-merged field
+ * map, validated per variant against a per-variant `coverage:` map. The routed
+ * enum is the discriminator property's enum (issuance) or `resolve_enum`
+ * (downstream); `exhaustive` requires every enum value to be claimed by a
+ * variant (mappable or explicitly unroutable).
+ */
+function validatePolymorphicMapping(
+  input: ValidateInput,
+  strict: boolean,
+  opts: ValidateOptions,
+  err: ErrFn
+): void {
+  const mapping = input.mapping;
+  const properties = (input.sourceSchema.properties ?? {}) as Record<string, unknown>;
+  const propertyNames = Object.keys(properties);
+
+  // 1. Resolve the routed enum — the value set the variants must partition.
+  let enumValues: string[] | null = null;
+  let exhaustive = false;
+  let enumDeclared = false;
+  if (isPlainObject(mapping.discriminator)) {
+    const disc = mapping.discriminator;
+    exhaustive = disc.exhaustive === true;
+    const field = disc.field;
+    if (typeof field !== "string" || !(field in properties)) {
+      err(null, `discriminator.field "${String(field)}" is not a property of the source schema`);
+    } else {
+      enumDeclared = true;
+      enumValues = detectEnumValues(properties[field], input.registry);
+      if (enumValues === null) {
+        err(
+          null,
+          `discriminator.field "${field}" is not enum-typed; a discriminator must route on an enum`
+        );
+      }
+    }
+  } else if (isPlainObject(mapping.route_by_security)) {
+    const rbs = mapping.route_by_security;
+    exhaustive = rbs.exhaustive === true;
+    if (typeof rbs.via !== "string" || !(rbs.via in properties)) {
       err(
         null,
-        `coverage denominator ${n} does not match source schema property count ${propertyNames.length}`
+        `route_by_security.via "${String(rbs.via)}" is not a property of the source schema`
       );
     }
-    if (x !== nonTodoCount) {
+    if (typeof rbs.resolve !== "string" || rbs.resolve.length === 0) {
       err(
         null,
-        `coverage numerator ${x} does not match the count of non-TODO entries (${nonTodoCount})`
+        'route_by_security requires a non-empty "resolve" (the discriminator field on the joined issuance)'
       );
+    }
+    if (typeof rbs.source_mapping !== "string" || rbs.source_mapping.length === 0) {
+      err(
+        null,
+        'route_by_security requires a non-empty "source_mapping" (the issuance mapping it joins to)'
+      );
+    }
+    if (typeof rbs.resolve_enum === "string") {
+      enumDeclared = true;
+      enumValues = detectEnumValues({ $ref: rbs.resolve_enum }, input.registry);
+      if (enumValues === null) {
+        err(
+          null,
+          `route_by_security.resolve_enum "${rbs.resolve_enum}" did not resolve to an enum in the registry`
+        );
+      }
     }
   }
 
-  return errors;
-}
+  // 2. variants: + shared:
+  const rawVariants = mapping.variants;
+  if (!isPlainObject(rawVariants) || Object.keys(rawVariants).length === 0) {
+    err(null, 'a polymorphic mapping requires a non-empty "variants" map');
+    return;
+  }
+  const variants = rawVariants;
+  const rawShared = mapping.shared ?? {};
+  if (!isPlainObject(rawShared)) {
+    err(null, '"shared" must be a map of field → entry');
+    return;
+  }
+  const shared = rawShared as Record<string, unknown>;
 
-function isStatus(v: unknown): v is typeof STATUS_VOCABULARY[number] {
-  return typeof v === "string" && (STATUS_VOCABULARY as readonly string[]).includes(v);
-}
+  // 3. Partition the routed enum across variants' `when:` sets.
+  const claimedBy: Record<string, string[]> = {};
+  for (const [label, rawV] of Object.entries(variants)) {
+    if (!isPlainObject(rawV)) {
+      err(null, `variant "${label}" must be a map`);
+      continue;
+    }
+    const when = rawV.when;
+    if (!Array.isArray(when) || when.length === 0 || !when.every((w) => typeof w === "string")) {
+      err(null, `variant "${label}" requires a non-empty "when" array of discriminator values`);
+      continue;
+    }
+    for (const w of when as string[]) (claimedBy[w] ??= []).push(label);
+  }
+  for (const [val, labels] of Object.entries(claimedBy)) {
+    if (labels.length > 1) {
+      err(
+        null,
+        `discriminator value "${val}" is claimed by more than one variant (${labels.join(", ")})`
+      );
+    }
+  }
+  if (enumValues !== null) {
+    const enumSet = new Set(enumValues);
+    for (const val of Object.keys(claimedBy)) {
+      if (!enumSet.has(val))
+        err(null, `variant "when" value "${val}" is not a value of the routed enum`);
+    }
+    if (exhaustive) {
+      for (const val of enumValues) {
+        if (!(val in claimedBy)) {
+          err(
+            null,
+            `enum value "${val}" is not claimed by any variant (exhaustive routing requires every value handled or explicitly marked unroutable)`
+          );
+        }
+      }
+    }
+  } else if (exhaustive && !enumDeclared) {
+    err(
+      null,
+      "exhaustive routing requires a resolvable enum (discriminator.field or route_by_security.resolve_enum)"
+    );
+  }
 
-type ErrFn = (field: string | null, message: string) => void;
+  // 4. Per-variant: primary_targets resolve; shared∪fields validates; coverage matches.
+  const coverage = mapping.coverage;
+  if (!isPlainObject(coverage)) {
+    err(
+      null,
+      `a polymorphic mapping requires a per-variant coverage map (e.g. { Variant: "X/N" }), got ${JSON.stringify(
+        coverage
+      )}`
+    );
+  }
+  const coverageMap = (isPlainObject(coverage) ? coverage : {}) as Record<string, unknown>;
+
+  for (const [label, rawV] of Object.entries(variants)) {
+    if (!isPlainObject(rawV)) continue;
+    const v = rawV;
+
+    const pts = v.primary_targets;
+    if (pts !== null && pts !== undefined) {
+      if (!Array.isArray(pts) || !pts.every((p) => typeof p === "string")) {
+        err(
+          null,
+          `variant "${label}" primary_targets must be an array of "#/..." pointers or null`
+        );
+      } else if (input.targetBundle !== null) {
+        for (const ptr of pts as string[]) {
+          if (!ptr.startsWith("#/")) {
+            err(null, `variant "${label}" primary_target "${ptr}" must be a "#/..." JSON pointer`);
+            continue;
+          }
+          const res = resolveJsonPointer(input.targetBundle, ptr);
+          if (!res.found) {
+            err(
+              null,
+              `variant "${label}" primary_target "${ptr}" does not resolve in the target bundle`
+            );
+            continue;
+          }
+          if (derefNode(input.targetBundle, res.value) === true) {
+            err(
+              null,
+              `variant "${label}" primary_target "${ptr}" resolves to \`true\` (excluded from the bundle snapshot)`
+            );
+          }
+        }
+      }
+    }
+
+    const rawVFields = v.fields ?? {};
+    if (!isPlainObject(rawVFields)) {
+      err(null, `variant "${label}" fields must be a map`);
+      continue;
+    }
+    for (const k of Object.keys(rawVFields)) {
+      if (k in shared) {
+        err(
+          null,
+          `variant "${label}" field "${k}" also appears in shared: (a field is either shared or variant-specific)`
+        );
+      }
+    }
+    const effective: Record<string, unknown> = {
+      ...shared,
+      ...(rawVFields as Record<string, unknown>),
+    };
+    const variantErr: ErrFn = (field, message) => err(field ? `${label}.${field}` : null, message);
+    const nonTodo = validateFieldMap(effective, properties, strict, opts, input, variantErr);
+
+    const cov = coverageMap[label];
+    const cm = typeof cov === "string" ? /^(\d+)\/(\d+)$/.exec(cov) : null;
+    if (cov === undefined) {
+      err(null, `coverage is missing an entry for variant "${label}"`);
+    } else if (!cm) {
+      err(null, `coverage for variant "${label}" "${String(cov)}" must look like "X/N"`);
+    } else {
+      const x = Number(cm[1]);
+      const n = Number(cm[2]);
+      if (n !== propertyNames.length) {
+        err(
+          null,
+          `coverage["${label}"] denominator ${n} does not match source schema property count ${propertyNames.length}`
+        );
+      }
+      if (x !== nonTodo) {
+        err(
+          null,
+          `coverage["${label}"] numerator ${x} does not match the count of non-TODO entries (${nonTodo})`
+        );
+      }
+    }
+  }
+
+  for (const label of Object.keys(coverageMap)) {
+    if (!(label in variants)) {
+      err(null, `coverage has an entry for "${label}" but there is no such variant`);
+    }
+  }
+}
 
 function validateEntryShape(
   entry: Record<string, unknown>,

@@ -76,10 +76,71 @@ function renderItem(name: string, entry: unknown): Item {
   }
 }
 
+/** A node in a (possibly nested) ASCII tree. */
+interface Tree {
+  label: string;
+  children: Tree[];
+}
+
+/** Lift a flat {label, children: string[]} Item into a Tree. */
+function itemToTree(item: Item): Tree {
+  return { label: item.label, children: item.children.map((c) => ({ label: c, children: [] })) };
+}
+
+/** Recursively draw an ASCII tree from the given root nodes. */
+function renderTree(nodes: Tree[], prefix = ""): string[] {
+  const out: string[] = [];
+  nodes.forEach((node, i) => {
+    const last = i === nodes.length - 1;
+    out.push(`${prefix}${last ? "└── " : "├── "}${node.label}`);
+    out.push(...renderTree(node.children, prefix + (last ? "    " : "│   ")));
+  });
+  return out;
+}
+
+function fieldTrees(fields: unknown): Tree[] {
+  return isPlainObject(fields)
+    ? Object.entries(fields).map(([name, entry]) => itemToTree(renderItem(name, entry)))
+    : [];
+}
+
 export function renderMappingReport(input: MappingReportInput): string {
   const status = asStringOr(input.mapping.status, "?");
   const coverage = asStringOr(input.mapping.coverage, "?");
   const target = asStringOr(input.frontmatter.target_standard, "?");
+
+  // Polymorphic mappings (discriminator / route_by_security + variants) carry no
+  // top-level fields:/coverage; render the routing plus each variant's per-field
+  // routes (shared fields shown once).
+  const rawVariants = input.mapping.variants;
+  if (isPlainObject(rawVariants)) {
+    const disc = input.mapping.discriminator;
+    const rbs = input.mapping.route_by_security;
+    const routing = isPlainObject(disc)
+      ? `discriminator: ${asStringOr(disc.field, "?")}`
+      : isPlainObject(rbs)
+      ? `route_by_security: ${asStringOr(rbs.via, "?")} → ${asStringOr(rbs.resolve, "?")}`
+      : "variants";
+    const coverageMap = isPlainObject(input.mapping.coverage) ? input.mapping.coverage : {};
+
+    const roots: Tree[] = [{ label: routing, children: [] }];
+    const shared = input.mapping.shared;
+    if (isPlainObject(shared) && Object.keys(shared).length > 0) {
+      roots.push({ label: `shared (${Object.keys(shared).length})`, children: fieldTrees(shared) });
+    }
+    for (const [label, rawV] of Object.entries(rawVariants)) {
+      const v = isPlainObject(rawV) ? rawV : {};
+      const targets = Array.isArray(v.primary_targets)
+        ? ` → ${(v.primary_targets as unknown[]).map((p) => asStringOr(p, "?")).join(", ")}`
+        : "";
+      roots.push({
+        label: `${label} (${asStringOr(coverageMap[label], "?")})${targets}`,
+        children: fieldTrees(v.fields),
+      });
+    }
+    return [`${input.file}  ${status} polymorphic → ${target}`, ...renderTree(roots)].join("\n");
+  }
+
   const header = `${input.file}  ${status} ${coverage} → ${target}`;
 
   const rawFields = input.mapping.fields;
