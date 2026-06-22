@@ -59,8 +59,8 @@ written by some mapping; 99 are never populated.** The domain-bearing Carta-only
 
 | Carta concept(s) | What it is | OCF gap |
 |---|---|---|
-| `Phantom*`, `Piu*`, `Sar*` families (verified defs) | Phantom/Cash-Bonus units, Profits Interest Units, Stock Appreciation Rights | No OCF instrument; OCF `CSAR`/`SSAR` route to `null` |
-| `Rsa*` family + `RestrictedStockAward` | RSA as a first-class security with its own lifecycle | OCF models RSA only as a `StockIssuance.issuance_type` flag |
+| `Phantom*`, `Piu*` families (verified defs) | Phantom/Cash-Bonus units, Profits Interest Units | **Genuinely Carta-only** — OCF's `CompensationType` has no phantom or PIU member |
+| `Rsu*`/`RestrictedStockUnit`, `Sar*`, `Rsa*`/`RestrictedStockAward` | RSU, SAR, RSA promoted to dedicated first-class security types | **Altitude mismatch, not absence** — OCF *does* model all three, via discriminator flags on shared transactions: `RSU`/`CSAR`/`SSAR` → `EquityCompensationIssuance.compensation_type`; `RSA` → `StockIssuance.issuance_type` (OCF deliberately treats an RSA as actually-issued stock, not a contractual award). Carta promotes each to its own transaction+security family. |
 | `OptionExercise` (+ `OptionExerciseTaxWithholdingLineItem`, `Jurisdiction`), `Exercise` | Richer exercise-request object: tax withholding per jurisdiction, money movement, state machine | OCF exercise has only `date`/`quantity`/`resulting_security_ids` |
 | `ConvertibleNote` interest economics (`interestRate`, accrual/compounding/`dayCountBasis`, `changeInControlPercent`) | Full note interest terms | OCF→Carta writes only principal/discount/cap |
 | `PreferredShareClassDetails`, `ShareClassRightsAndPreferences.{multiplier, participating, participationCap, originalIssuePrice}`, `DividendDetails` | Preferred dividend & liquidation economics | OCF→Carta writes only `conversionRatio`/`conversionPrice` |
@@ -107,7 +107,7 @@ sibling-set context are **Core-entity-but-Extended-field** (listed at the bottom
 | **Valuation** | `ShareClassValuation` | `price_per_share`→`price`; `stock_class_id`→`shareClassId` |
 | **StockPlan** | `OptionPoolSummary` | `plan_name`→`name`; `initial_shares_reserved`→`authorizedShares`; `stock_class_id`→`shareClassId` |
 | **StockIssuance** | `Certificate` + `CertificateIssuanceTransaction` | `date`→`issueDate` (exact date↔date); `security_id`→`securityId`; `custom_id`→`securityLabel`; `stakeholder_id`; `stock_class_id`→`shareClassId`; `share_price`→`pricePerShare`; `quantity`; `vesting_terms_id`→`vestingScheduleTemplateId` |
-| **EquityCompensationIssuance** *(strongest, 85%)* | `OptionIssuanceTransaction` + `OptionGrant` | `date`→`issueDatetime`; ids; `board_approval_date`→`boardApprovalDate`; `stock_plan_id`→`equityPlanId`; `quantity`; `exercise_price`→`exercisePrice`; `early_exercisable`; `expiration_date`→`expirationDatetime`; `vestings`→`OptionGrantVestingEvent.*`; `termination_exercise_windows`→`ExercisePeriods.*`; `compensation_type`→`stockOptionType` (ISO/NSO/OTHER) |
+| **EquityCompensationIssuance** *(strongest, 85% — option grants)* | `OptionIssuanceTransaction` + `OptionGrant` | `date`→`issueDatetime`; ids; `board_approval_date`→`boardApprovalDate`; `stock_plan_id`→`equityPlanId`; `quantity`; `exercise_price`→`exercisePrice`; `early_exercisable`; `expiration_date`→`expirationDatetime`; `vestings`→`OptionGrantVestingEvent.*`; `termination_exercise_windows`→`ExercisePeriods.*`; `compensation_type`→`stockOptionType` (ISO/NSO/OTHER). **Option grants only**: `compensation_type` `RSU`/`CSAR`/`SSAR` instead select Carta's `Rsu*`/`Sar*` families — a routing gap the current mapping does not yet emit. |
 | **WarrantIssuance** | `WarrantIssuanceTransaction` + `WarrantTransactionItem` | `date`→`issueDatetime`; ids; `quantity`; `exercise_price`→`exercisePrice`; `purchase_price`→`purchasePrice`; `warrant_expiration_date`→`expirationDatetime` |
 | **ConvertibleIssuance** | `ConvertibleIssuanceTransaction` + `ConvertibleNote` (+ `NoteBlock`) | `date`→`issueDatetime`; ids; `investment_amount`→`principal`; `convertible_type`→`NoteBlock.noteType` (`SAFE`→`SAFE`, `NOTE`→`CONVERTIBLE_DEBT`, `CONVERTIBLE_SECURITY`→`CONVERTIBLE_EQUITY`) |
 | **Stock / EquityComp / Convertible Cancellation** | `*CancellationTransaction` (+`*TransactionItem`) | `date`→`effectiveDatetime`; `quantity` (or `amount`→`principal`); `security_id`→`*TransactionItem.securityId` |
@@ -127,7 +127,10 @@ have no Issuer-level Carta home.*
 `reason_text`→`reason` (free-text→enum); `security_law_exemptions`→`Compliance.federalExemption`
 (array→single enum); `balance_security_id`; inline `vestings` on Stock/Warrant issuance;
 `seniority`/`conversion_rights` (sibling-set computed); `conversion_triggers`/`exercise_triggers`
-(terms survive, graph dropped); `tax_ids`/phone/address detail; RSU/CSAR/SSAR `compensation_type`.
+(terms survive, graph dropped); `tax_ids`/phone/address detail. (Non-option `compensation_type`
+`RSU`/`CSAR`/`SSAR` and `StockIssuance.issuance_type=RSA` are **instrument-routing discriminators**,
+not dropped fields — they select Carta's `Rsu*`/`Sar*`/`Rsa*` families and belong in those mappings,
+which the current option/`Certificate`-centric mappings do not yet emit.)
 
 ## 4. Transforms required even within Core
 
@@ -183,6 +186,8 @@ options, warrants, and convertibles. These round-trip cleanly once four mechanic
 Everything else divides into two structural mismatches maintainers should treat as out of scope:
 OCF's forward-looking **state machines** (conversion triggers, vesting conditions) that Carta
 realizes as flat terms, and OCF's **event stream** (transfers, retractions, adjustments, splits)
-that Carta collapses into current-state snapshots — while Carta, conversely, models instruments
-(Phantom/PIU/SAR/RSA) and tax/dividend/performance detail that OCF never expresses. The core is
-the contract worth standardizing; the rest belongs in documented, direction-specific extensions.
+that Carta collapses into current-state snapshots — while Carta, conversely, *promotes to dedicated
+security types* several instruments OCF carries as discriminator flags (RSU/SAR via
+`compensation_type`, RSA via `issuance_type`), and models Phantom/PIU units plus tax/dividend/
+performance detail OCF does not express. The core is the contract worth standardizing; the rest
+belongs in documented, direction-specific extensions.
