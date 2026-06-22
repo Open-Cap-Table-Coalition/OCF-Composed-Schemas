@@ -212,6 +212,46 @@ describe("polymorphic mapping — issuance (discriminator + variants)", () => {
   });
 });
 
+describe("entry note: field (corner-case annotation)", () => {
+  it("accepts an optional string note on an entry", () => {
+    const m = issuanceMapping();
+    (m.variants as { Option: { fields: Record<string, unknown> } }).Option.fields.comp_type = {
+      kind: "unmappable",
+      target: null,
+      reason: "no-equivalent",
+      note: "RSU/CSAR/SSAR route to the Rsu/Sar variants — round-trip preserved",
+    };
+    expect(messages(input({ mapping: m }))).toEqual([]);
+  });
+
+  it("rejects a non-string note", () => {
+    const m = issuanceMapping();
+    (m.variants as { Option: { fields: Record<string, unknown> } }).Option.fields.comp_type = {
+      kind: "unmappable",
+      target: null,
+      reason: "no-equivalent",
+      note: 123,
+    };
+    const errs = messages(input({ mapping: m }));
+    expect(errs.some((s) => /note.*must be a string/i.test(s))).toBe(true);
+  });
+
+  it("renders an entry note in the verbose report", () => {
+    const m = issuanceMapping();
+    (m.variants as { Option: { fields: Record<string, unknown> } }).Option.fields.exercise_price = {
+      kind: "rename",
+      target: "#/$defs/OptionTx/properties/exercisePrice",
+      note: "see also the Sar variant for base_price",
+    };
+    const out = renderMappingReport({
+      file: "f.mapping.md",
+      frontmatter: { target_standard: "Carta" },
+      mapping: m,
+    });
+    expect(out).toContain("see also the Sar variant for base_price");
+  });
+});
+
 describe("polymorphic mapping — downstream (route_by_security)", () => {
   function dinput(over: Partial<ValidateInput> = {}): ValidateInput {
     return input({

@@ -23,7 +23,10 @@ reviewed` and identical in frontmatter and mapping block; every `fields:` key is
 of the source schema; `kind` ∈ `rename | split | combine | enum-remap | computed | unmappable |
 TODO` with the matching target shape (string; array of ≥2 strings for `split`; `null` for
 `unmappable`; literal `TODO` for `TODO`); `coverage: X/N` where `N` = source property count and
-`X` = non-`TODO` entry count — the counter is machine-checked, never hand-trusted.
+`X` = non-`TODO` entry count — the counter is machine-checked, never hand-trusted. Any entry may
+carry an optional free-text `note:` (a string) to record a corner case — e.g. that a discriminator
+value shown as *dropped* in one variant is actually *routed* to another (the round-trip is
+preserved, not lost). Notes are rendered under their field in `--verbose`.
 
 **Semantic (when `target_standard` ≠ `TBD`):** every string target must be a `#/...` JSON pointer
 that resolves in the target bundle (`target_standard` → bundle file via `TARGET_BUNDLES` in the

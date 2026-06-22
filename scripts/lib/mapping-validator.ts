@@ -568,6 +568,13 @@ function validateEntryShape(
       )})`
     );
   }
+
+  // Optional free-text annotation (valid on any kind) — used to record corner
+  // cases, e.g. that a discriminator value dropped in this variant has a real
+  // home in another variant (the round-trip is preserved, not lost).
+  if (entry.note !== undefined && typeof entry.note !== "string") {
+    err(name, "note: must be a string");
+  }
 }
 
 function validateValuesBlock(

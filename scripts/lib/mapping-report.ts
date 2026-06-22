@@ -34,46 +34,52 @@ function renderItem(name: string, entry: unknown): Item {
   const kind = entry.kind;
   const target = entry.target;
 
+  let item: Item;
   switch (kind) {
     case "rename":
     case "computed":
     case "combine":
-      return { label: `${name} → ${asStringOr(target, "?")} (${kind})`, children: [] };
+      item = { label: `${name} → ${asStringOr(target, "?")} (${kind})`, children: [] };
+      break;
 
-    case "split": {
-      if (!Array.isArray(target)) {
-        return { label: `${name} → ? (split)`, children: [] };
-      }
-      return {
-        label: `${name} (split)`,
-        children: target.map((el) => asStringOr(el, "?")),
-      };
-    }
+    case "split":
+      item = !Array.isArray(target)
+        ? { label: `${name} → ? (split)`, children: [] }
+        : { label: `${name} (split)`, children: target.map((el) => asStringOr(el, "?")) };
+      break;
 
     case "enum-remap": {
       const label = `${name} → ${asStringOr(target, "?")} (enum-remap)`;
       const values = entry.values;
-      if (!isPlainObject(values)) {
-        return { label, children: [] };
-      }
-      const children = Object.entries(values).map(([key, value]) =>
-        value === null ? `${key} ✗ dropped` : `${key} → ${String(value)}`
-      );
-      return { label, children };
+      item = isPlainObject(values)
+        ? {
+            label,
+            children: Object.entries(values).map(([key, value]) =>
+              value === null ? `${key} ✗ dropped` : `${key} → ${String(value)}`
+            ),
+          }
+        : { label, children: [] };
+      break;
     }
 
     case "unmappable": {
       const reason = entry.reason;
-      return {
+      item = {
         label:
           typeof reason === "string" ? `${name} ✗ unmappable: ${reason}` : `${name} ✗ unmappable`,
         children: [],
       };
+      break;
     }
 
     default:
-      return { label: `${name} ⚠ kind: ${String(kind)}`, children: [] };
+      item = { label: `${name} ⚠ kind: ${String(kind)}`, children: [] };
   }
+
+  // A free-text note: renders as the field's last child line (e.g. to record that a
+  // value dropped in this variant is routed to another — round-trip preserved).
+  if (typeof entry.note === "string") item.children.push(`ℹ ${entry.note}`);
+  return item;
 }
 
 /** A node in a (possibly nested) ASCII tree. */
