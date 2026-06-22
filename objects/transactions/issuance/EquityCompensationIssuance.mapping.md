@@ -404,7 +404,7 @@ coverage:
 
 - **Polymorphic by `compensation_type`.** OCF carries option grants, RSUs, and SARs in this
   one transaction; Carta splits them into dedicated families. This mapping uses the
-  `discriminator:` convention (see [`docs/polymorphic-transaction-routing.md`](../../../../docs/polymorphic-transaction-routing.md)):
+  `discriminator:` convention (see [`docs/polymorphic-transaction-routing.md`](../../../docs/polymorphic-transaction-routing.md)):
   `OPTION*` → `OptionIssuanceTransaction` + `OptionGrant`; `RSU` → `RsuIssuanceTransaction` +
   `RestrictedStockUnit`; `CSAR`/`SSAR` → `SarIssuanceTransaction`. The three `when:` sets
   partition all six `CompensationType` values (`exhaustive: true`).

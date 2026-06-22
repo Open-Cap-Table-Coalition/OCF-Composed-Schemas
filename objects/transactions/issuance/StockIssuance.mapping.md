@@ -277,11 +277,11 @@ coverage:
 
 - **Polymorphic by `issuance_type`.** An RSA is, in OCF, a `StockIssuance` flagged
   `issuance_type: RSA` (actually-issued stock with a repurchase/forfeiture right) — see
-  [`docs/type-mapping-policy.md`](../../../../docs/type-mapping-policy.md). Carta promotes it to a
+  [`docs/type-mapping-policy.md`](../../../docs/type-mapping-policy.md). Carta promotes it to a
   dedicated `RestrictedStockAward` security. This mapping routes `RSA` → `RsaIssuanceTransaction` +
   `RestrictedStockAward`; everything else (`FOUNDERS_STOCK`, and `issuance_type` **absent**, which
   the importer treats as the `Default` route) → `CertificateIssuanceTransaction` + `Certificate`.
-  See [`docs/polymorphic-transaction-routing.md`](../../../../docs/polymorphic-transaction-routing.md).
+  See [`docs/polymorphic-transaction-routing.md`](../../../docs/polymorphic-transaction-routing.md).
 - **Per-variant divergence.** `board_approval_date` and `vestings` (explicit event array) exist on
   `RestrictedStockAward` but **not** on `Certificate` (which carries only
   `vestingScheduleTemplateId`), so they are RSA-only; `share_price`/`cost_basis` land on the
