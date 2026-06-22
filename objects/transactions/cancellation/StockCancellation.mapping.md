@@ -127,8 +127,12 @@ shared:
   comments:            { kind: unmappable, target: null, reason: no-equivalent }
   object_type:         { kind: unmappable, target: null, reason: ocf-internal }
   security_id:         { kind: unmappable, target: null, reason: ocf-internal }
-  balance_security_id: { kind: unmappable, target: null, reason: no-equivalent }
   reason_text:         { kind: unmappable, target: null, reason: no-equivalent }
+  balance_security_id:
+    kind: computed                 # lineage: the partial-cancel remainder security precededBy
+    target:
+      Rsa:     "#/$defs/RestrictedStockAwardPrecededBy/properties/securities"
+      Default: "#/$defs/CertificatePrecededBy/properties/securities"
   date:
     kind: rename
     target:
@@ -169,7 +173,7 @@ coverage:
   the joined `StockIssuance` first (the two-pass requirement, §2.2). Routing an RSA
   cancel into the Certificate family would be the bug-#219 misroute; the
   `route_by_security` join prevents it.
-- **`date` / `quantity`** are the only mappable fields; each lands on the resolved
+- **`date` / `quantity`** are the mappable tx-level fields; each lands on the resolved
   family's cancellation tx (`effectiveDatetime` / `quantity`) via a per-variant target
   map. **Granularity to flag:** OCF `date` is a calendar date and Carta
   `effectiveDatetime` is a full datetime, so an importer must widen the OCF date
@@ -179,9 +183,15 @@ coverage:
   text — the type-mapping policy treats free-text → enum as unmappable, not a rename
   (there is no OCF enum to remap member-for-member).
 - **`security_id`** is the join key (`route_by_security.via`); it routes the family,
-  it is not itself a stored Carta field. **`balance_security_id`** (the
-  partial-cancellation remainder pointer) has no Carta equivalent on either
-  cancellation tx — a genuine domain gap, not OCF scaffolding.
+  it is not itself a stored Carta field.
+- **`balance_security_id` round-trips as lineage (kind `computed`).** The remainder
+  security minted by a partial cancellation is itself a stock security —
+  `RestrictedStockAward` for the RSA family, `Certificate` for the default family — and
+  both carry `precededBy.securities` (a `PrecededBySecurity` array). The remainder
+  records the cancelled security as its predecessor, so an importer writes the cancelled
+  `security_id` into the remainder's `precededBy.securities`: this reverse lineage edge
+  round-trips losslessly, it is not unmappable. (The cancellation tx *itself* still
+  holds no balance field — only the security lineage carries it.)
 - **`id`, `comments`, `object_type`** are OCF scaffolding with no Carta home: `id`
   is OCF's own object identifier, `comments` is free-text metadata, and `object_type`
   (the fixed `const TX_STOCK_CANCELLATION`) is the transaction discriminator — Carta
