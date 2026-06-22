@@ -112,7 +112,9 @@ Source: [`StockReissuance.schema.json`](./StockReissuance.schema.json)
 # undecidable from the record alone: it is resolved by joining security_id back to
 # the StockIssuance and reading that issuance's issuance_type. The reissuance verb
 # itself has no Carta home in EITHER family — Carta models no reissuance
-# transaction — so every variant is fully unmappable (primary_targets: null).
+# transaction — so every variant has primary_targets: null. The reissued securities
+# are nonetheless stock securities (Certificate / RSA) that record their origin in
+# precededBy.securities, so resulting_security_ids round-trips via computed lineage.
 # See docs/polymorphic-transaction-routing.md §2.2/§4.3.
 status: complete
 
@@ -123,15 +125,20 @@ route_by_security:
   source_mapping: ../issuance/StockIssuance.mapping.md
   exhaustive: true
 
-# shared: every source property. All 8 are unmappable in both families (Carta has
-# no reissuance transaction), so none carries a per-variant target map.
+# shared: every source property. The reissuance event itself is unmappable in both
+# families (Carta has no reissuance transaction), but resulting_security_ids lands on
+# the reissued stock security's precededBy.securities via a per-variant target map.
 shared:
   id:                     { kind: unmappable, target: null, reason: ocf-internal }
   comments:               { kind: unmappable, target: null, reason: no-equivalent }
   object_type:            { kind: unmappable, target: null, reason: ocf-internal }
   date:                   { kind: unmappable, target: null, reason: no-equivalent }
   security_id:            { kind: unmappable, target: null, reason: ocf-internal }
-  resulting_security_ids: { kind: unmappable, target: null, reason: no-equivalent }
+  resulting_security_ids:
+    kind: computed                 # lineage: the reissued security precededBy
+    target:
+      Rsa:     "#/$defs/RestrictedStockAwardPrecededBy/properties/securities"
+      Default: "#/$defs/CertificatePrecededBy/properties/securities"
   split_transaction_id:   { kind: unmappable, target: null, reason: no-equivalent }
   reason_text:            { kind: unmappable, target: null, reason: no-equivalent }
 
@@ -154,24 +161,35 @@ coverage:
 
 ## Notes / open questions
 
-- **Join-dependent (downstream), and fully unmappable in every family.** One OCF
-  `TX_STOCK_REISSUANCE` would, if it had a Carta home, fan out by the stock family
-  fixed at issuance — restricted-stock (`RSA`) vs plain stock (`FOUNDERS_STOCK`). The
-  record itself carries no discriminator, only `security_id`, so an importer must
-  resolve `issuance_type` from the joined `StockIssuance` first (the two-pass
-  requirement, §2.2). But **Carta exposes no reissuance transaction in either
-  family**, so both variants resolve to `primary_targets: null`: routing is still
-  modelled for fidelity (the family is decidable), yet there is no destination tx
-  to land on. See docs/polymorphic-transaction-routing.md §4.3.
+- **Join-dependent (downstream); the reissuance event is unmappable, the security
+  lineage is not.** One OCF `TX_STOCK_REISSUANCE` fans out by the stock family fixed
+  at issuance — restricted-stock (`RSA`) vs plain stock (`FOUNDERS_STOCK`). The record
+  itself carries no discriminator, only `security_id`, so an importer must resolve
+  `issuance_type` from the joined `StockIssuance` first (the two-pass requirement,
+  §2.2). **Carta exposes no reissuance transaction in either family**, so both variants
+  resolve to `primary_targets: null`: there is no destination tx to land the event on.
+  But the *reissued securities* are stock securities (`Certificate` / `RestrictedStockAward`)
+  that record their origin in `precededBy.securities`, so `resulting_security_ids`
+  still round-trips losslessly via computed lineage. See
+  docs/polymorphic-transaction-routing.md §4.3.
 - **`security_id`** is the join key (`route_by_security.via`); it routes the family,
   it is not itself a stored Carta field — hence `ocf-internal`, not a rename.
-- **No mappable fields.** Carta has no stock-reissuance transaction (the
+- **No transaction-level endpoint.** Carta has no stock-reissuance transaction (the
   `CertificatePrecededByReason` set is share-reserve / option-exercised /
   RSU-settled / debt-converted / warrant-exercised / share-class-converted /
-  transferred / balance-reissued — a reissuance verb is not a transaction type, and
-  the closest provenance reason is a property value on a *certificate*, not a home
-  for these transaction fields). So `date`, `resulting_security_ids`, and
-  `split_transaction_id` have no reissuance-transaction endpoint in either family.
+  transferred / balance-reissued — a reissuance verb is not a transaction type). So
+  `date` and `split_transaction_id` have no reissuance-transaction endpoint in either
+  family.
+- **`resulting_security_ids` → lineage on the reissued security (kind `computed`).**
+  A reissuance produces a new stock security — a Carta `Certificate` (plain stock) or
+  `RestrictedStockAward` (RSA) — and each reissued security records its origin in
+  `precededBy.securities` (a `PrecededBySecurity` array). The OCF *array* therefore
+  round-trips **losslessly** as a set of reverse lineage edges per family:
+  `CertificatePrecededBy.securities` for `Default`, `RestrictedStockAwardPrecededBy.securities`
+  for `Rsa`. This is `computed` (importer-derived placement onto records the reissuance
+  *references*), not a `rename` — there is no tx-level scalar, so the full lineage set
+  is preserved. (The reissuance *event* still has no Carta home; only the resulting
+  securities' provenance does.)
 - **`reason_text` has no home.** Free-form human-readable justification for the
   reissuance. Carta encodes provenance reasons as structured enum values, never as
   free text, and exposes no per-transaction notes/memo/comment string — the
