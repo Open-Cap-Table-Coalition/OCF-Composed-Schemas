@@ -107,54 +107,83 @@ Source: [`EquityCompensationCancellation.schema.json`](./EquityCompensationCance
 
 ```yaml
 # kind vocabulary: rename | split | combine | enum-remap | computed | unmappable | TODO
+# routing: route_by_security (downstream join). This cancellation carries only
+# security_id and NO discriminator, so the Carta cancellation family
+# (Option/Rsu/Sar) is undecidable from the record alone: it is resolved by
+# joining security_id back to the EquityCompensationIssuance and reading that
+# issuance's compensation_type. See docs/polymorphic-transaction-routing.md §2.2/§4.3.
 status: complete
-coverage: "8/8"
 
-fields:
-  id:
-    kind: unmappable
-    target: null
-    reason: ocf-internal
-  comments:
-    kind: unmappable
-    target: null
-    reason: ocf-internal
-  object_type:
-    kind: unmappable
-    target: null
-    reason: ocf-internal
-    values:
-      TX_PLAN_SECURITY_CANCELLATION: null
-      TX_EQUITY_COMPENSATION_CANCELLATION: null
+route_by_security:
+  via: security_id
+  resolve: compensation_type
+  resolve_enum: "https://raw.githubusercontent.com/Open-Cap-Table-Coalition/Open-Cap-Format-OCF/main/schema/enums/CompensationType.schema.json"
+  source_mapping: ../issuance/EquityCompensationIssuance.mapping.md
+  exhaustive: true
+
+# shared: fields whose Carta home differs by family carry a per-variant target map
+# { Option/Rsu/Sar: pointer }; all three Carta cancellation txs share the same shape.
+shared:
+  id:                  { kind: unmappable, target: null, reason: ocf-internal }
+  comments:            { kind: unmappable, target: null, reason: no-equivalent }
+  object_type:         { kind: unmappable, target: null, reason: ocf-internal }
+  security_id:         { kind: unmappable, target: null, reason: ocf-internal }
+  balance_security_id: { kind: unmappable, target: null, reason: no-equivalent }
+  reason_text:         { kind: unmappable, target: null, reason: no-equivalent }
   date:
     kind: rename
-    target: "#/$defs/OptionCancellationTransaction/properties/effectiveDatetime"
-  security_id:
-    kind: rename
-    target: "#/$defs/OptionTransactionItem/properties/securityId"
-  balance_security_id:
-    kind: unmappable
-    target: null
-    reason: no-equivalent
-  reason_text:
-    kind: computed
-    target: "#/$defs/OptionCancellationTransaction/properties/reason"
+    target:
+      Option: "#/$defs/OptionCancellationTransaction/properties/effectiveDatetime"
+      Rsu:    "#/$defs/RsuCancellationTransaction/properties/effectiveDatetime"
+      Sar:    "#/$defs/SarCancellationTransaction/properties/effectiveDatetime"
   quantity:
     kind: rename
-    target: "#/$defs/OptionCancellationTransaction/properties/quantity"
+    target:
+      Option: "#/$defs/OptionCancellationTransaction/properties/quantity"
+      Rsu:    "#/$defs/RsuCancellationTransaction/properties/quantity"
+      Sar:    "#/$defs/SarCancellationTransaction/properties/quantity"
+
+variants:
+
+  Option:
+    when: [OPTION, OPTION_NSO, OPTION_ISO]
+    primary_targets:
+      - "#/$defs/OptionCancellationTransaction"
+    fields: {}
+
+  Rsu:
+    when: [RSU]
+    primary_targets:
+      - "#/$defs/RsuCancellationTransaction"
+    fields: {}
+
+  Sar:
+    when: [CSAR, SSAR]
+    primary_targets:
+      - "#/$defs/SarCancellationTransaction"
+    fields: {}
+
+coverage:
+  Option: 8/8
+  Rsu: 8/8
+  Sar: 8/8
 ```
 
 ## Notes / open questions
 
-- **Carta has a direct home for this transaction: `OptionCancellationTransaction`.** OCF equity compensation = Carta option grants (the transaction surface routes equity-comp / plan-security option issuance to `OptionIssuanceTransaction` + `OptionGrant`), and Carta models the cancellation/termination of such a grant as `OptionCancellationTransaction`, nested under `OptionTransactionItem.cancellations[]` (an array described as "all cancellation and termination transactions for the option grant, in chronological order," since "an option can accrue multiple cancellation events, e.g. TERMINATED followed by PTEP_ENDED"). `OptionTransactionItem` ("An option grant with its full transaction history. Groups all lifecycle events (issuance, exercises, cancellation) for a single option grant") is the grouping container that holds the cancellation array; the grant terms themselves live on `OptionGrant`, which carries no `cancellations[]` array. This is the single unambiguous Carta destination, so the substantive payload of the OCF transaction maps field-for-field.
-- **`quantity` → `OptionCancellationTransaction.quantity`.** The number of equity-comp units cancelled. OCF `Numeric` → Carta `Decimal`; both are arbitrary-precision numeric strings, so the rename is value-preserving (type renamed, not the value). This is the core economic payload of the cancellation.
-- **`date` → `OptionCancellationTransaction.effectiveDatetime`.** The date the cancellation occurred. **Granularity widening to flag:** OCF `date` is a calendar **date** (`types/Date.schema.json`), whereas Carta's `effectiveDatetime` is a full **datetime** (`Iso8601CompleteCalendarDateTime`). An importer must widen the OCF date to a datetime (e.g. by appending a time-of-day / midnight UTC); the reverse (Carta → OCF) is lossy as it truncates the time component. Carta also carries `terminationDatetime` and `forfeitureDatetime` on this transaction, but OCF supplies only a single transaction `date`, so `effectiveDatetime` is the correct one-to-one target; the other two datetimes have no OCF source field here and are left unset by this mapping.
-- **`security_id` → `OptionTransactionItem.securityId`.** OCF's transaction-to-security foreign key — the stable per-security id that selects *which* grant is being cancelled. Note that `OptionCancellationTransaction` itself carries **no** security reference field (it exposes only `effectiveDatetime`, `reason`, `quantity`, `terminationDatetime`, `forfeitureDatetime`); the cancellation is nested *under* its grant via `OptionTransactionItem.cancellations[]`, so the security linkage in Carta is structural (the array containment) and the corresponding stable key lives on the parent `OptionTransactionItem.securityId` ("The identifier of the option grant" used to cross-reference transactions). Mapped there. This parallels the sibling cancellations exactly: `StockCancellation` → `#/$defs/CertificateTransactionItem/properties/securityId` and `ConvertibleCancellation` → `#/$defs/ConvertibleTransactionItem/properties/securityId`. Not value-identical (each system assigns its own ids), but it is the same role: the per-security reference used across Carta's option lifecycle (the same UUID also appears on `OptionGrant.securityId`; the transaction-item link is chosen as the closer, per-transaction-grouping analogue that actually contains the cancellation row).
-- **`reason_text` → `OptionCancellationTransaction.reason` (`computed`).** OCF stores the cancellation reason as **free text** (`reason_text`, "Reason for the cancellation"); Carta stores it as the **enum** `OptionCancellationReason` (`OPTION_CANCELLATION_REASON_TERMINATED`, `_CANCELED`, `_TERMINATION_FORFEITED`, `_LIFETIME_ENDED`, `_PTEP_ENDED`). Because the source is unconstrained prose and the target is a closed vocabulary, this is **not** a clean `enum-remap` (there is no OCF enum to remap member-for-member) — it is `computed`: an importer must classify the free text into one of Carta's reason codes (e.g. text mentioning expiry at end of post-termination-exercise → `_PTEP_ENDED`; forfeiture of unvested shares on termination → `_TERMINATION_FORFEITED`; plain "canceled" → `_CANCELED`). The mapping is lossy in both directions: prose nuance is dropped going to Carta, and Carta's specific code loses the original wording going back. `reason_text` is OCF-required, so a value is always present to classify; when it does not match a more specific code, `_CANCELED` / `_TERMINATED` are the safe fallbacks.
-- **`balance_security_id` → unmappable (`no-equivalent`).** OCF supports *partial* cancellations by pointing at a second security that holds the remaining (un-cancelled) balance. `OptionCancellationTransaction` has no such field — Carta records only the cancelled `quantity` on the original grant and has no slot for a balance-security pointer, so OCF's partial-cancellation balance linkage has no Carta home. This is a genuine domain gap, not OCF scaffolding.
-- **`id`, `comments`, `object_type`: OCF scaffolding (`ocf-internal`).**
-  - `id` is OCF's identifier for the cancellation transaction object; Carta assigns its own ids and `OptionCancellationTransaction` has no incoming-id field this could become.
-  - `object_type` is OCF's transaction discriminator, not a domain value — Carta selects the transaction kind by which concrete `$def` it instantiates (`OptionCancellationTransaction`), so the discriminator string itself has no target. Both enum members map to `null`: `TX_EQUITY_COMPENSATION_CANCELLATION` and the v2.0.0-deprecated alias `TX_PLAN_SECURITY_CANCELLATION` denote the *same* transaction (the dual members exist purely "to avoid a breaking change… `TX_PLAN_SECURITY_CANCELLATION` will be deprecated in v2.0.0"). Do not confuse this discriminator with Carta's `OptionCancellationTransaction.reason`, which is fed by `reason_text`, not by `object_type`.
-  - `comments` is free-text OCF metadata with no slot on the Carta transaction.
-- This object is `ocf_kind: object`, so it is classified `n/a-object` per the bucket policy: its own properties map directly to the corresponding Carta object's fields (`OptionCancellationTransaction`, plus the parent `OptionTransactionItem` for the security key) rather than to a reusable type. Of the 8 source properties, 5 carry into Carta (`quantity`, `date`, `security_id`, `reason_text`, and `object_type` is captured *structurally* by instantiating `OptionCancellationTransaction`); the 3 unmappables are 2 pieces of OCF scaffolding (`id`, `comments`, `object_type` discriminator) and 1 genuine gap (`balance_security_id`, partial-cancellation balance pointer).
-</content>
+- **Join-dependent (downstream).** One OCF `EquityCompensationCancellation` fans out
+  to three Carta cancellation transactions — `OptionCancellationTransaction`,
+  `RsuCancellationTransaction`, `SarCancellationTransaction` — selected by the
+  instrument family fixed at issuance. The record itself carries no discriminator,
+  only `security_id`, so an importer must resolve `compensation_type` from the joined
+  `EquityCompensationIssuance` first (the two-pass requirement, §2.2).
+- **`date` / `quantity`** are the only mappable fields; each lands on the resolved
+  family's cancellation tx (`effectiveDatetime` / `quantity`) via a per-variant
+  target map.
+- **`reason_text` has no home.** Carta's cancellation `reason` is an enum
+  (`OptionCancellationReason` / `RsuCancellationReason` / `SarCancellationReason`);
+  OCF `reason_text` is free text — the type-mapping policy treats free-text → enum as
+  unmappable, not a rename.
+- **`security_id`** is the join key (`route_by_security.via`); it routes the family,
+  it is not itself a stored Carta field. **`balance_security_id`** (partial-cancel
+  remainder) has no Carta equivalent on any cancellation tx.
