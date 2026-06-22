@@ -107,55 +107,95 @@ Source: [`StockRepurchase.schema.json`](./StockRepurchase.schema.json)
 
 ```yaml
 # kind vocabulary: rename | split | combine | enum-remap | computed | unmappable | TODO
+# routing: route_by_security (downstream join). A StockRepurchase carries only
+# security_id and NO discriminator, so the repurchased stock's family is undecidable
+# from the record alone: it is resolved by joining security_id back to the
+# StockIssuance and reading that issuance's issuance_type. Both stock families
+# (RSA / FOUNDERS_STOCK) are unmappable here because Carta has no repurchase
+# transaction at all. See docs/polymorphic-transaction-routing.md §2.2/§4.3.
 status: complete
-coverage: 9/9
 
-fields:
-  id:
-    kind: unmappable
-    target: null
-    reason: ocf-internal
-  comments:
-    kind: unmappable
-    target: null
-    reason: ocf-internal
-  object_type:
-    kind: enum-remap
-    target: "#/$defs/CertificateCancellationTransaction/properties/reason"
-    values:
-      TX_STOCK_REPURCHASE: CERTIFICATE_CANCELLATION_REASON_REPURCHASED
-  date:
-    kind: rename
-    target: "#/$defs/CertificateCancellationTransaction/properties/effectiveDatetime"
-  security_id:
-    kind: rename
-    target: "#/$defs/CertificateTransactionItem/properties/securityId"
-  price:
-    kind: unmappable
-    target: null
-    reason: no-equivalent
-  quantity:
-    kind: rename
-    target: "#/$defs/CertificateCancellationTransaction/properties/quantity"
-  consideration_text:
-    kind: unmappable
-    target: null
-    reason: no-equivalent
-  balance_security_id:
-    kind: unmappable
-    target: null
-    reason: no-equivalent
+route_by_security:
+  via: security_id
+  resolve: issuance_type
+  resolve_enum: "https://raw.githubusercontent.com/Open-Cap-Table-Coalition/Open-Cap-Format-OCF/main/schema/enums/StockIssuanceType.schema.json"
+  source_mapping: ../issuance/StockIssuance.mapping.md
+  exhaustive: true
+
+# shared: every source property. Carta has no repurchase transaction in either
+# family, so every field is unmappable in every variant — no field has a per-variant
+# Carta home, hence no per-variant target maps appear.
+shared:
+  id:                  { kind: unmappable, target: null, reason: ocf-internal }
+  comments:            { kind: unmappable, target: null, reason: no-equivalent }
+  object_type:         { kind: unmappable, target: null, reason: ocf-internal }
+  date:                { kind: unmappable, target: null, reason: no-equivalent }
+  security_id:         { kind: unmappable, target: null, reason: ocf-internal }
+  price:               { kind: unmappable, target: null, reason: no-equivalent }
+  quantity:            { kind: unmappable, target: null, reason: no-equivalent }
+  consideration_text:  { kind: unmappable, target: null, reason: no-equivalent }
+  balance_security_id: { kind: unmappable, target: null, reason: no-equivalent }
+
+variants:
+
+  Rsa:
+    when: [RSA]
+    primary_targets: null
+    fields: {}
+
+  Default:
+    when: [FOUNDERS_STOCK]
+    primary_targets: null
+    fields: {}
+
+coverage:
+  Rsa: 9/9
+  Default: 9/9
 ```
 
 ## Notes / open questions
 
-- **Carta has no dedicated stock-repurchase transaction; a repurchase is recorded as a certificate *cancellation* tagged with the `REPURCHASED` reason.** OCF models a buyback as a first-class transaction object (`TX_STOCK_REPURCHASE`) carrying a repurchase price-per-share and consideration. Carta's transaction surface has no `RepurchaseTransaction` and no repurchase `$def`; instead `CertificateTransactionItem` groups exactly two lifecycle events (`issuance` + `cancellations[]`), and a repurchase is materialised as a `CertificateCancellationTransaction` whose `reason` is `CertificateCancellationReason.CERTIFICATE_CANCELLATION_REASON_REPURCHASED` ("The certificate shares were repurchased by the issuer."). So the *event* has a home (the cancellation record), but its *economic* fields (price, consideration) do not — Carta's cancellation transaction records only datetime/reason/quantity/termination-forfeiture datetimes, no money. This object is `ocf_kind: object`, so the 3-bucket type policy does not apply; an OCF transaction maps to its corresponding Carta transaction, which here is the repurchase-reasoned certificate cancellation. The fields that have a genuine home are mapped; the price/consideration/balance fields are `no-equivalent`.
-- `date` → `CertificateCancellationTransaction.effectiveDatetime`. OCF's repurchase `date` is the date the buyback occurred; in Carta the buyback is the cancellation of the repurchased certificate, whose `effectiveDatetime` is that date. **Date-vs-datetime granularity gap:** OCF `date` is a calendar `Date` (`YYYY-MM-DD`, `types/Date.schema.json`) while `effectiveDatetime` is `Iso8601CompleteCalendarDateTime`, so a (UTC) time-of-day must be synthesised on export and is dropped on import.
-- `security_id` → `CertificateTransactionItem.securityId`. OCF `security_id` identifies the stock security being repurchased. Carta keys the cancellation to a certificate via its enclosing `CertificateTransactionItem.securityId` ("The identifier of the certificate"); the `CertificateCancellationTransaction` itself carries no security reference, so the item-level `securityId` is the queryable home for the repurchased-security link. (For a *partial* repurchase, OCF leaves the surviving balance on a separate `balance_security_id`; see below.)
-- `quantity` → `CertificateCancellationTransaction.quantity`. OCF's `quantity` is the number of shares repurchased; the Carta cancellation `quantity` (`Decimal`) is the number of shares removed from the certificate by the repurchase. Type note: OCF `Numeric` → Carta `Decimal`; both are arbitrary-precision decimal strings, no transform. For a full repurchase this equals the certificate's outstanding quantity; for a partial repurchase it is the repurchased slice and the remainder is a separate certificate (see `balance_security_id`).
-- `price` → unmappable / `no-equivalent`. OCF records the repurchase price *per share* as a `Monetary` (`{amount, currency}` → would map to Carta `Money` if a target existed). But Carta's `CertificateCancellationTransaction` has **no price/`Money` field at all** — it stores only datetime/reason/quantity/termination data. `Certificate.pricePerShare` (`Money`) exists, but it is the *issuance* price the certificate was originally bought at, not the price the issuer pays to buy the shares back; routing the repurchase price there would overwrite/contradict the issue price. There is no Carta property for the consideration paid in a buyback, so the repurchase price has no home.
-- `consideration_text` → unmappable / `no-equivalent`. Free-form description of the consideration given for the repurchase. Carta has no general per-transaction notes/consideration field, and the cancellation transaction carries no such slot, so this is `no-equivalent`.
-- `balance_security_id` → unmappable / `no-equivalent`. For a *partial* repurchase OCF points at the security holding the unrepurchased remainder. Carta has no remainder/split linkage on `CertificateCancellationTransaction` or `Certificate`: a partial repurchase would appear as a cancellation of part of the certificate, leaving (or re-issuing) the balance as its own certificate, with no Carta property tying the cancellation to "the certificate holding the leftover balance." This is consistent with the `balance_security_id` treatment on the completed `StockConversion`/`ConvertibleConversion` mappings — Carta records no balance-security back-reference for any partial event.
-- `object_type` → **enum-remap** → `CertificateCancellationTransaction.reason`, with `TX_STOCK_REPURCHASE` → `CERTIFICATE_CANCELLATION_REASON_REPURCHASED`. This is the field that carries the "this was a repurchase" signal across the boundary. Carta has **no repurchase transaction type**; instead a repurchase is materialised as a `CertificateCancellationTransaction` whose `reason` is the `CERTIFICATE_CANCELLATION_REASON_REPURCHASED` member of `CertificateCancellationReason` ("The certificate shares were repurchased by the issuer."). Because the OCF discriminator `const` resolves to a single source value and the Carta `reason` enum has a member that means exactly "repurchased", the OCF object-type constant has a genuine, semantically-precise home — so it is mapped rather than dropped as `ocf-internal`. (This diverges deliberately from the `TX_STOCK_CONVERSION → null` treatment in `StockConversion`: there the conversion is modelled on the *issuance* side of a new certificate and the cancellation `reason` is not the destination, whereas here the entire event **is** the cancellation, so its `reason` member is the correct target.)
-- `id`, `comments` → unmappable / `ocf-internal`. Standard OCF object scaffolding. `id` is OCF's own object identifier (Carta assigns server-side ids); `comments` has no Carta slot. Both are OCF-internal and have no Carta target.
-- Open question / round-trip: because Carta reconstructs a repurchase from a certificate cancellation carrying the `REPURCHASED` reason — and drops the repurchase price and consideration entirely — an OCF→Carta→OCF round-trip cannot recover the original `TX_STOCK_REPURCHASE` price/`consideration_text`/`balance_security_id`. Recovering even the *event* requires the convention "treat a `CERTIFICATE_CANCELLATION_REASON_REPURCHASED` cancellation as a repurchase." This pairing/identity convention and the lost economics are export-tooling concerns, not expressible in the schema.
+- **Join-dependent (downstream), and unmappable in every family.** A `StockRepurchase`
+  carries no discriminator — only `security_id` — so the repurchased stock's family
+  (`RSA` vs `FOUNDERS_STOCK`) is undecidable from the record alone. An importer must
+  resolve `issuance_type` from the joined `StockIssuance` first (the two-pass
+  requirement, docs/polymorphic-transaction-routing.md §2.2), which is why this is a
+  `route_by_security` mapping rather than a plain single-target one. The routing here
+  is structurally honest but lands nowhere: **Carta has no repurchase transaction in
+  either family**, so both variants have `primary_targets: null` and every source
+  property is `unmappable`.
+- **No Carta repurchase verb exists.** Carta's transaction surface has no
+  `RepurchaseTransaction` and no repurchase `$def` on the `RestrictedStockAward` or the
+  plain `Certificate` family; a buyback is not representable as its own Carta event.
+  (A repurchase *could* be approximated as a `CertificateCancellationTransaction` with
+  the `CERTIFICATE_CANCELLATION_REASON_REPURCHASED` reason, but that is a
+  family-agnostic certificate cancellation, not a per-family route off the repurchased
+  security, so it is not a faithful target for this routed object — see the open
+  question below.) Because the entire family is unmappable, every field — including the
+  ones that would have homes on a cancellation tx (`date`, `quantity`) — is
+  `no-equivalent` here.
+- **`security_id`** is the join key (`route_by_security.via`); it routes the family by
+  joining back to the issuance, it is not itself a stored Carta field, so it is
+  `ocf-internal`.
+- **`price` / `consideration_text` have no home.** OCF records the repurchase price
+  *per share* (`Monetary`) and a free-text `consideration_text`; Carta has no
+  per-family repurchase property for the money paid in a buyback or for free-form
+  consideration, so both are `no-equivalent`. (Even the cancellation-tx approximation
+  carries no `Money` slot.)
+- **`date` / `quantity`** describe when the buyback happened and how many shares were
+  repurchased. Neither stock family exposes a repurchase event to land them on, so both
+  are `no-equivalent` rather than renames.
+- **`balance_security_id`** (partial-repurchase remainder) has no Carta back-reference
+  on any stock family, consistent with the `balance_security_id` treatment on the
+  completed `StockConversion`/`ConvertibleConversion` mappings.
+- **`id`, `comments`, `object_type`.** Standard OCF object scaffolding: `id` and
+  `object_type` are `ocf-internal` (Carta assigns ids; the routed object type is the
+  join's concern, not a stored field), and `comments` has no Carta slot
+  (`no-equivalent`).
+- Open question / round-trip: since neither family can record the repurchase, an
+  OCF→Carta→OCF round-trip recovers nothing of a `StockRepurchase`. If buybacks must
+  survive, the export convention "materialise a repurchase as a
+  `CERTIFICATE_CANCELLATION_REASON_REPURCHASED` certificate cancellation" (and read it
+  back as a repurchase) would have to live in the tooling — it is not a per-family
+  schema target and so is out of scope for this routed mapping. See
+  docs/polymorphic-transaction-routing.md §4.3.
