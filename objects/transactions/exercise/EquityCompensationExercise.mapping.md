@@ -150,10 +150,10 @@ shared:
       Sar:    "#/$defs/SarExerciseTransaction/properties/quantity"
       Rsu:    null
   resulting_security_ids:
-    kind: rename
+    kind: computed                 # lineage: importer records each resulting security's precededBy
     target:
-      Option: "#/$defs/OptionExerciseTransaction/properties/resultingSecurityId"
-      Sar:    "#/$defs/SarExerciseTransaction/properties/resultingSecurityId"
+      Option: "#/$defs/CertificatePrecededBy/properties/securities"
+      Sar:    "#/$defs/CertificatePrecededBy/properties/securities"
       Rsu:    null
 
 variants:
@@ -201,11 +201,17 @@ coverage:
     granularity widening; the same "shares acquired on exercise" event.
   - `quantity` → `quantity`. OCF `types/Numeric` (stringified decimal) → Carta
     `Decimal`; straight rename, representation change only.
-  - `resulting_security_ids` → `resultingSecurityId`: **cardinality narrowing.** OCF
-    allows an *array* of resulting security IDs; Carta's `resultingSecurityId` is a
-    single string. The common case (one exercise → one resulting certificate)
-    round-trips cleanly; an OCF exercise listing multiple resulting ids cannot be
-    represented without loss / splitting into multiple Carta records.
+  - `resulting_security_ids` → **lineage on the resulting security** (kind `computed`).
+    An exercise produces shares — a Carta `Certificate` — and each resulting
+    certificate records its origin in `Certificate.precededBy.securities` (a
+    `PrecededBySecurity` array). The OCF *array* therefore round-trips **losslessly**
+    as a set of reverse lineage edges: the importer writes the exercised grant's
+    `security_id` into every resulting certificate's `precededBy.securities`. This is
+    `computed` (importer-derived placement onto records the exercise *references*), not
+    a `rename` — Carta's tx-level scalar `resultingSecurityId` is only a lossy
+    convenience pointer (a single id), whereas `precededBy.securities` carries the full
+    set, so in any snapshot the complete lineage forest stays traceable. (Cash-settled
+    SARs settle to `cashAcquired` and produce no resulting security.)
 - **`security_id`** is the join key (`route_by_security.via`); it routes the family,
   it is not itself a stored Carta field. Carta's exercise transactions hold no
   reference to the source grant — that linkage is structural (the exercise sits under
