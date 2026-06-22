@@ -187,3 +187,12 @@ coverage:
 - **`security_id`** is the join key (`route_by_security.via`); it routes the family,
   it is not itself a stored Carta field. **`balance_security_id`** (partial-cancel
   remainder) has no Carta equivalent on any cancellation tx.
+- **Lineage asymmetry — why `balance_security_id` stays unmappable here.** A partial
+  equity-comp cancellation mints a new balance security in the *same* family — an
+  `OptionGrant` / `RestrictedStockUnit` / `SarTransactionItem` — and Carta's
+  equity-comp security objects carry **no `precededBy` edge**; only the stock
+  securities (`Certificate`, `RestrictedStockAward`) do. So unlike the stock families,
+  `balance_security_id` has no Carta reverse-lineage home to be `computed` onto and
+  remains genuinely unmappable. Contrast the stock-side `StockCancellation` (#182),
+  where the same field *is* recorded via the resulting security's
+  `precededBy.securities`.
