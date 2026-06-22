@@ -252,6 +252,76 @@ describe("entry note: field (corner-case annotation)", () => {
   });
 });
 
+describe("routed_to: (verified round-trip edges)", () => {
+  function withRoutedTo(routed_to: unknown): ValidateInput {
+    const m = issuanceMapping();
+    (m.variants as { Option: { fields: Record<string, unknown> } }).Option.fields.comp_type = {
+      kind: "unmappable",
+      target: null,
+      reason: "no-equivalent",
+      routed_to,
+    };
+    return input({ mapping: m });
+  }
+
+  it("accepts a routed_to edge to the variant that actually claims the value", () => {
+    // RSU is dropped in the Option variant but claimed by the Rsu variant (when: [RSU]).
+    expect(messages(withRoutedTo({ RSU: "Rsu" }))).toEqual([]);
+  });
+
+  it("rejects routed_to pointing at a non-existent variant", () => {
+    const errs = messages(withRoutedTo({ RSU: "Nope" }));
+    expect(errs.some((s) => /routed_to.*"Nope".*no such variant/i.test(s))).toBe(true);
+  });
+
+  it("rejects routed_to to a variant that does NOT claim the value (route isn't real)", () => {
+    // routing RSU to the Option variant is false — Option claims only OPT.
+    const errs = messages(withRoutedTo({ RSU: "Option" }));
+    expect(errs.some((s) => /routed_to.*RSU.*Option.*does not claim/i.test(s))).toBe(true);
+  });
+
+  it("rejects a routed_to key that is not a value of the routed enum", () => {
+    const errs = messages(withRoutedTo({ BOGUS: "Rsu" }));
+    expect(errs.some((s) => /routed_to key "BOGUS".*not a value of the routed enum/i.test(s))).toBe(
+      true
+    );
+  });
+
+  it("rejects a non-map routed_to", () => {
+    const errs = messages(withRoutedTo("Rsu"));
+    expect(errs.some((s) => /routed_to.*must be a map/i.test(s))).toBe(true);
+  });
+
+  it("renders a routed_to value as '→ variant (routed)', not dropped", () => {
+    const out = renderMappingReport({
+      file: "f.mapping.md",
+      frontmatter: { target_standard: "Carta" },
+      mapping: {
+        status: "complete",
+        discriminator: { field: "comp_type", exhaustive: true },
+        variants: {
+          Option: {
+            when: ["OPT"],
+            primary_targets: ["#/$defs/OptionTx"],
+            fields: {
+              comp_type: {
+                kind: "enum-remap",
+                target: "#/$defs/OptionGrant/properties/kind",
+                values: { OPT: "A", RSU: null },
+                routed_to: { RSU: "Rsu" },
+              },
+            },
+          },
+          Rsu: { when: ["RSU"], primary_targets: ["#/$defs/RsuTx"], fields: {} },
+        },
+        coverage: { Option: "1/1", Rsu: "1/1" },
+      },
+    });
+    expect(out).toContain("RSU → Rsu (routed)");
+    expect(out).not.toMatch(/RSU ✗ dropped/);
+  });
+});
+
 describe("polymorphic mapping — downstream (route_by_security)", () => {
   function dinput(over: Partial<ValidateInput> = {}): ValidateInput {
     return input({

@@ -51,12 +51,15 @@ function renderItem(name: string, entry: unknown): Item {
     case "enum-remap": {
       const label = `${name} → ${asStringOr(target, "?")} (enum-remap)`;
       const values = entry.values;
+      const routedTo = isPlainObject(entry.routed_to) ? entry.routed_to : {};
       item = isPlainObject(values)
         ? {
             label,
-            children: Object.entries(values).map(([key, value]) =>
-              value === null ? `${key} ✗ dropped` : `${key} → ${String(value)}`
-            ),
+            children: Object.entries(values).map(([key, value]) => {
+              if (value !== null) return `${key} → ${String(value)}`;
+              const route = routedTo[key];
+              return typeof route === "string" ? `${key} → ${route} (routed)` : `${key} ✗ dropped`;
+            }),
           }
         : { label, children: [] };
       break;

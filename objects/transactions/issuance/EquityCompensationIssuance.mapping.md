@@ -302,7 +302,7 @@ variants:
         kind: enum-remap
         target: "#/$defs/OptionGrant/properties/stockOptionType"
         values: { OPTION_NSO: NSO, OPTION_ISO: ISO, OPTION: OTHER, RSU: null, CSAR: null, SSAR: null }
-        note: "RSU/CSAR/SSAR show as dropped only because this is the Option branch — they route to the Rsu / Sar variants (RsuIssuanceTransaction / SarIssuanceTransaction). The OCF→Carta round-trip is preserved, not lost."
+        routed_to: { RSU: Rsu, CSAR: Sar, SSAR: Sar } # not dropped — handled by these variants (verified round-trip)
       option_grant_type:
         kind: enum-remap
         target: "#/$defs/OptionGrant/properties/stockOptionType"

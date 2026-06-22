@@ -24,9 +24,12 @@ of the source schema; `kind` ∈ `rename | split | combine | enum-remap | comput
 TODO` with the matching target shape (string; array of ≥2 strings for `split`; `null` for
 `unmappable`; literal `TODO` for `TODO`); `coverage: X/N` where `N` = source property count and
 `X` = non-`TODO` entry count — the counter is machine-checked, never hand-trusted. Any entry may
-carry an optional free-text `note:` (a string) to record a corner case — e.g. that a discriminator
-value shown as *dropped* in one variant is actually *routed* to another (the round-trip is
-preserved, not lost). Notes are rendered under their field in `--verbose`.
+carry an optional free-text `note:` (a string), rendered under its field in `--verbose`. In a
+polymorphic mapping (below), an entry may also carry a **`routed_to:`** map
+(`{ discriminator value → variant label }`) — a *verified round-trip edge*: a value `null`-ed in
+this variant because it belongs to another. The validator confirms each named variant actually
+*claims* that value (a real, deterministic route), and `--verbose` renders it as
+`VALUE → Variant (routed)` instead of `VALUE ✗ dropped`.
 
 **Semantic (when `target_standard` ≠ `TBD`):** every string target must be a `#/...` JSON pointer
 that resolves in the target bundle (`target_standard` → bundle file via `TARGET_BUNDLES` in the

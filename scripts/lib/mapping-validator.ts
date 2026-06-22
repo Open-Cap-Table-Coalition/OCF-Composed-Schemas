@@ -485,6 +485,28 @@ function validatePolymorphicMapping(
     const variantErr: ErrFn = (field, message) => err(field ? `${label}.${field}` : null, message);
     const nonTodo = validateFieldMap(effective, properties, strict, opts, input, variantErr);
 
+    // Verify routed_to edges on this variant's fields: each maps a routed enum
+    // value to a variant that actually claims it (a real, deterministic route).
+    for (const [fieldName, fEntry] of Object.entries(rawVFields)) {
+      if (!isPlainObject(fEntry) || !isPlainObject(fEntry.routed_to)) continue;
+      for (const [val, vlabel] of Object.entries(fEntry.routed_to)) {
+        const where = `${label}.${fieldName}`;
+        if (enumValues !== null && !enumValues.includes(val)) {
+          err(null, `${where} routed_to key "${val}" is not a value of the routed enum`);
+        }
+        if (typeof vlabel !== "string" || !(vlabel in variants)) {
+          err(null, `${where} routed_to "${String(vlabel)}" names no such variant`);
+          continue;
+        }
+        if (!(claimedBy[val] ?? []).includes(vlabel)) {
+          err(
+            null,
+            `${where} routed_to says "${val}" → ${vlabel}, but the ${vlabel} variant does not claim "${val}"`
+          );
+        }
+      }
+    }
+
     const cov = coverageMap[label];
     const cm = typeof cov === "string" ? /^(\d+)\/(\d+)$/.exec(cov) : null;
     if (cov === undefined) {
@@ -574,6 +596,13 @@ function validateEntryShape(
   // home in another variant (the round-trip is preserved, not lost).
   if (entry.note !== undefined && typeof entry.note !== "string") {
     err(name, "note: must be a string");
+  }
+
+  // routed_to: a structured, machine-checkable round-trip edge { discriminator
+  // value → variant label }. Shape only here; the polymorphic path verifies the
+  // named variants actually claim the values.
+  if (entry.routed_to !== undefined && !isPlainObject(entry.routed_to)) {
+    err(name, "routed_to: must be a map of discriminator value → variant label");
   }
 }
 
