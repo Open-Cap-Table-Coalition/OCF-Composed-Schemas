@@ -192,6 +192,15 @@ coverage:
   exists to host any of these fields. (Sibling `WarrantTransfer.mapping.md` *does*
   have a home; equity-comp transfer does not — same "host transaction absent"
   situation as `EquityCompensationRetraction.mapping.md`.)
+- **The lineage has no Carta home either (sharper gap than `StockTransfer`).**
+  Transferring an equity-comp award produces a new `OptionGrant` / `RestrictedStockUnit` /
+  `SAR`, and Carta's equity-comp security objects carry **no** `precededBy` edge — only
+  the stock securities (`Certificate`, `RestrictedStockAward`) do. So
+  `resulting_security_ids` / `balance_security_id` cannot round-trip as reverse lineage
+  onto the resulting security the way they would on the stock side; they stay
+  `unmappable`. This is a sharper gap than stock-side `StockTransfer` (#212), where the
+  *event* is dropped but the *lineage* survives via `precededBy.securities` — here neither
+  the transfer event nor its lineage has any Carta destination.
 - **`date` / `quantity` / `resulting_security_ids` / `balance_security_id` /
   `consideration_text`** are the business fields a transfer would carry —
   effective date, units transferred, the resulting securities created, the
