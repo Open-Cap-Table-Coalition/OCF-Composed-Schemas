@@ -101,48 +101,58 @@ Source: [`StockConsolidation.schema.json`](./StockConsolidation.schema.json)
 
 ```yaml
 # kind vocabulary: rename | split | combine | enum-remap | computed | unmappable | TODO
+# routing: route_by_security (downstream join). This consolidation carries NO
+# scalar security_id and NO discriminator — it folds many stock positions
+# (security_ids) into one resulting_security_id. The stock family (Rsa vs.
+# Founders/Default) is fixed at issuance, so it is resolved by joining the
+# consolidated securities back to their StockIssuance and reading that
+# issuance's issuance_type. No Carta consolidation transaction exists, so every
+# variant is fully unmappable. See docs/polymorphic-transaction-routing.md §2.2/§4.3.
 status: complete
-coverage: 7/7
 
-fields:
-  id:
-    kind: unmappable
-    target: null
-    reason: ocf-internal
-  comments:
-    kind: unmappable
-    target: null
-    reason: ocf-internal
-  object_type:
-    kind: unmappable
-    target: null
-    reason: ocf-internal
-    values:
-      TX_STOCK_CONSOLIDATION: null
-  date:
-    kind: unmappable
-    target: null
-    reason: no-equivalent
-  resulting_security_id:
-    kind: unmappable
-    target: null
-    reason: no-equivalent
-  security_ids:
-    kind: unmappable
-    target: null
-    reason: no-equivalent
-  reason_text:
-    kind: unmappable
-    target: null
-    reason: no-equivalent
+route_by_security:
+  via: security_ids
+  resolve: issuance_type
+  resolve_enum: "https://raw.githubusercontent.com/Open-Cap-Table-Coalition/Open-Cap-Format-OCF/main/schema/enums/StockIssuanceType.schema.json"
+  source_mapping: ../issuance/StockIssuance.mapping.md
+  exhaustive: true
+
+# shared: every source property. No Carta consolidation tx exists for either
+# stock family, so every field is unmappable in all variants — none carries a
+# per-variant target map.
+shared:
+  id:                    { kind: unmappable, target: null, reason: ocf-internal }
+  comments:              { kind: unmappable, target: null, reason: no-equivalent }
+  object_type:           { kind: unmappable, target: null, reason: ocf-internal }
+  date:                  { kind: unmappable, target: null, reason: no-equivalent }
+  resulting_security_id: { kind: unmappable, target: null, reason: no-equivalent }
+  security_ids:          { kind: unmappable, target: null, reason: ocf-internal }
+  reason_text:           { kind: unmappable, target: null, reason: no-equivalent }
+
+variants:
+
+  Rsa:
+    when: [RSA]
+    primary_targets: null
+    fields: {}
+
+  Default:
+    when: [FOUNDERS_STOCK]
+    primary_targets: null
+    fields: {}
+
+coverage:
+  Rsa: 7/7
+  Default: 7/7
 ```
 
 ## Notes / open questions
 
-- **Carta has no stock-consolidation transaction, so the whole object is unmappable.** OCF's `TX_STOCK_CONSOLIDATION` records the merging of several existing stock positions (`security_ids`) into one new resulting position (`resulting_security_id`) — a balance-housekeeping event with no economic effect on the cap table. Carta's transaction set is purely issuance/exercise/settlement/cancellation/transfer per security family (`CertificateIssuanceTransaction`, `Option*`, `Convertible*`, `Warrant*`, `Rsa*`, `Rsu*`, `Sar*`, `Phantom*`, `Piu*`); none of them models consolidating multiple lots into one. The token "consolidat" does not appear anywhere in the bundle. There is therefore no corresponding Carta object onto which to map this transaction's substantive fields.
-- `resulting_security_id` looks superficially mappable because Carta does define a `resultingSecurityId` field — but only on derivative-conversion events: `OptionExerciseTransaction`, `RsuSettlementTransaction`, `SarExerciseTransaction`, `WarrantExerciseTransaction`, and `WarrantTransferTransaction`. In every case it means "the security *produced* when a derivative is exercised/settled/transferred," not "the lot that absorbs several consolidated stock positions." Routing OCF's consolidation result onto one of those unrelated transaction types would assert an exercise/transfer that did not occur, so it is left `no-equivalent` rather than mapped to a same-named field on the wrong object. (This object is `ocf_kind: object`, so the 3-bucket type policy does not apply; an OCF transaction maps to its *corresponding* Carta transaction, and here there is none.)
-- `security_ids` (the array of source positions being consolidated, `minItems: 1`, unique) has no home for the same reason: Carta has no consolidation event to attach a many-to-one source list to. Carta's transactions reference a single `securityId`/`resultingSecurityId`, never a set of consolidated inputs.
-- `date` — OCF records the transaction date as a calendar `Date` (`types/Date.schema.json`, `YYYY-MM-DD`). Carta's transaction timestamps are `Iso8601CompleteCalendarDateTime` (date *plus* time) and live on the concrete transaction objects (`*Datetime` fields). With no Carta consolidation transaction to carry it, the date has nowhere to land; note also the date-vs-datetime granularity gap that would apply even if a target existed.
-- `reason_text` — free-form human-readable justification for the consolidation. Carta has no general per-transaction reason/comment field, and there is no consolidation transaction to host one, so this is `no-equivalent`.
-- `id`, `comments`, `object_type` — OCF object scaffolding. `id` is OCF's identifier (Carta assigns its own server-side IDs); `object_type` is OCF's discriminator constant (`TX_STOCK_CONSOLIDATION`), which Carta does not need because it types transactions positionally per endpoint; `comments` has no Carta slot. All three are `ocf-internal`. The `object_type` `values:` block maps the sole constant to `null` because there is no Carta discriminator value to remap to.
+- **Join-dependent (downstream), and fully unmappable.** OCF `TX_STOCK_CONSOLIDATION` carries only the foreign keys — the array `security_ids` of the positions being folded together and the single `resulting_security_id` — and no discriminator of its own. The stock family is fixed at issuance, so an importer would resolve `issuance_type` by joining the consolidated securities back to their `StockIssuance` (the two-pass requirement, §2.2). Because this object has no scalar `security_id`, the join key (`route_by_security.via`) is the array `security_ids`. The `StockIssuanceType` enum partitions exactly into `Rsa` (`RSA`) and `Default` (`FOUNDERS_STOCK`).
+- **Carta has no consolidation transaction in either family**, so `primary_targets` is `null` for both variants and no field maps anywhere. OCF's consolidation is a balance-housekeeping merge of several lots into one with no economic effect; Carta's transaction set is purely issuance/exercise/settlement/cancellation/transfer per security family and models nothing that consolidates multiple lots into one. The token "consolidat" does not appear in the bundle.
+- **`resulting_security_id` is not mappable.** Carta does define a `resultingSecurityId` field, but only on derivative-conversion events (`OptionExerciseTransaction`, `RsuSettlementTransaction`, `SarExerciseTransaction`, `WarrantExerciseTransaction`, `WarrantTransferTransaction`), where it means "the security *produced* by an exercise/settlement/transfer," not "the lot that absorbs several consolidated stock positions." Mapping onto a same-named field on the wrong transaction would assert an event that did not occur, so it stays `no-equivalent`.
+- **`security_ids`** is the join key (`route_by_security.via`); it routes the family and is `ocf-internal` rather than a stored Carta field. It is also a many-to-one source list, which Carta has no consolidation event to attach to (Carta transactions reference a single `securityId`/`resultingSecurityId`, never a set of consolidated inputs).
+- **`reason_text` has no home** — free-form human-readable justification, and Carta has neither a general per-transaction reason field nor a consolidation transaction to host one (`no-equivalent`). (Even where Carta exposes a `reason`, it is an enum, and free-text → enum is unmappable, not a rename.)
+- **`date`** is an OCF calendar `Date` (`YYYY-MM-DD`); Carta's transaction timestamps are `Iso8601CompleteCalendarDateTime` on the concrete transaction objects. With no Carta consolidation transaction to carry it, it has nowhere to land (`no-equivalent`), independent of the date-vs-datetime granularity gap.
+- **`id`, `object_type`** are OCF scaffolding. `id` is OCF's identifier (Carta assigns its own server-side IDs) and `object_type` is the discriminator constant `TX_STOCK_CONSOLIDATION`, which Carta does not need because it types transactions positionally per endpoint — both `ocf-internal`. `comments` has no Carta slot (`no-equivalent`).
 
