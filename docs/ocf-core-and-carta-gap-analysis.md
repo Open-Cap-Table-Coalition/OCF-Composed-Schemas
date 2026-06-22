@@ -164,6 +164,13 @@ which the current option/`Certificate`-centric mappings do not yet emit.)
   `valuation_type`, `capitalization_definition_rules` all dropped).
 - **OCF vesting-condition graph.** `VestingTerms`, `VestingCondition*`, `*Trigger` — all 0%.
   Carta's flat `VestingPeriod`/template is fed by the canonical OCF vesting layer instead.
+- **Explicit vesting events on plain stock.** OCF carries `vestings` (an explicit `Vesting`
+  event array) on *every* issuance, but Carta exposes a `vestingEvents` array only on its
+  grant-style securities (`RestrictedStockAward`, `OptionGrant`, `RestrictedStockUnit`). Plain
+  `Certificate` (and SAR, which has no Carta security object) carry only `vestingScheduleTemplateId`,
+  so a founders/certificate issuance expressed via explicit `vestings` rather than a template ref
+  loses its per-tranche detail on round-trip — `Certificate` is the only Carta security object
+  without an events array. (One-line Carta fix to close it: add `vestingEvents` to `Certificate`.)
 - **Whole event families.** Acceptance (except EquityComp), retraction, the non-Warrant
   transfer family, adjustment, split/consolidation, repricing, return-to-pool, and standalone
   vesting/acceleration events — Carta keeps current state, not OCF's transaction stream.
