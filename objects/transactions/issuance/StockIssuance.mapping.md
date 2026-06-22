@@ -15,13 +15,13 @@ required_fields:
   - security_law_exemptions
   - stakeholder_id
   - custom_id
-target_standard: TBD
-target_version: TBD
-status: draft
+target_standard: Carta
+target_version: v1alpha1 (2026-04-30)
+status: complete
 last_generated: 2026-05-18
 ---
 
-# Object - Stock Issuance Transaction → TBD
+# Object - Stock Issuance Transaction → Carta
 
 > Object describing a stock issuance transaction by the issuer and held by a stakeholder
 
@@ -181,80 +181,126 @@ Source: [`StockIssuance.schema.json`](./StockIssuance.schema.json)
 
 ```yaml
 # kind vocabulary: rename | split | combine | enum-remap | computed | unmappable | TODO
-status: draft
-coverage: 0/21
+# routing: discriminator (issuance-time) — issuance_type routes an RSA to Carta's
+# RestrictedStockAward family; FOUNDERS_STOCK / absent is a plain Certificate.
+# shared: fields common to both variants. A field whose Carta home differs by
+# variant carries a per-variant target map { Rsa/Default: pointer }; the validator
+# enforces the keys stay in sync with the variant set.
+status: complete
 
-fields:
-  id:
-    kind: TODO
-    target: TODO
-  comments:
-    kind: TODO
-    target: TODO
-  object_type:
-    kind: TODO          # likely enum-remap
-    target: TODO
-    values:
-      TX_STOCK_ISSUANCE: TODO
+discriminator:
+  field: issuance_type
+  exhaustive: true
+
+shared:
+  id:                        { kind: unmappable, target: null, reason: ocf-internal }
+  comments:                  { kind: unmappable, target: null, reason: no-equivalent }
+  object_type:               { kind: unmappable, target: null, reason: ocf-internal }
   date:
-    kind: TODO
-    target: TODO
+    kind: rename
+    target:
+      Rsa:     "#/$defs/RsaIssuanceTransaction/properties/issueDatetime"
+      Default: "#/$defs/CertificateIssuanceTransaction/properties/issueDatetime"
   security_id:
-    kind: TODO
-    target: TODO
+    kind: rename
+    target:
+      Rsa:     "#/$defs/RestrictedStockAward/properties/securityId"
+      Default: "#/$defs/Certificate/properties/securityId"
   custom_id:
-    kind: TODO
-    target: TODO
+    kind: rename
+    target:
+      Rsa:     "#/$defs/RestrictedStockAward/properties/securityLabel"
+      Default: "#/$defs/Certificate/properties/securityLabel"
   stakeholder_id:
-    kind: TODO
-    target: TODO
-  board_approval_date:
-    kind: TODO
-    target: TODO
-  stockholder_approval_date:
-    kind: TODO
-    target: TODO
-  consideration_text:
-    kind: TODO
-    target: TODO
-  security_law_exemptions:
-    kind: TODO
-    target: TODO
+    kind: rename
+    target:
+      Rsa:     "#/$defs/RestrictedStockAward/properties/stakeholderId"
+      Default: "#/$defs/Certificate/properties/stakeholderId"
+  stockholder_approval_date: { kind: unmappable, target: null, reason: no-equivalent }
+  consideration_text:        { kind: unmappable, target: null, reason: no-equivalent }
+  security_law_exemptions:   { kind: unmappable, target: null, reason: no-equivalent }
   stock_class_id:
-    kind: TODO
-    target: TODO
+    kind: rename
+    target:
+      Rsa:     "#/$defs/RestrictedStockAward/properties/shareClassId"
+      Default: "#/$defs/Certificate/properties/shareClassId"
   stock_plan_id:
-    kind: TODO
-    target: TODO
-  share_numbers_issued:
-    kind: TODO
-    target: TODO
-  share_price:
-    kind: TODO
-    target: TODO
+    kind: rename
+    target:
+      Rsa:     "#/$defs/RsaIssuanceTransaction/properties/equityPlanId"
+      Default: "#/$defs/CertificateIssuanceTransaction/properties/equityPlanId"
+  share_numbers_issued:      { kind: unmappable, target: null, reason: no-equivalent }
   quantity:
-    kind: TODO
-    target: TODO
+    kind: rename
+    target:
+      Rsa:     "#/$defs/RsaIssuanceTransaction/properties/quantity"
+      Default: "#/$defs/CertificateIssuanceTransaction/properties/quantity"
   vesting_terms_id:
-    kind: TODO
-    target: TODO
-  vestings:
-    kind: TODO
-    target: TODO
-  cost_basis:
-    kind: TODO
-    target: TODO
-  stock_legend_ids:
-    kind: TODO
-    target: TODO
-  issuance_type:
-    kind: TODO          # likely enum-remap
-    target: TODO
-    values:
-      RSA: TODO
-      FOUNDERS_STOCK: TODO
+    kind: rename
+    target:
+      Rsa:     "#/$defs/RsaIssuanceTransaction/properties/vestingScheduleTemplateId"
+      Default: "#/$defs/CertificateIssuanceTransaction/properties/vestingScheduleTemplateId"
+  stock_legend_ids:          { kind: unmappable, target: null, reason: no-equivalent }
+
+variants:
+
+  Rsa:
+    when: [RSA]
+    primary_targets:
+      - "#/$defs/RsaIssuanceTransaction"
+      - "#/$defs/RestrictedStockAward"
+    fields:
+      board_approval_date: { kind: rename, target: "#/$defs/RestrictedStockAward/properties/boardApprovalDate" }
+      share_price:         { kind: rename, target: "#/$defs/RestrictedStockAward/properties/pricePerShare" }
+      cost_basis:          { kind: rename, target: "#/$defs/RsaIssuanceTransaction/properties/acquisitionCost" }
+      vestings:            { kind: rename, target: "#/$defs/RestrictedStockAward/properties/vestingEvents" }
+      issuance_type:       { kind: unmappable, target: null, reason: no-equivalent }
+
+  Default:
+    when: [FOUNDERS_STOCK]
+    primary_targets:
+      - "#/$defs/CertificateIssuanceTransaction"
+      - "#/$defs/Certificate"
+    fields:
+      board_approval_date: { kind: unmappable, target: null, reason: no-equivalent }
+      share_price:         { kind: rename, target: "#/$defs/Certificate/properties/pricePerShare" }
+      cost_basis:          { kind: rename, target: "#/$defs/CertificateIssuanceTransaction/properties/acquisitionCost" }
+      vestings:
+        kind: unmappable
+        target: null
+        reason: no-equivalent
+        note: >-
+          Carta's Certificate has no vestingEvents array (only vestingScheduleTemplateId),
+          so OCF's explicit vesting events have no home for founders/certificate stock — the
+          template ref still maps via vesting_terms_id. RSA keeps both (RestrictedStockAward
+          carries vestingEvents). Carta-side asymmetry: Certificate is the only security object
+          without an events array.
+      issuance_type:       { kind: unmappable, target: null, reason: no-equivalent }
+
+coverage:
+  Rsa: 21/21
+  Default: 21/21
 ```
 
 ## Notes / open questions
 
-- 
+- **Polymorphic by `issuance_type`.** An RSA is, in OCF, a `StockIssuance` flagged
+  `issuance_type: RSA` (actually-issued stock with a repurchase/forfeiture right) — see
+  [`docs/type-mapping-policy.md`](../../../docs/type-mapping-policy.md). Carta promotes it to a
+  dedicated `RestrictedStockAward` security. This mapping routes `RSA` → `RsaIssuanceTransaction` +
+  `RestrictedStockAward`; everything else (`FOUNDERS_STOCK`, and `issuance_type` **absent**, which
+  the importer treats as the `Default` route) → `CertificateIssuanceTransaction` + `Certificate`.
+  See [`docs/polymorphic-transaction-routing.md`](../../../docs/polymorphic-transaction-routing.md).
+- **Per-variant divergence.** `board_approval_date` and `vestings` (explicit event array) exist on
+  `RestrictedStockAward` but **not** on `Certificate` (which carries only
+  `vestingScheduleTemplateId`), so they are RSA-only; `share_price`/`cost_basis` land on the
+  resolved family's security/transaction object.
+- **`shared:` fields use per-variant target maps where the home diverges** (`date`/`security_id`/
+  `custom_id`/`stakeholder_id`/`stock_class_id`/`stock_plan_id`/`quantity`/`vesting_terms_id`): each
+  is a `target: { Rsa/Default: pointer }` map landing on the resolved family's transaction/security
+  object. Both families carry every divergent field (unlike SAR in `EquityCompensationIssuance`), so
+  no `null` columns are needed; the validator enforces the keys stay in sync with the variant set.
+- **Genuinely unmappable.** `share_numbers_issued` (no Carta range type), `stock_legend_ids`
+  (OCF-required; no Carta legend store), and `issuance_type` itself (no Carta field records the
+  RSA/founders flavor; `CertificateIssuanceReason` is a *why-issued* enum, a different concept) have
+  no Carta home in either variant.
