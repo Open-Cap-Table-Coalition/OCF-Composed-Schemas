@@ -31,7 +31,7 @@ Excluding pure OCF scaffolding (`id`/`object_type`/`comments`), the 110 mappings
 |---|---|---|
 | Transfer (Stock, Convertible, EquityComp, PlanSecurity) | None | No `*TransferTransaction` except `WarrantTransferTransaction`; transfers surface only as a `_TRANSFERRED` cancellation reason |
 | Retraction (all securities) | None | No retraction/reversal/correction event anywhere |
-| Vesting events / acceleration (`VestingEvent`, `VestingAcceleration`) | None | No non-schedule vesting-event or acceleration ledger |
+| Vesting events / acceleration (`VestingEvent`, `VestingAcceleration`) | None\* | Under-mapped: Carta *does* have realized `*VestingEvent` rows + `Acceleration{name,terms}` (see floor note) |
 | Split / consolidation (`StockClassSplit`, `StockConsolidation`) | None | No share-adjustment transaction; `split_ratio` unmappable |
 | Repricing (`EquityCompensationRepricing`) | None | No option-repricing event for underwater resets |
 | Pool / authorized-share adjustments | None | No `StockPlanPoolAdjustment`, `…ReturnToPool`, `IssuerAuthorizedSharesAdjustment` host |
@@ -41,6 +41,18 @@ Excluding pure OCF scaffolding (`id`/`object_type`/`comments`), the 110 mappings
 | `VestingTerms` + condition/trigger graph | None | No `VestingCondition`/`*Trigger` def; superseded by the canonical vesting layer |
 | Conversion triggers / most mechanisms | None | No `ConversionTrigger` def; Carta stores flat economics only |
 | Identity/contact types (`TaxID`, `Phone`, `Email`, `Name`, `ShareNumberRange`, `File`, `Md5`) | None | No tax-id, structured-phone, share-range, or file-hash storage |
+
+> **\* These transaction-family "None"s are a floor, not the true gap.** Carta is a *snapshot*
+> reached by reason-coded issuance/cancellation events with preceded-by lineage, so most of these
+> are *reconstructable* (cancel+reissue, in-place mutation, or realized-event rows). The companion
+> [`event-to-snapshot-reconstruction.md`](./event-to-snapshot-reconstruction.md) revises them to:
+> **Strong** — Conversion, Transfer (stock/warrant/PIU/RSA), Split/Consolidation (certificate/RSA),
+> authorized-share & pool adjustments, vesting start + date-based events; **Partial** — Repricing,
+> Retraction (all five), vesting acceleration & milestone events, convertible/option-grant transfers,
+> return-to-pool; **confirmed None** — issuer-level authorized-shares adjustment, stock/convertible/
+> warrant acceptance, and split of options/warrants/RSUs. (`Financing`, `StockLegendTemplate`, the
+> `VestingTerms` condition/trigger graph, conversion triggers, and the identity/contact types remain
+> genuine structural absences.)
 
 **Carta → OCF (what Carta needs/models that OCF lacks).** Of the 139 Carta `$def`s, **40 are
 written by some mapping; 99 are never populated.** The domain-bearing Carta-only concepts:
