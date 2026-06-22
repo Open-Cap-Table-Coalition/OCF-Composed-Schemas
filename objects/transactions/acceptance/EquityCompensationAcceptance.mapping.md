@@ -91,44 +91,90 @@ Source: [`EquityCompensationAcceptance.schema.json`](./EquityCompensationAccepta
 
 ```yaml
 # kind vocabulary: rename | split | combine | enum-remap | computed | unmappable | TODO
+# routing: route_by_security (downstream join). Acceptance is NOT a Carta transaction;
+# it sets a stakeholderAcceptanceDate on the security object. The record carries only
+# security_id and NO discriminator, so the family (Option/Rsu/Sar) is undecidable from
+# the record alone: it is resolved by joining security_id back to the
+# EquityCompensationIssuance and reading that issuance's compensation_type.
+# See docs/polymorphic-transaction-routing.md §2.2/§4.3.
 status: complete
-coverage: 5/5
 
-fields:
-  id:
-    kind: unmappable
-    target: null
-    reason: ocf-internal
-  comments:
-    kind: unmappable
-    target: null
-    reason: ocf-internal
-  object_type:
-    kind: unmappable
-    target: null
-    reason: ocf-internal
-    values:
-      TX_PLAN_SECURITY_ACCEPTANCE: null
-      TX_EQUITY_COMPENSATION_ACCEPTANCE: null
+route_by_security:
+  via: security_id
+  resolve: compensation_type
+  resolve_enum: "https://raw.githubusercontent.com/Open-Cap-Table-Coalition/Open-Cap-Format-OCF/main/schema/enums/CompensationType.schema.json"
+  source_mapping: ../issuance/EquityCompensationIssuance.mapping.md
+  exhaustive: true
+
+# shared: every source property. `date` lands on the resolved family's security object
+# (stakeholderAcceptanceDate), so it carries a per-variant target map { Option/Rsu/Sar }.
+# Sar has no Carta security object, so its acceptance date is unmappable (null).
+shared:
+  id:          { kind: unmappable, target: null, reason: ocf-internal }
+  comments:    { kind: unmappable, target: null, reason: no-equivalent }
+  object_type: { kind: unmappable, target: null, reason: ocf-internal }
+  security_id: { kind: unmappable, target: null, reason: ocf-internal }
   date:
     kind: rename
-    target: "#/$defs/OptionGrant/properties/stakeholderAcceptanceDate"
-  security_id:
-    kind: rename
-    target: "#/$defs/OptionGrant/properties/securityId"
+    target:
+      Option: "#/$defs/OptionGrant/properties/stakeholderAcceptanceDate"
+      Rsu:    "#/$defs/RestrictedStockUnit/properties/stakeholderAcceptanceDate"
+      Sar:    null
+
+variants:
+
+  Option:
+    when: [OPTION, OPTION_NSO, OPTION_ISO]
+    primary_targets:
+      - "#/$defs/OptionGrant"
+    fields: {}
+
+  Rsu:
+    when: [RSU]
+    primary_targets:
+      - "#/$defs/RestrictedStockUnit"
+    fields: {}
+
+  Sar:
+    when: [CSAR, SSAR]
+    primary_targets: null
+    fields: {}
+
+coverage:
+  Option: 5/5
+  Rsu: 5/5
+  Sar: 5/5
 ```
 
 ## Notes / open questions
 
-- **Carta has no acceptance *transaction*; it records acceptance as a date on the grant.** OCF models a stakeholder accepting their equity-comp grant as a standalone transaction object (`TX_EQUITY_COMPENSATION_ACCEPTANCE` / the deprecated `TX_PLAN_SECURITY_ACCEPTANCE`). Carta has no analogous transaction type — its transaction set covers issuance / exercise / cancellation but not acceptance. Instead, Carta folds "the stakeholder accepted" into the security object itself: `OptionGrant.stakeholderAcceptanceDate` (`Iso8601CompleteCalendarDate`). The mirror fields exist on the other equity-comp securities too (`RestrictedStockAward.stakeholderAcceptanceDate`, `RestrictedStockUnit.stakeholderAcceptanceDate`, and `Interest.acceptanceDate`), confirming this is Carta's modeling pattern for acceptance generally.
-- **`date` → `OptionGrant.stakeholderAcceptanceDate`.** This is the substantive payload of the transaction: the date the holder accepted. OCF equity compensation = Carta option grants (the context's transaction surface maps equity-comp / plan-security option issuance to `OptionIssuanceTransaction` + `OptionGrant`), so `OptionGrant` is the single, unambiguous Carta home for an *equity-comp* acceptance, and `stakeholderAcceptanceDate` is the field. Marked `rename` rather than a transaction-field mapping because in Carta this is an update (set the date) on the existing grant identified by `security_id`, not the creation of a new transaction row.
-  - Granularity note: both sides are calendar **dates** here (OCF `Date` and Carta `Iso8601CompleteCalendarDate`), so unlike the issuance/exercise transactions there is no date-vs-datetime widening to flag. (Carta's `Interest.acceptanceDate` is a *datetime*, but the equity-comp grant fields used here are plain dates.)
-  - Carta scopes acceptance per equity-comp security type via distinct fields. An importer must route by what `security_id` resolves to: an option grant → `OptionGrant.stakeholderAcceptanceDate`; an RSA → `RestrictedStockAward.stakeholderAcceptanceDate`; an RSU → `RestrictedStockUnit.stakeholderAcceptanceDate`. This file documents the `OptionGrant` target because that is the canonical equity-comp grant; the value semantics are identical across the three.
-- **`security_id` → `OptionGrant.securityId`.** OCF's transaction-to-security foreign key. In OCF the acceptance is a separate object that references the issued security by `security_id`; in Carta there is no separate object, so this key is what selects *which* grant's `stakeholderAcceptanceDate` to set. Carta's `OptionGrant.securityId` is the corresponding stable per-security identifier (it is the same key used across Carta's option transactions: `securityId` appears on `OptionGrant`, `OptionIssuanceTransaction`, `OptionExerciseTransaction`, etc.). Not value-identical (the two systems assign their own ids), but it is the same role: the per-security reference. Marked `rename`.
-- **`id`, `comments`, `object_type`: OCF scaffolding (`ocf-internal`).**
-  - `id` is OCF's identifier for the acceptance transaction object. Carta has no acceptance transaction object, so there is no row whose id this could become; Carta assigns its own ids to the objects it does have.
-  - `object_type` is OCF's discriminator. Because Carta has no acceptance transaction, neither enum member (`TX_EQUITY_COMPENSATION_ACCEPTANCE`, nor the v2.0.0-deprecated alias `TX_PLAN_SECURITY_ACCEPTANCE`) corresponds to any Carta type — both map to `null`. The distinction between the two OCF members is purely an OCF backwards-compatibility artifact ("done to avoid a breaking change… `TX_PLAN_SECURITY_ACCEPTANCE` will be deprecated in v2.0.0") with no bearing on the target.
-  - `comments` is free-text OCF metadata with no slot on the Carta grant.
-- This object is `ocf_kind: object`, so it is classified `n/a-object` per the bucket policy: its own properties map directly to the corresponding Carta object's fields (`OptionGrant`) rather than to a reusable type. The two genuinely-absent fields (`id`, the acceptance discriminator) plus `comments` are the only unmappables, and each is OCF internal scaffolding rather than a lost domain value — the actual acceptance information (who/which-grant + when) is fully preserved via `security_id` + `date`.
-</content>
-</invoke>
+- **Join-dependent (downstream), and acceptance is not a transaction.** Carta has no
+  acceptance *transaction*: its transaction set covers issuance / exercise / cancellation
+  but not acceptance. Instead Carta folds "the stakeholder accepted" into the security
+  object itself as `stakeholderAcceptanceDate`. One OCF `EquityCompensationAcceptance`
+  therefore does not fan out to a Carta tx — it sets a date on the resolved family's
+  security object. The record carries no discriminator, only `security_id`, so the family
+  is fixed at issuance and an importer must resolve `compensation_type` from the joined
+  `EquityCompensationIssuance` first (the two-pass requirement, §2.2 of
+  docs/polymorphic-transaction-routing.md).
+- **`date` is the only mappable field.** It is the substantive payload — the date the
+  holder accepted — and lands on the resolved family's security object via a per-variant
+  target map: Option → `OptionGrant.stakeholderAcceptanceDate`, Rsu →
+  `RestrictedStockUnit.stakeholderAcceptanceDate`. Both sides are calendar dates (OCF
+  `Date`, Carta `Iso8601CompleteCalendarDate`), so there is no date-vs-datetime widening
+  to flag.
+- **Sar has no home (`primary_targets: null`).** CSAR/SSAR have no Carta security object
+  with a `stakeholderAcceptanceDate` (there is no SAR grant object to set the field on),
+  so the entire family is unmappable here and `date`'s `Sar` target is `null`.
+- **`security_id`** is the join key (`route_by_security.via`); it routes the family by
+  resolving to the issuance's `compensation_type`, it is not itself a stored Carta field
+  on the accepted security — marked `ocf-internal`.
+- **`id`, `object_type`, `comments`: OCF scaffolding.** `id` is OCF's identifier for the
+  acceptance transaction object; Carta has no acceptance object for it to become
+  (`ocf-internal`). `object_type` is OCF's discriminator — neither enum member
+  (`TX_EQUITY_COMPENSATION_ACCEPTANCE` nor the v2.0.0-deprecated alias
+  `TX_PLAN_SECURITY_ACCEPTANCE`) corresponds to any Carta type (`ocf-internal`).
+  `comments` is free-text OCF metadata with no slot on the Carta security (`no-equivalent`).
+- The `when:` sets partition `CompensationType` exactly: Option `[OPTION, OPTION_NSO,
+  OPTION_ISO]`, Rsu `[RSU]`, Sar `[CSAR, SSAR]`.
+
