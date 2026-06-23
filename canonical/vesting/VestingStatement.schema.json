@@ -2,42 +2,67 @@
   "$schema": "http://json-schema.org/draft/2020-12/schema",
   "$id": "https://raw.githubusercontent.com/Open-Cap-Table-Coalition/OCF-Composed-Schemas/main/canonical/vesting/VestingStatement.schema.json",
   "title": "Canonical - Vesting Statement",
-  "description": "One segment within a template; produces a sequence of vesting events at the given cadence. Total segment duration is occurrences * period in period_type units.",
+  "description": "One segment within a template, covering `percentage` of the grant. It has two independent optional axes: a time `schedule` and an `event_condition`. With only a schedule it vests on a grid (DATE); with only an event_condition it is a pure milestone that vests when the event fires (MILESTONE); with both it is gated and then grids (HYBRID). At least one axis must be present — a statement with neither is meaningless. The DATE/MILESTONE/HYBRID label is a derived rollup (recomputed on export), not stored here.",
   "type": "object",
   "properties": {
     "order": { "type": "integer", "minimum": 1 },
-    "occurrences": { "type": "integer", "minimum": 1 },
-    "period": {
-      "type": "integer",
-      "minimum": 0,
-      "description": "Length of one installment, in period_type units. Total segment duration is occurrences * period."
-    },
-    "period_type": {
-      "$ref": "https://raw.githubusercontent.com/Open-Cap-Table-Coalition/Open-Cap-Format-OCF/main/schema/enums/PeriodType.schema.json"
-    },
-    "cliff": {
+    "schedule": {
       "type": "object",
-      "description": "Optional cliff on this statement, expressed as a duration. length/lengthUnit give the time until the cliff; percentage is the share that vests at the cliff. Expressing the cliff as a duration (rather than an installment index) lets it fall between installments.",
+      "description": "Optional time schedule. Present ⟺ the statement vests on a time grid; absent ⟺ a pure milestone that vests only when event_condition fires. Total segment duration is occurrences * period in period_type units.",
       "properties": {
-        "length": {
+        "occurrences": { "type": "integer", "minimum": 1 },
+        "period": {
           "type": "integer",
           "minimum": 0,
-          "description": "Duration until the cliff, in lengthUnit units."
+          "description": "Length of one installment, in period_type units. Total segment duration is occurrences * period."
         },
-        "lengthUnit": {
+        "period_type": {
           "$ref": "https://raw.githubusercontent.com/Open-Cap-Table-Coalition/Open-Cap-Format-OCF/main/schema/enums/PeriodType.schema.json"
         },
-        "percentage": {
-          "$ref": "https://raw.githubusercontent.com/Open-Cap-Table-Coalition/OCF-Composed-Schemas/main/canonical/vesting/Fraction.schema.json"
+        "cliff": {
+          "type": "object",
+          "description": "Optional cliff on this schedule, expressed as a duration. length/period_type give the time until the cliff; percentage is the share that vests at the cliff. Expressing the cliff as a duration (rather than an installment index) lets it fall between installments.",
+          "properties": {
+            "length": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Duration until the cliff, in period_type units."
+            },
+            "period_type": {
+              "$ref": "https://raw.githubusercontent.com/Open-Cap-Table-Coalition/Open-Cap-Format-OCF/main/schema/enums/PeriodType.schema.json"
+            },
+            "percentage": {
+              "$ref": "https://raw.githubusercontent.com/Open-Cap-Table-Coalition/Open-Cap-Format-OCF/main/schema/types/Numeric.schema.json"
+            }
+          },
+          "required": ["length", "period_type", "percentage"],
+          "additionalProperties": false
         }
       },
-      "required": ["length", "lengthUnit", "percentage"],
+      "required": ["occurrences", "period", "period_type"],
+      "additionalProperties": false
+    },
+    "event_condition": {
+      "type": "object",
+      "description": "Optional. A named event (referenced by event_id) that must fire before this statement releases; its firing is recorded by TX_CANONICAL_VESTING_EVENT. Present ⟺ the statement is gated. Canonical models the event by its id and its firing; the event's real-world meaning (what counts as firing) is the producer's, not encoded here.",
+      "properties": {
+        "event_id": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Identifier of the gating event. Matches event_id on a TX_CANONICAL_VESTING_EVENT."
+        }
+      },
+      "required": ["event_id"],
       "additionalProperties": false
     },
     "percentage": {
-      "$ref": "https://raw.githubusercontent.com/Open-Cap-Table-Coalition/OCF-Composed-Schemas/main/canonical/vesting/Fraction.schema.json"
+      "$ref": "https://raw.githubusercontent.com/Open-Cap-Table-Coalition/Open-Cap-Format-OCF/main/schema/types/Numeric.schema.json"
     }
   },
-  "required": ["order", "occurrences", "period", "period_type", "percentage"],
+  "anyOf": [
+    { "required": ["schedule"] },
+    { "required": ["event_condition"] }
+  ],
+  "required": ["order", "percentage"],
   "additionalProperties": false
 }
