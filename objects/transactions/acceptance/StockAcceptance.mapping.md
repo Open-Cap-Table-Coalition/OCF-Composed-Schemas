@@ -8,13 +8,13 @@ required_fields:
   - object_type
   - date
   - security_id
-target_standard: TBD
-target_version: TBD
-status: draft
+target_standard: Carta
+target_version: v1alpha1 (2026-04-30)
+status: complete
 last_generated: 2026-05-18
 ---
 
-# Object - Stock Acceptance Transaction → TBD
+# Object - Stock Acceptance Transaction → Carta
 
 > Object describing a stock acceptance transaction
 
@@ -87,29 +87,75 @@ Source: [`StockAcceptance.schema.json`](./StockAcceptance.schema.json)
 
 ```yaml
 # kind vocabulary: rename | split | combine | enum-remap | computed | unmappable | TODO
-status: draft
-coverage: 0/5
+# routing: route_by_security (downstream join). A stock acceptance carries only
+# security_id and NO discriminator, so the family is undecidable from the record
+# alone: it is resolved by joining security_id back to the StockIssuance and
+# reading that issuance's issuance_type. An RSA acceptance lands on
+# RestrictedStockAward.stakeholderAcceptanceDate; founders' / default stock maps to
+# a Certificate, which has no acceptance field, so that variant is unmappable.
+# See docs/polymorphic-transaction-routing.md §2.2/§4.3.
+status: complete
 
-fields:
-  id:
-    kind: TODO
-    target: TODO
-  comments:
-    kind: TODO
-    target: TODO
-  object_type:
-    kind: TODO          # likely enum-remap
-    target: TODO
-    values:
-      TX_STOCK_ACCEPTANCE: TODO
+route_by_security:
+  via: security_id
+  resolve: issuance_type
+  resolve_enum: "https://raw.githubusercontent.com/Open-Cap-Table-Coalition/Open-Cap-Format-OCF/main/schema/enums/StockIssuanceType.schema.json"
+  source_mapping: ../issuance/StockIssuance.mapping.md
+  exhaustive: true
+
+# shared: every source property. `date` is the only mappable field and its Carta
+# home differs by variant, so it carries a per-variant target map keyed by EVERY
+# variant label (null = no acceptance slot in that variant).
+shared:
+  id:          { kind: unmappable, target: null, reason: ocf-internal }
+  comments:    { kind: unmappable, target: null, reason: no-equivalent }
+  object_type: { kind: unmappable, target: null, reason: ocf-internal }
+  security_id: { kind: unmappable, target: null, reason: ocf-internal }
   date:
-    kind: TODO
-    target: TODO
-  security_id:
-    kind: TODO
-    target: TODO
+    kind: rename
+    target:
+      Rsa:     "#/$defs/RestrictedStockAward/properties/stakeholderAcceptanceDate"
+      Default: null
+
+variants:
+
+  Rsa:
+    when: [RSA]
+    primary_targets:
+      - "#/$defs/RestrictedStockAward"
+    fields: {}
+
+  Default:
+    when: [FOUNDERS_STOCK]
+    primary_targets: null
+    fields: {}
+
+coverage:
+  Rsa: 5/5
+  Default: 5/5
 ```
 
 ## Notes / open questions
 
-- 
+- **Join-dependent (downstream).** A stock acceptance carries only `security_id`
+  and no discriminator; the security family is fixed at issuance, not on the
+  acceptance record. An importer must resolve `issuance_type` from the joined
+  `StockIssuance` first (the two-pass requirement, §2.2) before it can decide where
+  the acceptance lands. `StockIssuanceType` has exactly two values — `RSA` and
+  `FOUNDERS_STOCK` — which the two variants partition exhaustively.
+- **`date` is the only mappable field.** For an `RSA` issuance the accepted security
+  is a Carta `RestrictedStockAward`, which exposes
+  `stakeholderAcceptanceDate` (`$ref Iso8601CompleteCalendarDate`); the OCF
+  acceptance `date` is folded onto that security via the per-variant target map.
+- **`Default` (FOUNDERS_STOCK) is unmappable.** Non-RSA stock maps to a Carta
+  `Certificate`, and `Certificate` has no `stakeholderAcceptanceDate` (its only date
+  fields are `issueDate` / `canceledDate` / `lastModifiedDatetime`). Carta also has
+  no `StockAcceptanceTransaction` and no generic acceptance transaction, so there is
+  nowhere to record a founders'-stock acceptance — `primary_targets: null` and
+  `date → null` for this variant.
+- **`security_id`** is the join key (`route_by_security.via`); it routes the family,
+  it is not itself a stored Carta field on the resolved security.
+- **`id`, `comments`, `object_type` → unmappable.** Standard OCF object scaffolding:
+  `id` is OCF's own object identifier (Carta assigns server-side ids) and
+  `object_type` is OCF's discriminator constant (`TX_STOCK_ACCEPTANCE`), both
+  `ocf-internal`; `comments` is free-text with no Carta slot (`no-equivalent`).
