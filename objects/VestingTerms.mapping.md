@@ -4,21 +4,18 @@ ocf_object_type: VESTING_TERMS
 ocf_title: Object - Vesting Terms
 ocf_kind: object
 required_fields:
-  - name
-  - description
-  - allocation_type
-  - vesting_conditions
-  - id
   - object_type
-target_standard: Carta
-target_version: v1alpha1 (2026-04-30)
-status: complete
-last_generated: 2026-05-18
+  - id
+  - statements
+target_standard: TBD
+target_version: TBD
+status: draft
+last_generated: 2026-06-29
 ---
 
-# Object - Vesting Terms → Carta
+# Object - Vesting Terms → TBD
 
-> Object describing the terms under which a security vests
+> Version dispatcher for vesting terms. The stable public `$id` accepts either the current condition-DAG shape (v1) or the forward-looking ordered-statement template shape (v2) during the transition window.
 
 ## OCF schema
 
@@ -32,59 +29,33 @@ Source: [`VestingTerms.schema.json`](./VestingTerms.schema.json)
   "$schema": "http://json-schema.org/draft-07/schema",
   "$id": "https://raw.githubusercontent.com/Open-Cap-Table-Coalition/Open-Cap-Format-OCF/main/schema/objects/VestingTerms.schema.json",
   "title": "Object - Vesting Terms",
-  "description": "Object describing the terms under which a security vests",
+  "description": "Version dispatcher for vesting terms. The stable public `$id` accepts either the current condition-DAG shape (v1) or the forward-looking ordered-statement template shape (v2) during the transition window.",
+  "x-ocf-stability": "alpha",
   "type": "object",
-  "allOf": [
-    {
-      "$ref": "https://raw.githubusercontent.com/Open-Cap-Table-Coalition/Open-Cap-Format-OCF/main/schema/primitives/objects/Object.schema.json"
-    }
-  ],
   "properties": {
     "id": {
-      "description": "Identifier for the object",
-      "type": "string"
-    },
-    "comments": {
-      "description": "Unstructured text comments related to and stored for the object",
-      "type": "array",
-      "items": {
-        "type": "string"
-      }
+      "type": "string",
+      "description": "Identifier the issuance's `vesting_template_id` references."
     },
     "object_type": {
       "const": "VESTING_TERMS"
     },
-    "name": {
-      "description": "Concise name for the vesting schedule",
-      "type": "string"
-    },
-    "description": {
-      "description": "Detailed description of the vesting schedule",
-      "type": "string"
-    },
-    "allocation_type": {
-      "description": "Allocation/rounding type for the vesting schedule",
-      "$ref": "https://raw.githubusercontent.com/Open-Cap-Table-Coalition/Open-Cap-Format-OCF/main/schema/enums/AllocationType.schema.json"
-    },
-    "vesting_conditions": {
-      "description": "Conditions and triggers that describe the graph of vesting schedules and events",
+    "statements": {
+      "description": "Ordered list of vesting statements. They chain implicitly by their `order` field rather than via explicit graph edges.",
       "type": "array",
       "items": {
-        "$ref": "https://raw.githubusercontent.com/Open-Cap-Table-Coalition/Open-Cap-Format-OCF/main/schema/types/vesting/VestingCondition.schema.json"
+        "$ref": "https://raw.githubusercontent.com/Open-Cap-Table-Coalition/Open-Cap-Format-OCF/main/schema/types/vesting/VestingStatement.schema.json"
       },
       "minItems": 1
     }
   },
-  "additionalProperties": false,
   "required": [
-    "name",
-    "description",
-    "allocation_type",
-    "vesting_conditions",
+    "object_type",
     "id",
-    "object_type"
+    "statements"
   ],
-  "$comment": "Copyright © 2026 Open Cap Table Coalition (https://opencaptablecoalition.com) / Original File: https://github.com/Open-Cap-Table-Coalition/Open-Cap-Format-OCF/tree/main/schema/objects/VestingTerms.schema.json"
+  "additionalProperties": false,
+  "$comment": "Copyright © 2026 Open Cap Table Coalition (https://opencaptablecoalition.com) / Original File: https://github.com/Open-Cap-Table-Coalition/Open-Cap-Format-OCF/tree/main/schema/objects/versions.schema.json"
 }
 ```
 
@@ -94,50 +65,24 @@ Source: [`VestingTerms.schema.json`](./VestingTerms.schema.json)
 
 ```yaml
 # kind vocabulary: rename | split | combine | enum-remap | computed | unmappable | TODO
-status: complete
-coverage: 7/7
+# unmappable reason vocabulary: no-equivalent | excluded-from-snapshot | out-of-scope | ocf-internal
+status: draft
+coverage: 0/3
 
 fields:
   id:
-    kind: unmappable
-    target: null
-    reason: ocf-internal
-  comments:
-    kind: unmappable
-    target: null
-    reason: ocf-internal
+    kind: TODO
+    target: TODO
   object_type:
-    kind: unmappable
-    target: null
-    reason: ocf-internal
+    kind: TODO          # likely enum-remap
+    target: TODO
     values:
-      VESTING_TERMS: null
-  name:
-    kind: unmappable
-    target: null
-    reason: no-equivalent
-  description:
-    kind: unmappable
-    target: null
-    reason: no-equivalent
-  allocation_type:
-    kind: unmappable
-    target: null
-    reason: no-equivalent
-    values:
-      CUMULATIVE_ROUNDING: null
-      CUMULATIVE_ROUND_DOWN: null
-      FRONT_LOADED: null
-      BACK_LOADED: null
-      FRONT_LOADED_TO_SINGLE_TRANCHE: null
-      BACK_LOADED_TO_SINGLE_TRANCHE: null
-      FRACTIONAL: null
-  vesting_conditions:
-    kind: unmappable
-    target: null
-    reason: no-equivalent
+      VESTING_TERMS: TODO
+  statements:
+    kind: TODO
+    target: TODO
 ```
 
 ## Notes / open questions
 
-- OCF abandoned vesting machinery (no Carta counterpart). The canonical vesting layer at `canonical/vesting/` is the proposed replacement.
+- 

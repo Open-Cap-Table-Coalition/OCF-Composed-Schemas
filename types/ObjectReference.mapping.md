@@ -9,7 +9,7 @@ required_fields:
 target_standard: Carta
 target_version: v1alpha1 (2026-04-30)
 status: complete
-last_generated: 2026-05-18
+last_generated: 2026-06-29
 ---
 
 # Type - Object Reference → Carta
@@ -55,6 +55,7 @@ Source: [`ObjectReference.schema.json`](./ObjectReference.schema.json)
 
 ```yaml
 # kind vocabulary: rename | split | combine | enum-remap | computed | unmappable | TODO
+# unmappable reason vocabulary: no-equivalent | excluded-from-snapshot | out-of-scope | ocf-internal
 status: complete
 coverage: 2/2
 
@@ -118,7 +119,6 @@ fields:
       TX_WARRANT_RETRACTION: null
       TX_WARRANT_TRANSFER: null
       TX_VESTING_ACCELERATION: null
-      TX_VESTING_START: null
       TX_VESTING_EVENT: null
   object_id:
     kind: unmappable
