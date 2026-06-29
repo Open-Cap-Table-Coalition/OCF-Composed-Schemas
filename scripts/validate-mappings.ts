@@ -10,7 +10,7 @@ import { parseMappingDocument, MappingParseError } from "./lib/mapping-parser.js
 import { validateMapping, ValidationError, TARGET_BUNDLES } from "./lib/mapping-validator.js";
 import { renderMappingReport } from "./lib/mapping-report.js";
 
-const MAPPING_DIRS = ["objects", "types", "canonical"] as const;
+const MAPPING_DIRS = ["objects", "types"] as const;
 
 interface Args {
   filter?: string;

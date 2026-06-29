@@ -18,7 +18,7 @@ required_fields:
 target_standard: Carta
 target_version: v1alpha1 (2026-04-30)
 status: complete
-last_generated: 2026-05-18
+last_generated: 2026-06-29
 ---
 
 # Object - Equity Compensation Issuance Transaction → Carta
@@ -37,30 +37,17 @@ Source: [`EquityCompensationIssuance.schema.json`](./EquityCompensationIssuance.
   "$schema": "http://json-schema.org/draft-07/schema",
   "$id": "https://raw.githubusercontent.com/Open-Cap-Table-Coalition/Open-Cap-Format-OCF/main/schema/objects/transactions/issuance/EquityCompensationIssuance.schema.json",
   "title": "Object - Equity Compensation Issuance Transaction",
-  "description": "Object describing securities issuance transaction by the issuer and held by a stakeholder as a form of compensation (as noted elsewhere, RSAs are not included here intentionally and should be modelled using Stock Issuances).",
+  "description": "Version dispatcher for the equity-compensation issuance transaction. The stable public `$id` accepts either the current shape (v1, which references vesting via `vesting_terms_id`) or the forward-looking shape (v2, which references a v2 vesting template via `vesting_template_id` and carries the per-grant `vesting_start_date`) during the transition window.",
+  "x-ocf-stability": "alpha",
   "type": "object",
-  "allOf": [
-    {
-      "$ref": "https://raw.githubusercontent.com/Open-Cap-Table-Coalition/Open-Cap-Format-OCF/main/schema/primitives/objects/Object.schema.json"
-    },
-    {
-      "$ref": "https://raw.githubusercontent.com/Open-Cap-Table-Coalition/Open-Cap-Format-OCF/main/schema/primitives/objects/transactions/Transaction.schema.json"
-    },
-    {
-      "$ref": "https://raw.githubusercontent.com/Open-Cap-Table-Coalition/Open-Cap-Format-OCF/main/schema/primitives/objects/transactions/SecurityTransaction.schema.json"
-    },
-    {
-      "$ref": "https://raw.githubusercontent.com/Open-Cap-Table-Coalition/Open-Cap-Format-OCF/main/schema/primitives/objects/transactions/issuance/Issuance.schema.json"
-    }
-  ],
   "properties": {
     "id": {
-      "description": "Identifier for the object",
-      "type": "string"
+      "type": "string",
+      "description": "Identifier for this transaction."
     },
     "comments": {
-      "description": "Unstructured text comments related to and stored for the object",
       "type": "array",
+      "description": "Unstructured text comments related to and stored for the object.",
       "items": {
         "type": "string"
       }
@@ -73,90 +60,91 @@ Source: [`EquityCompensationIssuance.schema.json`](./EquityCompensationIssuance.
       "description": "This is done to avoid a breaking change as we work towards a bigger restructure of the equity types in v2.0.0. `TX_PLAN_SECURITY_ISSUANCE` will be deprecated in v2.0.0"
     },
     "date": {
-      "description": "Date on which the transaction occurred",
-      "$ref": "https://raw.githubusercontent.com/Open-Cap-Table-Coalition/Open-Cap-Format-OCF/main/schema/types/Date.schema.json"
+      "$ref": "https://raw.githubusercontent.com/Open-Cap-Table-Coalition/Open-Cap-Format-OCF/main/schema/types/Date.schema.json",
+      "description": "Date on which the issuance transaction occurred. Distinct from the vesting commencement date, which is carried separately as `vesting_start_date`."
     },
     "security_id": {
-      "description": "Identifier for the security (stock, plan security, warrant, or convertible) by which it can be referenced by other transaction objects. Note that while this identifier is created with an issuance object, it should be different than the issuance object's `id` field which identifies the issuance transaction object itself. All future transactions on the security (e.g. acceptance, transfer, cancel, etc.) must reference this `security_id` to qualify which security the transaction applies to.",
-      "type": "string"
+      "type": "string",
+      "description": "Identifier for the security created by this issuance. Other transactions (vesting event, exercise, cancellation, etc.) reference this id."
     },
     "custom_id": {
-      "description": "A custom ID for this security (e.g. CN-1.)",
-      "type": "string"
+      "type": "string",
+      "description": "Human-readable identifier for the security (e.g. 'CN-1')."
     },
     "stakeholder_id": {
-      "description": "Identifier for the stakeholder that holds legal title to this security",
-      "type": "string"
+      "type": "string",
+      "description": "Identifier of the stakeholder holding legal title to the security."
     },
     "board_approval_date": {
-      "description": "Date of board approval for the security",
-      "$ref": "https://raw.githubusercontent.com/Open-Cap-Table-Coalition/Open-Cap-Format-OCF/main/schema/types/Date.schema.json"
+      "$ref": "https://raw.githubusercontent.com/Open-Cap-Table-Coalition/Open-Cap-Format-OCF/main/schema/types/Date.schema.json",
+      "description": "Date of board approval for the security, when applicable."
     },
     "stockholder_approval_date": {
-      "description": "Date on which the stockholders approved the security",
-      "$ref": "https://raw.githubusercontent.com/Open-Cap-Table-Coalition/Open-Cap-Format-OCF/main/schema/types/Date.schema.json"
+      "$ref": "https://raw.githubusercontent.com/Open-Cap-Table-Coalition/Open-Cap-Format-OCF/main/schema/types/Date.schema.json",
+      "description": "Date of stockholder approval for the security, when applicable."
     },
     "consideration_text": {
-      "description": "Unstructured text description of consideration provided in exchange for security issuance",
-      "type": "string"
+      "type": "string",
+      "description": "Unstructured text description of consideration provided in exchange for the issuance."
     },
     "security_law_exemptions": {
-      "title": "Security Issuance - Security Exemption Array",
-      "description": "List of security law exemptions (and applicable jurisdictions) for this security",
       "type": "array",
+      "description": "Security law exemptions (and applicable jurisdictions) for this security.",
       "items": {
         "$ref": "https://raw.githubusercontent.com/Open-Cap-Table-Coalition/Open-Cap-Format-OCF/main/schema/types/SecurityExemption.schema.json"
       }
     },
     "stock_plan_id": {
-      "description": "If the equity compensation was issued from a plan (don't forget, plan-less options are a thing), what is the plan id.",
-      "type": "string"
+      "type": "string",
+      "description": "If the security was issued from a stock plan, the plan's id. Plan-less options are valid and omit this field."
     },
     "stock_class_id": {
-      "description": "The stock class options will exercise into. Especially important for plan-less options and any issuances from a plan that supports multiple share classes.",
-      "type": "string"
+      "type": "string",
+      "description": "The stock class the security exercises/settles into. Important for plan-less options and plans that support multiple share classes."
     },
     "compensation_type": {
-      "description": "If the plan security is compensation, what kind?",
-      "$ref": "https://raw.githubusercontent.com/Open-Cap-Table-Coalition/Open-Cap-Format-OCF/main/schema/enums/CompensationType.schema.json"
+      "$ref": "https://raw.githubusercontent.com/Open-Cap-Table-Coalition/Open-Cap-Format-OCF/main/schema/enums/CompensationType.schema.json",
+      "description": "The kind of equity compensation. Determines which type-specific fields are required."
     },
     "option_grant_type": {
-      "description": "If the plan security is an option, what kind?",
       "$ref": "https://raw.githubusercontent.com/Open-Cap-Table-Coalition/Open-Cap-Format-OCF/main/schema/enums/OptionType.schema.json",
-      "$comment": "DEPRECATION WARNING - This field is being retained for compatibility, but these variations have been incorporated into CompensationType.schema.json enum options"
+      "description": "If the security is an option, what kind. Retained from v1 for compatibility; in the new model this has been incorporated into CompensationType."
     },
     "quantity": {
-      "description": "How many shares are subject to this plan security?",
-      "$ref": "https://raw.githubusercontent.com/Open-Cap-Table-Coalition/Open-Cap-Format-OCF/main/schema/types/Numeric.schema.json"
+      "$ref": "https://raw.githubusercontent.com/Open-Cap-Table-Coalition/Open-Cap-Format-OCF/main/schema/types/Numeric.schema.json",
+      "description": "Number of shares subject to this security."
     },
     "exercise_price": {
-      "description": "If this is an option, what is the exercise price of the option?",
-      "$ref": "https://raw.githubusercontent.com/Open-Cap-Table-Coalition/Open-Cap-Format-OCF/main/schema/types/Monetary.schema.json"
+      "$ref": "https://raw.githubusercontent.com/Open-Cap-Table-Coalition/Open-Cap-Format-OCF/main/schema/types/Monetary.schema.json",
+      "description": "Required for option compensation types. The price per share at which the option can be exercised."
     },
     "base_price": {
-      "description": "If this is a stock appreciation right, what is the base price used to calculate the appreciation of the SAR?",
-      "$ref": "https://raw.githubusercontent.com/Open-Cap-Table-Coalition/Open-Cap-Format-OCF/main/schema/types/Monetary.schema.json"
+      "$ref": "https://raw.githubusercontent.com/Open-Cap-Table-Coalition/Open-Cap-Format-OCF/main/schema/types/Monetary.schema.json",
+      "description": "Required for stock appreciation right compensation types (CSAR, SSAR). The base price used to calculate appreciation."
     },
     "early_exercisable": {
       "type": "boolean",
-      "description": "Is this Equity Compensation exercisable prior to completion of vesting? If so, it's assumed the vesting schedule will remain in effect but, instead of vesting a right to exercise, it becomes the schedule determining when a right to repurchase the resulting stock lapses.",
-      "$comment": "REQUIRED in v2"
+      "description": "If true, the security is exercisable prior to completion of vesting; the schedule then governs a right-of-repurchase lapse rather than the right-to-exercise."
     },
-    "vesting_terms_id": {
-      "description": "Identifier of the VestingTerms to which this security is subject. If neither `vesting_terms_id` or `vestings` are present then the security is fully vested on issuance.",
-      "type": "string"
+    "vesting_start_date": {
+      "$ref": "https://raw.githubusercontent.com/Open-Cap-Table-Coalition/Open-Cap-Format-OCF/main/schema/types/Date.schema.json",
+      "description": "The per-grant vesting commencement date — the anchor every statement of the referenced template grids from. Required whenever `vesting_template_id` is present and always supplied with the grant: when the real commencement date is not yet known (a contingent start), a far-future placeholder date (e.g. 9999-12-31) is supplied rather than omitting the field or modeling the start as an event. Lives on the issuance, not the template, because the template is reusable across grants."
+    },
+    "vesting_template_id": {
+      "type": "string",
+      "description": "Identifier of the v2 vesting template the security is subject to. If neither `vesting_template_id` nor `vestings` is present, the security is fully vested at issuance. The template's statements anchor to `vesting_start_date` (carried on this same transaction); a statement may additionally carry an `event_condition` whose firing is recorded by a v2 vesting-event transaction."
     },
     "vestings": {
       "title": "Equity Compensation Issuance - Vestings Array",
-      "description": "List of exact vesting dates and amounts for this security. When `vestings` array is present then `vesting_terms_id` may be ignored.",
       "type": "array",
+      "description": "Optional materialized projection of exact vesting dates and amounts. A grant may be described by the declarative template (`vesting_template_id`), by this imperative event list, or by both; when both are present an external tool confirms they agree.",
       "minItems": 1,
       "items": {
         "$ref": "https://raw.githubusercontent.com/Open-Cap-Table-Coalition/Open-Cap-Format-OCF/main/schema/types/Vesting.schema.json"
       }
     },
     "expiration_date": {
-      "description": "Expiration date of the plan security",
+      "description": "Expiration date of the security, or null if it does not expire.",
       "oneOf": [
         {
           "type": "null"
@@ -168,93 +156,33 @@ Source: [`EquityCompensationIssuance.schema.json`](./EquityCompensationIssuance.
     },
     "termination_exercise_windows": {
       "title": "Plan Security - Termination Window Array",
-      "description": "Exercise periods applicable to plan security after a termination for a given, enumerated reason",
       "type": "array",
+      "description": "Exercise periods applicable after a termination, by reason.",
       "items": {
         "$ref": "https://raw.githubusercontent.com/Open-Cap-Table-Coalition/Open-Cap-Format-OCF/main/schema/types/TerminationWindow.schema.json"
       }
     }
   },
-  "anyOf": [
-    {
-      "properties": {
-        "compensation_type": {
-          "const": "OPTION"
-        }
-      },
-      "$comment": "For now, we're using JSONSchema to enforce some properties for some compensation types but not others. Options require exercise price.",
-      "required": [
-        "exercise_price"
-      ]
-    },
-    {
-      "properties": {
-        "compensation_type": {
-          "const": "OPTION_NSO"
-        }
-      },
-      "$comment": "For now, we're using JSONSchema to enforce some properties for some compensation types but not others. Options require exercise price.",
-      "required": [
-        "exercise_price"
-      ]
-    },
-    {
-      "properties": {
-        "compensation_type": {
-          "const": "OPTION_ISO"
-        }
-      },
-      "$comment": "For now, we're using JSONSchema to enforce some properties for some compensation types but not others. Options require exercise price.",
-      "required": [
-        "exercise_price"
-      ]
-    },
-    {
-      "properties": {
-        "compensation_type": {
-          "const": "RSU"
-        }
-      },
-      "$comment": "For now, we're using JSONSchema to enforce some properties for some compensation types but not others. RSUs usually don't have exercise prices."
-    },
-    {
-      "properties": {
-        "compensation_type": {
-          "const": "CSAR"
-        }
-      },
-      "$comment": "For now, we're using JSONSchema to enforce some properties for some compensation types but not others. Stock appreciation rights have grant prices.",
-      "required": [
-        "base_price"
-      ]
-    },
-    {
-      "properties": {
-        "compensation_type": {
-          "const": "SSAR"
-        }
-      },
-      "$comment": "For now, we're using JSONSchema to enforce some properties for some compensation types but not others. Stock appreciation rights have grant prices.",
-      "required": [
-        "base_price"
-      ]
-    }
-  ],
-  "additionalProperties": false,
   "required": [
-    "compensation_type",
-    "quantity",
-    "expiration_date",
-    "termination_exercise_windows",
     "id",
     "object_type",
     "date",
     "security_id",
-    "security_law_exemptions",
+    "custom_id",
     "stakeholder_id",
-    "custom_id"
+    "compensation_type",
+    "quantity",
+    "expiration_date",
+    "security_law_exemptions",
+    "termination_exercise_windows"
   ],
-  "$comment": "Copyright © 2026 Open Cap Table Coalition (https://opencaptablecoalition.com) / Original File: https://github.com/Open-Cap-Table-Coalition/Open-Cap-Format-OCF/tree/main/schema/objects/transactions/issuance/EquityCompensationIssuance.schema.json"
+  "dependencies": {
+    "vesting_template_id": [
+      "vesting_start_date"
+    ]
+  },
+  "additionalProperties": false,
+  "$comment": "Copyright © 2026 Open Cap Table Coalition (https://opencaptablecoalition.com) / Original File: https://github.com/Open-Cap-Table-Coalition/Open-Cap-Format-OCF/tree/main/schema/objects/transactions/issuance/versions.schema.json"
 }
 ```
 
@@ -331,7 +259,7 @@ shared:
       Option: "#/$defs/OptionIssuanceTransaction/properties/quantity"
       Rsu:    "#/$defs/RsuIssuanceTransaction/properties/quantity"
       Sar:    "#/$defs/SarIssuanceTransaction/properties/quantity"
-  vesting_terms_id:
+  vesting_template_id:
     kind: rename
     target:
       Option: "#/$defs/OptionIssuanceTransaction/properties/vestingScheduleTemplateId"
@@ -345,8 +273,15 @@ shared:
       Sar:    null
     note: >-
       SAR has no Carta security object, so OCF's explicit vesting events have no home for the
-      Sar variant — the template ref still maps via vesting_terms_id →
+      Sar variant — the template ref still maps via vesting_template_id →
       SarIssuanceTransaction.vestingScheduleTemplateId. Option/RSU keep both.
+
+  vesting_start_date:
+    kind: rename
+    target:
+      Option: "#/$defs/OptionGrant/properties/vestingStartDate"
+      Rsu:    "#/$defs/RestrictedStockUnit/properties/vestingStartDate"
+      Sar:    null
 
 variants:
 
@@ -399,9 +334,9 @@ variants:
       termination_exercise_windows: { kind: unmappable, target: null, reason: no-equivalent }
 
 coverage:
-  Option: 23/23
-  Rsu: 23/23
-  Sar: 23/23
+  Option: 24/24
+  Rsu: 24/24
+  Sar: 24/24
 ```
 
 ## Notes / open questions
@@ -413,7 +348,7 @@ coverage:
   `RestrictedStockUnit`; `CSAR`/`SSAR` → `SarIssuanceTransaction`. The three `when:` sets
   partition all six `CompensationType` values (`exhaustive: true`).
 - **`shared:` fields use per-variant target maps where the home diverges.** Transaction-level
-  fields (`date`/`stock_plan_id`/`stock_class_id`/`quantity`/`vesting_terms_id`) each land on the
+  fields (`date`/`stock_plan_id`/`stock_class_id`/`quantity`/`vesting_template_id`) each land on the
   resolved family's `*IssuanceTransaction`; security-level identity fields
   (`security_id`/`custom_id`/`stakeholder_id`/`board_approval_date`/`vestings`) land on `OptionGrant`
   vs `RestrictedStockUnit`. Each such field is a `target: { Option/Rsu/Sar: pointer|null }` map; the
@@ -430,3 +365,7 @@ coverage:
   report rather than borrowing an Option pointer.
 - **Lossy by Carta's design.** CSAR vs SSAR collapse to one `SarIssuanceTransaction` (no
   settlement-mode field). `OPTION` (unspecified) → `OTHER`.
+- **`vesting_start_date` → Carta `vestingStartDate`.** The v2 model splits the old
+  `vesting_terms_id` into `vesting_template_id` (the reusable template ref, mapped above like the
+  old field) plus this per-grant anchor. It lands on the resolved family's security object
+  (`OptionGrant` / `RestrictedStockUnit`), mirroring `vestings`; SAR has no security object so `Sar: null`.
