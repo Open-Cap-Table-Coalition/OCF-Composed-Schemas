@@ -10,13 +10,13 @@ required_fields:
   - date
   - security_id
   - resulting_security_ids
-target_standard: TBD
-target_version: TBD
-status: draft
+target_standard: Carta
+target_version: "v1alpha1 (2026-04-30)"
+status: complete
 last_generated: 2026-05-18
 ---
 
-# Object - Warrant Exercise Transaction → TBD
+# Object - Warrant Exercise Transaction → Carta
 
 > Object describing a warrant exercise transaction
 
@@ -107,38 +107,50 @@ Source: [`WarrantExercise.schema.json`](./WarrantExercise.schema.json)
 
 ```yaml
 # kind vocabulary: rename | split | combine | enum-remap | computed | unmappable | TODO
-status: draft
-coverage: 0/8
+status: complete
+coverage: 8/8
 
 fields:
   id:
-    kind: TODO
-    target: TODO
+    kind: unmappable
+    target: null
+    reason: ocf-internal
   comments:
-    kind: TODO
-    target: TODO
+    kind: unmappable
+    target: null
+    reason: ocf-internal
   object_type:
-    kind: TODO          # likely enum-remap
-    target: TODO
+    kind: unmappable
+    target: null
+    reason: ocf-internal
     values:
-      TX_WARRANT_EXERCISE: TODO
+      TX_WARRANT_EXERCISE: null
   date:
-    kind: TODO
-    target: TODO
+    kind: rename
+    target: "#/$defs/WarrantExerciseTransaction/properties/sharesAcquiredDatetime"
   security_id:
-    kind: TODO
-    target: TODO
+    kind: rename
+    target: "#/$defs/WarrantTransactionItem/properties/securityId"
   consideration_text:
-    kind: TODO
-    target: TODO
+    kind: unmappable
+    target: null
+    reason: no-equivalent
   resulting_security_ids:
-    kind: TODO
-    target: TODO
+    kind: rename
+    target: "#/$defs/WarrantExerciseTransaction/properties/resultingSecurityId"
   trigger_id:
-    kind: TODO
-    target: TODO
+    kind: unmappable
+    target: null
+    reason: no-equivalent
 ```
 
 ## Notes / open questions
 
-- 
+- **Bucket: n/a-object.** This is an OCF transaction object (`ocf_kind: object`), so it maps its properties directly onto the corresponding Carta object rather than being bucket-classified as a reusable type. The clear Carta home is `#/$defs/WarrantExerciseTransaction` ("An exercise transaction for a warrant. Represents the conversion of warrant rights into shares."). In Carta's model these exercise records are not free-standing transactions: they live in the `exercises[]` array of `#/$defs/WarrantTransactionItem` (Carta's per-warrant container, `Warrant.exercises -> array of WarrantExerciseTransaction`). That structural difference is why some OCF fields route to the parent `WarrantTransactionItem` rather than to `WarrantExerciseTransaction` itself.
+- **Structural model: OCF flat transactions vs. Carta warrant-nested items.** OCF emits each exercise as a standalone transaction object that references its warrant by `security_id`. Carta instead nests the exercise under the warrant it belongs to. So OCF's `security_id` (the identifier of the warrant being exercised) maps to `#/$defs/WarrantTransactionItem/properties/securityId` ("The identifier of the warrant"), i.e. the parent container's key, not a field on the exercise record. A consumer building Carta data must group OCF warrant exercises by `security_id` and append each to the matching `Warrant.exercises[]`.
+- **`date` -> `sharesAcquiredDatetime` (granularity change).** OCF `date` is a calendar DATE (`types/Date.schema.json`, `YYYY-MM-DD`). Carta's `sharesAcquiredDatetime` is `#/$defs/Iso8601CompleteCalendarDateTime` — a full date-time. The mapping is lossy in the time-of-day direction: OCF carries no time component, so producing the Carta value requires padding with a zero/placeholder time (e.g. midnight). Semantically both denote when the exercise occurred / shares were acquired.
+- **`resulting_security_ids` -> `resultingSecurityId` (cardinality change).** OCF allows an ARRAY of resulting security IDs (a single exercise can in principle yield multiple resulting securities). Carta's `WarrantExerciseTransaction.resultingSecurityId` is a SINGLE string. Carta also exposes `resultingSecurityType` and `resultingSecurityLabel` companions, but no array form. For the common single-result case this is a clean rename; if an OCF exercise lists more than one resulting security, only one can be represented per Carta exercise record (the remainder would have no home — a fan-out Carta does not model).
+- **`consideration_text` (unmappable / no-equivalent).** OCF stores an unstructured free-text description of the consideration paid for the exercise. Carta's `WarrantExerciseTransaction` has no consideration/notes/text slot at all (its fields are `sharesAcquiredDatetime`, `quantity`, `withheldQuantity`, `settledQuantity`, `resultingSecurityId`, `resultingSecurityType`, `resultingSecurityLabel`). There is no structured price/cash field on the warrant exercise either, so the consideration narrative cannot be parked anywhere — it is dropped.
+- **`trigger_id` (unmappable / no-equivalent).** OCF links the exercise back to the specific warrant exercise-trigger (from the warrant's `exercise_triggers` state machine) that fired. Carta records the warrant's exercise terms as plain fields and does not model an exercise-trigger state machine, so it has no trigger identifier to reference. This is the same "Carta records terms, not OCF's full conversion/exercise-trigger state machine" gap seen on convertible/warrant conversion mappings — the event-logic linkage has no Carta counterpart.
+- **`id`, `comments`, `object_type` (ocf-internal).** Standard OCF object scaffolding. `id` is OCF's own object identifier (Carta assigns its own keys server-side and does not carry an id on the nested `WarrantExerciseTransaction`); `comments` is OCF's free-text array with no Carta slot; `object_type` is the OCF discriminator const `TX_WARRANT_EXERCISE` — Carta types positionally (the record's place in `Warrant.exercises[]` already identifies it as a warrant exercise), so there is nothing to remap the const onto (`values.TX_WARRANT_EXERCISE: null`).
+- **Carta fields with no OCF source.** `WarrantExerciseTransaction.quantity`, `withheldQuantity`, and `settledQuantity` (the share-count economics of the exercise, all `Decimal`) and the `resultingSecurityType` / `resultingSecurityLabel` companions have no counterpart on OCF's `WarrantExercise` object — OCF carries quantity on the referenced issuance/warrant security, not on the exercise transaction. These are simply absent from the OCF source side and so do not appear in the field map.
