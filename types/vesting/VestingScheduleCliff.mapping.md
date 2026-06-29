@@ -7,13 +7,13 @@ required_fields:
   - length
   - period_type
   - percentage
-target_standard: TBD
-target_version: TBD
-status: draft
+target_standard: Carta
+target_version: v1alpha1 (2026-04-30)
+status: complete
 last_generated: 2026-06-29
 ---
 
-# Type - Vesting Schedule Cliff → TBD
+# Type - Vesting Schedule Cliff → Carta
 
 > A cliff on a v2 vesting schedule, expressed as a duration. `length`/`period_type` give the time until the cliff; `percentage` is the share that vests at the cliff. Expressing the cliff as a duration (rather than an installment index) lets it fall between installments.
 
@@ -63,25 +63,29 @@ Source: [`VestingScheduleCliff.schema.json`](./VestingScheduleCliff.schema.json)
 ```yaml
 # kind vocabulary: rename | split | combine | enum-remap | computed | unmappable | TODO
 # unmappable reason vocabulary: no-equivalent | excluded-from-snapshot | out-of-scope | ocf-internal
-status: draft
-coverage: 0/3
+status: complete
+coverage: 3/3
 
 fields:
   length:
-    kind: TODO
-    target: TODO
+    kind: rename
+    target: "#/$defs/VestingPeriod/properties/cliffLength"
   period_type:
-    kind: TODO          # likely enum-remap
-    target: TODO
+    kind: enum-remap
+    target: "#/$defs/VestingPeriod/properties/cliffLengthUnit"
     values:
-      DAYS: TODO
-      MONTHS: TODO
-      YEARS: TODO
+      DAYS: DAY
+      MONTHS: MONTH
+      YEARS: YEAR
   percentage:
-    kind: TODO
-    target: TODO
+    kind: computed
+    target: "#/$defs/VestingPeriod/properties/cliffPercentage"
+    transform: |
+      cliffPercentage.value = percentage   # OCF Numeric decimal string -> Carta Decimal { value }
 ```
 
 ## Notes / open questions
 
-- 
+- A `VestingScheduleCliff` lands on Carta's `VestingPeriod` cliff fields: `length`/`period_type`/`percentage` map to `cliffLength`/`cliffLengthUnit`/`cliffPercentage`. This matches the pre-#227 `canonical/vesting` cliff mapping, which pointed the same fields at `VestingPeriod`.
+- `period_type` is an `enum-remap` because OCF's `PeriodType` (`DAYS`/`MONTHS`/`YEARS`) is plural while Carta's `PeriodUnit` (`#/$defs/PeriodUnit`, referenced by `cliffLengthUnit`) is singular (`DAY`/`MONTH`/`YEAR`). The two enums are 1:1, so the remap is total.
+- `percentage` is `computed` rather than a straight rename: OCF carries a `Numeric` fixed-point decimal *string*, while Carta's `cliffPercentage` is a `Decimal` object (`{ value: "<decimal string>" }`), so the value is wrapped. The pre-#227 canonical mapping computed this from a `numerator`/`denominator` fraction; #129 simplified the cliff share to a single decimal, so it's now a direct string-into-`.value` wrap.
