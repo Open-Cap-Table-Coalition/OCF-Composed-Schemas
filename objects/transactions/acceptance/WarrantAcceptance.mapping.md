@@ -8,13 +8,13 @@ required_fields:
   - object_type
   - date
   - security_id
-target_standard: TBD
-target_version: TBD
-status: draft
+target_standard: Carta
+target_version: "v1alpha1 (2026-04-30)"
+status: complete
 last_generated: 2026-05-18
 ---
 
-# Object - Warrant Acceptance Transaction → TBD
+# Object - Warrant Acceptance Transaction → Carta
 
 > Object describing a warrant acceptance transaction
 
@@ -87,29 +87,38 @@ Source: [`WarrantAcceptance.schema.json`](./WarrantAcceptance.schema.json)
 
 ```yaml
 # kind vocabulary: rename | split | combine | enum-remap | computed | unmappable | TODO
-status: draft
-coverage: 0/5
+status: complete
+coverage: 5/5
 
 fields:
   id:
-    kind: TODO
-    target: TODO
+    kind: unmappable
+    target: null
+    reason: ocf-internal
   comments:
-    kind: TODO
-    target: TODO
+    kind: unmappable
+    target: null
+    reason: ocf-internal
   object_type:
-    kind: TODO          # likely enum-remap
-    target: TODO
+    kind: unmappable
+    target: null
+    reason: ocf-internal
     values:
-      TX_WARRANT_ACCEPTANCE: TODO
+      TX_WARRANT_ACCEPTANCE: null
   date:
-    kind: TODO
-    target: TODO
+    kind: unmappable
+    target: null
+    reason: no-equivalent
   security_id:
-    kind: TODO
-    target: TODO
+    kind: unmappable
+    target: null
+    reason: no-equivalent
 ```
 
 ## Notes / open questions
 
-- 
+- **Object-level routing: Carta has no warrant-acceptance transaction, so this OCF object as a whole has no Carta home.** OCF models stakeholder acceptance of a warrant as its own first-class transaction object (`TX_WARRANT_ACCEPTANCE`), referencing the accepted warrant by `security_id`. Carta's warrant model is `WarrantIssuanceTransaction` / `WarrantExerciseTransaction` / `WarrantCancellationTransaction` / `WarrantTransferTransaction` (plus the `WarrantTransactionItem` bundle and `WarrantBlockSummary`) — there is **no** `WarrantAcceptanceTransaction` and no acceptance event in the warrant lifecycle. This matches the context note that Carta has no equivalent for OCF acceptance transactions: warrant acceptance is dropped wholesale.
+- **Why `date` is `no-equivalent` (and not routable to an acceptance-date field).** Carta *does* carry a stakeholder-acceptance timestamp, but only on equity-comp and stock securities — `OptionGrant.stakeholderAcceptanceDate`, `RestrictedStockAward.stakeholderAcceptanceDate`, `RestrictedStockUnit.stakeholderAcceptanceDate` (all `Iso8601CompleteCalendarDate`), plus `Interest.acceptanceDate` (`Iso8601CompleteCalendarDateTime`). None of these is a warrant security/transaction, and there is no warrant analogue (`WarrantIssuanceTransaction` exposes only `issueDatetime` / `expirationDatetime`, never an acceptance date). So OCF's warrant-acceptance `date` has nowhere to land. Note also the granularity gap that would apply even if a home existed: OCF `date` is a calendar **date** (`types/Date.schema.json`, `format: date`), whereas Carta's acceptance fields on equity-comp securities are `Iso8601CompleteCalendarDate` (date) but `Interest.acceptanceDate` is a full **datetime** — a date-vs-datetime mismatch.
+- **Why `security_id` is `no-equivalent`.** It is a foreign key onto the warrant security being accepted. Carta warrant transactions do reference a security via `securityId` (on `WarrantTransactionItem`), but only in the context of an issuance/exercise/cancellation/transfer — there is no acceptance transaction onto which this reference could be attached, so the reference has no destination. (Had a Carta warrant-acceptance transaction existed, `security_id` would route to its `securityId`; it does not.)
+- `id`, `comments`, `object_type`: OCF object scaffolding (`ocf-internal`). `id` is OCF's own identifier (Carta assigns server-side ids); `object_type` is OCF's discriminator constant (`TX_WARRANT_ACCEPTANCE`) — Carta types transactions positionally by endpoint/def rather than via a stored discriminator, so the single const value remaps to `null`; `comments` is free-text OCF metadata with no Carta slot.
+- Net result: **0 of 5 fields map.** Three are OCF-internal scaffolding and two (`date`, `security_id`) are genuinely absent from Carta because the warrant-acceptance concept itself is absent. This is consistent with the other acceptance transactions in this folder and with the Issuer precedent's treatment of scaffolding (`id`/`object_type`/`comments` → `ocf-internal`).
