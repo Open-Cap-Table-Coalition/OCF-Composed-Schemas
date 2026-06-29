@@ -9,13 +9,13 @@ required_fields:
   - date
   - security_id
   - reason_text
-target_standard: TBD
-target_version: TBD
-status: draft
+target_standard: Carta
+target_version: v1alpha1 (2026-04-30)
+status: complete
 last_generated: 2026-05-18
 ---
 
-# Object - Warrant Retraction Transaction → TBD
+# Object - Warrant Retraction Transaction → Carta
 
 > Object describing a retraction of a warrant security
 
@@ -93,32 +93,44 @@ Source: [`WarrantRetraction.schema.json`](./WarrantRetraction.schema.json)
 
 ```yaml
 # kind vocabulary: rename | split | combine | enum-remap | computed | unmappable | TODO
-status: draft
-coverage: 0/6
+status: complete
+coverage: 6/6
 
 fields:
   id:
-    kind: TODO
-    target: TODO
+    kind: unmappable
+    target: null
+    reason: ocf-internal
   comments:
-    kind: TODO
-    target: TODO
+    kind: unmappable
+    target: null
+    reason: ocf-internal
   object_type:
-    kind: TODO          # likely enum-remap
-    target: TODO
+    kind: unmappable
+    target: null
+    reason: no-equivalent
     values:
-      TX_WARRANT_RETRACTION: TODO
+      TX_WARRANT_RETRACTION: null
   date:
-    kind: TODO
-    target: TODO
+    kind: unmappable
+    target: null
+    reason: no-equivalent
   security_id:
-    kind: TODO
-    target: TODO
+    kind: unmappable
+    target: null
+    reason: no-equivalent
   reason_text:
-    kind: TODO
-    target: TODO
+    kind: unmappable
+    target: null
+    reason: no-equivalent
 ```
 
 ## Notes / open questions
 
-- 
+- **Carta has no retraction transaction, so this entire object is unmappable.** A retraction in OCF voids a previously-recorded transaction that was entered in error or that the issuer chose to undo — it is a correction/withdrawal of a record, distinct from a *cancellation* (which terminates a live security). Carta's warrant transaction surface, modeled by `WarrantTransactionItem` (`#/$defs/WarrantTransactionItem`), exposes only `issuance`, `exercises[]`, `transfers[]`, and `cancellations[]` — there is no retraction array and no retraction transaction `$def`. A full-text scan of the pinned bundle for `retract*` / `reasonText` / `reason_text` returns nothing. So none of the six OCF fields has a Carta home.
+- `reason_text` (free-text reason for the retraction) has no Carta counterpart. The only `reason` fields in the Carta bundle are the constrained **cancellation** enums (`WarrantCancellationReason`, `CertificateCancellationReason`, `OptionCancellationReason`, etc.), each carried by a `*CancellationTransaction`. `WarrantCancellationReason` allows only `WARRANT_CANCELLATION_REASON_{CANCELED,LIFETIME_ENDED,TRANSFERRED}` — semantics that describe *why a security was cancelled*, not *why a prior record was retracted*. They are not a destination for OCF's free-form retraction reason: the concept (correction of an erroneous record), the field type (free text vs. closed enum), and the host transaction (cancellation vs. retraction) all differ. Mapping `reason_text` there would be semantically wrong, so it is left `no-equivalent` rather than forced onto a cancellation-reason enum.
+- `security_id` is OCF's reference to the warrant whose record is being retracted. Carta does use `securityId` (a string foreign key) on its transaction/security items — e.g. `WarrantTransactionItem.securityId` — but only to anchor *supported* transactions to a security. Because the retraction transaction itself does not exist in Carta, there is no Carta record for this `security_id` to populate; it is marked `no-equivalent` rather than pointed at an unrelated object's foreign key.
+- `date` — OCF records a calendar `Date`; Carta's transactions use `Iso8601CompleteCalendarDateTime` (a datetime) on their `*Datetime` fields. The date-vs-datetime granularity difference is moot here regardless, because there is no Carta retraction transaction to host a date.
+- `object_type` is the OCF discriminator constant `TX_WARRANT_RETRACTION`. There is no Carta transaction type to remap it to (Carta types transactions positionally by which array/`$def` they appear in, and it has no retraction type), so this is `no-equivalent` rather than `enum-remap`; the single OCF enum value `TX_WARRANT_RETRACTION` is listed and maps to `null`. (Contrast Carta's *supported* warrant events, which carry no `object_type` discriminator at all.)
+- `id` and `comments` are OCF object scaffolding (per the `Object` primitive). `id` is OCF's own identifier and Carta assigns identifiers server-side; `comments` has no Carta slot on any transaction. Both are marked `ocf-internal`, consistent with the Issuer/Document precedents. (`object_type` is classified `no-equivalent` rather than `ocf-internal` here because — unlike `id`/`comments` — its content is a transaction-type signal whose closest Carta analog, a transaction `$def`, genuinely does not exist for retractions.)
+- This matches the broader pattern for OCF transactions Carta does not model: per the transaction-surface guidance, Carta has **no equivalent for retraction** (alongside acceptance, adjustment, change-event, consolidation, reissuance, release, repricing, repurchase, return-to-pool, and stock-split). The four sibling retraction transactions (`StockRetraction`, `EquityCompensationRetraction`, `PlanSecurityRetraction`, `ConvertibleRetraction`) carry the identical field set and reach the same all-unmappable result.
