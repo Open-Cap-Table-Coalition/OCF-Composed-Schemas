@@ -9,7 +9,7 @@ required_fields:
 target_standard: TBD
 target_version: TBD
 status: draft
-last_generated: 2026-05-18
+last_generated: 2026-06-29
 ---
 
 # Type - Object Reference → TBD
@@ -55,6 +55,7 @@ Source: [`ObjectReference.schema.json`](./ObjectReference.schema.json)
 
 ```yaml
 # kind vocabulary: rename | split | combine | enum-remap | computed | unmappable | TODO
+# unmappable reason vocabulary: no-equivalent | excluded-from-snapshot | out-of-scope | ocf-internal
 status: draft
 coverage: 0/2
 
@@ -117,7 +118,6 @@ fields:
       TX_WARRANT_RETRACTION: TODO
       TX_WARRANT_TRANSFER: TODO
       TX_VESTING_ACCELERATION: TODO
-      TX_VESTING_START: TODO
       TX_VESTING_EVENT: TODO
   object_id:
     kind: TODO
