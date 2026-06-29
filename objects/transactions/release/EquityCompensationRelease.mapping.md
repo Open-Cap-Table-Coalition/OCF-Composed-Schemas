@@ -12,13 +12,13 @@ required_fields:
   - release_price
   - quantity
   - resulting_security_ids
-target_standard: TBD
-target_version: TBD
-status: draft
+target_standard: Carta
+target_version: "v1alpha1 (2026-04-30)"
+status: complete
 last_generated: 2026-05-18
 ---
 
-# Object - Equity Compensation Release Transaction → TBD
+# Object - Equity Compensation Release Transaction → Carta
 
 > Object describing equity compensation security release transaction
 
@@ -123,45 +123,127 @@ Source: [`EquityCompensationRelease.schema.json`](./EquityCompensationRelease.sc
 
 ```yaml
 # kind vocabulary: rename | split | combine | enum-remap | computed | unmappable | TODO
-status: draft
-coverage: 0/10
+# routing: route_by_security (downstream join). This release carries only
+# security_id and NO discriminator, so the equity-comp family is undecidable from
+# the record alone: it is resolved by joining security_id back to the
+# EquityCompensationIssuance and reading that issuance's compensation_type.
+# Only RSUs "release" (settle into shares); options/SARs have no Carta release
+# surface, so those families route to null. See
+# docs/polymorphic-transaction-routing.md §2.2/§4.3.
+status: complete
 
-fields:
-  id:
-    kind: TODO
-    target: TODO
-  comments:
-    kind: TODO
-    target: TODO
-  object_type:
-    kind: TODO          # likely enum-remap
-    target: TODO
-    values:
-      TX_PLAN_SECURITY_RELEASE: TODO
-      TX_EQUITY_COMPENSATION_RELEASE: TODO
+route_by_security:
+  via: security_id
+  resolve: compensation_type
+  resolve_enum: "https://raw.githubusercontent.com/Open-Cap-Table-Coalition/Open-Cap-Format-OCF/main/schema/enums/CompensationType.schema.json"
+  source_mapping: ../issuance/EquityCompensationIssuance.mapping.md
+  exhaustive: true
+
+# shared: every source property. Fields whose Carta home differs by family carry
+# a per-variant target map { Rsu/Option/Sar: pointer }. Only Rsu has a release
+# surface (the RSU-settlement defs); Option/Sar are null because no Carta release
+# transaction exists for those families.
+shared:
+  id:                 { kind: unmappable, target: null, reason: ocf-internal }
+  comments:           { kind: unmappable, target: null, reason: no-equivalent }
+  object_type:        { kind: unmappable, target: null, reason: ocf-internal }
+  security_id:        { kind: unmappable, target: null, reason: ocf-internal }
+  consideration_text: { kind: unmappable, target: null, reason: no-equivalent }
   date:
-    kind: TODO
-    target: TODO
-  security_id:
-    kind: TODO
-    target: TODO
+    kind: rename
+    target:
+      Rsu:    "#/$defs/RsuSettlementTransaction/properties/settlementDatetime"
+      Option: null
+      Sar:    null
   settlement_date:
-    kind: TODO
-    target: TODO
+    kind: rename
+    target:
+      Rsu:    "#/$defs/RestrictedStockUnitSettlement/properties/settlementDate"
+      Option: null
+      Sar:    null
   release_price:
-    kind: TODO
-    target: TODO
+    kind: rename
+    target:
+      Rsu:    "#/$defs/RestrictedStockUnitSettlement/properties/settlementPrice"
+      Option: null
+      Sar:    null
   quantity:
-    kind: TODO
-    target: TODO
-  consideration_text:
-    kind: TODO
-    target: TODO
+    kind: rename
+    target:
+      Rsu:    "#/$defs/RsuSettlementTransaction/properties/settledQuantity"
+      Option: null
+      Sar:    null
   resulting_security_ids:
-    kind: TODO
-    target: TODO
+    kind: computed                 # lineage: importer records the resulting certificate precededBy
+    target:
+      Option: null
+      Rsu:    "#/$defs/CertificatePrecededBy/properties/securities"
+      Sar:    null
+
+variants:
+
+  Rsu:
+    when: [RSU]
+    primary_targets:
+      - "#/$defs/RsuSettlementTransaction"
+      - "#/$defs/RestrictedStockUnitSettlement"
+    fields: {}
+
+  Option:
+    when: [OPTION, OPTION_NSO, OPTION_ISO]
+    primary_targets: null
+    fields: {}
+
+  Sar:
+    when: [CSAR, SSAR]
+    primary_targets: null
+    fields: {}
+
+coverage:
+  Option: 10/10
+  Rsu: 10/10
+  Sar: 10/10
 ```
 
 ## Notes / open questions
 
-- 
+- **Join-dependent (downstream).** One OCF `EquityCompensationRelease` routes by the
+  instrument family fixed at issuance, but the record itself carries no discriminator —
+  only `security_id`. An importer must first resolve `compensation_type` from the joined
+  `EquityCompensationIssuance` (the two-pass requirement,
+  docs/polymorphic-transaction-routing.md §2.2), then route. `security_id` is the
+  `route_by_security.via` join key, not a stored Carta field.
+- **Only RSUs release.** "Release" here means a vested equity-comp security settling
+  into shares. Carta models this *only* as RSU settlement — there is no
+  `…ReleaseTransaction` for options or SARs — so the **Option** and **Sar** variants
+  have `primary_targets: null` (the release *event* is unmappable for them) and every
+  shared field routes to `null` for them; options and SARs simply do not release. The
+  **Rsu** variant lands on the two Carta defs that describe the
+  same RSU-settlement event from two angles: `RsuSettlementTransaction` (the transaction
+  record) and `RestrictedStockUnitSettlement` (the settlement line-item carrying the
+  economics, nested under `RestrictedStockUnit.settlements`).
+- **Mappable Rsu fields.** `date` → `RsuSettlementTransaction.settlementDatetime` (OCF
+  calendar date widening to a Carta datetime); `settlement_date` →
+  `RestrictedStockUnitSettlement.settlementDate` (clean calendar-date match, deliberately
+  a distinct node from the transaction `date`); `release_price` →
+  `RestrictedStockUnitSettlement.settlementPrice` (the only Carta home for the price —
+  `RsuSettlementTransaction` has no price field; Monetary ↔ Money); `quantity` →
+  `RsuSettlementTransaction.settledQuantity` (shares released; numeric-string ↔ Decimal).
+- **`resulting_security_ids` round-trips as reverse lineage (kind `computed`).** An RSU
+  release/settlement produces shares — a Carta `Certificate` — and each resulting
+  certificate records its origin in `Certificate.precededBy.securities` (a
+  `PrecededBySecurity` array). The OCF *array* therefore round-trips **losslessly** as a
+  set of reverse lineage edges: the importer writes the released RSU's id into every
+  resulting certificate's `precededBy.securities`. This is `computed` (importer-derived
+  placement onto the records the release *references*), not the lossy tx-level scalar
+  `RsuSettlementTransaction.resultingSecurityId` (a single id that cannot represent
+  multiple results). **Option** and **Sar** stay `null` — they do not release.
+- **`consideration_text` has no home.** OCF stores free text describing consideration
+  given for the release; Carta exposes no free-text consideration field on either RSU
+  settlement def, so `no-equivalent` in every variant.
+- **`object_type` / `id` / `comments` (`ocf-internal`).** `object_type`'s enum
+  (`TX_PLAN_SECURITY_RELEASE`, the v1 alias deprecated in v2.0.0, and
+  `TX_EQUITY_COMPENSATION_RELEASE`) is positionally encoded by the routed Carta def, with
+  no per-record type discriminator to remap onto. OCF `id` identifies the OCF transaction
+  object (Carta's same-named `RsuSettlementTransaction.id` is a *different* settlement-tx
+  identifier, so reusing it would be wrong), and `comments` has no Carta slot.
