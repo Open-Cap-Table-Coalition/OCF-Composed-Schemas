@@ -10,13 +10,13 @@ required_fields:
   - date
   - security_id
   - resulting_security_ids
-target_standard: TBD
-target_version: TBD
-status: draft
+target_standard: Carta
+target_version: "v1alpha1 (2026-04-30)"
+status: complete
 last_generated: 2026-05-18
 ---
 
-# Object - Equity Compensation Exercise Transaction → TBD
+# Object - Equity Compensation Exercise Transaction → Carta
 
 > Object describing equity compensation exercise transaction
 
@@ -111,39 +111,120 @@ Source: [`EquityCompensationExercise.schema.json`](./EquityCompensationExercise.
 
 ```yaml
 # kind vocabulary: rename | split | combine | enum-remap | computed | unmappable | TODO
-status: draft
-coverage: 0/8
+# routing: route_by_security (downstream join). This exercise carries only
+# security_id and NO discriminator, so the Carta exercise family is undecidable
+# from the record alone: it is resolved by joining security_id back to the
+# EquityCompensationIssuance and reading that issuance's compensation_type.
+# Options/SARs exercise; an OCF exercise against an RSU is semantically invalid
+# (RSUs settle via Release, they are not exercised) so the Rsu family has no
+# Carta exercise tx and is wholly unmappable here.
+# See docs/polymorphic-transaction-routing.md §2.2/§4.3.
+status: complete
 
-fields:
-  id:
-    kind: TODO
-    target: TODO
-  comments:
-    kind: TODO
-    target: TODO
-  object_type:
-    kind: TODO          # likely enum-remap
-    target: TODO
-    values:
-      TX_PLAN_SECURITY_EXERCISE: TODO
-      TX_EQUITY_COMPENSATION_EXERCISE: TODO
+route_by_security:
+  via: security_id
+  resolve: compensation_type
+  resolve_enum: "https://raw.githubusercontent.com/Open-Cap-Table-Coalition/Open-Cap-Format-OCF/main/schema/enums/CompensationType.schema.json"
+  source_mapping: ../issuance/EquityCompensationIssuance.mapping.md
+  exhaustive: true
+
+# shared: fields whose Carta home differs by family carry a per-variant target map
+# { Option/Rsu/Sar: pointer }. Rsu is null on every routed field — an OCF exercise
+# against an RSU has no Carta exercise transaction to land on.
+shared:
+  id:                 { kind: unmappable, target: null, reason: ocf-internal }
+  comments:           { kind: unmappable, target: null, reason: no-equivalent }
+  object_type:        { kind: unmappable, target: null, reason: no-equivalent }
+  security_id:        { kind: unmappable, target: null, reason: ocf-internal }
+  consideration_text: { kind: unmappable, target: null, reason: no-equivalent }
   date:
-    kind: TODO
-    target: TODO
-  security_id:
-    kind: TODO
-    target: TODO
-  consideration_text:
-    kind: TODO
-    target: TODO
-  resulting_security_ids:
-    kind: TODO
-    target: TODO
+    kind: rename
+    target:
+      Option: "#/$defs/OptionExerciseTransaction/properties/sharesAcquiredDatetime"
+      Sar:    "#/$defs/SarExerciseTransaction/properties/sharesAcquiredDatetime"
+      Rsu:    null
   quantity:
-    kind: TODO
-    target: TODO
+    kind: rename
+    target:
+      Option: "#/$defs/OptionExerciseTransaction/properties/quantity"
+      Sar:    "#/$defs/SarExerciseTransaction/properties/quantity"
+      Rsu:    null
+  resulting_security_ids:
+    kind: computed                 # lineage: importer records each resulting security's precededBy
+    target:
+      Option: "#/$defs/CertificatePrecededBy/properties/securities"
+      Sar:    "#/$defs/CertificatePrecededBy/properties/securities"
+      Rsu:    null
+
+variants:
+
+  Option:
+    when: [OPTION, OPTION_NSO, OPTION_ISO]
+    primary_targets:
+      - "#/$defs/OptionExerciseTransaction"
+    fields: {}
+
+  Rsu:
+    when: [RSU]
+    primary_targets: null
+    fields: {}
+
+  Sar:
+    when: [CSAR, SSAR]
+    primary_targets:
+      - "#/$defs/SarExerciseTransaction"
+    fields: {}
+
+coverage:
+  Option: 8/8
+  Rsu: 8/8
+  Sar: 8/8
 ```
 
 ## Notes / open questions
 
-- 
+- **Join-dependent (downstream).** One OCF `EquityCompensationExercise` fans out by
+  the instrument family fixed at issuance: an exercise of an option grant lands on
+  `OptionExerciseTransaction`, an exercise of a SAR on `SarExerciseTransaction`. The
+  record itself carries no discriminator, only `security_id`, so an importer must
+  resolve `compensation_type` from the joined `EquityCompensationIssuance` first (the
+  two-pass requirement, docs/polymorphic-transaction-routing.md §2.2/§4.3).
+- **Rsu is wholly unmappable.** An RSU is *settled* (`Release`), not *exercised*; an
+  OCF exercise whose `security_id` resolves to a `RSU` compensation type is
+  semantically invalid and has no Carta exercise transaction to receive it. The `Rsu`
+  variant therefore has `primary_targets: null` and every routed field is `null` for it.
+- **`date` / `quantity` / `resulting_security_ids`** are the mappable fields; each
+  lands on the resolved family's exercise tx via a per-variant target map:
+  - `date` → `sharesAcquiredDatetime`. OCF `date` is a calendar date (`types/Date`,
+    `YYYY-MM-DD`); Carta's `sharesAcquiredDatetime` is a full datetime
+    (`Iso8601CompleteCalendarDateTime`) — the standard OCF-date → Carta-datetime
+    granularity widening; the same "shares acquired on exercise" event.
+  - `quantity` → `quantity`. OCF `types/Numeric` (stringified decimal) → Carta
+    `Decimal`; straight rename, representation change only.
+  - `resulting_security_ids` → **lineage on the resulting security** (kind `computed`).
+    An exercise produces shares — a Carta `Certificate` — and each resulting
+    certificate records its origin in `Certificate.precededBy.securities` (a
+    `PrecededBySecurity` array). The OCF *array* therefore round-trips **losslessly**
+    as a set of reverse lineage edges: the importer writes the exercised grant's
+    `security_id` into every resulting certificate's `precededBy.securities`. This is
+    `computed` (importer-derived placement onto records the exercise *references*), not
+    a `rename` — Carta's tx-level scalar `resultingSecurityId` is only a lossy
+    convenience pointer (a single id), whereas `precededBy.securities` carries the full
+    set, so in any snapshot the complete lineage forest stays traceable. (Cash-settled
+    SARs settle to `cashAcquired` and produce no resulting security.)
+- **`security_id`** is the join key (`route_by_security.via`); it routes the family,
+  it is not itself a stored Carta field. Carta's exercise transactions hold no
+  reference to the source grant — that linkage is structural (the exercise sits under
+  its grant), not a leaf property — so `security_id` is `ocf-internal` here.
+- **`consideration_text` has no home.** OCF stores free text describing consideration;
+  the nearest Carta concept is `exerciseMethod`, a constrained enum describing *how*
+  the exercise was funded (CASH / CASHLESS / …), not a free-text description — free
+  text → enum is unmappable, not a rename.
+- **`object_type`** (`TX_PLAN_SECURITY_EXERCISE` / `TX_EQUITY_COMPENSATION_EXERCISE`)
+  is the OCF record discriminator; Carta types the exercise positionally by family, so
+  there is no per-record type field to remap onto. **`id`** identifies the OCF object
+  (Carta's same-named `id` is the *exercise request* id — semantically different) and
+  **`comments`** has no Carta slot.
+- **Unused Carta fields:** on the routed exercise txs, `exerciseMethod`, `recordType`,
+  `resultingSecurityType`, and `resultingSecurityLabel` have no OCF source field here
+  and are left unpopulated.
