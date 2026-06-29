@@ -121,13 +121,17 @@ fields:
       VestingScheduleCliff mappings.
   event_condition:
     kind: computed
-    target: "#/$defs/VestingPeriod/properties/milestoneName"
+    target: "#/$defs/VestingPeriod/properties/performanceCondition"
     transform: |
-      milestoneName = event_condition.event_id
-      The event axis turns the period into a milestone-based VestingPeriod.
-      Carta has only the milestone name to carry the gate, so the OCF event_id
-      (which also links to the v2 vesting-event transaction that records the
-      firing) is reused as the milestoneName. Absent for pure DATE statements.
+      performanceCondition.name = event_condition.event_id
+      The event axis gates this period on a named event, mapping to Carta's
+      period-level performanceCondition object whose `name` carries the gate's
+      identity (the OCF event_id, which also links to the v2 vesting-event
+      transaction that records the firing). See the VestingEventCondition
+      mapping for the type-level event_id -> PerformanceCondition.name detail.
+      (Carta also exposes a bare milestoneName; performanceCondition is used
+      here to stay consistent with the VestingEventCondition mapping + the v2
+      design — worth a reviewer confirm.) Absent for pure DATE statements.
   percentage:
     kind: computed
     target: "#/$defs/VestingPeriod/properties/percentage"
