@@ -10,13 +10,13 @@ required_fields:
   - security_id
   - price
   - quantity
-target_standard: TBD
-target_version: TBD
-status: draft
+target_standard: Carta
+target_version: "v1alpha1 (2026-04-30)"
+status: complete
 last_generated: 2026-05-18
 ---
 
-# Object - Stock Repurchase Transaction → TBD
+# Object - Stock Repurchase Transaction → Carta
 
 > Object describing a stock repurchase transaction
 
@@ -107,41 +107,111 @@ Source: [`StockRepurchase.schema.json`](./StockRepurchase.schema.json)
 
 ```yaml
 # kind vocabulary: rename | split | combine | enum-remap | computed | unmappable | TODO
-status: draft
-coverage: 0/9
+# routing: route_by_security (downstream join). A StockRepurchase carries only
+# security_id and NO discriminator, so the repurchased stock's family is undecidable
+# from the record alone: it is resolved by joining security_id back to the
+# StockIssuance and reading that issuance's issuance_type. Carta has no repurchase
+# transaction at all, so the repurchase event is unmappable in both stock families
+# (RSA / FOUNDERS_STOCK); only the remainder security's lineage (balance_security_id)
+# round-trips. See docs/polymorphic-transaction-routing.md §2.2/§4.3.
+status: complete
 
-fields:
-  id:
-    kind: TODO
-    target: TODO
-  comments:
-    kind: TODO
-    target: TODO
-  object_type:
-    kind: TODO          # likely enum-remap
-    target: TODO
-    values:
-      TX_STOCK_REPURCHASE: TODO
-  date:
-    kind: TODO
-    target: TODO
-  security_id:
-    kind: TODO
-    target: TODO
-  price:
-    kind: TODO
-    target: TODO
-  quantity:
-    kind: TODO
-    target: TODO
-  consideration_text:
-    kind: TODO
-    target: TODO
+route_by_security:
+  via: security_id
+  resolve: issuance_type
+  resolve_enum: "https://raw.githubusercontent.com/Open-Cap-Table-Coalition/Open-Cap-Format-OCF/main/schema/enums/StockIssuanceType.schema.json"
+  source_mapping: ../issuance/StockIssuance.mapping.md
+  exhaustive: true
+
+# shared: every source property. Carta has no repurchase transaction in either
+# family, so the repurchase event fields are unmappable. The exception is
+# balance_security_id: the partial-repurchase remainder is a stock security whose
+# precededBy.securities records the repurchased-from security, so it carries a
+# per-variant target map { Rsa / Default: pointer }.
+shared:
+  id:                  { kind: unmappable, target: null, reason: ocf-internal }
+  comments:            { kind: unmappable, target: null, reason: no-equivalent }
+  object_type:         { kind: unmappable, target: null, reason: ocf-internal }
+  date:                { kind: unmappable, target: null, reason: no-equivalent }
+  security_id:         { kind: unmappable, target: null, reason: ocf-internal }
+  price:               { kind: unmappable, target: null, reason: no-equivalent }
+  quantity:            { kind: unmappable, target: null, reason: no-equivalent }
+  consideration_text:  { kind: unmappable, target: null, reason: no-equivalent }
   balance_security_id:
-    kind: TODO
-    target: TODO
+    kind: computed                 # lineage: the post-repurchase remainder security precededBy
+    target:
+      Rsa:     "#/$defs/RestrictedStockAwardPrecededBy/properties/securities"
+      Default: "#/$defs/CertificatePrecededBy/properties/securities"
+
+variants:
+
+  Rsa:
+    when: [RSA]
+    primary_targets: null
+    fields: {}
+
+  Default:
+    when: [FOUNDERS_STOCK]
+    primary_targets: null
+    fields: {}
+
+coverage:
+  Rsa: 9/9
+  Default: 9/9
 ```
 
 ## Notes / open questions
 
-- 
+- **Join-dependent (downstream), and unmappable in every family.** A `StockRepurchase`
+  carries no discriminator — only `security_id` — so the repurchased stock's family
+  (`RSA` vs `FOUNDERS_STOCK`) is undecidable from the record alone. An importer must
+  resolve `issuance_type` from the joined `StockIssuance` first (the two-pass
+  requirement, docs/polymorphic-transaction-routing.md §2.2), which is why this is a
+  `route_by_security` mapping rather than a plain single-target one. The routing here
+  is structurally honest: **Carta has no repurchase transaction in either family**, so
+  both variants have `primary_targets: null` and the repurchase *event* itself
+  (`date` / `price` / `quantity` / `consideration_text`) stays `unmappable`. The one
+  exception is `balance_security_id` — the remainder security after a partial
+  repurchase is an ordinary stock security whose lineage *does* round-trip (see below).
+- **No Carta repurchase verb exists.** Carta's transaction surface has no
+  `RepurchaseTransaction` and no repurchase `$def` on the `RestrictedStockAward` or the
+  plain `Certificate` family; a buyback is not representable as its own Carta event.
+  (A repurchase *could* be approximated as a `CertificateCancellationTransaction` with
+  the `CERTIFICATE_CANCELLATION_REASON_REPURCHASED` reason, but that is a
+  family-agnostic certificate cancellation, not a per-family route off the repurchased
+  security, so it is not a faithful target for this routed object — see the open
+  question below.) Because the entire family is unmappable, every field — including the
+  ones that would have homes on a cancellation tx (`date`, `quantity`) — is
+  `no-equivalent` here.
+- **`security_id`** is the join key (`route_by_security.via`); it routes the family by
+  joining back to the issuance, it is not itself a stored Carta field, so it is
+  `ocf-internal`.
+- **`price` / `consideration_text` have no home.** OCF records the repurchase price
+  *per share* (`Monetary`) and a free-text `consideration_text`; Carta has no
+  per-family repurchase property for the money paid in a buyback or for free-form
+  consideration, so both are `no-equivalent`. (Even the cancellation-tx approximation
+  carries no `Money` slot.)
+- **`date` / `quantity`** describe when the buyback happened and how many shares were
+  repurchased. Neither stock family exposes a repurchase event to land them on, so both
+  are `no-equivalent` rather than renames.
+- **`balance_security_id` → lineage on the remainder security** (kind `computed`).
+  After a *partial* repurchase the un-repurchased shares live on a remainder security,
+  and in both stock families that remainder is itself a Carta stock security — an
+  `RestrictedStockAward` for `Rsa`, a plain `Certificate` for `Default` — each of which
+  carries a `precededBy.securities` array (`RestrictedStockAwardPrecededBy` /
+  `CertificatePrecededBy`). The importer writes the repurchased-from `security_id` into
+  that remainder security's `precededBy.securities`, so this reverse lineage edge
+  round-trips **losslessly** even though the repurchase event has no Carta home. It is
+  `computed` (importer-derived placement onto the remainder security the repurchase
+  *references*), not a `rename`, and lands per family via a per-variant target map.
+- **`id`, `comments`, `object_type`.** Standard OCF object scaffolding: `id` and
+  `object_type` are `ocf-internal` (Carta assigns ids; the routed object type is the
+  join's concern, not a stored field), and `comments` has no Carta slot
+  (`no-equivalent`).
+- Open question / round-trip: since neither family can record the repurchase, an
+  OCF→Carta→OCF round-trip recovers nothing of a `StockRepurchase`. If buybacks must
+  survive, the export convention "materialise a repurchase as a
+  `CERTIFICATE_CANCELLATION_REASON_REPURCHASED` certificate cancellation" (and read it
+  back as a repurchase) would have to live in the tooling — it is not a per-family
+  schema target and so is out of scope for this routed mapping. See
+  docs/polymorphic-transaction-routing.md §4.3.
