@@ -812,11 +812,18 @@ function validateEntryTargets(
     lastResolved = node;
   }
 
-  if (kind === "enum-remap" && sourceEnumValues !== null && lastResolved !== undefined) {
+  if (kind === "enum-remap" && lastResolved !== undefined) {
     const targetEnum = targetEnumValuesAt(bundle, lastResolved);
-    const values = entry.values;
-    if (targetEnum !== null && isPlainObject(values)) {
-      for (const [key, v] of Object.entries(values)) {
+    if (targetEnum === null) {
+      // An enum-remap whose target is not an enum silently skipped value-membership
+      // checking, letting a structurally-resolvable but semantically-wrong target
+      // (e.g. a whole object $def) pass. Require the target to actually be an enum.
+      err(
+        name,
+        `kind enum-remap target "${String(target)}" must resolve to an enum in the target bundle`
+      );
+    } else if (sourceEnumValues !== null && isPlainObject(entry.values)) {
+      for (const [key, v] of Object.entries(entry.values)) {
         if (typeof v !== "string" || v === "TODO") continue;
         if (!targetEnum.includes(v)) {
           err(

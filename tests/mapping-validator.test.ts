@@ -355,6 +355,19 @@ describe("validateMapping — values blocks", () => {
     };
     expect(messages(makeInput({ mapping: m }))).toEqual([]);
   });
+
+  it("rejects an enum-remap whose target resolves to a non-enum node", () => {
+    // #/$defs/Thing/properties/name is a plain string, not an enum. Previously this
+    // resolved fine and value-membership checking was silently skipped; now it errors.
+    const m = mapping();
+    (m.fields as Record<string, unknown>).color = {
+      kind: "enum-remap",
+      target: "#/$defs/Thing/properties/name",
+      values: { RED: "red", BLUE: "blue" },
+    };
+    const errs = messages(makeInput({ mapping: m }));
+    expect(errs.some((s) => /enum-remap target .* must resolve to an enum/.test(s))).toBe(true);
+  });
 });
 
 describe("validateMapping — coverage and status strictness", () => {
