@@ -7,13 +7,13 @@ required_fields:
   - object_type
   - id
   - statements
-target_standard: TBD
-target_version: TBD
-status: draft
+target_standard: Carta
+target_version: v1alpha1 (2026-04-30)
+status: complete
 last_generated: 2026-06-29
 ---
 
-# Object - Vesting Terms → TBD
+# Object - Vesting Terms → Carta
 
 > Version dispatcher for vesting terms. The stable public `$id` accepts either the current condition-DAG shape (v1) or the forward-looking ordered-statement template shape (v2) during the transition window.
 
@@ -66,23 +66,26 @@ Source: [`VestingTerms.schema.json`](./VestingTerms.schema.json)
 ```yaml
 # kind vocabulary: rename | split | combine | enum-remap | computed | unmappable | TODO
 # unmappable reason vocabulary: no-equivalent | excluded-from-snapshot | out-of-scope | ocf-internal
-status: draft
-coverage: 0/3
+status: complete
+coverage: 3/3
 
 fields:
   id:
-    kind: TODO
-    target: TODO
+    kind: rename
+    target: "#/$defs/VestingScheduleTemplate/properties/id"
   object_type:
-    kind: TODO          # likely enum-remap
-    target: TODO
-    values:
-      VESTING_TERMS: TODO
+    kind: unmappable
+    target: null
+    reason: ocf-internal
   statements:
-    kind: TODO
-    target: TODO
+    kind: rename
+    target: "#/$defs/VestingScheduleTemplate/properties/periods"
 ```
 
 ## Notes / open questions
 
-- 
+- `VestingTerms` is the parent of OCF's new statements-based vesting model. Its Carta analogue is `VestingScheduleTemplate`: a reusable schedule shape whose statements live as `periods[]` in the template. This mirrors the pre-#227 `canonical/vesting/VestingScheduleTemplate.mapping.md` targets exactly.
+- `id` → the template's `id`. OCF's `id` is the identifier an issuance's `vesting_template_id` references, which is the same role Carta's `VestingScheduleTemplate.id` plays, so it is a genuine `rename` rather than `ocf-internal`. Note Carta's `id` has `maxLength: 50`; OCF imposes no length bound, so a long OCF id could need truncation/remapping at export time.
+- `statements` → `periods[]`. Each OCF `VestingStatement` projects to one Carta `VestingPeriod`; the per-statement field projection (`order`/`occurrences`/`period`/`period_type`/`cliff`/`percentage` → Carta `VestingPeriod`) is documented on `types/vesting/VestingStatement.mapping.md`, not here.
+- `object_type` is the OCF type discriminator (const `VESTING_TERMS`); Carta has no equivalent, so it is `ocf-internal`.
+- Carta's `VestingScheduleTemplate` also exposes `issuerId`, `name`, `description`, `vestingScheduleType`, and `uuid`, which have no OCF source on `VestingTerms` and are left unset by this mapping.
