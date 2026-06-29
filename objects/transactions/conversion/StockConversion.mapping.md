@@ -10,13 +10,13 @@ required_fields:
   - date
   - security_id
   - resulting_security_ids
-target_standard: TBD
-target_version: TBD
-status: draft
+target_standard: Carta
+target_version: "v1alpha1 (2026-04-30)"
+status: complete
 last_generated: 2026-05-18
 ---
 
-# Object - Stock Conversion Transaction → TBD
+# Object - Stock Conversion Transaction → Carta
 
 > Object describing a conversion of stock
 
@@ -107,38 +107,115 @@ Source: [`StockConversion.schema.json`](./StockConversion.schema.json)
 
 ```yaml
 # kind vocabulary: rename | split | combine | enum-remap | computed | unmappable | TODO
-status: draft
-coverage: 0/8
+# routing: route_by_security (downstream join). A stock conversion carries only
+# security_id and NO discriminator, so the source security's family is fixed at
+# issuance: join security_id back to the StockIssuance and read its issuance_type
+# (RSA vs FOUNDERS_STOCK / absent). See docs/polymorphic-transaction-routing.md §2.2.
+# Routing matters for the *outputs*: Carta has no stock-conversion transaction in
+# EITHER family (primary_targets: null, the event itself is unmappable), but the
+# converted-to and balance securities ARE stock securities (RSA / Certificate)
+# whose precededBy.securities records the converted-from security — so the
+# conversion lineage round-trips losslessly via computed onto the resolved family's
+# PrecededBy. The route block declares the join so the conversion verb is recorded
+# against the same enum its siblings (issuance/cancellation) partition.
+status: complete
 
-fields:
-  id:
-    kind: TODO
-    target: TODO
-  comments:
-    kind: TODO
-    target: TODO
-  object_type:
-    kind: TODO          # likely enum-remap
-    target: TODO
-    values:
-      TX_STOCK_CONVERSION: TODO
-  date:
-    kind: TODO
-    target: TODO
-  security_id:
-    kind: TODO
-    target: TODO
+route_by_security:
+  via: security_id
+  resolve: issuance_type
+  resolve_enum: "https://raw.githubusercontent.com/Open-Cap-Table-Coalition/Open-Cap-Format-OCF/main/schema/enums/StockIssuanceType.schema.json"
+  source_mapping: ../issuance/StockIssuance.mapping.md
+  exhaustive: true
+
+# shared: every source property. There is no Carta conversion *transaction* home in
+# any family, so the event fields stay unmappable — but resulting_security_ids and
+# balance_security_id point at stock securities (RSA / Certificate) whose precededBy
+# records the converted-from security, so each carries a per-variant target map
+# { Rsa / Default: <Family>PrecededBy.securities } and is computed lineage.
+shared:
+  id:                     { kind: unmappable, target: null, reason: ocf-internal }
+  comments:               { kind: unmappable, target: null, reason: no-equivalent }
+  object_type:            { kind: unmappable, target: null, reason: ocf-internal }
+  date:                   { kind: unmappable, target: null, reason: no-equivalent }
+  security_id:            { kind: unmappable, target: null, reason: ocf-internal }
   resulting_security_ids:
-    kind: TODO
-    target: TODO
+    kind: computed                 # lineage: the converted-to security precededBy
+    target:
+      Rsa:     "#/$defs/RestrictedStockAwardPrecededBy/properties/securities"
+      Default: "#/$defs/CertificatePrecededBy/properties/securities"
   balance_security_id:
-    kind: TODO
-    target: TODO
-  quantity_converted:
-    kind: TODO
-    target: TODO
+    kind: computed                 # lineage: the unconverted-remainder security precededBy
+    target:
+      Rsa:     "#/$defs/RestrictedStockAwardPrecededBy/properties/securities"
+      Default: "#/$defs/CertificatePrecededBy/properties/securities"
+  quantity_converted:     { kind: unmappable, target: null, reason: no-equivalent }
+
+variants:
+
+  Rsa:
+    when: [RSA]
+    primary_targets: null
+    fields: {}
+
+  Default:
+    when: [FOUNDERS_STOCK]
+    primary_targets: null
+    fields: {}
+
+coverage:
+  Rsa: 8/8
+  Default: 8/8
 ```
 
 ## Notes / open questions
 
-- 
+- **Downstream join (no discriminator on the record).** A stock conversion carries
+  only `security_id` and the fixed `object_type` const — it has no `issuance_type` of
+  its own. The source security's family was fixed at issuance, so an importer must
+  resolve `issuance_type` by joining `security_id` back to the `StockIssuance`
+  (RSA → `RestrictedStockAward` family; FOUNDERS_STOCK / absent → plain `Certificate`),
+  the two-pass requirement in docs/polymorphic-transaction-routing.md §2.2. The
+  `route_by_security:` block declares that join and partitions the
+  `StockIssuanceType` enum (`{RSA, FOUNDERS_STOCK}`) exactly, just as the sibling
+  `StockIssuance` mapping does at issuance time.
+- **The conversion *event* is unmappable — Carta has no stock-conversion transaction
+  in either family — but the security *lineage* is not.** OCF models a stock-class
+  conversion as a first-class transaction object (`TX_STOCK_CONVERSION`) pointing at
+  the converted security and the securities it became. Carta's transaction surface is
+  issuance / cancellation only: there is no `StockConversionTransaction`, no conversion
+  `$def`, and no transaction-type for a conversion in the `RestrictedStockAward` family
+  or the `Certificate` family. (Carta instead reconstructs the economic event as a
+  cancel-of-source + issue-of-resulting pair joined by `SHARE_CLASS_CONVERTED` reason
+  codes and `precededBySecurityId` — a reason-code convention, not a typed event, so
+  there is no single Carta `$def` that is "the conversion." It cannot be a
+  `primary_target`.) Hence `primary_targets: null` for both `Rsa` and `Default`, and
+  the event fields (`date`, `quantity_converted`) stay `unmappable`. The
+  converted-to and balance securities, however, are themselves stock securities whose
+  origin Carta *does* record — see the lineage bullet below.
+- **`resulting_security_ids` / `balance_security_id` → lineage on the resulting
+  security (kind `computed`).** A conversion produces a converted-to security and (for
+  partial conversions) an unconverted-remainder security; both are *stock* securities
+  in the resolved family. Carta STOCK securities — `RestrictedStockAward` and
+  `Certificate` — each carry `precededBy -> { reason, securities: [PrecededBySecurity] }`,
+  an array, and that reverse lineage edge records the converted-from security. So each
+  OCF *array* round-trips **losslessly** as a set of reverse lineage edges: the importer
+  writes the source `security_id` into every converted-to / remainder security's
+  `precededBy.securities`. This is `computed` (importer-derived placement onto records
+  the conversion *references*) and carries a per-variant target map —
+  `Rsa → RestrictedStockAwardPrecededBy.securities`, `Default → CertificatePrecededBy.securities`
+  — because the resulting security's family is the same family the source was routed to.
+- **The event fields have no home.** `date` and `quantity_converted` would each only
+  land on the *synthesised* cancel/issue Carta records that no conversion `$def` owns,
+  so they have no conversion-level Carta target (`no-equivalent`). `security_id` is the
+  `route_by_security.via` join key — it routes the family, it is not itself a stored
+  Carta field (`ocf-internal`). `id` is OCF's own object identifier and `object_type`
+  is the fixed discriminator const `TX_STOCK_CONVERSION` (Carta types transactions
+  positionally and has no conversion discriminator at all) — both `ocf-internal`.
+- **Coverage.** Both variants are `8/8`: all eight source properties are shared and
+  non-TODO (six resolved `unmappable`, two resolved `computed` lineage), and neither
+  variant adds any variant-specific fields, so X = shared (8) + own (0) = N = 8.
+- Open question: representing the conversion *event* on Carta at all requires the
+  cancel+issue reason-code convention described above; that pairing/identity logic is
+  export-tooling territory, not expressible in this static mapping. The mapping here
+  faithfully records that no in-schema Carta home exists for the event, while the
+  converted-from → converted-to lineage is captured losslessly via `precededBy`.
