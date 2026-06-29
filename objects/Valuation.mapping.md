@@ -10,13 +10,13 @@ required_fields:
   - stock_class_id
   - id
   - object_type
-target_standard: TBD
-target_version: TBD
-status: draft
+target_standard: Carta
+target_version: v1alpha1 (2026-04-30)
+status: complete
 last_generated: 2026-05-18
 ---
 
-# Object - Valuation → TBD
+# Object - Valuation → Carta
 
 > Object describing a valuation used in the cap table
 
@@ -102,46 +102,63 @@ Source: [`Valuation.schema.json`](./Valuation.schema.json)
 
 ```yaml
 # kind vocabulary: rename | split | combine | enum-remap | computed | unmappable | TODO
-status: draft
-coverage: 0/10
+status: complete
+coverage: 10/10
 
 fields:
   id:
-    kind: TODO
-    target: TODO
+    kind: unmappable
+    target: null
+    reason: ocf-internal
   comments:
-    kind: TODO
-    target: TODO
+    kind: unmappable
+    target: null
+    reason: ocf-internal
   object_type:
-    kind: TODO          # likely enum-remap
-    target: TODO
+    kind: unmappable
+    target: null
+    reason: ocf-internal
     values:
-      VALUATION: TODO
+      VALUATION: null
   provider:
-    kind: TODO
-    target: TODO
+    kind: unmappable
+    target: null
+    reason: no-equivalent
   board_approval_date:
-    kind: TODO
-    target: TODO
+    kind: unmappable
+    target: null
+    reason: no-equivalent
   stockholder_approval_date:
-    kind: TODO
-    target: TODO
+    kind: unmappable
+    target: null
+    reason: no-equivalent
   price_per_share:
-    kind: TODO
-    target: TODO
+    kind: rename
+    target: "#/$defs/ShareClassValuation/properties/price"
   effective_date:
-    kind: TODO
-    target: TODO
+    kind: unmappable
+    target: null
+    reason: no-equivalent
   stock_class_id:
-    kind: TODO
-    target: TODO
+    kind: rename
+    target: "#/$defs/ShareClassValuation/properties/shareClassId"
   valuation_type:
-    kind: TODO          # likely enum-remap
-    target: TODO
+    kind: unmappable
+    target: null
+    reason: no-equivalent
     values:
-      409A: TODO
+      409A: null
 ```
 
 ## Notes / open questions
 
-- 
+- Carta models this concept as its own reusable `$def`, `ShareClassValuation` ("The fair market valuation price for a share class."), so OCF `Valuation` maps to it object-to-object. `ShareClassValuation` carries only four fields: `shareClassId`, `shareClassName`, `common` (true if common, false if preferred), and `price` (`$ref: Money`). It is the one Carta structure that captures a per-share-class FMV price.
+- `price_per_share` (OCF `Monetary`) → `ShareClassValuation.price` (Carta `Money`). This is the substantive payload of the object. The OCF `Monetary` sub-fields route through the `Monetary → Money` type mapping (`amount → Money.amount`, `currency → Money.currencyCode`).
+- `stock_class_id` → `ShareClassValuation.shareClassId`. Both are the foreign key to the (share/stock) class the valuation applies to. Note the OCF/Carta naming difference ("stock class" vs. "share class") is purely terminological; this is the same identifier role used throughout both schemas.
+- `ShareClassValuation.shareClassName` and `ShareClassValuation.common` have no OCF `Valuation` counterpart. OCF carries only the `stock_class_id` foreign key, not a denormalized class name, and OCF does not flag common-vs-preferred on the valuation object — that lives on the referenced `StockClass`. These two Carta fields are therefore left unmapped (no OCF source).
+- The following OCF fields have no counterpart on Carta's `ShareClassValuation` (which records only price + the share-class identity), and nothing valuation-adjacent in the bundle stores them, so they are `no-equivalent`:
+    - `effective_date` (OCF `Date`): Carta's `ShareClassValuation` records no date at all — neither an as-of/effective date nor a board-approval date. The only `valuation`/`evaluation` date tokens in the bundle are `PerformanceCondition.evaluationDate` (a vesting-condition test date) and `ConvertibleIssuanceTransaction.valuationCap` (a convertible's cap amount, not a date) — both unrelated to a 409A FMV. So a `ShareClassValuation` price carries no temporal qualifier in Carta.
+    - `board_approval_date`, `stockholder_approval_date` (OCF `Date`): OCF tracks the governance/approval dates that 409A valuations in particular require; Carta's `ShareClassValuation` has no approval-tracking fields.
+    - `provider`: OCF records the entity that produced the valuation (e.g., the 409A firm); Carta's `ShareClassValuation` has no provider/source field.
+    - `valuation_type` (OCF enum `ValuationType`): the OCF enum currently has a single member, `409A`, and is described as a "seam for supporting different types of valuations in future versions." Carta has no valuation-type discriminator on `ShareClassValuation` (and no enum for valuation kinds anywhere in the bundle) — every `ShareClassValuation` is implicitly an FMV price with no typed category — so there is no Carta enum to remap onto. `409A → null`.
+- `id`, `comments`, `object_type`: OCF object scaffolding. `id` is OCF's own identifier (Carta assigns its own server-side); `object_type` is the OCF discriminator (`const: "VALUATION"`) that Carta does not need (it types positionally per endpoint, so `VALUATION → null`); `comments` has no Carta slot. All three are `ocf-internal`.
