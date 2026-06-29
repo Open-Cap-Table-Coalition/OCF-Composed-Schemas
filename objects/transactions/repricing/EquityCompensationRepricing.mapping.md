@@ -9,13 +9,13 @@ required_fields:
   - object_type
   - date
   - security_id
-target_standard: TBD
-target_version: TBD
-status: draft
+target_standard: Carta
+target_version: "v1alpha1 (2026-04-30)"
+status: complete
 last_generated: 2026-05-18
 ---
 
-# Object - Equity Compensation Repricing Transaction → TBD
+# Object - Equity Compensation Repricing Transaction → Carta
 
 > Object describing an event that adjusts the exercise price of existing equity compensation, typically done when the current share price falls significantly below the set exercise price, rendering an option underwater.
 
@@ -90,32 +90,82 @@ Source: [`EquityCompensationRepricing.schema.json`](./EquityCompensationRepricin
 
 ```yaml
 # kind vocabulary: rename | split | combine | enum-remap | computed | unmappable | TODO
-status: draft
-coverage: 0/6
+# routing: route_by_security (downstream join). This repricing carries only
+# security_id and NO discriminator, so the price-bearing family
+# (Option/Sar/Rsu) is undecidable from the record alone: it is resolved by
+# joining security_id back to the EquityCompensationIssuance and reading that
+# issuance's compensation_type. See docs/polymorphic-transaction-routing.md §2.2/§4.3.
+status: complete
 
-fields:
-  id:
-    kind: TODO
-    target: TODO
-  comments:
-    kind: TODO
-    target: TODO
-  object_type:
-    kind: TODO          # likely enum-remap
-    target: TODO
-    values:
-      TX_EQUITY_COMPENSATION_REPRICING: TODO
-  date:
-    kind: TODO
-    target: TODO
-  security_id:
-    kind: TODO
-    target: TODO
+route_by_security:
+  via: security_id
+  resolve: compensation_type
+  resolve_enum: "https://raw.githubusercontent.com/Open-Cap-Table-Coalition/Open-Cap-Format-OCF/main/schema/enums/CompensationType.schema.json"
+  source_mapping: ../issuance/EquityCompensationIssuance.mapping.md
+  exhaustive: true
+
+# shared: every source property. Carta has no repricing transaction; a repricing
+# is a price *mutation*, so the only mappable field (new_exercise_price) lands on
+# the resolved family's static strike via a per-variant target map. RSUs are
+# priceless, so the field has no home in that variant (null).
+shared:
+  id:          { kind: unmappable, target: null, reason: ocf-internal }
+  comments:    { kind: unmappable, target: null, reason: no-equivalent }
+  object_type: { kind: unmappable, target: null, reason: ocf-internal }
+  security_id: { kind: unmappable, target: null, reason: ocf-internal }
+  date:        { kind: unmappable, target: null, reason: no-equivalent }
   new_exercise_price:
-    kind: TODO
-    target: TODO
+    kind: rename
+    target:
+      Option: "#/$defs/OptionGrant/properties/exercisePrice"
+      Sar:    "#/$defs/SarIssuanceTransaction/properties/exercisePrice"
+      Rsu:    null
+
+variants:
+
+  Option:
+    when: [OPTION, OPTION_NSO, OPTION_ISO]
+    primary_targets:
+      - "#/$defs/OptionGrant"
+    fields: {}
+
+  Sar:
+    when: [CSAR, SSAR]
+    primary_targets:
+      - "#/$defs/SarIssuanceTransaction"
+    fields: {}
+
+  Rsu:
+    when: [RSU]
+    primary_targets: null
+    fields: {}
+
+coverage:
+  Option: 6/6
+  Sar: 6/6
+  Rsu: 6/6
 ```
 
 ## Notes / open questions
 
-- 
+- **Join-dependent (downstream).** One OCF `EquityCompensationRepricing` carries only
+  `security_id` and no discriminator, so the instrument family is undecidable from the
+  record alone. An importer must first resolve `compensation_type` from the joined
+  `EquityCompensationIssuance` (the family fixed at issuance) and only then knows which
+  price field the new strike applies to — the two-pass requirement
+  (docs/polymorphic-transaction-routing.md §2.2/§4.3).
+- **Carta has no repricing transaction.** A repricing is a *mutation* of the existing
+  strike, not a discrete Carta event. So `new_exercise_price` does not land on a
+  repricing tx; it lands on the price-bearing field of the resolved family:
+  `OptionGrant.exercisePrice` for the option family and
+  `SarIssuanceTransaction.exercisePrice` for the SAR family, via the per-variant target
+  map.
+- **RSUs are priceless.** RSUs have no exercise price, so there is no field for the new
+  strike to land on; `new_exercise_price` is `null` in the `Rsu` variant and that
+  variant has `primary_targets: null` — the whole family is unmappable here.
+- **`date` has no home.** Because Carta records the strike as a single static value with
+  no repricing event, there is no Carta repricing transaction and therefore no
+  event-date slot to carry the *when* of the price change; `date` is `no-equivalent`.
+- **`security_id`** is the join key (`route_by_security.via`); it routes the family and
+  is not itself a stored Carta field. **`id`/`object_type`** are OCF object scaffolding
+  (`ocf-internal`) and **`comments`** has no Carta slot (`no-equivalent`).
