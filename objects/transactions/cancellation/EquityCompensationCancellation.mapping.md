@@ -10,13 +10,13 @@ required_fields:
   - date
   - security_id
   - reason_text
-target_standard: TBD
-target_version: TBD
-status: draft
+target_standard: Carta
+target_version: "v1alpha1 (2026-04-30)"
+status: complete
 last_generated: 2026-05-18
 ---
 
-# Object - Equity Compensation Cancellation Transaction → TBD
+# Object - Equity Compensation Cancellation Transaction → Carta
 
 > Object describing a cancellation of equity compensation
 
@@ -107,39 +107,92 @@ Source: [`EquityCompensationCancellation.schema.json`](./EquityCompensationCance
 
 ```yaml
 # kind vocabulary: rename | split | combine | enum-remap | computed | unmappable | TODO
-status: draft
-coverage: 0/8
+# routing: route_by_security (downstream join). This cancellation carries only
+# security_id and NO discriminator, so the Carta cancellation family
+# (Option/Rsu/Sar) is undecidable from the record alone: it is resolved by
+# joining security_id back to the EquityCompensationIssuance and reading that
+# issuance's compensation_type. See docs/polymorphic-transaction-routing.md §2.2/§4.3.
+status: complete
 
-fields:
-  id:
-    kind: TODO
-    target: TODO
-  comments:
-    kind: TODO
-    target: TODO
-  object_type:
-    kind: TODO          # likely enum-remap
-    target: TODO
-    values:
-      TX_PLAN_SECURITY_CANCELLATION: TODO
-      TX_EQUITY_COMPENSATION_CANCELLATION: TODO
+route_by_security:
+  via: security_id
+  resolve: compensation_type
+  resolve_enum: "https://raw.githubusercontent.com/Open-Cap-Table-Coalition/Open-Cap-Format-OCF/main/schema/enums/CompensationType.schema.json"
+  source_mapping: ../issuance/EquityCompensationIssuance.mapping.md
+  exhaustive: true
+
+# shared: fields whose Carta home differs by family carry a per-variant target map
+# { Option/Rsu/Sar: pointer }; all three Carta cancellation txs share the same shape.
+shared:
+  id:                  { kind: unmappable, target: null, reason: ocf-internal }
+  comments:            { kind: unmappable, target: null, reason: no-equivalent }
+  object_type:         { kind: unmappable, target: null, reason: ocf-internal }
+  security_id:         { kind: unmappable, target: null, reason: ocf-internal }
+  balance_security_id: { kind: unmappable, target: null, reason: no-equivalent }
+  reason_text:         { kind: unmappable, target: null, reason: no-equivalent }
   date:
-    kind: TODO
-    target: TODO
-  security_id:
-    kind: TODO
-    target: TODO
-  balance_security_id:
-    kind: TODO
-    target: TODO
-  reason_text:
-    kind: TODO
-    target: TODO
+    kind: rename
+    target:
+      Option: "#/$defs/OptionCancellationTransaction/properties/effectiveDatetime"
+      Rsu:    "#/$defs/RsuCancellationTransaction/properties/effectiveDatetime"
+      Sar:    "#/$defs/SarCancellationTransaction/properties/effectiveDatetime"
   quantity:
-    kind: TODO
-    target: TODO
+    kind: rename
+    target:
+      Option: "#/$defs/OptionCancellationTransaction/properties/quantity"
+      Rsu:    "#/$defs/RsuCancellationTransaction/properties/quantity"
+      Sar:    "#/$defs/SarCancellationTransaction/properties/quantity"
+
+variants:
+
+  Option:
+    when: [OPTION, OPTION_NSO, OPTION_ISO]
+    primary_targets:
+      - "#/$defs/OptionCancellationTransaction"
+    fields: {}
+
+  Rsu:
+    when: [RSU]
+    primary_targets:
+      - "#/$defs/RsuCancellationTransaction"
+    fields: {}
+
+  Sar:
+    when: [CSAR, SSAR]
+    primary_targets:
+      - "#/$defs/SarCancellationTransaction"
+    fields: {}
+
+coverage:
+  Option: 8/8
+  Rsu: 8/8
+  Sar: 8/8
 ```
 
 ## Notes / open questions
 
-- 
+- **Join-dependent (downstream).** One OCF `EquityCompensationCancellation` fans out
+  to three Carta cancellation transactions — `OptionCancellationTransaction`,
+  `RsuCancellationTransaction`, `SarCancellationTransaction` — selected by the
+  instrument family fixed at issuance. The record itself carries no discriminator,
+  only `security_id`, so an importer must resolve `compensation_type` from the joined
+  `EquityCompensationIssuance` first (the two-pass requirement, §2.2).
+- **`date` / `quantity`** are the only mappable fields; each lands on the resolved
+  family's cancellation tx (`effectiveDatetime` / `quantity`) via a per-variant
+  target map.
+- **`reason_text` has no home.** Carta's cancellation `reason` is an enum
+  (`OptionCancellationReason` / `RsuCancellationReason` / `SarCancellationReason`);
+  OCF `reason_text` is free text — the type-mapping policy treats free-text → enum as
+  unmappable, not a rename.
+- **`security_id`** is the join key (`route_by_security.via`); it routes the family,
+  it is not itself a stored Carta field. **`balance_security_id`** (partial-cancel
+  remainder) has no Carta equivalent on any cancellation tx.
+- **Lineage asymmetry — why `balance_security_id` stays unmappable here.** A partial
+  equity-comp cancellation mints a new balance security in the *same* family — an
+  `OptionGrant` / `RestrictedStockUnit` / `SarTransactionItem` — and Carta's
+  equity-comp security objects carry **no `precededBy` edge**; only the stock
+  securities (`Certificate`, `RestrictedStockAward`) do. So unlike the stock families,
+  `balance_security_id` has no Carta reverse-lineage home to be `computed` onto and
+  remains genuinely unmappable. Contrast the stock-side `StockCancellation` (#182),
+  where the same field *is* recorded via the resulting security's
+  `precededBy.securities`.
