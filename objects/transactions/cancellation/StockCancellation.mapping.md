@@ -10,13 +10,13 @@ required_fields:
   - date
   - security_id
   - reason_text
-target_standard: TBD
-target_version: TBD
-status: draft
+target_standard: Carta
+target_version: "v1alpha1 (2026-04-30)"
+status: complete
 last_generated: 2026-05-18
 ---
 
-# Object - Stock Cancellation Transaction → TBD
+# Object - Stock Cancellation Transaction → Carta
 
 > Object describing a cancellation of a stock security
 
@@ -103,38 +103,96 @@ Source: [`StockCancellation.schema.json`](./StockCancellation.schema.json)
 
 ```yaml
 # kind vocabulary: rename | split | combine | enum-remap | computed | unmappable | TODO
-status: draft
-coverage: 0/8
+# routing: route_by_security (downstream join). This cancellation carries only
+# security_id and NO discriminator, so the Carta cancellation family
+# (Rsa vs Certificate) is undecidable from the record alone: it is resolved by
+# joining security_id back to the StockIssuance and reading that issuance's
+# issuance_type. An RSA cancel must route to RsaCancellationTransaction, never to
+# the Certificate family (the bug-#219 class). See
+# docs/polymorphic-transaction-routing.md §2.2/§4.3.
+status: complete
 
-fields:
-  id:
-    kind: TODO
-    target: TODO
-  comments:
-    kind: TODO
-    target: TODO
-  object_type:
-    kind: TODO          # likely enum-remap
-    target: TODO
-    values:
-      TX_STOCK_CANCELLATION: TODO
-  date:
-    kind: TODO
-    target: TODO
-  security_id:
-    kind: TODO
-    target: TODO
+route_by_security:
+  via: security_id
+  resolve: issuance_type
+  resolve_enum: "https://raw.githubusercontent.com/Open-Cap-Table-Coalition/Open-Cap-Format-OCF/main/schema/enums/StockIssuanceType.schema.json"
+  source_mapping: ../issuance/StockIssuance.mapping.md
+  exhaustive: true
+
+# shared: every source property. date/quantity land on a different Carta
+# cancellation tx per family, so they carry a per-variant target map
+# { Rsa: pointer, Default: pointer }.
+shared:
+  id:                  { kind: unmappable, target: null, reason: ocf-internal }
+  comments:            { kind: unmappable, target: null, reason: no-equivalent }
+  object_type:         { kind: unmappable, target: null, reason: ocf-internal }
+  security_id:         { kind: unmappable, target: null, reason: ocf-internal }
+  reason_text:         { kind: unmappable, target: null, reason: no-equivalent }
   balance_security_id:
-    kind: TODO
-    target: TODO
-  reason_text:
-    kind: TODO
-    target: TODO
+    kind: computed                 # lineage: the partial-cancel remainder security precededBy
+    target:
+      Rsa:     "#/$defs/RestrictedStockAwardPrecededBy/properties/securities"
+      Default: "#/$defs/CertificatePrecededBy/properties/securities"
+  date:
+    kind: rename
+    target:
+      Rsa:     "#/$defs/RsaCancellationTransaction/properties/effectiveDatetime"
+      Default: "#/$defs/CertificateCancellationTransaction/properties/effectiveDatetime"
   quantity:
-    kind: TODO
-    target: TODO
+    kind: rename
+    target:
+      Rsa:     "#/$defs/RsaCancellationTransaction/properties/quantity"
+      Default: "#/$defs/CertificateCancellationTransaction/properties/quantity"
+
+variants:
+
+  Rsa:
+    when: [RSA]
+    primary_targets:
+      - "#/$defs/RsaCancellationTransaction"
+    fields: {}
+
+  Default:
+    when: [FOUNDERS_STOCK]
+    primary_targets:
+      - "#/$defs/CertificateCancellationTransaction"
+    fields: {}
+
+coverage:
+  Rsa: 8/8
+  Default: 8/8
 ```
 
 ## Notes / open questions
 
-- 
+- **Join-dependent (downstream).** One OCF `StockCancellation` fans out to two Carta
+  cancellation transactions — `RsaCancellationTransaction` (restricted stock awards)
+  and `CertificateCancellationTransaction` (founders / plain certificated stock) —
+  selected by the stock family fixed at issuance. The record itself carries no
+  discriminator, only `security_id`, so an importer must resolve `issuance_type` from
+  the joined `StockIssuance` first (the two-pass requirement, §2.2). Routing an RSA
+  cancel into the Certificate family would be the bug-#219 misroute; the
+  `route_by_security` join prevents it.
+- **`date` / `quantity`** are the mappable tx-level fields; each lands on the resolved
+  family's cancellation tx (`effectiveDatetime` / `quantity`) via a per-variant target
+  map. **Granularity to flag:** OCF `date` is a calendar date and Carta
+  `effectiveDatetime` is a full datetime, so an importer must widen the OCF date
+  (the reverse is lossy).
+- **`reason_text` has no home.** Carta's cancellation `reason` is an enum
+  (`CertificateCancellationReason` / the RSA equivalent); OCF `reason_text` is free
+  text — the type-mapping policy treats free-text → enum as unmappable, not a rename
+  (there is no OCF enum to remap member-for-member).
+- **`security_id`** is the join key (`route_by_security.via`); it routes the family,
+  it is not itself a stored Carta field.
+- **`balance_security_id` round-trips as lineage (kind `computed`).** The remainder
+  security minted by a partial cancellation is itself a stock security —
+  `RestrictedStockAward` for the RSA family, `Certificate` for the default family — and
+  both carry `precededBy.securities` (a `PrecededBySecurity` array). The remainder
+  records the cancelled security as its predecessor, so an importer writes the cancelled
+  `security_id` into the remainder's `precededBy.securities`: this reverse lineage edge
+  round-trips losslessly, it is not unmappable. (The cancellation tx *itself* still
+  holds no balance field — only the security lineage carries it.)
+- **`id`, `comments`, `object_type`** are OCF scaffolding with no Carta home: `id`
+  is OCF's own object identifier, `comments` is free-text metadata, and `object_type`
+  (the fixed `const TX_STOCK_CANCELLATION`) is the transaction discriminator — Carta
+  selects the kind by which `$def` it instantiates, so the string has no target.
