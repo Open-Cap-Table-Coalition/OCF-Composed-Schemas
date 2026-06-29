@@ -9,13 +9,13 @@ required_fields:
   - date
   - security_id
   - resulting_security_ids
-target_standard: TBD
-target_version: TBD
-status: draft
+target_standard: Carta
+target_version: "v1alpha1 (2026-04-30)"
+status: complete
 last_generated: 2026-05-18
 ---
 
-# Object - Stock Re-issuance Transaction → TBD
+# Object - Stock Re-issuance Transaction → Carta
 
 > Object describing a re-issuance of stock
 
@@ -107,38 +107,95 @@ Source: [`StockReissuance.schema.json`](./StockReissuance.schema.json)
 
 ```yaml
 # kind vocabulary: rename | split | combine | enum-remap | computed | unmappable | TODO
-status: draft
-coverage: 0/8
+# routing: route_by_security (downstream join). This reissuance carries only
+# security_id and NO discriminator, so the stock family (Rsa vs plain stock) is
+# undecidable from the record alone: it is resolved by joining security_id back to
+# the StockIssuance and reading that issuance's issuance_type. The reissuance verb
+# itself has no Carta home in EITHER family — Carta models no reissuance
+# transaction — so every variant has primary_targets: null. The reissued securities
+# are nonetheless stock securities (Certificate / RSA) that record their origin in
+# precededBy.securities, so resulting_security_ids round-trips via computed lineage.
+# See docs/polymorphic-transaction-routing.md §2.2/§4.3.
+status: complete
 
-fields:
-  id:
-    kind: TODO
-    target: TODO
-  comments:
-    kind: TODO
-    target: TODO
-  object_type:
-    kind: TODO          # likely enum-remap
-    target: TODO
-    values:
-      TX_STOCK_REISSUANCE: TODO
-  date:
-    kind: TODO
-    target: TODO
-  security_id:
-    kind: TODO
-    target: TODO
+route_by_security:
+  via: security_id
+  resolve: issuance_type
+  resolve_enum: "https://raw.githubusercontent.com/Open-Cap-Table-Coalition/Open-Cap-Format-OCF/main/schema/enums/StockIssuanceType.schema.json"
+  source_mapping: ../issuance/StockIssuance.mapping.md
+  exhaustive: true
+
+# shared: every source property. The reissuance event itself is unmappable in both
+# families (Carta has no reissuance transaction), but resulting_security_ids lands on
+# the reissued stock security's precededBy.securities via a per-variant target map.
+shared:
+  id:                     { kind: unmappable, target: null, reason: ocf-internal }
+  comments:               { kind: unmappable, target: null, reason: no-equivalent }
+  object_type:            { kind: unmappable, target: null, reason: ocf-internal }
+  date:                   { kind: unmappable, target: null, reason: no-equivalent }
+  security_id:            { kind: unmappable, target: null, reason: ocf-internal }
   resulting_security_ids:
-    kind: TODO
-    target: TODO
-  split_transaction_id:
-    kind: TODO
-    target: TODO
-  reason_text:
-    kind: TODO
-    target: TODO
+    kind: computed                 # lineage: the reissued security precededBy
+    target:
+      Rsa:     "#/$defs/RestrictedStockAwardPrecededBy/properties/securities"
+      Default: "#/$defs/CertificatePrecededBy/properties/securities"
+  split_transaction_id:   { kind: unmappable, target: null, reason: no-equivalent }
+  reason_text:            { kind: unmappable, target: null, reason: no-equivalent }
+
+variants:
+
+  Rsa:
+    when: [RSA]
+    primary_targets: null
+    fields: {}
+
+  Default:
+    when: [FOUNDERS_STOCK]
+    primary_targets: null
+    fields: {}
+
+coverage:
+  Rsa: 8/8
+  Default: 8/8
 ```
 
 ## Notes / open questions
 
-- 
+- **Join-dependent (downstream); the reissuance event is unmappable, the security
+  lineage is not.** One OCF `TX_STOCK_REISSUANCE` fans out by the stock family fixed
+  at issuance — restricted-stock (`RSA`) vs plain stock (`FOUNDERS_STOCK`). The record
+  itself carries no discriminator, only `security_id`, so an importer must resolve
+  `issuance_type` from the joined `StockIssuance` first (the two-pass requirement,
+  §2.2). **Carta exposes no reissuance transaction in either family**, so both variants
+  resolve to `primary_targets: null`: there is no destination tx to land the event on.
+  But the *reissued securities* are stock securities (`Certificate` / `RestrictedStockAward`)
+  that record their origin in `precededBy.securities`, so `resulting_security_ids`
+  still round-trips losslessly via computed lineage. See
+  docs/polymorphic-transaction-routing.md §4.3.
+- **`security_id`** is the join key (`route_by_security.via`); it routes the family,
+  it is not itself a stored Carta field — hence `ocf-internal`, not a rename.
+- **No transaction-level endpoint.** Carta has no stock-reissuance transaction (the
+  `CertificatePrecededByReason` set is share-reserve / option-exercised /
+  RSU-settled / debt-converted / warrant-exercised / share-class-converted /
+  transferred / balance-reissued — a reissuance verb is not a transaction type). So
+  `date` and `split_transaction_id` have no reissuance-transaction endpoint in either
+  family.
+- **`resulting_security_ids` → lineage on the reissued security (kind `computed`).**
+  A reissuance produces a new stock security — a Carta `Certificate` (plain stock) or
+  `RestrictedStockAward` (RSA) — and each reissued security records its origin in
+  `precededBy.securities` (a `PrecededBySecurity` array). The OCF *array* therefore
+  round-trips **losslessly** as a set of reverse lineage edges per family:
+  `CertificatePrecededBy.securities` for `Default`, `RestrictedStockAwardPrecededBy.securities`
+  for `Rsa`. This is `computed` (importer-derived placement onto records the reissuance
+  *references*), not a `rename` — there is no tx-level scalar, so the full lineage set
+  is preserved. (The reissuance *event* still has no Carta home; only the resulting
+  securities' provenance does.)
+- **`reason_text` has no home.** Free-form human-readable justification for the
+  reissuance. Carta encodes provenance reasons as structured enum values, never as
+  free text, and exposes no per-transaction notes/memo/comment string — the
+  type-mapping policy treats free-text → enum as unmappable, not a rename.
+- **`id`, `object_type`, `comments`** are standard OCF object scaffolding: `id` is
+  OCF's own identifier (Carta assigns ids server-side), `object_type` is the fixed
+  `TX_STOCK_REISSUANCE` discriminator (no Carta reissuance transaction type to
+  receive it), and `comments` has no Carta slot.
+
