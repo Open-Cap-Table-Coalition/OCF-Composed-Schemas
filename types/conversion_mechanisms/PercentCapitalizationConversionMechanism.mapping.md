@@ -7,13 +7,13 @@ required_fields:
   - converts_to_percent
   - type
   - type
-target_standard: TBD
-target_version: TBD
-status: draft
+target_standard: Carta
+target_version: v1alpha1 (2026-04-30)
+status: complete
 last_generated: 2026-05-18
 ---
 
-# Conversion Mechanism - Percent of Capitalization → TBD
+# Conversion Mechanism - Percent of Capitalization → Carta
 
 > Sets forth inputs and conversion mechanism of percent of capitalization conversion (where an instrument purports to grant a percent of company capitalization at some point in time)
 
@@ -69,26 +69,33 @@ Source: [`PercentCapitalizationConversionMechanism.schema.json`](./PercentCapita
 
 ```yaml
 # kind vocabulary: rename | split | combine | enum-remap | computed | unmappable | TODO
-status: draft
-coverage: 0/4
+status: complete
+coverage: 4/4
 
 fields:
   type:
-    kind: TODO          # likely enum-remap
-    target: TODO
-    values:
-      FIXED_PERCENT_OF_CAPITALIZATION_CONVERSION: TODO
+    kind: unmappable
+    target: null
+    reason: no-equivalent
   converts_to_percent:
-    kind: TODO
-    target: TODO
+    kind: unmappable
+    target: null
+    reason: no-equivalent
   capitalization_definition:
-    kind: TODO
-    target: TODO
+    kind: unmappable
+    target: null
+    reason: no-equivalent
   capitalization_definition_rules:
-    kind: TODO
-    target: TODO
+    kind: unmappable
+    target: null
+    reason: no-equivalent
 ```
 
 ## Notes / open questions
 
-- 
+- **Bucket 3 (absent).** Carta has no reusable conversion-mechanism `$def` and, more specifically, no concept of a *percent-of-capitalization* conversion. Carta records convertible/preferred conversion economics as bare scalar terms on objects — `ConvertibleNote`/`ConvertibleIssuanceTransaction` (`priceCap`/`valuationCap` as `Money`, `discountPercentage`/`interestRate` as `Decimal`, `conversionTrigger` as `Money`) and `ShareClassRightsAndPreferences` (`conversionPrice`/`originalIssuePrice` as `Money`, `conversionRatio`/`multiplier`/`participationCap` as `Decimal`). None of those is "what fraction of the fully-diluted capitalization this instrument converts into," which is the entire point of this mechanism. There is no single clear Carta home, so every field is `unmappable` / `no-equivalent`.
+- This OCF type is `$ref`'d by `types/conversion_rights/ConvertibleConversionRight.schema.json` and `types/conversion_rights/WarrantConversionRight.schema.json` (via `primitives/types/conversion_rights/ConversionRight.schema.json`). At the object level, Carta models the *resulting* convertible/warrant terms (e.g. on `ConvertibleNote`/`ConvertibleIssuanceTransaction`), but it does not carry OCF's conversion-trigger state machine or this particular mechanism variant — so the mechanism payload is dropped when those rights route to their Carta homes.
+- `type` (const `FIXED_PERCENT_OF_CAPITALIZATION_CONVERSION`): this is OCF's discriminator selecting which conversion-mechanism variant is in play. Carta has no conversion-mechanism enum to remap it to (no `Conversion*`/`Mechanism`/`Trigger` enum exists in the bundle), and it does not record the mechanism kind at all, so there is no enum target — `unmappable` / `no-equivalent`. (It is not OCF scaffolding like `object_type`; it carries genuine semantics that Carta simply omits, hence `no-equivalent` rather than `ocf-internal`.)
+- `converts_to_percent` (`Percentage`, a fixed-point decimal in `[0,1]`): the core economic input — the share of company capitalization granted. Carta's nearest `Decimal`/`Money` conversion fields (`conversionRatio`, `conversionPrice`, `discountPercentage`, etc.) all express *price-per-share* or *shares-per-share* or *a discount off a round price*, none of which is a percentage of total capitalization; coercing this value into any of them would be semantically wrong. No Carta field stores it — `unmappable` / `no-equivalent`.
+- `capitalization_definition` (free-text legal language defining "company capitalization" for the conversion): Carta has no field for the textual/definitional basis of a conversion. `unmappable` / `no-equivalent`.
+- `capitalization_definition_rules` (`CapitalizationDefinitionRules`): the nested fully-diluted inclusion/exclusion booleans (outstanding shares, options, unissued options, this security, other converting securities, option-pool top-ups, new money). Per the already-complete `types/CapitalizationDefinitionRules.mapping.md`, all eight of those rule booleans are themselves `unmappable` — Carta exposes aggregate share counts but not the inclusion-policy used to compute them — so this whole sub-object has no Carta home either. `unmappable` / `no-equivalent`.
