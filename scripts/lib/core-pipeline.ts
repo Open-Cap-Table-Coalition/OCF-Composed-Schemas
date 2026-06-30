@@ -94,6 +94,21 @@ export async function deriveCore(repoRoot: string): Promise<Derived> {
     if (!fields.has(r.field)) fields.set(r.field, { srcRaw: r.srcRaw, description: r.description });
     byEntity.set(r.entity, fields);
   }
+
+  // Identity spine: Core is an OCF subset, so every Core entity carries OCF's
+  // universal keys — `id` and `object_type` — even though they are economically
+  // `out` (no Carta payload home). Required for referential closure (R4) and to
+  // discriminate the transaction union; the §3 note flags them as fold keys.
+  const propsByEntity = new Map(corpus.objects.map((o) => [o.entity, o.properties]));
+  for (const [entity, fields] of byEntity) {
+    const props = propsByEntity.get(entity) ?? {};
+    for (const key of ["object_type", "id"]) {
+      if (props[key] !== undefined && !fields.has(key)) {
+        fields.set(key, { srcRaw: props[key], description: shortDescription(props[key]) });
+      }
+    }
+  }
+
   const entities: CoreEntity[] = [...byEntity.entries()]
     .map(([entity, fields]) => ({
       entity,

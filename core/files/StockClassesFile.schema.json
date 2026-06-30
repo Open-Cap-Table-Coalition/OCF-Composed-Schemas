@@ -26,6 +26,10 @@
             "type": "string",
             "description": "Default prefix for certificate numbers in certificated shares (e.g. CS- in CS-1). If certificate IDs have a dash, the prefix should end i…"
           },
+          "id": {
+            "type": "string",
+            "description": "Identifier for the object"
+          },
           "initial_shares_authorized": {
             "type": "string",
             "description": "The initial number of shares authorized for this stock class"
@@ -38,6 +42,9 @@
           "name": {
             "type": "string",
             "description": "Name for the stock type (e.g. Series A Preferred or Class A Common)"
+          },
+          "object_type": {
+            "const": "STOCK_CLASS"
           },
           "par_value": {
             "type": "object",

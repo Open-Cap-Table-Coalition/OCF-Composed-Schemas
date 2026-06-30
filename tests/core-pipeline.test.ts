@@ -45,4 +45,18 @@ describe("deriveCore (determinism — the drift gate's premise)", () => {
     const d = await deriveCore(process.cwd());
     for (const e of d.entities) expect(e.fields.length).toBeGreaterThan(0);
   });
+
+  it("every entity carries the OCF identity spine (id + object_type)", async () => {
+    const d = await deriveCore(process.cwd());
+    for (const e of d.entities) {
+      const names = new Set(e.fields.map((f) => f.field));
+      expect(names.has("id")).toBe(true);
+      expect(names.has("object_type")).toBe(true);
+    }
+    // The discriminator is present on every event def in the emitted package.
+    const tf = d.package.get("files/TransactionsFile.schema.json") as any;
+    for (const def of tf.properties.items.items.oneOf) {
+      expect(def.properties.object_type).toBeDefined();
+    }
+  });
 });

@@ -55,9 +55,16 @@
             },
             "description": "What is/are the current relationship(s) of the stakeholder to the issuer?"
           },
+          "id": {
+            "type": "string",
+            "description": "Identifier for the object"
+          },
           "issuer_assigned_id": {
             "type": "string",
             "description": "This might be any sort of id assigned to the stakeholder by the issuer, such as an internal company ID for an employee stakeholder"
+          },
+          "object_type": {
+            "const": "STAKEHOLDER"
           },
           "stakeholder_type": {
             "type": "string",

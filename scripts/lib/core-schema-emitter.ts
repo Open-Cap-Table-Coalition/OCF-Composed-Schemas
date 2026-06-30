@@ -40,6 +40,9 @@ export function renderNode(
     return { type: "array", items: renderNode(n.items, registry, depth + 1) };
   }
 
+  // Preserve a const (e.g. object_type) — it discriminates the transaction union.
+  if (n.const !== undefined) return { const: n.const };
+
   const enumVals = detectEnumValues(n, registry);
   if (enumVals) return { type: "string", enum: enumVals };
 

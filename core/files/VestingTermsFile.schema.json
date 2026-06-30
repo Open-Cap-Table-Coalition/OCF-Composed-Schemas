@@ -18,6 +18,9 @@
             "type": "string",
             "description": "Identifier the issuance's `vesting_template_id` references."
           },
+          "object_type": {
+            "const": "VESTING_TERMS"
+          },
           "statements": {
             "type": "array",
             "items": {

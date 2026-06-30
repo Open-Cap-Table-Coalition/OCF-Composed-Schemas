@@ -52,6 +52,11 @@ describe("renderNode — inline OCF grammar", () => {
       enum: ["A", "B", "C"],
     });
   });
+  it("preserves a const (the object_type discriminator)", () => {
+    expect(renderNode({ const: "TX_STOCK_ISSUANCE" }, registry)).toEqual({
+      const: "TX_STOCK_ISSUANCE",
+    });
+  });
   it("recurses into a composite type, keeping its required", () => {
     expect(renderNode({ $ref: "ocf://Monetary" }, registry)).toEqual({
       type: "object",

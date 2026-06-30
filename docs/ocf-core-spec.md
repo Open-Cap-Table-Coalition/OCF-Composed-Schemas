@@ -201,7 +201,11 @@ emits, all **generated, never hand-edited**:
   carries the issuer inline + a `*_files` pointer collection per present category. **Entities are OCF
   entities — variants are collapsed**: a Carta-fold split like `StockIssuance` Default/Rsa is one OCF
   `StockIssuance` (R0), with fields = the union of what is `core` in any admissible variant, each
-  optional. Scalar leaves are inlined with **assertable OCF-grammar `pattern`s**: `Numeric`/`Percentage`
+  optional. **Identity spine:** because Core ⊆ OCF, every entity also carries OCF's universal keys —
+  `id` and `object_type` (a `const`, the transaction-union discriminator) — even though they are
+  economically `out` (no Carta payload home). They are keys, not payload (the §3 non-degeneracy gate
+  ignores them); without them the all-optional event union is ambiguous and referential closure (R4)
+  can't resolve. Scalar leaves are inlined with **assertable OCF-grammar `pattern`s**: `Numeric`/`Percentage`
   already ship patterns; for `Date` the emitter **synthesizes** `^\d{4}-\d{2}-\d{2}$`, because
   `types/Date.schema.json` only declares `format: date`, annotation-only under draft-07. Every value is
   inlined — each file is self-contained, no `$ref`. An instance valid against the package is, by

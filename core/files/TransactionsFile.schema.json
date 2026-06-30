@@ -40,6 +40,13 @@
                 "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
                 "description": "Date on which the transaction occurred"
               },
+              "id": {
+                "type": "string",
+                "description": "Identifier for the object"
+              },
+              "object_type": {
+                "const": "TX_CONVERTIBLE_CANCELLATION"
+              },
               "security_id": {
                 "type": "string",
                 "description": "Identifier for the security (stock, plan security, warrant, or convertible) by which it can be referenced by other transaction objects. N…"
@@ -56,6 +63,13 @@
                 "type": "string",
                 "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
                 "description": "Date on which the transaction occurred"
+              },
+              "id": {
+                "type": "string",
+                "description": "Identifier for the object"
+              },
+              "object_type": {
+                "const": "TX_CONVERTIBLE_CONVERSION"
               },
               "quantity_converted": {
                 "type": "string",
@@ -92,6 +106,10 @@
                 "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
                 "description": "Date on which the transaction occurred"
               },
+              "id": {
+                "type": "string",
+                "description": "Identifier for the object"
+              },
               "investment_amount": {
                 "type": "object",
                 "additionalProperties": false,
@@ -110,6 +128,9 @@
                   "currency"
                 ],
                 "description": "Amount invested and outstanding on date of issuance of this convertible"
+              },
+              "object_type": {
+                "const": "TX_CONVERTIBLE_ISSUANCE"
               },
               "security_id": {
                 "type": "string",
@@ -132,6 +153,18 @@
                 "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
                 "description": "Date on which the transaction occurred"
               },
+              "id": {
+                "type": "string",
+                "description": "Identifier for the object"
+              },
+              "object_type": {
+                "type": "string",
+                "enum": [
+                  "TX_PLAN_SECURITY_CANCELLATION",
+                  "TX_EQUITY_COMPENSATION_CANCELLATION"
+                ],
+                "description": "This is done to avoid a breaking change as we work towards a bigger restructure of the equity types in v2.0.0. `TX_PLAN_SECURITY_CANCELLA…"
+              },
               "quantity": {
                 "type": "string",
                 "pattern": "^[+-]?[0-9]+(\\.[0-9]{1,10})?$",
@@ -149,6 +182,18 @@
                 "type": "string",
                 "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
                 "description": "Date on which the transaction occurred"
+              },
+              "id": {
+                "type": "string",
+                "description": "Identifier for the object"
+              },
+              "object_type": {
+                "type": "string",
+                "enum": [
+                  "TX_PLAN_SECURITY_EXERCISE",
+                  "TX_EQUITY_COMPENSATION_EXERCISE"
+                ],
+                "description": "This is done to avoid a breaking change as we work towards a bigger restructure of the equity types in v2.0.0. `TX_PLAN_SECURITY_EXERCISE…"
               },
               "quantity": {
                 "type": "string",
@@ -236,6 +281,18 @@
                 "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
                 "description": "Expiration date of the security, or null if it does not expire."
               },
+              "id": {
+                "type": "string",
+                "description": "Identifier for this transaction."
+              },
+              "object_type": {
+                "type": "string",
+                "enum": [
+                  "TX_PLAN_SECURITY_ISSUANCE",
+                  "TX_EQUITY_COMPENSATION_ISSUANCE"
+                ],
+                "description": "This is done to avoid a breaking change as we work towards a bigger restructure of the equity types in v2.0.0. `TX_PLAN_SECURITY_ISSUANCE…"
+              },
               "option_grant_type": {
                 "type": "string",
                 "enum": [
@@ -310,6 +367,18 @@
                 "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
                 "description": "Date on which the transaction occurred"
               },
+              "id": {
+                "type": "string",
+                "description": "Identifier for the object"
+              },
+              "object_type": {
+                "type": "string",
+                "enum": [
+                  "TX_PLAN_SECURITY_RELEASE",
+                  "TX_EQUITY_COMPENSATION_RELEASE"
+                ],
+                "description": "This is done to avoid a breaking change as we work towards a bigger restructure of the equity types in v2.0.0. `TX_PLAN_SECURITY_RELEASE`…"
+              },
               "quantity": {
                 "type": "string",
                 "pattern": "^[+-]?[0-9]+(\\.[0-9]{1,10})?$",
@@ -347,6 +416,10 @@
             "type": "object",
             "title": "EquityCompensationRepricing",
             "properties": {
+              "id": {
+                "type": "string",
+                "description": "Identifier for the object"
+              },
               "new_exercise_price": {
                 "type": "object",
                 "additionalProperties": false,
@@ -365,6 +438,9 @@
                   "currency"
                 ],
                 "description": "What is the exercise price of the option after the repricing?"
+              },
+              "object_type": {
+                "const": "TX_EQUITY_COMPENSATION_REPRICING"
               }
             },
             "required": [],
@@ -374,6 +450,13 @@
             "type": "object",
             "title": "StakeholderRelationshipChangeEvent",
             "properties": {
+              "id": {
+                "type": "string",
+                "description": "Identifier for the object"
+              },
+              "object_type": {
+                "const": "CE_STAKEHOLDER_RELATIONSHIP"
+              },
               "relationship_ended": {
                 "type": "string",
                 "enum": [
@@ -429,6 +512,13 @@
                 "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
                 "description": "Date on which the transaction occurred"
               },
+              "id": {
+                "type": "string",
+                "description": "Identifier for the object"
+              },
+              "object_type": {
+                "const": "TX_STOCK_CANCELLATION"
+              },
               "quantity": {
                 "type": "string",
                 "pattern": "^[+-]?[0-9]+(\\.[0-9]{1,10})?$",
@@ -442,10 +532,17 @@
             "type": "object",
             "title": "StockClassAuthorizedSharesAdjustment",
             "properties": {
+              "id": {
+                "type": "string",
+                "description": "Identifier for the object"
+              },
               "new_shares_authorized": {
                 "type": "string",
                 "pattern": "^[+-]?[0-9]+(\\.[0-9]{1,10})?$",
                 "description": "The new number of shares authorized for this stock class as of the event of this transaction"
+              },
+              "object_type": {
+                "const": "TX_STOCK_CLASS_AUTHORIZED_SHARES_ADJUSTMENT"
               },
               "stock_class_id": {
                 "type": "string",
@@ -491,6 +588,13 @@
                 "type": "string",
                 "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
                 "description": "Date on which the transaction occurred"
+              },
+              "id": {
+                "type": "string",
+                "description": "Identifier for the object"
+              },
+              "object_type": {
+                "const": "TX_STOCK_ISSUANCE"
               },
               "quantity": {
                 "type": "string",
@@ -571,6 +675,13 @@
                 "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
                 "description": "Date on which the transaction occurred"
               },
+              "id": {
+                "type": "string",
+                "description": "Identifier for the object"
+              },
+              "object_type": {
+                "const": "TX_WARRANT_CANCELLATION"
+              },
               "quantity": {
                 "type": "string",
                 "pattern": "^[+-]?[0-9]+(\\.[0-9]{1,10})?$",
@@ -611,6 +722,13 @@
                   "currency"
                 ],
                 "description": "The exercise price of the warrant"
+              },
+              "id": {
+                "type": "string",
+                "description": "Identifier for the object"
+              },
+              "object_type": {
+                "const": "TX_WARRANT_ISSUANCE"
               },
               "purchase_price": {
                 "type": "object",
@@ -665,6 +783,13 @@
                 "type": "string",
                 "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
                 "description": "Date on which the transaction occurred"
+              },
+              "id": {
+                "type": "string",
+                "description": "Identifier for the object"
+              },
+              "object_type": {
+                "const": "TX_WARRANT_TRANSFER"
               },
               "quantity": {
                 "type": "string",

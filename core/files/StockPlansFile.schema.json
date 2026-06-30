@@ -14,10 +14,17 @@
         "type": "object",
         "title": "StockPlan",
         "properties": {
+          "id": {
+            "type": "string",
+            "description": "Identifier for the object"
+          },
           "initial_shares_reserved": {
             "type": "string",
             "pattern": "^[+-]?[0-9]+(\\.[0-9]{1,10})?$",
             "description": "The initial number of shares reserved in the pool for this stock plan by the Board or equivalent body."
+          },
+          "object_type": {
+            "const": "STOCK_PLAN"
           },
           "plan_name": {
             "type": "string",
