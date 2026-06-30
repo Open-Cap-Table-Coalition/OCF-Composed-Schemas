@@ -7,7 +7,7 @@
  *   assemble the admissible Core entities → emit the Core schema (§4).
  */
 import { isPlainObject } from "./mapping-validator.js";
-import { Corpus, loadGreenCorpus } from "./core-corpus.js";
+import { Corpus, loadGreenCorpus, loadReferenceGraph } from "./core-corpus.js";
 import { classifyField, ClassifyCtx, Verdict } from "./core-classifier.js";
 import { Admissibility, computeAdmissibility } from "./core-admissibility.js";
 import { CoreEntity, emitCoreSchema } from "./core-schema-emitter.js";
@@ -65,13 +65,15 @@ export async function deriveCore(repoRoot: string): Promise<Derived> {
     }
   }
 
+  const graph = await loadReferenceGraph(repoRoot);
   const admissibility = computeAdmissibility(
     rows.map((r) => ({
       entity: r.entity,
       variant: r.variant,
       field: r.field,
       klass: r.verdict.class,
-    }))
+    })),
+    graph
   );
   const admissible = new Set(
     admissibility.filter((a) => a.admissible).map((a) => `${a.entity} ${a.variant}`)

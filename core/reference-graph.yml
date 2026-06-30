@@ -1,0 +1,37 @@
+# OCF Core — reference graph + payload model (curated; hand-edited).
+#
+# Closure metadata the OCF schemas don't encode — an id is just a string, so
+# *which* object each `*_id` points to has to be stated. Drives §3 admissibility
+# (scripts/lib/core-admissibility.ts). Like core/allow-list.yml this names
+# RELATIONSHIPS, never field shapes — the generator owns those.
+#
+# `security_id` is handled in code, not here: an issuance CREATES it (no
+# obligation); any other transaction REFERENCES the security it created.
+
+# OCF foreign-key field → referent OCF object (a `core` one of these is a
+# closure obligation: the referent must itself be Core-admissible).
+references:
+  stock_class_id: StockClass
+  stakeholder_id: Stakeholder
+  stock_plan_id: StockPlan
+  vesting_terms_id: VestingTerms
+  vesting_template_id: VestingTerms
+  stock_legend_ids: StockLegendTemplate
+
+# id-shaped fields that are NOT outbound FKs — human labels / externally-assigned
+# ids. They impose no closure obligation.
+non_references:
+  - custom_id
+  - issuer_assigned_id
+
+# Bookkeeping / structural fields that carry no economic effect. A `core` field
+# named here is not "payload" for the non-degeneracy gate (§3): an entity landing
+# only these has no meaningful Core projection.
+non_payload:
+  - id
+  - object_type
+  - comments
+  - date
+  - security_id
+  - custom_id
+  - issuer_assigned_id

@@ -149,22 +149,38 @@ place.
 
 ## 3. Entity admissibility and closure (R4)
 
-A field-level pass isn't enough; the fold must be **total over a whole document**. Two entity-level
-conditions, both required:
+A field-level pass isn't enough; the fold must be **total over a whole document**. The spec names two
+conditions; **measured against the real bundle they resolve into two operational gates**
+(`scripts/lib/core-admissibility.ts`):
 
-- **Fold-required fields all land.** The fields a valid Carta snapshot *needs* for this entity (its
-  fold-driven required set — **not** OCF's `required_fields`) must all be `core`. Note `id` /
-  `object_type` are OCF bookkeeping (`reason: ocf-internal`) — not economic payload, though the fold
-  may use them as keys.
-- **Referential closure.** Every id the entity references must resolve to another **Core** entity (in
-  its Core projection). An issuance that references a `StockClass`/`Stakeholder` with no Core
-  projection cannot be guaranteed to fold — the reference dangles.
+- **Non-degeneracy — "the effect lands" (this is the fold-required condition, made operational).** The
+  original phrasing was "the fields a valid Carta snapshot *needs* must all be `core`." **Empirical
+  finding: every Carta target object declares `required: []`** — Carta requires nothing at the schema
+  level, so a fold-required check against the bundle is *vacuous* and can never gate. What a meaningful
+  snapshot actually needs is captured by **non-degeneracy**: the entity must land **≥1 payload field**
+  — a `core` field that is not bookkeeping (`id`/`object_type`/`comments`/`date`), not the self-created
+  security key, and not a graph reference. An entity that lands only a date, a key, or references has
+  no Core projection at all — exactly the case the goal doc calls "Carta has no transaction to reflect
+  this event." (The "useful-snapshot minimum" beyond this — e.g. a `Stakeholder`'s `legal_name` — is a
+  quality judgement, surfaced in the gap report, not a hard gate; cf. §7's "id alone closes the FK.")
+- **Referential closure.** Every id the entity carries **into Core** (a `core` FK field) must resolve
+  to another **Core-admissible** entity. An FK that is `out` imposes no obligation — Core doesn't carry
+  it. Computed as a greatest fixpoint (assume every green entity admissible, remove any whose `core` FK
+  dangles). References resolve through a **curated reference graph** — `core/reference-graph.yml`, the
+  second thin curated input alongside the allow-list (§5) — because *which* OCF object each `*_id`
+  points to is **not** encoded in the schemas (an id is just a string). `security_id` is special:
+  *created* by an issuance (no obligation), a *reference* to that security elsewhere.
 
 An entity meeting both is **Core-admissible**; otherwise it is **blocked** (and the blocker is named:
-a missing fold-required field, or a non-Core reference). Events are **first-class** — a Core-admissible
-transaction stays an event in Core; whether the fold lands it as a Carta transaction or collapses it
-into snapshot state is a translation-time concern, not a demotion. There is no separate
+`no-payload`, or a `dangling-reference` to a non-Core/absent referent). Events are **first-class** — a
+Core-admissible transaction stays an event in Core; whether the fold lands it as a Carta transaction or
+collapses it into snapshot state is a translation-time concern, not a demotion. There is no separate
 "reconstructable" tier.
+
+> **Note on the current corpus.** Closure never actually fires today — once
+> `StockClass`/`Stakeholder`/`StockPlan`/`VestingTerms` went green, every reference resolves. What
+> bounds Core is non-degeneracy: the transfers/retractions/acceptances whose only payload was an
+> `array → scalar` lineage field (held `out`) land nothing, so they are `no-payload`-blocked.
 
 ---
 
@@ -208,18 +224,22 @@ CI rebuilds the draft in memory and fails unless both hold:
 
 ---
 
-## 5. Two layers: the drafted subset and the curated allow-list
+## 5. Two layers: the drafted subset and the curated inputs
 
 A *derived* draft must not be mistaken for a *ratified* definition, but the human layer is kept
-deliberately **thin** so field shapes stay derived:
+deliberately **thin** — exactly **two small curated files**, neither of which lists a field shape:
 
-- **Allow-list (curated, versioned) — not a second schema.** Small, hand-edited: (1) the set of
-  **ratified `(entity, variant)` names** admitted to Core; (2) optional **`basis: confirmed`**
-  markers per `(entity, variant, field)` that *empirically harden* a `core` verdict against the live
-  importer (§6) — hardening, not membership; (3) any documented **OCF↔Carta gaps** being tracked. It
-  does **not** re-list field sets or types — the generator owns those and the drift gate pins them. The
-  human ratifies *which entities are in*; they don't re-draw the spine. This is the tagged release
-  artifact.
+- **Allow-list (`core/allow-list.yml`, curated, versioned) — not a second schema.** Small, hand-edited:
+  (1) the set of **ratified `(entity, variant)` names** admitted to Core; (2) optional
+  **`basis: confirmed`** markers per `(entity, variant, field)` that *empirically harden* a `core`
+  verdict against the live importer (§6) — hardening, not membership; (3) any documented **OCF↔Carta
+  gaps** being tracked. It does **not** re-list field sets or types — the generator owns those and the
+  drift gate pins them. The human ratifies *which entities are in*; they don't re-draw the spine.
+- **Reference graph (`core/reference-graph.yml`, curated) — closure metadata, not shapes.** Which OCF
+  object each `*_id` points to, which id-shaped fields are labels not FKs, and which `core` fields are
+  bookkeeping rather than payload. This is knowledge the schemas don't encode (an id is just a string);
+  it drives §3 closure and the non-degeneracy gate. Like the allow-list it names *relationships*, never
+  field types — those stay derived.
 - **Generated (derived, unversioned)** — the ledger + Core schema + gap report + rollup of §4,
   everything drafted so far from green mappings. Converges on the ratified set; no independent version.
 

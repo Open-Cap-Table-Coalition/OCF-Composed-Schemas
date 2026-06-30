@@ -22,7 +22,7 @@ import { hideBin } from "yargs/helpers";
 import { isPlainObject } from "./lib/mapping-validator.js";
 import { classifyField, ClassifyCtx, Verdict } from "./lib/core-classifier.js";
 import { computeAdmissibility, Admissibility } from "./lib/core-admissibility.js";
-import { loadGreenCorpus } from "./lib/core-corpus.js";
+import { loadGreenCorpus, loadReferenceGraph } from "./lib/core-corpus.js";
 
 const SPINE = [
   "StockIssuance",
@@ -78,13 +78,15 @@ async function main(argv: { entity?: string; md?: string }): Promise<number> {
 
   // §3 admissibility runs over ALL rows — closure is global (a referent may be
   // outside the entity filter). We display the verdict for the filtered view.
+  const graph = await loadReferenceGraph(process.cwd());
   const adm = computeAdmissibility(
     rows.map((r) => ({
       entity: r.entity,
       variant: r.variant,
       field: r.field,
       klass: r.verdict.class,
-    }))
+    })),
+    graph
   );
   const admBy = new Map(adm.map((a) => [`${a.entity} ${a.variant}`, a]));
 

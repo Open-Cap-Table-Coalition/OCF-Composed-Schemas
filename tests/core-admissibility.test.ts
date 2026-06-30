@@ -3,7 +3,21 @@ import {
   referentOf,
   ClassifiedRow,
   Admissibility,
+  ReferenceGraph,
 } from "../scripts/lib/core-admissibility.js";
+
+// Fixture graph mirroring the relevant entries of core/reference-graph.yml.
+const GRAPH: ReferenceGraph = {
+  references: {
+    stock_class_id: "StockClass",
+    stakeholder_id: "Stakeholder",
+    stock_plan_id: "StockPlan",
+    vesting_terms_id: "VestingTerms",
+    vesting_template_id: "VestingTerms",
+  },
+  nonReferences: new Set(["custom_id", "issuer_assigned_id"]),
+  nonPayload: new Set(["id", "object_type", "comments", "date", "security_id", "custom_id"]),
+};
 
 const core = (entity: string, variant: string, field: string): ClassifiedRow => ({
   entity,
@@ -22,46 +36,52 @@ function index(adm: Admissibility[]): Map<string, Admissibility> {
   return new Map(adm.map((a) => [`${a.entity} ${a.variant}`, a]));
 }
 
+const run = (rows: ClassifiedRow[]): Admissibility[] => computeAdmissibility(rows, GRAPH);
+
 describe("referentOf", () => {
   it("maps known FK fields to their referent entity", () => {
-    expect(referentOf("X", "stakeholder_id")).toEqual({ kind: "entity", entity: "Stakeholder" });
-    expect(referentOf("X", "stock_class_id")).toEqual({ kind: "entity", entity: "StockClass" });
-    expect(referentOf("X", "vesting_template_id")).toEqual({
+    expect(referentOf("X", "stakeholder_id", GRAPH)).toEqual({
+      kind: "entity",
+      entity: "Stakeholder",
+    });
+    expect(referentOf("X", "stock_class_id", GRAPH)).toEqual({
+      kind: "entity",
+      entity: "StockClass",
+    });
+    expect(referentOf("X", "vesting_template_id", GRAPH)).toEqual({
       kind: "entity",
       entity: "VestingTerms",
     });
   });
   it("treats security_id as created on an issuance, a reference elsewhere", () => {
-    expect(referentOf("StockIssuance", "security_id")).toEqual({ kind: "none" });
-    expect(referentOf("StockTransfer", "security_id")).toEqual({ kind: "security" });
+    expect(referentOf("StockIssuance", "security_id", GRAPH)).toEqual({ kind: "none" });
+    expect(referentOf("StockTransfer", "security_id", GRAPH)).toEqual({ kind: "security" });
   });
   it("treats labels as non-references", () => {
-    expect(referentOf("X", "custom_id")).toEqual({ kind: "none" });
-    expect(referentOf("X", "issuer_assigned_id")).toEqual({ kind: "none" });
+    expect(referentOf("X", "custom_id", GRAPH)).toEqual({ kind: "none" });
+    expect(referentOf("X", "issuer_assigned_id", GRAPH)).toEqual({ kind: "none" });
   });
   it("flags an unknown id-shaped field as unresolved", () => {
-    expect(referentOf("X", "mystery_id")).toEqual({ kind: "unresolved" });
+    expect(referentOf("X", "mystery_id", GRAPH)).toEqual({ kind: "unresolved" });
   });
 });
 
 describe("computeAdmissibility — non-degeneracy (payload) gate", () => {
   it("blocks an entity that lands only a date / key / reference", () => {
-    const adm = index(computeAdmissibility([core("A", "—", "date")]));
+    const adm = index(run([core("A", "—", "date")]));
     const a = adm.get("A —")!;
     expect(a.admissible).toBe(false);
     expect(a.blockers.map((b) => b.why)).toContain("no-payload");
     expect(a.payloadFieldCount).toBe(0);
   });
   it("admits an entity with at least one payload field", () => {
-    const adm = index(
-      computeAdmissibility([core("A", "—", "quantity"), out("A", "—", "comments")])
-    );
+    const adm = index(run([core("A", "—", "quantity"), out("A", "—", "comments")]));
     expect(adm.get("A —")!.admissible).toBe(true);
   });
   it("a reference-only entity is degenerate (references are not payload)", () => {
     // stakeholder_id would also be a closure obligation, but the no-payload gate
     // fires regardless; assert the entity is blocked.
-    const adm = index(computeAdmissibility([core("A", "—", "stakeholder_id")]));
+    const adm = index(run([core("A", "—", "stakeholder_id")]));
     expect(adm.get("A —")!.admissible).toBe(false);
   });
 });
@@ -69,7 +89,7 @@ describe("computeAdmissibility — non-degeneracy (payload) gate", () => {
 describe("computeAdmissibility — referential closure", () => {
   it("admits when a core FK resolves to an admissible referent", () => {
     const adm = index(
-      computeAdmissibility([
+      run([
         core("Iss", "—", "quantity"),
         core("Iss", "—", "stock_class_id"),
         core("StockClass", "—", "name"),
@@ -80,9 +100,7 @@ describe("computeAdmissibility — referential closure", () => {
   });
 
   it("blocks when a core FK referent is absent (dangling)", () => {
-    const adm = index(
-      computeAdmissibility([core("Iss", "—", "quantity"), core("Iss", "—", "stock_class_id")])
-    );
+    const adm = index(run([core("Iss", "—", "quantity"), core("Iss", "—", "stock_class_id")]));
     const a = adm.get("Iss —")!;
     expect(a.admissible).toBe(false);
     expect(a.blockers).toContainEqual({
@@ -93,15 +111,13 @@ describe("computeAdmissibility — referential closure", () => {
   });
 
   it("an `out` FK imposes no closure obligation", () => {
-    const adm = index(
-      computeAdmissibility([core("Iss", "—", "quantity"), out("Iss", "—", "stock_class_id")])
-    );
+    const adm = index(run([core("Iss", "—", "quantity"), out("Iss", "—", "stock_class_id")]));
     expect(adm.get("Iss —")!.admissible).toBe(true);
   });
 
   it("propagates: a referent that is itself degenerate dangles its referrer (fixpoint)", () => {
     const adm = index(
-      computeAdmissibility([
+      run([
         core("Iss", "—", "quantity"),
         core("Iss", "—", "stock_class_id"),
         core("StockClass", "—", "id"), // id is bookkeeping → StockClass has no payload
@@ -115,15 +131,12 @@ describe("computeAdmissibility — referential closure", () => {
 
   it("a security_id on a transaction needs some admissible issuance", () => {
     const danglingTransfer = index(
-      computeAdmissibility([
-        core("FooTransfer", "—", "quantity"),
-        core("FooTransfer", "—", "security_id"),
-      ])
+      run([core("FooTransfer", "—", "quantity"), core("FooTransfer", "—", "security_id")])
     );
     expect(danglingTransfer.get("FooTransfer —")!.admissible).toBe(false);
 
     const withIssuance = index(
-      computeAdmissibility([
+      run([
         core("FooTransfer", "—", "quantity"),
         core("FooTransfer", "—", "security_id"),
         core("BarIssuance", "—", "quantity"),

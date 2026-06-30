@@ -9,11 +9,33 @@
  */
 import path from "node:path";
 import { readdir, readFile, stat } from "node:fs/promises";
+import { parse as parseYaml } from "yaml";
 
 import { loadRegistry, RawSchema, Registry } from "./registry.js";
 import { parseMappingDocument, MappingParseError } from "./mapping-parser.js";
 import { TARGET_BUNDLES, isPlainObject } from "./mapping-validator.js";
 import { classifyType, TypeVerdict } from "./core-classifier.js";
+import { ReferenceGraph } from "./core-admissibility.js";
+
+const REFERENCE_GRAPH = "core/reference-graph.yml";
+
+/** Load the curated §3 reference graph (core/reference-graph.yml). */
+export async function loadReferenceGraph(repoRoot: string): Promise<ReferenceGraph> {
+  const raw = parseYaml(await readFile(path.join(repoRoot, REFERENCE_GRAPH), "utf8"));
+  const obj = isPlainObject(raw) ? raw : {};
+  const references: Record<string, string> = {};
+  if (isPlainObject(obj.references)) {
+    for (const [k, v] of Object.entries(obj.references))
+      if (typeof v === "string") references[k] = v;
+  }
+  const toSet = (v: unknown): Set<string> =>
+    new Set(Array.isArray(v) ? v.filter((x): x is string => typeof x === "string") : []);
+  return {
+    references,
+    nonReferences: toSet(obj.non_references),
+    nonPayload: toSet(obj.non_payload),
+  };
+}
 
 const MAPPING_DIRS = ["objects", "types"] as const;
 const GREEN = new Set(["complete", "reviewed"]);
