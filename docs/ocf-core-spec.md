@@ -1,475 +1,311 @@
-# OCF Core — Generation Spec (Straw-Man v0)
+# OCF Core — Derivation & Build Spec (Straw-Man v2)
 
-A self-contained specification of the **proposed syntax, workflow, and mechanism** for generating
-the **OCF Core** straw-man profile. This is the *design*, decoupled from any particular
-implementation: it describes what an author writes, what the machine must do with it, and what it
-must emit — enough for a fresh implementation in any language. The reference implementation's code,
-generated manifests, and hand-rolled artifact contents are intentionally **not** reproduced here.
+How **OCF Core** is computed from the mapping corpus this repo already has, what the build emits, and
+how CI keeps it honest. This is the **mechanism**; the **definition, rules (R0–R6), and rulings** live
+in [`ocf-core-goal.md`](./ocf-core-goal.md), which is canonical. Where the two disagree, the goal doc
+wins and this doc is wrong.
 
----
-
-## 1. What OCF Core is, and the problem it solves
-
-**OCF Core** is the subset of OCF that survives a **round-trip through Carta in both directions**.
-It is *not* a new format: an OCF Core instance is a valid OCF document with the non-surviving fields
-removed (a **subset projection** — see §8). The artifact being standardized is *membership* — which
-OCF entities and fields are Core — made **machine-checkable in CI** so "this field is Core" is an
-enforceable claim rather than a prose assertion.
-
-The straw man re-derives Core under a **bidirectional gate**. A prior pass asked only the forward
-question — does OCF data survive `OCF → Carta → OCF`. The bidirectional gate additionally requires
-`Carta → OCF → Carta`, the literal reading of "mappable to and from both standards." This matters
-because Carta carries economically-meaningful structure OCF cannot express, so several forward-clean
-transforms are **not reversible** (wider enums, free-text→enum, array→scalar, arbitrary-precision
-widening). The reverse direction is the new source of disqualifiers.
-
-**Load-bearing honesty constraint.** Every reverse-direction verdict is **schema-derived, not
-importer-tested** — derived from what the two JSON Schemas permit, *not* from running a live Carta
-importer. "Round-trips both ways" means *the schemas allow a lossless mapping*, not that production
-performs it. The spec therefore attaches a `proof_level` to every claim and ships a
-**needs-confirmation** list rather than overclaiming (see §9).
+> **One-line recap of the goal.** OCF Core is an *event-driven* strict subset of OCF that **always
+> folds down to a valid Carta snapshot** (and enriches back up to full OCF). The defining invariant: a
+> document is Core iff the Carta fold is **total** over it — it never gets stuck and never drops a
+> datum with nowhere to land. The fold itself is separate, already-owned machinery; Core's job is to
+> *guarantee it can run*. This spec computes which OCF fields/events satisfy that guarantee.
 
 ---
 
-## 2. The conceptual model: tiers, transforms, and the gate
+## 1. Derive, don't declare
 
-### 2.1 Three tiers, applied at field granularity
+Core membership is a **computed view** over three pinned inputs that already exist — **no new
+annotations on any mapping**; the corpus stays exactly as it is today:
 
-An entity is admitted on its **defining economic payload** (the amounts/quantities/prices/dates and
-the security/stakeholder/class identifiers). Individual fields that fail the gate are **kept but
-flagged**, not used to disqualify the whole entity.
+1. **The mapping corpus** — the 102 `*.mapping.md` files. Each carries front-matter (`ocf_kind`,
+   `ocf_object_type`, `required_fields`, `target_standard`, `target_version`, `status`,
+   `last_generated`) and a fenced YAML block of per-field entries (`kind`, `target`, `reason`, and for
+   enums `values` / `routed_to`). This is where the value/existence base of R2 is **already encoded**
+   — the classifier reads it off the entry rather than re-deriving it.
+2. **The OCF schema registry** — `loadRegistry()` over `enums/ files/ objects/ primitives/ types/`,
+   indexed by `$id` (`scripts/lib/registry.ts`); supplies every source type and enum. Version pinned
+   in `OCF_SOURCE.md` (`1.2.1-unstable`).
+3. **The pinned Carta bundle** — `target-schema/Carta.schema.json` (`v1alpha1`), named in
+   `TARGET_BUNDLES`; supplies every target type and enum. Self-contained (all internal `#/$defs`).
 
-- **StrictCore** — the defining economic payload round-trips **both** directions using only
-  **reversible** transforms. Non-round-tripping fields on a StrictCore entity are marked
-  **Extended** (they drop on export; the entity stays Core on its spine).
-- **Reconstructable** — no clean 1:1 home, but the cap-table **state** survives via one of three
-  reconstruction transforms (A/B/C below). *State reproduces; event identity, atomicity, effective
-  dates, and governance approvals are lost.* "End-state reproducible" ≠ "event/graph preserved."
-- **Out** — no home in one or both directions, reachable only through a disqualifying transform, or
-  a genuinely missing attribute.
+The machine **drafts** Core from these; a human **ratifies** it in a thin allow-list (§5). Nothing in
+this pipeline asks an author to edit a mapping.
 
-A field's tier is a pair: a **tier** (`core` | `extended` | `reconstructable`) and a **roundtrips**
-direction (`both` | `forward` | `none`).
-
-### 2.2 Reversible transforms (permitted inside StrictCore)
-
-A field may be `core` only if its OCF→Carta transform is one of these (value-preserving and
-invertible):
-
-| # | Transform | Reversible because |
-|---|---|---|
-| T1 | `date ↔ datetime` widen/truncate | recoverable to date granularity (synthesize `T00:00:00Z` forward, truncate on import) |
-| T2 | numeric / money formatting (`Numeric→Decimal`, `Monetary→Money`) | value-preserving **within OCF's grammar** (see scalar caveat, §2.5) |
-| T3 | **bijective** `enum-remap` | source and target enum value-sets are identical (1:1 onto) — see bijection test in §4 Stage 1 |
-| T4 | country-code reshaping (alpha-2↔alpha-3, subdivision `CC-` prefix) | deterministic over the ISO-assigned table |
-| T5 | id **role**-remap | FK mapped by role; the value differs, the role is stable |
-| T6 | container grouping | flat OCF transaction ↔ Carta `*TransactionItem` array — structural, not loss |
-
-### 2.3 Disqualifying transforms (force a field to Extended; if it carries the defining payload, the entity drops to Reconstructable or Out)
-
-- free-text → enum classification (e.g. `reason_text` → a closed `*CancellationReason`)
-- array → scalar collapse (e.g. `resulting_security_ids[]`, `emails[]`, multi-`Address`)
-- **non-bijective** enum coarsening (wider/narrower Carta enum, or many→one like `INSTITUTION→UNKNOWN`)
-- structure → scalar collapse (e.g. `Ratio{num,den}` → `Decimal`)
-- settlement-mode / state-machine flattening (e.g. CSAR/SSAR → one row; trigger/condition graphs)
-- arbitrary-precision widening (Carta `Decimal`/`DateTime` strictly ⊋ OCF `Numeric`/`Date`) — a
-  **reverse-only** disqualifier (forward is clean; the reverse admits values OCF cannot represent)
-
-### 2.4 The three reconstruction transforms (define `reconstructable`)
-
-A `reconstructable` field/entity must declare which transform reproduces its state:
-
-- **A — cancel + reissue with lineage** (e.g. `precededBy` / `*Reason` chains): the event is modeled
-  as a cancellation plus a new issuance carrying provenance links.
-- **B — in-place snapshot mutation**: only the latest value survives (e.g. an adjusted authorized
-  share count, a repriced strike); the event itself and its date are lost.
-- **C — realized-event row**: the state lands as a row in a Carta array (e.g. a cancellation entry, a
-  vesting-event row, an exercise transaction).
-
-Each carries a **fidelity** ∈ {`strong`, `partial`} describing how much state survives.
-
-### 2.5 The scalar value-domain scoping rule
-
-The scalar substrate (`Numeric`, `Monetary`, `Percentage`, `Date`, and the code types) is StrictCore
-**only for OCF-originated values inside OCF's grammar** (fixed-point with ≤10 decimal places, no
-scientific notation, `[0,1]` for percentages, calendar dates with no time-of-day). A
-Carta-originated value outside that grammar (a `Decimal` with an exponent or >10 dp, a `DateTime`
-with a time-of-day) is reverse-lossy and therefore **Extended**. This rule is enforced concretely: in
-the generated profile schema (§5) each scalar `$def` is emitted with the OCF-grammar validation
-pattern, so an instance carrying an out-of-grammar value fails validation.
+**Green-only.** A mapping is consumed only when its block `status` is **`complete` or `reviewed`** —
+the exact pair the validator treats as strict (`const strict = blockStatus === "complete" ||
+blockStatus === "reviewed"`, `scripts/lib/mapping-validator.ts`). At those statuses `kind: TODO` is
+forbidden and every source property is mapped. Targets resolve only once `target_standard` is a real
+bundle (not `TBD`). Only `ocf_kind: object` mappings produce membership rows; `ocf_kind: type` scalar
+leaves (`Date`, `Numeric`, …) feed the inline-scalar library (§4), not their own rows.
 
 ---
 
-## 3. The annotation syntax (what an author writes)
+## 2. The classifier — does this field land in Carta?
 
-### 3.1 The input: one structured mapping document per OCF entity
+Each `(entity, variant, field)` gets one **class** ∈ `{ core, out }`. This implements R1–R3 + rulings
+A/B/C from the goal doc; restated operationally:
 
-The only human input is a **per-entity mapping document** — a structured (YAML-style) record with a
-per-field entry keyed by the OCF field name. (In the reference repo this is `<Entity>.mapping.md`,
-with the mapping in a fenced YAML block; the format, not the file convention, is what matters.) Each
-document carries **front-matter** the machinery relies on:
+- **`core`** — the field's data **lands in the Carta snapshot** via a clear, deterministic, **total**
+  rule, with **no existence-loss**. Value-coarsening (precision clamp, enum→bucket) is fine; the datum
+  is still there. "Lands" includes landing on a *different* Carta object via a **lossless reverse
+  edge** (ruling B), not only on the field's own counterpart.
+- **`out`** — no Carta destination, or the rule is **partial** (undefined on some legal OCF inputs —
+  ruling C), **heuristic** (ruling A), or **existence-losing** (drops elements/entities/relationships
+  — R2).
 
-- `status` — the lifecycle gate; the generator only consumes mappings at `complete` (§4 Stage 3).
-- `target_standard` / `target_version` — the pinned target bundle (Carta) the `target` pointers
-  resolve against. (§8 proposes pinning this version into the versioned reference artifact.)
-- `required_fields` — the OCF entity's required fields, used to intersect `required[]` in the
-  emitted profile schema (§5).
+There is no "extended" tier: Core is exactly what folds. A field that exists in full OCF but does not
+fold is simply not Core — it reappears on enrichment back to OCF, and that's fine.
 
-Each per-field entry already carries (independent of this profile work):
-
-```yaml
-field_name:
-  kind:   rename                                   # the transform — see vocabulary below
-  target: "#/$defs/<CartaDef>/properties/<prop>"   # JSON-Pointer into the target bundle, or null
-  reason: <slug>        # required when target is null / kind: unmappable
-  note:   >- ...        # optional prose
-```
-
-**`kind` vocabulary:** `rename` | `split` | `combine` | `enum-remap` | `computed` | `unmappable` |
-`TODO`.
-
-**`reason` controlled slugs** (required whenever `target: null` / `kind: unmappable`) — at minimum:
-- `ocf-internal` — an OCF bookkeeping field with no Carta analog (e.g. `id`, `object_type`).
-- `no-equivalent` — Carta genuinely lacks the concept (e.g. `stock_legend_ids`, `consideration_text`).
-
-**`enum-remap` payload:** an `enum-remap` entry carries a `values:` map giving the per-member
-source→target mapping, and optionally a `routed_to:` map:
-
-```yaml
-compensation_type:
-  kind: enum-remap
-  target: "#/$defs/OptionGrant/properties/stockOptionType"
-  values: { OPTION_NSO: NSO, OPTION_ISO: ISO, OPTION: OTHER, RSU: null, CSAR: null, SSAR: null }
-  routed_to: { RSU: Rsu, CSAR: Sar, SSAR: Sar }   # null-valued members handled by a sibling variant
-```
-
-- `values: { <SourceMember>: <TargetMember> | null }` — the member-level mapping the validator reads
-  to test bijectivity (§4 Stage 1). A member mapped to `null` is unmapped *in this variant*.
-- `routed_to: { <SourceMember>: <VariantName> }` — optional; declares a `null`-valued member is not
-  dropped but handled by the named sibling variant (a verified round-trip there), excluding it from
-  the drop count.
-
-### 3.2 Field-level profile keys (all optional — additive on the entry above)
-
-| Key | Values | Meaning |
-|---|---|---|
-| `tier` | `core` \| `extended` \| `reconstructable` | the field's tier (omit → derived, §4 Stage 2) |
-| `roundtrips` | `both` \| `forward` \| `none` | which directions survive |
-| `reverse_blocker` | free text | *why* the reverse direction fails (expected on any forward-only field; copied into the ledger) |
-| `reconstruct` | `{ transform: A\|B\|C, fidelity: strong\|partial }` | required when `tier: reconstructable` |
-
-### 3.3 Entity- and variant-level default
-
-An entity declares its tier once (a **top-level** key in the mapping block, alongside
-`discriminator:`/`shared:`/`variants:`); unannotated fields inherit and only exceptions are
-overridden:
-
-```yaml
-profile: { tier: core, roundtrips: both }     # entity is StrictCore
-# or
-profile: { tier: reconstructable }            # state round-trips, event lost
-```
-
-For polymorphic entities the default may instead/also be set per variant under
-`variants.<Variant>.profile`.
-
-### 3.4 Polymorphic entities: discriminator, variants, and the file skeleton
-
-An entity whose Carta home depends on an OCF field is **polymorphic**. Its mapping declares a
-discriminator and partitions the work into a shared block plus per-variant blocks:
-
-```yaml
-discriminator:
-  field: issuance_type        # the OCF field that selects the route
-  exhaustive: true            # the union of all variant `when:` sets must cover every enum value
-
-shared:                       # fields common to all variants
-  quantity:
-    kind: rename
-    target:                   # per-variant target MAP when the Carta home differs by route
-      Rsa:     "#/$defs/RsaIssuanceTransaction/properties/quantity"
-      Default: "#/$defs/CertificateIssuanceTransaction/properties/quantity"
-  stock_legend_ids: { kind: unmappable, target: null, reason: no-equivalent }
-
-variants:
-  Rsa:
-    when: [RSA]                                      # discriminator values this variant handles
-    primary_targets:                                 # the Carta object(s) this route lands on
-      - "#/$defs/RsaIssuanceTransaction"
-      - "#/$defs/RestrictedStockAward"
-    fields:                                          # variant-specific field entries / overrides
-      vestings:
-        kind: rename
-        target: "#/$defs/RestrictedStockAward/properties/vestingEvents"
-        tier: extended
-        roundtrips: forward
-        reverse_blocker: "vestingEvents realized rows (isoQuantity/nsoQuantity/vested) have no OCF pre-image"
-```
-
-Rules a fresh implementation must honor:
-
-- **Variant set.** The keys under `variants:` are the canonical variant set. Every per-variant
-  `target` map's keys are validated against it (every variant present, none unknown).
-- **`when:` exhaustiveness.** When `discriminator.exhaustive: true`, the union of all `when:` sets
-  must cover every value of the discriminator enum.
-- **Shared vs variant.** `shared:` fields apply to every variant (divergent homes via a per-variant
-  `target` map); `variants.<V>.fields:` are variant-specific. The classifier resolves each shared
-  field against every variant and merges in the variant-specific fields, emitting one row per
-  `(entity, variant, field)`.
-- **Null variant.** A field whose `target` is `null` for a given variant (no home on that route) is
-  forced to `extended`/`none` for that variant — never `core`.
-
-**The discipline: annotate only the exceptions.** In the example above `quantity` is left bare and
-derived to `core`; `vestings` is the one field a human must flag as forward-only; `stock_legend_ids`
-is simply `unmappable`. A non-polymorphic entity omits `discriminator:`/`variants:` and lists its
-fields under a single `fields:` block.
-
----
-
-## 4. The mechanism: a four-stage, deterministic, CI-gated pipeline
-
-A mapping document is the **only human input**; every downstream artifact is derived and gated.
+Most of this is read straight off the mapping `kind`/`target`/`values`; the shape checks consult the
+two schemas:
 
 ```
-  <Entity> mapping document   ← human writes this (targets + tier annotations)
-        │  validate
-        ▼
-  [1] VALIDATOR  — gate: reject any dishonest annotation
-        │  build
-        ▼
-  [2] CLASSIFIER — per (entity, variant, field) → a tier row
-        │
-        ▼
-  [3] GENERATOR  — emit the three deterministic artifacts
-        │  check (CI)
-        ▼
-  [4] GATES      — (a) drift: committed bytes == fresh build
-                   (b) subset: generated ⊆ curated reference
+classify(entry, src, tgt):           # src/tgt = source & target nodes, resolved + unwrapped per 2.3
+  if entry.kind in {unmappable, TODO}:            return out      # no destination
+  if entry.target is null or "TODO":              return out
+  if not resolves(entry.target):                  return out      # see 2.1
+
+  if entry.kind == enum-remap:                                    # ruling C (totality); routed_to per 2.2
+      if any source member maps to null and is not in entry.routed_to:  return out   # partial → out
+      return core                                                 # total; bucketing/coarsening OK
+
+  if entry.kind in {computed, combine, split}:                    # ruling A vs B — see note
+      if target is a lossless reverse-edge landing (full payload, no existence-loss):  return core
+      return out                                                  # heuristic / unprovable derivation
+
+  # kind == rename: lands unless the shape collapses (existence-loss, R2)
+  if isArray(src) and not isArray(tgt):           return out      # array → scalar
+  if isMultiPropObject(src) and not isMultiPropObject(tgt): return out   # structure → scalar
+  if isEnum(tgt) and not isEnum(src):             return out      # free-text → enum
+  if isArray(src) and isArray(tgt) and shapeCollapses(itemsOf(src), itemsOf(tgt)): return out
+  if isMultiPropObject(src) and a source property has no target property:          return out
+  return core                                                     # incl. widening (Numeric→Decimal, Date→DateTime)
 ```
 
-### Stage 1 — Validator (the bidirectional gate)
+**Note on `computed` / `combine` / `split` (where rulings A and B split).** The `kind` alone doesn't
+decide these — what decides is whether the datum *provably lands* in the snapshot with no
+existence-loss. **Ruling B:** a field whose target is a **lossless reverse edge** on another Carta
+object (e.g. transfer/cancellation lineage written to `precededBy.securities` on the resulting
+security) **is `core`, and that is a schema-level verdict** (`basis: schema`, per goal R3) — no human
+sign-off needed, because the mapping's resolved target shows the datum has a home. **Ruling A:** a
+`computed` free-text→enum classification (heuristic, drops the prose) is **`out`** — it neither lands
+totally nor losslessly. Everything else `computed`/`combine`/`split` whose landing a static read can't
+establish is `out` by default; `basis: confirmed` (§6) is for *empirically hardening* a `core` verdict
+against the live importer, **not** the gate for membership. `array→scalar` fan-out
+(`resulting_security_ids[]` → a scalar slot) stays `out` under either reading — existence-loss, not a
+reverse edge.
 
-Runs on every field as part of normal mapping validation. It enforces the **bidirectional
-invariant**, which is what makes a dishonest annotation impossible to commit:
+### 2.1 What "resolves" means — reuse the validator
 
-> `tier: core` **requires** `roundtrips: both` **and** a reversible-only `kind`
-> (`rename` / `combine` / `computed`, or a **bijective** `enum-remap`).
+`resolves(target)` is the predicate `scripts/lib/mapping-validator.ts` already implements: the pointer
+begins with `#/`, `resolveJsonPointer(bundle, ptr)` returns `found: true` (RFC 6901 via the
+`jsonpointer` package), and the dereferenced node is **not** the literal `true` (Carta marks
+out-of-snapshot references as `true`; treated as no-home). `derefNode()` follows internal `$ref`
+chains; the bundle is self-contained, so resolution is closed. Enum membership uses the existing
+`detectEnumValues(property, registry)` (OCF side) and `targetEnumValuesAt(bundle, node)` (Carta side).
 
-Concretely the gate must:
+### 2.2 Polymorphic entities — classify per variant
 
-- **Reject** `tier: core` on a `split`, an `unmappable`, a `TODO`, or a **non-bijective**
-  `enum-remap`. **Bijection test:** resolve the target enum from the bundle and the source enum from
-  the entry's `values:` map; require the two value-sets to be **equal as sets** (same membership, a
-  true 1:1 onto remap — equal cardinality is necessary but not sufficient, and a wider/narrower
-  target enum fails).
-- **Reject** `tier: core` with any `roundtrips` other than `both`.
-- **Require** `reconstruct: { transform ∈ {A,B,C}, fidelity ∈ {strong,partial} }` whenever
-  `tier: reconstructable`, and require `roundtrips ≠ both`.
-- **Require** `roundtrips ∈ {forward, none}` for `tier: extended`.
-- For polymorphic fields, carry the author's `tier:` onto **each variant projection** including the
-  `null`/no-home ones — so `core` + "no home in this variant" is rejected, not silently dropped.
+The corpus already encodes polymorphism (`discriminator` / `shared` / `variants` / `primary_targets` /
+per-variant `target` maps / `routed_to`; see `docs/polymorphic-transaction-routing.md`). The
+classifier consumes it as-is: a `shared` field with a per-variant `target` map is resolved **once per
+variant** (one row per `(entity, variant, field)`); a null target for a variant ⇒ `out` for that
+variant only; an `enum-remap` member sent to `null` but listed in `routed_to: { MEMBER: Variant }` is
+**not** unmapped — it round-trips in the named sibling variant, so it doesn't make the map partial.
+That is why `EquityCompensationIssuance`'s Option-variant `compensation_type` (`{ OPTION_NSO: NSO,
+OPTION_ISO: ISO, OPTION: OTHER }`, with `RSU/CSAR/SSAR` routed to `Rsu`/`Sar`) is **total → `core`**.
+Downstream transactions routed by `route_by_security` (no local discriminator; a two-pass JOIN on the
+issuance) classify against the variant the join selects.
 
-All keys are optional, so a corpus with no annotations still validates (additive rollout). A
-configuration switch can later make the entity-level tier declaration mandatory once the corpus is
-fully annotated (optional first, required later).
+### 2.3 The type inspector (the one piece of new code)
 
-### Stage 2 — Classifier (derive tier rows)
+The `rename` shape checks turn on four predicates over a **resolved, unwrapped** node — resolve `$ref`
+(`derefNode`) and **unwrap a nullable union** first (a `oneOf`/`anyOf` of `{type: null}` + one real
+branch resolves to that branch, e.g. `expiration_date`):
 
-Produces **one tier row per `(entity, variant, field)`**. An explicit annotation always wins;
-otherwise the tier is **derived** from the kind + whether the target resolves in the target bundle:
+- **`isEnum(n)`** — `detectEnumValues`/`targetEnumValuesAt` returns a non-null value set.
+- **`isArray(n)`** — `n.type == "array"` (or its `$ref`/unwrapped target is); `itemsOf(n)` is the
+  resolved `items` node.
+- **`isScalar(n)`** — an object whose only data property is a single string leaf (Carta's `{value: …}`
+  wrappers — `Decimal`, `Iso8601*`, `Money.amount`) **or** a bare `type: string` leaf (OCF
+  primitives). Scalar wrappers count as scalars — that is what makes `Ratio → Decimal` a
+  `structure → scalar` collapse.
+- **`isMultiPropObject(n)`** — an object with ≥2 data properties that is *not* a scalar wrapper
+  (`Ratio{numerator,denominator}`, `Monetary{amount,currency}`).
 
-| Kind (unannotated) | Derived tier / roundtrips |
-|---|---|
-| `rename` / `computed` / `combine` with a **resolving** target | `core` / `both` |
-| `rename` / `computed` / `combine` with a **null / unresolved** target | `extended` / `none` (or `forward`) |
-| bijective `enum-remap` | `core` / `both` |
-| non-bijective `enum-remap` | `extended` / `forward` |
-| `unmappable` / `TODO` / `split` | `extended` / `none` |
+These aren't disjoint (a string enum is both `isEnum` and `isScalar`); totality comes from the
+**ordered cascade** above, not a partition. `shapeCollapses(s,t)` applies the three structural checks
+once to a nested element/component pair (one level — the green corpus nests no deeper).
 
-Per-variant `target` maps are resolved **per variant** before classifying, so one OCF field emits
-multiple rows.
-
-**The honesty rule (load-bearing).** Deriving fields to `core` does **not** make the *entity*
-StrictCore. An entity is StrictCore only when its mapping carries an **explicit** tier declaration —
-an entity-level `profile: { tier: core }`, or ≥1 field tagged `tier: core`. Derivation alone never
-promotes an entity: a forward mapping is not a proven round-trip. (Concretely: strip a StockIssuance
-of its entity-level `profile:` line and every field is still classified, but the entity drops to
-*Out*.)
-
-### Stage 3 — Generator (emit artifacts)
-
-Walks the corpus, **validates each mapping and skips any with errors or not at `status: complete`**
-(green-only filter), classifies the rest, and emits three **deterministic, byte-stable** artifacts
-(see §5). Output must be reproducible — no timestamps, stable key ordering — so the drift gate can
-byte-compare.
-
-### Stage 4 — CI gates
-
-A verification/CI pass rebuilds in memory and fails unless **both** hold:
-
-1. **Drift** — every committed artifact byte-equals a fresh build (edit an annotation, forget to
-   rebuild → CI goes red).
-2. **Subset** — the generated set is a subset of the curated **reference** (§6): every generated
-   StrictCore entity is in the reference's `$defs`; every generated `core` field is in that entity's
-   reference `$def`; every generated Reconstructable entity is a key in the reference's
-   `x-reconstructable` map.
-
-This reuses the trust model the repo already applies to its per-variant `coverage: { <Variant>:
-<mapped>/<total> }` counters — a generated value committed alongside the mapping and re-derived +
-diff-checked in CI. The three new artifacts extend exactly that pattern.
+**Why widening is never a collapse.** Folding *down* into a wider Carta type loses nothing: OCF
+`Numeric 1.25` → Carta `Decimal "1.25"`; OCF `Date` → Carta `DateTime` at `T00:00:00Z`. We only ever
+go Core→Carta (down) and Core→OCF (up, by re-adding detail); we never reconstruct Core *from* Carta,
+so the extra room in Carta's types is simply unused. The Core schema (§4) constrains values to OCF's
+own grammar, so a wide Carta value (`1.5e9`, a real `14:30`) is not an OCF Core value in the first
+place.
 
 ---
 
-## 5. The generated artifacts (what the machine emits)
+## 3. Entity admissibility and closure (R4)
 
-Three files, generated and never hand-edited, regenerated and diff-gated in CI:
+A field-level pass isn't enough; the fold must be **total over a whole document**. Two entity-level
+conditions, both required:
 
-- **Membership ledger** — one row per `(entity, variant?, field)` carrying `tier`, `roundtrips`,
-  `target`, optional `reconstruct`, optional `reverse_blocker`, and `proof_level`, plus per-tier
-  counts. This carries the reverse-direction and Reconstructable truth a JSON Schema cannot express.
-- **Profile schema** — a derived OCF-dialect JSON Schema (draft-07; `$id` `ocf-core/profile`) with
-  one `$def` per StrictCore entity, **pruned to its `core`/`both` fields**, with `required[]`
-  intersected down to the surviving fields. Referenced OCF scalar types are inlined as local `$defs`
-  carrying their **OCF-grammar validation** (`Numeric` as fixed-point ≤10 dp, `Percentage`
-  constrained to `[0,1]`, code types as their patterns) — this materializes the §2.5 value-domain
-  rule on the OCF side. External `$ref`s are rewritten to local `#/$defs/...` so the schema is
-  self-contained. **By construction, an instance valid against this schema *is* StrictCore.** It
-  reuses OCF's own field names and types verbatim (see §8 — Core is a projection, not a transform).
-- **Human rollup** (markdown) — per-tier counts and, per entity, the core / extended field lists
-  (per-variant rows deduped to one name each; a field that is core in *any* variant shows as core).
+- **Fold-required fields all land.** The fields a valid Carta snapshot *needs* for this entity (its
+  fold-driven required set — **not** OCF's `required_fields`) must all be `core`. Note `id` /
+  `object_type` are OCF bookkeeping (`reason: ocf-internal`) — not economic payload, though the fold
+  may use them as keys.
+- **Referential closure.** Every id the entity references must resolve to another **Core** entity (in
+  its Core projection). An issuance that references a `StockClass`/`Stakeholder` with no Core
+  projection cannot be guaranteed to fold — the reference dangles.
 
-### Proof levels
-
-`proof_level` keeps StrictCore from overclaiming:
-
-- `P0` — structural only (target shape resolves)
-- `P1` — enum-bijection checked (target resolves **and** the source/target enum value-sets verified
-  equal)
-- `P2` — executed value-level round-trip (**out of scope** for the static gate)
-
-Under the static gate, Core fields ship at `P1` at best; `P2` requires a live importer and is
-explicitly deferred (see §9).
+An entity meeting both is **Core-admissible**; otherwise it is **blocked** (and the blocker is named:
+a missing fold-required field, or a non-Core reference). Events are **first-class** — a Core-admissible
+transaction stays an event in Core; whether the fold lands it as a Carta transaction or collapses it
+into snapshot state is a translation-time concern, not a demotion. There is no separate
+"reconstructable" tier.
 
 ---
 
-## 6. Two-layer model: curated reference vs generated profile
+## 4. What the build emits
 
-The full Core definition must **not** wait on every in-flight mapping PR to land. So Core is split
-into two layers, with a guard that keeps them honest:
+The generator walks the green corpus, classifies every row (§2), applies the closure check (§3), and
+emits, all **generated, never hand-edited**:
 
-- **Reference** (curated) — the hand-maintained *definition* of Core: an OCF-dialect JSON Schema
-  (`$id` `ocf-core/reference`) with one `$def` per StrictCore entity, plus a top-level
-  **`x-reconstructable`** object keyed by entity family (each family's reconstruct transform +
-  fidelity). v0 is ~16 StrictCore `$defs` + ~26 reconstructable families. Derived from the spec
-  analysis by a human, **independent of which mapping PRs have landed.** This is *the* definition of
-  OCF Core, and the **versioned** artifact. Each StrictCore `$def` carries a `$comment` with an
-  `EXTENDED (drop on export): …` line naming that entity's reverse-lossy fields and reasons — the
-  source authors copy from when filling in `reverse_blocker:` (see §7).
-- **Generated** (the ledger + profile schema + rollup) — the subset that has been **mechanically
-  verified so far**: the entities whose mappings are actually annotated and validating today. It
-  converges on the reference as entities graduate; it carries no independent version.
+- **Membership ledger** — one row per `(entity, variant, field)`: `class` (core/out), `target`, source
+  & target type names, and for `out` rows the reason (`no-destination` / `existence-loss` / `partial` /
+  `heuristic`), for `core` rows the loss kind (`direct` / `widening` / `value-coarsening` /
+  `reverse-edge`). Plus the per-entity admissibility verdict and any closure blocker. This holds the
+  fold-relevant truth a JSON Schema can't.
+- **Core schema** — an OCF-dialect JSON Schema, one `$def` per Core-admissible `(entity, variant)`,
+  pruned to its `core` fields, `required[]` = the fold-required set. Scalar leaves are inlined with
+  **assertable OCF-grammar `pattern`s**: `Numeric`/`Percentage` already ship patterns; for `Date` the
+  emitter **synthesizes** `^\d{4}-\d{2}-\d{2}$`, because `types/Date.schema.json` only declares
+  `format: date`, which is annotation-only under draft-07 and would not reject a time-of-day. External
+  `$ref`s are rewritten local. An instance valid against this schema is, by construction, a Core
+  instance whose values are in OCF grammar — i.e. guaranteed-foldable on values.
+- **Gap report (R5)** — two lists: (a) OCF richness with no Carta home (fold-required fields that are
+  `out` with `no-destination`/`existence-loss`), and (b) generally-applicable Carta concepts OCF
+  lacks. These are the OCF↔Carta gaps to discuss; they are never smuggled into Core.
+- **Human rollup** (markdown) — per-entity core/out field lists and admissibility, for review.
 
-**Subset guard.** Stage 4(b) asserts the generated profile is **always a subset of the reference**
-— for StrictCore entities/fields *and* for the `x-reconstructable` families. The machinery can
-therefore never publish an entity or field the curated definition does not sanction (this is what
-catches an optimistic over-derivation). If a green mapping would generate something the reference
-does not list, CI fails: either the annotation is wrong, or the spec genuinely changed and the
-reference + analysis doc must be updated **in the same change**.
+### CI gates — the trust model already in this repo
 
----
+CI rebuilds the draft in memory and fails unless both hold:
 
-## 7. The graduation workflow (how an entity enters the generated profile)
-
-An entity starts **reference-only** (defined in the curated reference, not yet generated) and
-**graduates** into the generated/gated profile when its mapping lands and is annotated:
-
-1. **Land the mapping** — `status: complete`, passing normal mapping validation.
-2. **Declare the entity tier** — add `profile: { tier: core, roundtrips: both }` (or `{ tier:
-   reconstructable }`) to the mapping's block.
-3. **Annotate only the exceptions** — leave plain resolving renames bare (derived to `core`); for
-   each **reverse-lossy** field, override to `tier: extended, roundtrips: forward` with a
-   `reverse_blocker` (copy the reason from the reference `$def`'s `EXTENDED` `$comment` line). For a
-   reconstructable entity, tag the relevant field(s) with `reconstruct: { transform, fidelity }`.
-   The four reverse-lossy patterns to watch:
-   **wider Carta enum · free-text → enum · array → scalar · arbitrary-precision widen.**
-4. **Regenerate and verify** — validate (gate the annotation) → build (regenerate the three
-   artifacts) → check (drift + subset). Commit the mapping **and** the regenerated artifacts
-   together.
-5. **Result** — the entity now appears in the profile schema / rollup, and the subset guard confirms
-   it matches the curated reference. If it doesn't, CI fails until either the annotation or the
-   reference+spec is corrected.
-
-Each in-flight mapping PR thus adds its own annotations and re-runs the build; CI's check enforces
-the regen on every PR.
+1. **Drift** — committed artifacts equal a fresh recomputation. This reuses the repo's existing
+   pattern: the validator does **not** byte-diff `coverage`; it re-derives the `X/N` count and asserts
+   the committed value matches (`mapping-validator.ts`). The Core gate extends that — CI reclassifies
+   the corpus and asserts the committed ledger and Core schema are **structurally equal** (same row
+   set, same `$def`/field/`required` shape). Equality is structural after canonical parse; committed
+   files are emitted with sorted keys/rows for a clean diff.
+2. **Subset** — every Core-admissible `(entity, variant)` the generator drafts is **ratified** in the
+   allow-list (§5). The machine can never publish an entity the curators haven't sanctioned. An
+   over-derivation (a wrongly-`core` field that flips an unratified entity to admissible) trips this
+   gate; CI fails until the **mapping** is corrected (a false `core` is a mis-encoded transform) or the
+   entity is ratified and this spec updated together.
 
 ---
 
-## 8. Governance, versioning, and the projection model
+## 5. Two layers: the drafted subset and the curated allow-list
 
-Three framing points a ratified spec must nail down (flagged here so the straw man is honest about
-what it is *not* yet):
+A *derived* draft must not be mistaken for a *ratified* definition, but the human layer is kept
+deliberately **thin** so field shapes stay derived:
 
-- **OCF Core is a projection of OCF, not a new format.** Producing a Core instance is a **subset
-  projection**: keep the StrictCore fields, drop the Extended ones. Each `$def` keeps OCF's own field
-  names and types, so an OCF Core document **is** a valid OCF document with fields removed — **no
-  value transform on the OCF side.** The value transforms (`date↔datetime`, enum remaps,
-  country-code reshaping, …) happen **only on the Carta crossing**, recorded per field as the Carta
-  `target`. This is why the profile schema reuses OCF field names verbatim.
-- **Versioning.** The **reference** schema is the versioned artifact; a Core release is a tagged
-  state of the reference + the spec doc. The generated profile is derived and always a subset, so it
-  carries no independent version. A future revision should pin the target (Carta) bundle version —
-  which each mapping already records — into the reference schema's `$id`.
-- **Produce/consume contract (out of scope for v0).** This spec defines *membership* (what is Core),
-  not a wire contract for emitting or ingesting Core instances. An instance is "StrictCore-valid" iff
-  it validates against the generated profile schema; the round-trip *guarantee* behind that validity
-  is still `proof_level`-bounded and pending the §9 importer confirmations.
+- **Allow-list (curated, versioned) — not a second schema.** Small, hand-edited: (1) the set of
+  **ratified `(entity, variant)` names** admitted to Core; (2) optional **`basis: confirmed`**
+  markers per `(entity, variant, field)` that *empirically harden* a `core` verdict against the live
+  importer (§6) — hardening, not membership; (3) any documented **OCF↔Carta gaps** being tracked. It
+  does **not** re-list field sets or types — the generator owns those and the drift gate pins them. The
+  human ratifies *which entities are in*; they don't re-draw the spine. This is the tagged release
+  artifact.
+- **Generated (derived, unversioned)** — the ledger + Core schema + gap report + rollup of §4,
+  everything drafted so far from green mappings. Converges on the ratified set; no independent version.
 
----
-
-## 9. Honesty boundary — what must be confirmed against a live importer
-
-Because every reverse verdict is **schema-derived, not importer-tested**, the spec ships a
-needs-confirmation list rather than overclaiming. The categories that would change verdicts:
-
-1. **Authoring model** — are transfer/conversion/split entered as cancel+reissue (transform A) or
-   rescaled in place (transform B)? Gates every transform-A family.
-2. **Enum bijections** — are the enums claimed bijective actually wired 1:1 by the importer, or do
-   exotics fall to `OTHER`/`UNKNOWN`? Gates every `enum-remap` claiming `core`.
-3. **Writability on import** — are the Carta fields targeted by reconstructable transforms actually
-   ingestable, or derived/read-only? Gates Repricing/Vesting/Acceptance-style reconstructions.
-4. **Unit conventions** — e.g. fraction `0.125` vs whole-number `12.5` for percentages; a silent
-   mismatch breaks the percentage leaf.
-5. **Out-of-grammar scalars** — does Carta ever emit scientific-notation / >10-dp `Decimal`s or
-   sub-day `DateTime`s in practice? Determines whether the scalar reverse-blocker is operational or
-   theoretical.
-
-The static gate proves **schema-permits**; these confirmations are the difference between that and
-**round-trips-in-production**. `proof_level` is the field that records which side of that line each
-claim sits on.
+**Graduation is automatic.** An entity is allow-listed but absent until its mapping is green; the next
+build classifies it, and if it's Core-admissible it appears. Landing a green mapping *is* graduation —
+no annotation step. If the draft and allow-list disagree, CI fails.
 
 ---
 
-## 10. Implementation checklist for a fresh build
+## 6. Honesty boundary — schema-derived vs importer-confirmed
 
-A crack dev re-implementing this needs to deliver, in order:
+Every class in §2 is **schema-derived** — including a reverse-edge `core` (ruling B): the verdict
+states what the two JSON Schemas *permit* a fold to do, not what a live Carta importer *does*. The
+ledger records a two-value **`basis`**:
 
-1. **Annotation grammar** — extend the mapping-entry parser to accept the optional field keys
-   (`tier`, `roundtrips`, `reverse_blocker`, `reconstruct`), the `enum-remap` `values:`/`routed_to:`
-   payload, and the entity/variant `profile:` default. All optional; existing corpus must still
-   validate.
-2. **Validator invariant** — the bidirectional gate (§4 Stage 1), including the bijection test by
-   enum value-set equality and per-variant projection of `tier:`.
-3. **Classifier** — the derivation table (§4 Stage 2), per-variant resolution, and the honesty rule
-   (no entity promotion without an explicit tier declaration).
-4. **Generator** — deterministic emission of the three artifacts (§5), including the
-   OCF-name-preserving, self-contained profile schema with inlined scalar grammar patterns and
-   intersected `required[]`.
-5. **Curated reference** — the hand-maintained Core definition (§6: StrictCore `$defs` +
-   `x-reconstructable`) and the subset guard.
-6. **CI wiring** — a verification mode running both gates (drift + subset), plus a build step authors
-   run before committing.
+- **`schema`** (default) — decided by the type/enum/cardinality read alone. This includes reverse-edge
+  `core` rows: the resolved target shows the datum has a lossless home, no human needed.
+- **`confirmed`** — a human verified the behavior against a live importer and recorded it in the
+  allow-list. This *hardens* an existing `core` verdict; it is never required for membership and never
+  assigned automatically.
 
-Domain *data* (which specific entities/fields land in each tier under the current Carta bundle) is
-the **output** of this machinery, not part of the spec — it is re-derived whenever the mappings or
-the Carta bundle change, and lives in the curated reference + generated artifacts, not in this
-document.
+Verdicts a live importer could move: (1) whether transfer/conversion lineage is actually ingested as a
+reverse edge or dropped; (2) whether `enum-remap` members claimed total wire 1:1 on import or fall to
+`OTHER`/`UNKNOWN`; (3) whether targeted Carta fields are writable vs derived/read-only; (4) unit
+conventions (fraction `0.125` vs whole-percent `12.5`). `basis` records which side of the
+schema-permits / folds-in-production line each claim sits on.
+
+---
+
+## 7. Current state — first cut against the corpus
+
+Applying the rules to the corpus today (a snapshot; re-derived on every build, not part of the spec):
+
+- **The intended spine is the four issuances** — `StockIssuance`, `EquityCompensationIssuance`,
+  `WarrantIssuance`, `ConvertibleIssuance` — with a clean value layer (`Monetary`→Carta `Money`,
+  `Date`, `Numeric`, `CurrencyCode`) and cliff vesting mechanics; cancellation lineage rides in as a
+  reverse-edge `core` (ruling B). But **today none of them are Core-admissible: they are `blocked` on
+  closure** (§3) — every issuance references `StockClass`/`Stakeholder`, whose mappings aren't green,
+  so the references have no Core projection to resolve to. Most *other* transactions (transfers,
+  retractions, acceptances, conversions) are blocked for a deeper reason — Carta has no transaction to
+  reflect them, or they fan out `array→scalar`.
+- **That closure block is an *artifact*, not a real gap — and a focused analysis says it clears.** The
+  `StockClass`/`Stakeholder` references score 0-core today only because **their mappings are still
+  draft skeletons** (the open draft PRs #112/#113, all `kind: TODO`), not because Carta lacks the
+  concept — Carta carries both (`#/$defs/ShareClass`, `#/$defs/Stakeholder`). Once a small **minimal
+  Core projection** of each lands green, the spine becomes admissible (R4):
+  - `StockClass → ShareClass`: `{ id, name, class_type, default_id_prefix, seniority }` (plus optional
+    `par_value`→`parValue`, `initial_shares_authorized`→`authorizedShareCount`). Preferred-class
+    economics like the participation cap live on the **nested** `preferredShareClassDetails` /
+    `ShareClassRightsAndPreferences`, not on `ShareClass` directly, and OCF `price_per_share` has no
+    `ShareClass` home at all.
+  - `Stakeholder → Stakeholder`: `{ id, name.legal_name }` (Carta `Stakeholder` has no required
+    fields, so `id` alone closes the FK; `legal_name` is the minimum for a *useful* snapshot).
+  - Note `WarrantIssuance`/`ConvertibleIssuance` don't reference `StockClass` at all — only
+    `StockIssuance` and `EquityCompensationIssuance` do.
+  The remaining `StockClass`/`Stakeholder` fields are R5 gaps (reported, not blocking) — the one
+  uncomfortable case is **`StockClass.votes_per_share`**: OCF-*required* yet homeless in Carta. It is
+  not fold-required, so it stays out of the Core projection and is logged as an R5 gap; a folded doc
+  silently loses voting rights.
+- **Vesting under R6 lands as quantum + cliff, not cadence or milestones.** `VestingScheduleCliff` and
+  the segment quantum (length, unit, percentage, order) fold cleanly; but `VestingScheduleSegment.period
+  → vestingMethod` is a **partial lookup** (every-5-days, every-4-months have no Carta target), which
+  by ruling C is `out` and cascades up to block the time-vesting spine. The milestone axis
+  (`VestingEventCondition`, `TX_VESTING_EVENT`) is unmapped entirely. The "closer to Carta" hope held
+  only for the grid quantum.
+
+---
+
+## 8. Implementation checklist (mostly wiring existing parts)
+
+1. **Type inspector (§2.3)** — resolve-and-unwrap + `isEnum`/`isArray`/`isScalar`/`isMultiPropObject`,
+   on the existing `registry`, `derefNode`, `detectEnumValues`, `targetEnumValuesAt`. The only genuinely
+   new code; the nullable-union unwrap and the scalar-wrapper rule are the parts to get right.
+2. **Classifier (§2)** — the `core`/`out` cascade per `(entity, variant, field)`, consuming the parsed
+   mapping (`mapping-parser.ts`) and the §2.1 resolution predicate, with ruling A/B/C behavior for
+   `enum-remap` totality and the `computed`/`reverse-edge` carve-out.
+3. **Admissibility + closure (§3)** — the fold-required-set check and referential closure over the
+   classified rows; restricted to `ocf_kind: object` entities.
+4. **Generator (§4)** — the ledger, the Core schema (OCF names/types verbatim, scalars inlined with
+   assertable patterns incl. the synthesized `Date` pattern, `required[]` = fold-required set), the gap
+   report, and the rollup.
+5. **Allow-list + subset guard (§5)** — the thin ratification file and the admissible-entities ⊆
+   allow-list check.
+6. **CI (§4)** — the recompute-and-assert **drift** gate (modeled on the coverage check) and the
+   **subset** gate; authors run the same build before committing.
+
+Which specific entities and fields land in Core under the current Carta bundle is the **output** of
+this machinery, not part of the spec — re-derived whenever a mapping or the bundle changes, and living
+in the generated artifacts and the allow-list, never in this document.
