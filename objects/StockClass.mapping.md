@@ -12,13 +12,13 @@ required_fields:
   - seniority
   - id
   - object_type
-target_standard: TBD
-target_version: TBD
-status: draft
+target_standard: Carta
+target_version: v1alpha1 (2026-04-30)
+status: complete
 last_generated: 2026-05-18
 ---
 
-# Object - Stock Class → TBD
+# Object - Stock Class → Carta
 
 > Object describing a class of stock issued by the issuer
 
@@ -141,65 +141,83 @@ Source: [`StockClass.schema.json`](./StockClass.schema.json)
 
 ```yaml
 # kind vocabulary: rename | split | combine | enum-remap | computed | unmappable | TODO
-status: draft
-coverage: 0/16
+status: complete
+coverage: 16/16
 
 fields:
   id:
-    kind: TODO
-    target: TODO
+    kind: unmappable
+    target: null
+    reason: ocf-internal
   comments:
-    kind: TODO
-    target: TODO
+    kind: unmappable
+    target: null
+    reason: ocf-internal
   object_type:
-    kind: TODO          # likely enum-remap
-    target: TODO
+    kind: unmappable
+    target: null
+    reason: ocf-internal
     values:
-      STOCK_CLASS: TODO
+      STOCK_CLASS: null
   name:
-    kind: TODO
-    target: TODO
+    kind: rename
+    target: "#/$defs/ShareClass/properties/name"
   class_type:
-    kind: TODO          # likely enum-remap
-    target: TODO
+    kind: enum-remap
+    target: "#/$defs/ShareClass/properties/type"
     values:
-      COMMON: TODO
-      PREFERRED: TODO
+      COMMON: COMMON
+      PREFERRED: PREFERRED
   default_id_prefix:
-    kind: TODO
-    target: TODO
+    kind: rename
+    target: "#/$defs/ShareClass/properties/prefix"
   initial_shares_authorized:
-    kind: TODO
-    target: TODO
+    kind: rename
+    target: "#/$defs/ShareClass/properties/authorizedShareCount"
   board_approval_date:
-    kind: TODO
-    target: TODO
+    kind: unmappable
+    target: null
+    reason: no-equivalent
   stockholder_approval_date:
-    kind: TODO
-    target: TODO
+    kind: unmappable
+    target: null
+    reason: no-equivalent
   votes_per_share:
-    kind: TODO
-    target: TODO
+    kind: unmappable
+    target: null
+    reason: no-equivalent
   par_value:
-    kind: TODO
-    target: TODO
+    kind: rename
+    target: "#/$defs/ShareClass/properties/parValue"
   price_per_share:
-    kind: TODO
-    target: TODO
+    kind: rename
+    target: "#/$defs/ShareClassRightsAndPreferences/properties/originalIssuePrice"
   seniority:
-    kind: TODO
-    target: TODO
+    kind: computed
+    target: "#/$defs/ShareClass/properties/seniority"
   conversion_rights:
-    kind: TODO
-    target: TODO
+    kind: computed
+    target: "#/$defs/ShareClassRightsAndPreferences"
   liquidation_preference_multiple:
-    kind: TODO
-    target: TODO
+    kind: rename
+    target: "#/$defs/ShareClassRightsAndPreferences/properties/multiplier"
   participation_cap_multiple:
-    kind: TODO
-    target: TODO
+    kind: rename
+    target: "#/$defs/ShareClassRightsAndPreferences/properties/participationCap"
 ```
 
 ## Notes / open questions
 
-- 
+- `class_type` → `type`: clean 1:1 enum-remap. Both sides use the same two values (`COMMON`, `PREFERRED`).
+- `default_id_prefix` → `prefix`: OCF allows a trailing dash (e.g. `CS-` when certificate IDs look like `CS-1`); Carta's `prefix` is constrained to numbers and letters only (e.g. `CS`). Any trailing dash should be stripped on transfer.
+- `initial_shares_authorized` → `authorizedShareCount`: OCF's `oneOf [AuthorizedShares enum, Numeric]` maps cleanly for the Numeric branch — Carta's field is `$ref: Decimal`. The sentinel enum values (`NOT APPLICABLE`, `UNLIMITED`) have no Carta target. As on `Issuer`, Carta's field carries no description and doesn't document temporal semantics, so we can't tell from the schema whether it reflects initial vs current authorization.
+- `par_value` → `parValue`: clean rename, OCF `Monetary` → Carta `Money` (both carry an amount + currency).
+- `seniority` → `seniority`: `kind: computed` because the value is inverted and rebased. OCF: higher number means higher priority (and decimals are allowed for inserting between classes, see the OCF description). Carta: integer where `1` is highest priority and increasing means *lower* priority. Producing the Carta value requires sorting all of an issuer's stock classes by OCF `seniority` descending and assigning Carta seniority `1, 2, 3, ...` in that order — i.e., per-record context is insufficient. The transformation is well-defined but requires the full set of stock classes for the issuer.
+- `price_per_share` → `preferredShareClassDetails.rightsAndPreferences.originalIssuePrice`: only meaningful for preferred classes. Common stock classes typically don't carry this in OCF, and there is no Carta target on the `ShareClass` for a common's original price.
+- `liquidation_preference_multiple` → `preferredShareClassDetails.rightsAndPreferences.multiplier`: preferred-only. Carta's field is `Decimal` (the OCF field is `Numeric`); both are numeric so this is a straightforward rename.
+- `participation_cap_multiple` → `preferredShareClassDetails.rightsAndPreferences.participationCap`: preferred-only. Same numeric correspondence as `multiplier`. Note that Carta also carries a separate `participating` boolean (whether the preferred is participating at all) which OCF does not represent explicitly; in OCF, "is participating" is implied by `participation_cap_multiple` being set.
+- `conversion_rights` → `preferredShareClassDetails.rightsAndPreferences` (kind `computed`): OCF carries an *array* of structured `StockClassConversionRight` objects, each with a `conversion_mechanism` (currently only `RatioConversionMechanism` is allowed), a `converts_to_stock_class_id`, and a `converts_to_future_round` flag. The `RatioConversionMechanism` itself has `conversion_price` (Monetary), `ratio` (Ratio = numerator/denominator), and `rounding_type` (enum). Carta collapses all of that into two scalar fields inside `rightsAndPreferences`: `conversionPrice` (Money) and `conversionRatio` (Decimal). Producing the Carta target therefore requires (a) picking one element of the array (Carta has no slot for alternative conversions), (b) `RatioConversionMechanism.conversion_price` → `conversionPrice`, (c) `RatioConversionMechanism.ratio` (numerator/denominator) → a single `conversionRatio` Decimal. Dropped on the way: `rounding_type`, `converts_to_stock_class_id`, `converts_to_future_round`, and any additional array elements.
+- `board_approval_date` / `stockholder_approval_date`: unmappable. Carta has a `BoardApproval` *enum* (`BOARD_APPROVAL_APPROVED` / `BOARD_APPROVAL_NOT_APPROVED`) but no field that carries the approval *date*. There is no Carta concept for stockholder approval at all on `ShareClass`.
+- `votes_per_share`: unmappable. Carta's `ShareClass` has no voting-rights field. (Carta's `ShareClassType` description does mention "PREFERRED: with no voting rights" — implying a categorical assumption rather than a per-class field — but there is no slot to express anything other than the type-level default.)
+- `id`, `comments`, `object_type`: unmappable OCF object scaffolding (same pattern as `Document`, `Issuer`, `Stakeholder`).
+- Carta-side `ShareClass` fields with no OCF source: `issuerId` (back-reference; OCF has one issuer per file), `pariPassu` (OCF expresses pari-passu by giving multiple classes the same `seniority` number rather than as a field), `preferredShareClassDetails.dividendDetails` (OCF `StockClass` carries no dividend information), `preferredShareClassDetails.rightsAndPreferences.participating` (in OCF, "participating" is implied by whether `participation_cap_multiple` is set; not an explicit field).
