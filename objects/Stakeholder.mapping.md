@@ -202,10 +202,10 @@ fields:
       TERMINATION_INVOLUNTARY_DISABILITY: null
       TERMINATION_INVOLUNTARY_WITH_CAUSE: null
   primary_contact:
-    kind: rename
+    kind: combine
     target: "#/$defs/Stakeholder/properties/email"
   contact_info:
-    kind: rename
+    kind: combine
     target: "#/$defs/Stakeholder/properties/email"
   addresses:
     kind: rename
@@ -225,7 +225,7 @@ fields:
 - `current_relationship` (deprecated singular) and `current_relationships` (canonical v2 array) both target Carta's single-valued `relationship`. Both rows pointing at the same target mirrors the `path`/`uri` pattern in `Document`. Per-value mapping is a near-identity rename; the only renamed value is `NON_US_EMPLOYEE` → `INTERNATIONAL_EMPLOYEE`. Carta has additional values (`EX_BOARD_MEMBER`, `EX_INTERNATIONAL_EMPLOYEE`) with no OCF source — those would have to come from elsewhere if needed.
 - `current_relationships` array → single Carta value is a lossy collapse: if OCF carries `[BOARD_MEMBER, FOUNDER]`, only one fits Carta. The mapping doc doesn't prescribe the rule; the consumer picks per-record (e.g., the most senior, the first, or by some policy).
 - `current_status`: unmappable. Carta has no per-stakeholder status field. The `EX_*` values of Carta's `relationship` enum partially encode termination (someone is an `EX_EMPLOYEE` rather than `EMPLOYEE`), but the finer-grained OCF status values (`LEAVE_OF_ABSENCE`, the various `TERMINATION_*` reasons) have no Carta target.
-- `primary_contact` (institutional) and `contact_info` (individual) both → Carta `email`: both OCF types carry `emails: array` and `phone_numbers: array` (and `primary_contact` also carries `name`). Only the email is transferred, and Carta accepts only a single string — so only the first email per record survives. Phone numbers, the contact person's name (for institutions), and additional emails are all dropped. Marked `kind: rename` rather than `computed` because the OCF field structurally corresponds to the Carta field, even though the inner shape collapses.
+- `primary_contact` (institutional) and `contact_info` (individual) both → Carta `email`: both OCF types carry `emails: array` and `phone_numbers: array` (and `primary_contact` also carries `name`). Only the email is transferred, and Carta accepts only a single string — so only the first email per record survives. Phone numbers, the contact person's name (for institutions), and additional emails are all dropped. Marked `kind: combine` rather than `rename`: these are two *distinct* optional OCF fields that both feed Carta's single `email`, so the relationship is a two-source → one-target fan-in, not a 1:1 field rename. Selection is by `stakeholder_type` (`contact_info` for an `INDIVIDUAL`, `primary_contact` for an `INSTITUTION`); the OCF schema places no `oneOf`/`anyOf` on the two fields, so if both happen to be set the one matching `stakeholder_type` wins. (`computed` is reserved for cross-record or otherwise-derived values; here the value is copied verbatim from whichever source applies, just collapsed to the first email.)
 - `addresses` → `address`: dramatic loss in two dimensions. OCF carries an *array* of richly structured `Address` objects (street, city, state, country, postal code, etc.); Carta's `StakeholderAddress` has *only* `country` (a single string, no structure). Only the country of one address survives; all other address data is dropped.
 - `tax_ids`: unmappable. Carta's `Stakeholder` has no tax-id field.
 - `id`, `comments`, `object_type`: unmappable boilerplate OCF object scaffolding (same as `Document`/`Issuer`).
