@@ -1,0 +1,39 @@
+# OCF Core — ratification allow-list (curated; the only hand-edited Core file).
+#
+# `core:build` DRAFTS the admissible (entity,variant) set from green mappings;
+# this file RATIFIES which $defs are admitted to Core. `npm run core:check` fails
+# if the draft includes a $def not listed here (over-derivation) — fix the mapping
+# or ratify it. A name listed here but not yet admissible is fine: it graduates
+# automatically once its mapping lands green. Field shapes are NOT listed here —
+# the generator owns those and the drift gate pins them (see ocf-core-converter-goal.md, C4).
+
+ratified:
+  - ConvertibleCancellation
+  - ConvertibleConversion
+  - ConvertibleIssuance
+  - EquityCompensationCancellation__Option
+  - EquityCompensationCancellation__Rsu
+  - EquityCompensationCancellation__Sar
+  - EquityCompensationExercise__Option
+  - EquityCompensationExercise__Sar
+  - EquityCompensationIssuance__Option
+  - EquityCompensationIssuance__Rsu
+  - EquityCompensationIssuance__Sar
+  - EquityCompensationRelease__Rsu
+  - EquityCompensationRepricing__Option
+  - EquityCompensationRepricing__Sar
+  - Issuer
+  - Stakeholder
+  - StakeholderRelationshipChangeEvent
+  - StockCancellation__Default
+  - StockCancellation__Rsa
+  - StockClass
+  - StockClassAuthorizedSharesAdjustment
+  - StockIssuance__Default
+  - StockIssuance__Rsa
+  - StockPlan
+  - Valuation
+  - VestingTerms
+  - WarrantCancellation
+  - WarrantIssuance
+  - WarrantTransfer
