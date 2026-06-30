@@ -19,6 +19,95 @@ import { ReferenceGraph } from "./core-admissibility.js";
 
 const REFERENCE_GRAPH = "core/reference-graph.yml";
 
+/** How OCF packages one entity kind into a `*File` document (from files/*File.schema.json). */
+export interface FileCategory {
+  /** OCF file_type const, e.g. OCF_STOCK_CLASSES_FILE. */
+  fileType: string;
+  /** Manifest collection key, e.g. stock_classes_files. */
+  collectionKey: string;
+  /** Vendored file-schema basename, e.g. StockClassesFile. */
+  fileName: string;
+}
+
+export interface OcfPackaging {
+  /** Object entity name → its OCF object-file category. */
+  objectFiles: Map<string, FileCategory>;
+  /** Entity names OCF places in the (single) TransactionsFile. */
+  transactionEntities: Set<string>;
+  /** Transactions file category. */
+  transactions: FileCategory;
+  /** $id of types/File (the manifest `*_files[]` pointer), for inlining. */
+  filePointerId: string;
+}
+
+const FILE_POINTER_ID =
+  "https://raw.githubusercontent.com/Open-Cap-Table-Coalition/Open-Cap-Format-OCF/main/schema/types/File.schema.json";
+
+/** OCF_STOCK_CLASSES_FILE → stock_classes_files (the manifest collection key). */
+function collectionKeyOf(fileType: string): string {
+  return (
+    fileType
+      .replace(/^OCF_/, "")
+      .replace(/_FILE$/, "")
+      .toLowerCase() + "_files"
+  );
+}
+
+function entitiesOfItems(items: unknown): string[] {
+  if (!isPlainObject(items)) return [];
+  const it = isPlainObject(items.items) ? items.items : {};
+  const refToName = (r: unknown) =>
+    typeof r === "string"
+      ? r
+          .split("/")
+          .pop()!
+          .replace(/\.schema\.json$/, "")
+      : null;
+  if (typeof it.$ref === "string") return [refToName(it.$ref)!];
+  if (Array.isArray(it.oneOf)) {
+    return it.oneOf
+      .map((o) => (isPlainObject(o) ? refToName(o.$ref) : null))
+      .filter((x): x is string => !!x);
+  }
+  return [];
+}
+
+/**
+ * Learn OCF's packaging from the vendored files/*File.schema.json: which object
+ * entity lands in which `*File`, and which entities the TransactionsFile holds.
+ * Derived, not hand-mapped — the converter mirrors OCF's own file layout.
+ */
+export async function loadOcfFileCategories(repoRoot: string): Promise<OcfPackaging> {
+  const dir = path.join(repoRoot, "files");
+  const objectFiles = new Map<string, FileCategory>();
+  const transactionEntities = new Set<string>();
+  let transactions: FileCategory = {
+    fileType: "OCF_TRANSACTIONS_FILE",
+    collectionKey: "transactions_files",
+    fileName: "TransactionsFile",
+  };
+
+  for (const name of (await readdir(dir)).sort()) {
+    if (!name.endsWith("File.schema.json")) continue;
+    const schema = JSON.parse(await readFile(path.join(dir, name), "utf8"));
+    const props =
+      isPlainObject(schema) && isPlainObject(schema.properties) ? schema.properties : {};
+    const ft = isPlainObject(props.file_type) ? props.file_type.const : undefined;
+    if (typeof ft !== "string" || ft === "OCF_MANIFEST_FILE") continue;
+    const fileName = name.replace(/\.schema\.json$/, "");
+    const cat: FileCategory = { fileType: ft, collectionKey: collectionKeyOf(ft), fileName };
+    const entities = entitiesOfItems(props.items);
+    if (ft === "OCF_TRANSACTIONS_FILE") {
+      transactions = cat;
+      for (const e of entities) transactionEntities.add(e);
+    } else {
+      for (const e of entities) objectFiles.set(e, cat);
+    }
+  }
+
+  return { objectFiles, transactionEntities, transactions, filePointerId: FILE_POINTER_ID };
+}
+
 /** Load the curated §3 reference graph (core/reference-graph.yml). */
 export async function loadReferenceGraph(repoRoot: string): Promise<ReferenceGraph> {
   const raw = parseYaml(await readFile(path.join(repoRoot, REFERENCE_GRAPH), "utf8"));

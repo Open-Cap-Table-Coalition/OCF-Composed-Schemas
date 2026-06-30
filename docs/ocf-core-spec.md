@@ -194,13 +194,18 @@ emits, all **generated, never hand-edited**:
   `heuristic`), for `core` rows the loss kind (`direct` / `widening` / `value-coarsening` /
   `reverse-edge`). Plus the per-entity admissibility verdict and any closure blocker. This holds the
   fold-relevant truth a JSON Schema can't.
-- **Core schema** — an OCF-dialect JSON Schema, one `$def` per Core-admissible `(entity, variant)`,
-  pruned to its `core` fields, `required[]` = the fold-required set. Scalar leaves are inlined with
-  **assertable OCF-grammar `pattern`s**: `Numeric`/`Percentage` already ship patterns; for `Date` the
-  emitter **synthesizes** `^\d{4}-\d{2}-\d{2}$`, because `types/Date.schema.json` only declares
-  `format: date`, which is annotation-only under draft-07 and would not reject a time-of-day. External
-  `$ref`s are rewritten local. An instance valid against this schema is, by construction, a Core
-  instance whose values are in OCF grammar — i.e. guaranteed-foldable on values.
+- **Core schema package** — packaged like OCF proper (`core/`): a manifest plus per-category `*File`
+  schemas, **reusing OCF `file_type` consts** so a Core package is also a shape-valid OCF package.
+  `files/TransactionsFile.schema.json` holds every admissible **event** (`items.oneOf`); one
+  `files/<Category>File.schema.json` per admissible **object**; `OCFCoreManifestFile.schema.json`
+  carries the issuer inline + a `*_files` pointer collection per present category. **Entities are OCF
+  entities — variants are collapsed**: a Carta-fold split like `StockIssuance` Default/Rsa is one OCF
+  `StockIssuance` (R0), with fields = the union of what is `core` in any admissible variant, each
+  optional. Scalar leaves are inlined with **assertable OCF-grammar `pattern`s**: `Numeric`/`Percentage`
+  already ship patterns; for `Date` the emitter **synthesizes** `^\d{4}-\d{2}-\d{2}$`, because
+  `types/Date.schema.json` only declares `format: date`, annotation-only under draft-07. Every value is
+  inlined — each file is self-contained, no `$ref`. An instance valid against the package is, by
+  construction, in OCF grammar — guaranteed-foldable on values.
 - **Gap report (R5)** — two lists: (a) OCF richness with no Carta home (fold-required fields that are
   `out` with `no-destination`/`existence-loss`), and (b) generally-applicable Carta concepts OCF
   lacks. These are the OCF↔Carta gaps to discuss; they are never smuggled into Core.

@@ -25,27 +25,32 @@ async function main(argv: { outDir: string; sample: string }): Promise<number> {
   const repoRoot = process.cwd();
   const derived = await deriveCore(repoRoot);
 
+  // Write the OCF-style schema package (relative path → schema), plus the
+  // generated markdown reports.
+  for (const [rel, schema] of derived.package) {
+    const abs = path.join(argv.outDir, rel);
+    await mkdir(path.dirname(abs), { recursive: true });
+    await writeFile(abs, JSON.stringify(schema, null, 2) + "\n", "utf8");
+  }
   await mkdir(argv.outDir, { recursive: true });
-  const schemaPath = path.join(argv.outDir, "core.schema.json");
-  const ledgerPath = path.join(argv.outDir, "core-ledger.md");
-  const gapsPath = path.join(argv.outDir, "core-gaps.md");
-  await writeFile(schemaPath, JSON.stringify(derived.schema, null, 2) + "\n", "utf8");
-  await writeFile(ledgerPath, renderLedger(derived), "utf8");
-  await writeFile(gapsPath, renderGapReport(derived), "utf8");
+  await writeFile(path.join(argv.outDir, "core-ledger.md"), renderLedger(derived), "utf8");
+  await writeFile(path.join(argv.outDir, "core-gaps.md"), renderGapReport(derived), "utf8");
 
-  const defCount = Object.keys((derived.schema.$defs as Record<string, unknown>) ?? {}).length;
-  console.log("OCF Core — §4 build");
+  const objects = derived.entities.filter((e) => e.kind === "object").length;
+  const events = derived.entities.filter((e) => e.kind === "event").length;
+  console.log("OCF Core — §4 build (packaged like OCF)");
   console.log("=".repeat(70));
-  console.log(`Admissible (entity,variant): ${derived.coreEntities.length}  →  ${defCount} $defs`);
-  console.log(`  core.schema.json  → ${schemaPath}`);
-  console.log(`  core-ledger.md    → ${ledgerPath}`);
-  console.log(`  core-gaps.md      → ${gapsPath}`);
+  console.log(
+    `Admissible OCF entities: ${derived.entities.length} (${objects} objects, ${events} events)`
+  );
+  console.log(`Schema package (${derived.package.size} files) under ${argv.outDir}/:`);
+  for (const rel of [...derived.package.keys()].sort()) console.log(`  ${rel}`);
+  console.log(`  core-ledger.md\n  core-gaps.md`);
 
-  const sampleDef = derived.coreEntities.find((e) => e.defName.includes(argv.sample));
-  if (sampleDef) {
-    const defs = derived.schema.$defs as Record<string, unknown>;
-    console.log(`\nSample $def — ${sampleDef.defName}:`);
-    console.log(JSON.stringify(defs[sampleDef.defName], null, 2));
+  const sampleRel = [...derived.package.keys()].find((r) => r.includes(argv.sample));
+  if (sampleRel) {
+    console.log(`\nSample — ${sampleRel}:`);
+    console.log(JSON.stringify(derived.package.get(sampleRel), null, 2));
   }
   return 0;
 }
@@ -174,8 +179,8 @@ const parsed = yargs(hideBin(process.argv))
   })
   .option("sample", {
     type: "string",
-    default: "StockIssuance",
-    describe: "Entity to print a sample $def for",
+    default: "TransactionsFile",
+    describe: "Package file (substring) to print as a sample",
   })
   .strict()
   .help()

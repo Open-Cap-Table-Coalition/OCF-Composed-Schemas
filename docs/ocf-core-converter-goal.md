@@ -72,8 +72,9 @@ The experiment paid for these; bake them in.
 1. **§3 closure** — define how the *fold-required* set is expressed (it is **not** OCF
    `required_fields`) and how `*_id`/`*_ids` references resolve to a referent entity; emit the
    admissible/blocked verdict with a named blocker.
-2. **§4 generator** — Core schema (inlined scalars with assertable patterns), ledger, gap report,
-   rollup; everything generated.
+2. **§4 generator** — the Core schema **package** (packaged like OCF proper: manifest + per-category
+   `*File` schemas, OCF `file_type` consts, variants collapsed to OCF entities, inlined assertable
+   patterns), the ledger, and the gap report; everything generated.
 3. **§5 allow-list + subset guard** — the ratification file and the admissible ⊆ allow-list check.
 4. **§6 basis + CI** — the `schema`/`confirmed` basis on ledger rows; the drift and subset gates,
    modeled on the existing coverage recompute-and-assert; authors run the same build pre-commit.

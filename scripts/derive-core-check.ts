@@ -2,25 +2,26 @@
 /**
  * OCF Core — CI gates (§5/§6). Read-only; exits non-zero on failure.
  *
- *   1. SUBSET — every Core-admissible (entity,variant) the generator drafts must
- *      be RATIFIED in core/allow-list.yml. An over-derivation (a wrongly-`core`
+ *   1. SUBSET — every Core-admissible OCF entity the generator drafts must be
+ *      RATIFIED in core/allow-list.yml. An over-derivation (a wrongly-`core`
  *      field flipping an unratified entity admissible) trips this gate; fix the
  *      mapping or ratify the entity. (Ratified-but-not-yet-admissible is fine —
  *      graduation is automatic once its mapping is green.)
- *   2. DRIFT — the committed core/core.schema.json must equal a fresh recompute
- *      (structural equality after canonical key-sort). Hand-edits and stale
- *      builds trip this; run `npm run core:build` and commit.
+ *   2. DRIFT — the committed Core schema PACKAGE (core/**.schema.json) must equal
+ *      a fresh recompute, file-for-file (structural equality after canonical
+ *      key-sort). Hand-edits, stale builds, and orphaned files trip this; run
+ *      `npm run core:build` and commit.
  *
  *   npm run core:check
  */
 import path from "node:path";
-import { readFile } from "node:fs/promises";
+import { readdir, readFile } from "node:fs/promises";
 import { parse as parseYaml } from "yaml";
 
 import { deriveCore } from "./lib/core-pipeline.js";
 
 const ALLOW_LIST = "core/allow-list.yml";
-const SCHEMA = "core/core.schema.json";
+const CORE_DIR = "core";
 
 /** Recursively sort object keys so comparison is structural, not key-order. */
 function canonical(value: unknown): unknown {
@@ -33,6 +34,22 @@ function canonical(value: unknown): unknown {
     return out;
   }
   return value;
+}
+
+/** Committed *.schema.json under core/, as repo-relative paths from core/. */
+async function committedSchemaFiles(repoRoot: string): Promise<string[]> {
+  const dir = path.join(repoRoot, CORE_DIR);
+  const entries = await readdir(dir, { recursive: true, withFileTypes: true });
+  const out: string[] = [];
+  for (const e of entries) {
+    if (!e.isFile() || !e.name.endsWith(".schema.json")) continue;
+    const parent =
+      (e as unknown as { parentPath?: string; path?: string }).parentPath ??
+      (e as unknown as { path?: string }).path ??
+      dir;
+    out.push(path.relative(dir, path.join(parent, e.name)));
+  }
+  return out.sort();
 }
 
 async function main(): Promise<number> {
@@ -54,31 +71,45 @@ async function main(): Promise<number> {
     );
   }
 
-  const drafted = derived.coreEntities.map((e) => e.defName).sort();
+  const drafted = derived.entities.map((e) => e.entity).sort();
   const unratified = drafted.filter((d) => !ratified.has(d));
   if (unratified.length) {
     failures.push(
-      `SUBSET: the generator drafts ${unratified.length} admissible $def(s) not in ${ALLOW_LIST}:\n` +
+      `SUBSET: the generator drafts ${unratified.length} admissible entit(y/ies) not in ${ALLOW_LIST}:\n` +
         unratified.map((d) => `    + ${d}`).join("\n") +
         `\n  → ratify them, or correct the mapping if they are over-derived.`
     );
   }
   const pendingGraduation = [...ratified].filter((r) => !drafted.includes(r)).sort();
 
-  // --- Gate 2: drift --------------------------------------------------------
+  // --- Gate 2: drift (whole package, file-for-file) -------------------------
+  const fresh = derived.package; // relPath → schema
+  let committed: string[] = [];
   try {
-    const committed = JSON.parse(await readFile(path.join(repoRoot, SCHEMA), "utf8"));
-    if (JSON.stringify(canonical(committed)) !== JSON.stringify(canonical(derived.schema))) {
-      failures.push(
-        `DRIFT: committed ${SCHEMA} differs from a fresh recompute — run \`npm run core:build\` and commit.`
-      );
-    }
+    committed = await committedSchemaFiles(repoRoot);
   } catch (err) {
     failures.push(
-      `DRIFT: cannot read ${SCHEMA} (${
-        (err as Error).message
-      }) — run \`npm run core:build\` and commit.`
+      `DRIFT: cannot read ${CORE_DIR}/ (${(err as Error).message}) — run \`npm run core:build\`.`
     );
+  }
+  const committedSet = new Set(committed);
+  const orphans = committed.filter((r) => !fresh.has(r));
+  const missing = [...fresh.keys()].filter((r) => !committedSet.has(r));
+  if (missing.length) failures.push(`DRIFT: not committed (run core:build): ${missing.join(", ")}`);
+  if (orphans.length)
+    failures.push(`DRIFT: committed but not generated (stale — delete): ${orphans.join(", ")}`);
+  for (const [rel, schema] of fresh) {
+    if (!committedSet.has(rel)) continue;
+    try {
+      const onDisk = JSON.parse(await readFile(path.join(repoRoot, CORE_DIR, rel), "utf8"));
+      if (JSON.stringify(canonical(onDisk)) !== JSON.stringify(canonical(schema))) {
+        failures.push(
+          `DRIFT: ${CORE_DIR}/${rel} differs from recompute — run \`npm run core:build\` and commit.`
+        );
+      }
+    } catch (err) {
+      failures.push(`DRIFT: cannot read ${CORE_DIR}/${rel} (${(err as Error).message}).`);
+    }
   }
 
   // --- Report ---------------------------------------------------------------
@@ -88,11 +119,12 @@ async function main(): Promise<number> {
     return 1;
   }
   console.log(
-    `OCF Core check: OK — ${drafted.length} admissible $def(s) all ratified; schema matches recompute.` +
+    `OCF Core check: OK — ${drafted.length} admissible entit(y/ies) ratified; ` +
+      `${fresh.size}-file package matches recompute.` +
       (pendingGraduation.length
         ? `\n  (${
             pendingGraduation.length
-          } ratified but awaiting a green mapping: ${pendingGraduation.join(", ")})`
+          } ratified, awaiting a green mapping: ${pendingGraduation.join(", ")})`
         : "")
   );
   return 0;

@@ -4,13 +4,19 @@
  * One function that both the build (scripts/derive-core-build) and the CI check
  * (scripts/derive-core-check) call, so they can never disagree on what Core is:
  *   load green corpus → classify every field (§2) → admissibility (§3) →
- *   assemble the admissible Core entities → emit the Core schema (§4).
+ *   collapse variants into OCF entities → emit the Core package (§4).
  */
 import { isPlainObject } from "./mapping-validator.js";
-import { Corpus, loadGreenCorpus, loadReferenceGraph } from "./core-corpus.js";
+import {
+  Corpus,
+  loadGreenCorpus,
+  loadOcfFileCategories,
+  loadReferenceGraph,
+  OcfPackaging,
+} from "./core-corpus.js";
 import { classifyField, ClassifyCtx, Verdict } from "./core-classifier.js";
 import { Admissibility, computeAdmissibility } from "./core-admissibility.js";
-import { CoreEntity, emitCoreSchema } from "./core-schema-emitter.js";
+import { CoreEntity, emitCorePackage } from "./core-schema-emitter.js";
 
 export interface DerivedRow {
   entity: string;
@@ -25,19 +31,16 @@ export interface Derived {
   corpus: Corpus;
   rows: DerivedRow[];
   admissibility: Admissibility[];
-  /** Admissible (entity,variant), pruned to core fields — the schema's $defs. */
-  coreEntities: CoreEntity[];
-  schema: Record<string, unknown>;
+  /** Admissible OCF entities (variants collapsed), pruned to core fields. */
+  entities: CoreEntity[];
+  /** The emitted package: relative path under core/ → schema object. */
+  package: Map<string, Record<string, unknown>>;
 }
 
 function shortDescription(node: unknown): string | undefined {
   if (!isPlainObject(node) || typeof node.description !== "string") return undefined;
   const d = node.description.replace(/\s+/g, " ").trim();
   return d.length > 140 ? d.slice(0, 137) + "…" : d;
-}
-
-export function defNameFor(entity: string, variant: string): string {
-  return variant === "—" ? entity : `${entity}__${variant}`;
 }
 
 export async function deriveCore(repoRoot: string): Promise<Derived> {
@@ -47,6 +50,8 @@ export async function deriveCore(repoRoot: string): Promise<Derived> {
     bundle: corpus.bundle,
     typeLib: corpus.typeLib,
   };
+  // OCF places transactions under objects/transactions/; everything else is an object.
+  const isEvent = new Map(corpus.objects.map((o) => [o.entity, o.rel.includes("/transactions/")]));
 
   const rows: DerivedRow[] = [];
   for (const obj of corpus.objects) {
@@ -75,30 +80,29 @@ export async function deriveCore(repoRoot: string): Promise<Derived> {
     })),
     graph
   );
-  const admissible = new Set(
+  const admissibleNode = new Set(
     admissibility.filter((a) => a.admissible).map((a) => `${a.entity} ${a.variant}`)
   );
 
-  const byNode = new Map<string, DerivedRow[]>();
+  // Collapse variants into OCF entities: an entity is in Core if ANY variant is
+  // admissible; its fields are the union of fields `core` in an admissible variant.
+  const byEntity = new Map<string, Map<string, { srcRaw: unknown; description?: string }>>();
   for (const r of rows) {
-    const k = `${r.entity} ${r.variant}`;
-    if (!admissible.has(k)) continue;
-    const list = byNode.get(k) ?? [];
-    list.push(r);
-    byNode.set(k, list);
+    if (!admissibleNode.has(`${r.entity} ${r.variant}`)) continue;
+    if (r.verdict.class !== "core") continue;
+    const fields = byEntity.get(r.entity) ?? new Map();
+    if (!fields.has(r.field)) fields.set(r.field, { srcRaw: r.srcRaw, description: r.description });
+    byEntity.set(r.entity, fields);
   }
-  const coreEntities: CoreEntity[] = [...byNode.values()].map((frs) => {
-    const { entity, variant } = frs[0]!;
-    return {
-      defName: defNameFor(entity, variant),
+  const entities: CoreEntity[] = [...byEntity.entries()]
+    .map(([entity, fields]) => ({
       entity,
-      variant,
-      fields: frs
-        .filter((r) => r.verdict.class === "core")
-        .map((r) => ({ field: r.field, srcRaw: r.srcRaw, description: r.description })),
-    };
-  });
+      kind: (isEvent.get(entity) ? "event" : "object") as "event" | "object",
+      fields: [...fields.entries()].map(([field, f]) => ({ field, ...f })),
+    }))
+    .sort((a, b) => a.entity.localeCompare(b.entity));
 
-  const schema = emitCoreSchema(coreEntities, corpus.registry);
-  return { corpus, rows, admissibility, coreEntities, schema };
+  const packaging: OcfPackaging = await loadOcfFileCategories(repoRoot);
+  const pkg = emitCorePackage(entities, corpus.registry, packaging);
+  return { corpus, rows, admissibility, entities, package: pkg };
 }

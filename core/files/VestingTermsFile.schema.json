@@ -1,0 +1,116 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://opencaptablecoalition.com/ocf-core/v0/files/VestingTermsFile.schema.json",
+  "title": "OCF Core — VestingTermsFile",
+  "description": "Generated. Core-admissible VestingTerms; values inlined into OCF grammar.",
+  "type": "object",
+  "properties": {
+    "file_type": {
+      "const": "OCF_VESTING_TERMS_FILE"
+    },
+    "items": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "title": "VestingTerms",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Identifier the issuance's `vesting_template_id` references."
+          },
+          "statements": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "event_condition": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "event_id": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "event_id"
+                  ]
+                },
+                "order": {
+                  "type": "integer"
+                },
+                "percentage": {
+                  "type": "string",
+                  "pattern": "^[+-]?[0-9]+(\\.[0-9]{1,10})?$"
+                },
+                "schedule": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "cliff": {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "properties": {
+                        "length": {
+                          "type": "integer"
+                        },
+                        "percentage": {
+                          "type": "string",
+                          "pattern": "^[+-]?[0-9]+(\\.[0-9]{1,10})?$"
+                        },
+                        "period_type": {
+                          "type": "string",
+                          "enum": [
+                            "DAYS",
+                            "MONTHS",
+                            "YEARS"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "length",
+                        "period_type",
+                        "percentage"
+                      ]
+                    },
+                    "occurrences": {
+                      "type": "integer"
+                    },
+                    "period": {
+                      "type": "integer"
+                    },
+                    "period_type": {
+                      "type": "string",
+                      "enum": [
+                        "DAYS",
+                        "MONTHS",
+                        "YEARS"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "occurrences",
+                    "period",
+                    "period_type"
+                  ]
+                }
+              },
+              "required": [
+                "order",
+                "percentage"
+              ]
+            },
+            "description": "Ordered list of vesting statements. They chain implicitly by their `order` field rather than via explicit graph edges."
+          }
+        },
+        "required": [],
+        "additionalProperties": false
+      }
+    }
+  },
+  "required": [
+    "file_type",
+    "items"
+  ],
+  "additionalProperties": false
+}

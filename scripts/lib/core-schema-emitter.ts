@@ -1,24 +1,29 @@
 /**
- * OCF Core — §4 schema emitter.
+ * OCF Core — §4 schema emitter (packaged like OCF proper).
  *
- * Renders the Core JSON Schema: one `$def` per Core-admissible `(entity, variant)`,
- * pruned to its `core` fields, every value INLINED into OCF grammar so the result
- * is self-contained (no external `$ref`) and assertable:
- *   - Numeric / Percentage / CurrencyCode / Md5 already ship `pattern`s → reused.
- *   - Date ships only `format: date` (annotation-only under draft-07) → the emitter
- *     SYNTHESISES `^\d{4}-\d{2}-\d{2}$` so a time-of-day is actually rejected.
- *   - enums inline their value set; composite types (Monetary, Ratio, …) recurse.
+ * Emits a multi-file package mirroring OCF's own layout (a manifest + per-category
+ * `*File` schemas, each with `items`), reusing OCF `file_type` consts so a Core
+ * package is also a shape-valid OCF package:
+ *   OCFCoreManifestFile.schema.json  — issuer + `*_files` collections (file_type OCF_MANIFEST_FILE)
+ *   files/TransactionsFile.schema.json — every admissible EVENT, items.oneOf
+ *   files/<Category>File.schema.json   — each admissible OBJECT, items[]
  *
- * `required: []` on every entity: the Carta fold declares nothing required (§3
- * finding — every Carta target is `required:[]`), so the fold-driven required set
- * is empty. An instance valid against this schema is, by construction, a Core
- * instance whose values are in OCF grammar — guaranteed-foldable on values.
+ * Entities are OCF entities (variants collapsed): a Carta-fold variant split like
+ * StockIssuance Default/Rsa is one OCF `StockIssuance` here (R0 — Core uses OCF's
+ * own objects); a field is included if it is `core` in any admissible variant.
+ * Every value is INLINED into OCF grammar (assertable patterns, synthesized Date),
+ * so each file is self-contained — no `$ref`, intra-package or external.
+ *
+ * `required: []` on every entity: the Carta fold declares nothing required (§3).
  */
 import { detectEnumValues } from "./enum-detection.js";
 import { Registry } from "./registry.js";
 import { isPlainObject } from "./mapping-validator.js";
 import { resolveSource } from "./core-classifier.js";
+import { OcfPackaging } from "./core-corpus.js";
 
+const DRAFT7 = "http://json-schema.org/draft-07/schema#";
+const ID_BASE = "https://opencaptablecoalition.com/ocf-core/v0";
 const DATE_PATTERN = "^\\d{4}-\\d{2}-\\d{2}$";
 
 /** Render one OCF source node into an inlined, OCF-grammar-constrained Core node. */
@@ -31,7 +36,6 @@ export function renderNode(
   const n = resolveSource(srcRaw, registry);
   if (!isPlainObject(n)) return {};
 
-  // Array first — detectEnumValues would otherwise collapse an array-of-enum.
   if (n.type === "array") {
     return { type: "array", items: renderNode(n.items, registry, depth + 1) };
   }
@@ -40,12 +44,12 @@ export function renderNode(
   if (enumVals) return { type: "string", enum: enumVals };
 
   // Composite type (object with its own properties): recurse, keep its required.
-  // OCF scalar type files carry boilerplate `properties: {}`; an empty object is
-  // not a composite, so require at least one property before recursing.
+  // OCF scalar type files carry boilerplate `properties: {}`; require ≥1 property.
   if (isPlainObject(n.properties) && Object.keys(n.properties).length > 0) {
     const props = n.properties as Record<string, unknown>;
     const rendered: Record<string, unknown> = {};
-    for (const [k, v] of Object.entries(props)) rendered[k] = renderNode(v, registry, depth + 1);
+    for (const k of Object.keys(props).sort())
+      rendered[k] = renderNode(props[k], registry, depth + 1);
     const required = Array.isArray(n.required)
       ? n.required.filter((r): r is string => typeof r === "string" && r in rendered)
       : [];
@@ -55,7 +59,6 @@ export function renderNode(
     return node;
   }
 
-  // Scalar leaf.
   if (typeof n.pattern === "string") {
     return { type: typeof n.type === "string" ? n.type : "string", pattern: n.pattern };
   }
@@ -70,48 +73,136 @@ export interface CoreField {
   description?: string;
 }
 
+/** One OCF entity admitted to Core (variants already collapsed). */
 export interface CoreEntity {
-  /** `$def` name: Entity, or Entity__Variant when polymorphic. */
-  defName: string;
   entity: string;
-  variant: string;
+  kind: "object" | "event";
   fields: CoreField[];
 }
 
-/** Assemble the full Core JSON Schema from the admissible entities. */
-export function emitCoreSchema(
-  entities: CoreEntity[],
-  registry: Registry
-): Record<string, unknown> {
-  const defs: Record<string, unknown> = {};
-  for (const e of [...entities].sort((a, b) => a.defName.localeCompare(b.defName))) {
-    const properties: Record<string, unknown> = {};
-    for (const f of [...e.fields].sort((a, b) => a.field.localeCompare(b.field))) {
-      const node = renderNode(f.srcRaw, registry);
-      if (f.description) node.description = f.description;
-      properties[f.field] = node;
-    }
-    defs[e.defName] = {
-      type: "object",
-      title: e.entity + (e.variant === "—" ? "" : ` (${e.variant})`),
-      properties,
-      // Fold-driven required set; the Carta fold requires nothing (§3).
-      required: [],
-      additionalProperties: false,
-    };
+/** Build the inlined `type: object` def for one Core entity. */
+function entityDef(e: CoreEntity, registry: Registry): Record<string, unknown> {
+  const properties: Record<string, unknown> = {};
+  for (const f of [...e.fields].sort((a, b) => a.field.localeCompare(b.field))) {
+    const node = renderNode(f.srcRaw, registry);
+    if (f.description) node.description = f.description;
+    properties[f.field] = node;
   }
   return {
-    $schema: "http://json-schema.org/draft-07/schema#",
-    $id: "https://opencaptablecoalition.com/ocf-core/v0/core.schema.json",
-    title: "OCF Core (derived)",
-    description:
-      "GENERATED by scripts/derive-core-build — do not hand-edit. One $def per " +
-      "Core-admissible (entity, variant), pruned to fields that fold losslessly to " +
-      "Carta, values inlined into OCF grammar. required:[] because the Carta fold " +
-      "declares nothing required (see docs/ocf-core-spec.md §3).",
-    oneOf: Object.keys(defs)
-      .sort()
-      .map((d) => ({ $ref: `#/$defs/${d}` })),
-    $defs: defs,
+    type: "object",
+    title: e.entity,
+    properties,
+    // Fold-driven required set; the Carta fold requires nothing (§3).
+    required: [],
+    additionalProperties: false,
   };
+}
+
+function coreId(rel: string): string {
+  return `${ID_BASE}/${rel}`;
+}
+
+function fileSchema(
+  fileName: string,
+  fileType: string,
+  itemsSchema: Record<string, unknown>,
+  description: string
+): Record<string, unknown> {
+  return {
+    $schema: DRAFT7,
+    $id: coreId(`files/${fileName}.schema.json`),
+    title: `OCF Core — ${fileName}`,
+    description,
+    type: "object",
+    properties: {
+      file_type: { const: fileType },
+      items: { type: "array", items: itemsSchema },
+    },
+    required: ["file_type", "items"],
+    additionalProperties: false,
+  };
+}
+
+/**
+ * Emit the full Core package as relativePath → schema object. The caller writes
+ * each under core/ (build) or compares against committed copies (check).
+ */
+export function emitCorePackage(
+  entities: CoreEntity[],
+  registry: Registry,
+  packaging: OcfPackaging
+): Map<string, Record<string, unknown>> {
+  const out = new Map<string, Record<string, unknown>>();
+  const sorted = [...entities].sort((a, b) => a.entity.localeCompare(b.entity));
+
+  // Events → one TransactionsFile (items.oneOf), mirroring OCF.
+  const events = sorted.filter((e) => e.kind === "event");
+  if (events.length) {
+    const oneOf = events.map((e) => entityDef(e, registry));
+    out.set(
+      `files/${packaging.transactions.fileName}.schema.json`,
+      fileSchema(
+        packaging.transactions.fileName,
+        packaging.transactions.fileType,
+        oneOf.length === 1 ? oneOf[0]! : { oneOf },
+        "Generated. Core-admissible transaction events; values inlined into OCF grammar."
+      )
+    );
+  }
+
+  // Objects → one per-category file each (OCF holds one entity type per file).
+  // Issuer has no OCF file — it rides inline on the manifest.
+  const issuer = sorted.find((e) => e.kind === "object" && e.entity === "Issuer");
+  const collections: { key: string; fileName: string }[] = [];
+  for (const e of sorted) {
+    if (e.kind !== "object" || e.entity === "Issuer") continue;
+    const cat = packaging.objectFiles.get(e.entity);
+    if (!cat) continue; // object with no OCF file category — skip (surfaced elsewhere)
+    out.set(
+      `files/${cat.fileName}.schema.json`,
+      fileSchema(
+        cat.fileName,
+        cat.fileType,
+        entityDef(e, registry),
+        `Generated. Core-admissible ${e.entity}; values inlined into OCF grammar.`
+      )
+    );
+    collections.push({ key: cat.collectionKey, fileName: cat.fileName });
+  }
+  if (events.length) {
+    collections.push({
+      key: packaging.transactions.collectionKey,
+      fileName: packaging.transactions.fileName,
+    });
+  }
+  collections.sort((a, b) => a.key.localeCompare(b.key));
+
+  // Manifest — issuer inline + a `*_files` pointer collection per present category.
+  const filePointer = renderNode({ $ref: packaging.filePointerId }, registry);
+  const manifestProps: Record<string, unknown> = {
+    file_type: { const: "OCF_MANIFEST_FILE" },
+    ocf_version: { type: "string" },
+    as_of: { type: "string", pattern: DATE_PATTERN },
+    generated_at: { type: "string", format: "date-time" },
+    comments: { type: "array", items: { type: "string" } },
+  };
+  if (issuer) manifestProps.issuer = entityDef(issuer, registry);
+  for (const c of collections) {
+    manifestProps[c.key] = { type: "array", items: filePointer };
+  }
+  out.set("OCFCoreManifestFile.schema.json", {
+    $schema: DRAFT7,
+    $id: coreId("OCFCoreManifestFile.schema.json"),
+    title: "OCF Core Manifest File",
+    description:
+      "GENERATED by scripts/derive-core-build — do not hand-edit. A Core cap-table " +
+      "package: issuer + references to the Core object/transaction files. Mirrors " +
+      "OCFManifestFile (reuses OCF file_type consts) so a Core package is shape-valid OCF.",
+    type: "object",
+    properties: manifestProps,
+    required: ["file_type", ...collections.map((c) => c.key)],
+    additionalProperties: false,
+  });
+
+  return out;
 }

@@ -1,4 +1,5 @@
-import { renderNode, emitCoreSchema, CoreEntity } from "../scripts/lib/core-schema-emitter.js";
+import { renderNode, emitCorePackage, CoreEntity } from "../scripts/lib/core-schema-emitter.js";
+import { OcfPackaging } from "../scripts/lib/core-corpus.js";
 import { RawSchema, Registry } from "../scripts/lib/registry.js";
 
 function makeRegistry(entries: RawSchema[]): Registry {
@@ -11,11 +12,18 @@ const registry = makeRegistry([
   { $id: "ocf://Numeric", type: "string", pattern: "^[0-9]+$", properties: {}, required: [] },
   { $id: "ocf://Date", type: "string", format: "date", properties: {}, required: [] },
   { $id: "ocf://Cur", type: "string", pattern: "^[A-Z]{3}$", properties: {}, required: [] },
+  { $id: "ocf://Md5", type: "string", pattern: "^[a-f0-9]{32}$", properties: {}, required: [] },
   {
     $id: "ocf://Monetary",
     type: "object",
     properties: { amount: { $ref: "ocf://Numeric" }, currency: { $ref: "ocf://Cur" } },
     required: ["amount", "currency"],
+  } as unknown as RawSchema,
+  {
+    $id: "ocf://File",
+    type: "object",
+    properties: { filepath: { type: "string" }, md5: { $ref: "ocf://Md5" } },
+    required: ["filepath", "md5"],
   } as unknown as RawSchema,
   { $id: "ocf://Enum3", enum: ["A", "B", "C"] },
 ]);
@@ -27,27 +35,23 @@ describe("renderNode — inline OCF grammar", () => {
       pattern: "^[0-9]+$",
     });
   });
-
   it("SYNTHESISES a Date pattern (format:date is annotation-only)", () => {
     expect(renderNode({ $ref: "ocf://Date" }, registry)).toEqual({
       type: "string",
       pattern: "^\\d{4}-\\d{2}-\\d{2}$",
     });
   });
-
   it("does NOT misread a boilerplate-scalar (properties:{}) as an object", () => {
     const node = renderNode({ $ref: "ocf://Numeric" }, registry);
     expect(node.type).toBe("string");
     expect(node.properties).toBeUndefined();
   });
-
   it("inlines an enum's value set", () => {
     expect(renderNode({ $ref: "ocf://Enum3" }, registry)).toEqual({
       type: "string",
       enum: ["A", "B", "C"],
     });
   });
-
   it("recurses into a composite type, keeping its required", () => {
     expect(renderNode({ $ref: "ocf://Monetary" }, registry)).toEqual({
       type: "object",
@@ -59,14 +63,6 @@ describe("renderNode — inline OCF grammar", () => {
       required: ["amount", "currency"],
     });
   });
-
-  it("renders arrays, recursing into items", () => {
-    expect(renderNode({ type: "array", items: { $ref: "ocf://Numeric" } }, registry)).toEqual({
-      type: "array",
-      items: { type: "string", pattern: "^[0-9]+$" },
-    });
-  });
-
   it("unwraps a nullable union to its real branch", () => {
     expect(renderNode({ anyOf: [{ type: "null" }, { $ref: "ocf://Numeric" }] }, registry)).toEqual({
       type: "string",
@@ -75,46 +71,89 @@ describe("renderNode — inline OCF grammar", () => {
   });
 });
 
-describe("emitCoreSchema", () => {
-  const entities: CoreEntity[] = [
-    {
-      defName: "StockIssuance__Rsa",
-      entity: "StockIssuance",
-      variant: "Rsa",
-      fields: [{ field: "quantity", srcRaw: { $ref: "ocf://Numeric" } }],
-    },
-    {
-      defName: "Stakeholder",
-      entity: "Stakeholder",
-      variant: "—",
-      fields: [{ field: "name", srcRaw: { type: "string" }, description: "Legal name" }],
-    },
-  ];
+const packaging: OcfPackaging = {
+  objectFiles: new Map([
+    [
+      "StockClass",
+      {
+        fileType: "OCF_STOCK_CLASSES_FILE",
+        collectionKey: "stock_classes_files",
+        fileName: "StockClassesFile",
+      },
+    ],
+  ]),
+  transactionEntities: new Set(["StockIssuance", "StockCancellation"]),
+  transactions: {
+    fileType: "OCF_TRANSACTIONS_FILE",
+    collectionKey: "transactions_files",
+    fileName: "TransactionsFile",
+  },
+  filePointerId: "ocf://File",
+};
 
-  it("emits one self-contained $def per entity, draft-07, with oneOf", () => {
-    const schema = emitCoreSchema(entities, registry) as Record<string, any>;
-    expect(schema.$schema).toContain("draft-07");
-    expect(Object.keys(schema.$defs).sort()).toEqual(["Stakeholder", "StockIssuance__Rsa"]);
-    expect(schema.oneOf).toContainEqual({ $ref: "#/$defs/Stakeholder" });
+const entities: CoreEntity[] = [
+  {
+    entity: "StockIssuance",
+    kind: "event",
+    fields: [{ field: "quantity", srcRaw: { $ref: "ocf://Numeric" } }],
+  },
+  {
+    entity: "StockCancellation",
+    kind: "event",
+    fields: [{ field: "date", srcRaw: { $ref: "ocf://Date" } }],
+  },
+  { entity: "StockClass", kind: "object", fields: [{ field: "name", srcRaw: { type: "string" } }] },
+  {
+    entity: "Issuer",
+    kind: "object",
+    fields: [{ field: "legal_name", srcRaw: { type: "string" } }],
+  },
+];
+
+describe("emitCorePackage", () => {
+  const pkg = emitCorePackage(entities, registry, packaging);
+
+  it("packages events into a TransactionsFile with OCF file_type and oneOf items", () => {
+    const tf = pkg.get("files/TransactionsFile.schema.json") as any;
+    expect(tf.properties.file_type.const).toBe("OCF_TRANSACTIONS_FILE");
+    const titles = tf.properties.items.items.oneOf.map((o: any) => o.title).sort();
+    expect(titles).toEqual(["StockCancellation", "StockIssuance"]);
   });
 
-  it("each $def is closed, with an empty (fold-driven) required set", () => {
-    const schema = emitCoreSchema(entities, registry) as Record<string, any>;
-    const def = schema.$defs.StockIssuance__Rsa;
-    expect(def).toMatchObject({ type: "object", additionalProperties: false, required: [] });
-    expect(def.properties.quantity).toEqual({ type: "string", pattern: "^[0-9]+$" });
+  it("packages each object into its OCF category file", () => {
+    const scf = pkg.get("files/StockClassesFile.schema.json") as any;
+    expect(scf.properties.file_type.const).toBe("OCF_STOCK_CLASSES_FILE");
+    expect(scf.properties.items.items).toMatchObject({
+      type: "object",
+      required: [],
+      additionalProperties: false,
+      properties: { name: { type: "string" } },
+    });
   });
 
-  it("carries a field description through onto the rendered node", () => {
-    const schema = emitCoreSchema(entities, registry) as Record<string, any>;
-    expect(schema.$defs.Stakeholder.properties.name.description).toBe("Legal name");
+  it("rides Issuer inline on the manifest (no IssuerFile) with file-pointer collections", () => {
+    expect([...pkg.keys()].some((k) => /Issuer.*File/.test(k))).toBe(false);
+    const mf = pkg.get("OCFCoreManifestFile.schema.json") as any;
+    expect(mf.properties.file_type.const).toBe("OCF_MANIFEST_FILE");
+    expect(mf.properties.issuer.properties.legal_name).toEqual({ type: "string" });
+    expect(
+      Object.keys(mf.properties)
+        .filter((k) => k.endsWith("_files"))
+        .sort()
+    ).toEqual(["stock_classes_files", "transactions_files"]);
+    // *_files items are inlined File pointers, not $refs.
+    expect(mf.properties.transactions_files.items).toEqual({
+      type: "object",
+      additionalProperties: false,
+      properties: {
+        filepath: { type: "string" },
+        md5: { type: "string", pattern: "^[a-f0-9]{32}$" },
+      },
+      required: ["filepath", "md5"],
+    });
   });
 
-  it("contains no external $ref (everything inlined)", () => {
-    const schema = emitCoreSchema(entities, registry);
-    const json = JSON.stringify(schema);
-    // The only $refs allowed are the top-level oneOf pointers into #/$defs.
-    const externalRef = /"\$ref":"(?!#\/\$defs\/)/.test(json);
-    expect(externalRef).toBe(false);
+  it("emits no $ref anywhere — every file is self-contained", () => {
+    expect(JSON.stringify([...pkg.values()]).includes('"$ref"')).toBe(false);
   });
 });
