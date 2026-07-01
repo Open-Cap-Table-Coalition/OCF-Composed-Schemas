@@ -50,7 +50,7 @@ async function emitProfile(repoRoot: string, base: string, profile: CoreProfile,
   console.log(`  package: ${derived.package.size} files + reports`);
 
   const sampleRel = [...derived.package.keys()].find((r) => r.includes(sample));
-  if (sampleRel && profile.name === "rich") {
+  if (sampleRel && profile.memberReasons.size > 0) {
     console.log(`  sample — ${sampleRel}:`);
     console.log(JSON.stringify(derived.package.get(sampleRel), null, 2));
   }

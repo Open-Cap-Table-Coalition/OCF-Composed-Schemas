@@ -10,8 +10,30 @@
       "initial_shares_authorized": "10000000",
       "par_value": { "amount": "0.0001", "currency": "USD" },
       "price_per_share": { "amount": "0.0001", "currency": "USD" },
+      "seniority": "1",
       "liquidation_preference_multiple": "1",
       "participation_cap_multiple": "1"
+    },
+    {
+      "object_type": "STOCK_CLASS",
+      "id": "sc-series-a",
+      "name": "Series A Preferred",
+      "class_type": "PREFERRED",
+      "default_id_prefix": "SA-",
+      "initial_shares_authorized": "2000000",
+      "par_value": { "amount": "0.0001", "currency": "USD" },
+      "price_per_share": { "amount": "1.25", "currency": "USD" },
+      "seniority": "2",
+      "liquidation_preference_multiple": "1",
+      "participation_cap_multiple": "1",
+      "conversion_rights": [
+        {
+          "type": "STOCK_CLASS_CONVERSION_RIGHT",
+          "conversion_mechanism": "RATIO_CONVERSION",
+          "converts_to_future_round": false,
+          "converts_to_stock_class_id": "sc-common"
+        }
+      ]
     }
   ]
 }

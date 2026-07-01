@@ -21,19 +21,13 @@
 import path from "node:path";
 import { writeFile } from "node:fs/promises";
 
-import { isPlainObject } from "./lib/mapping-validator.js";
-import { deriveCore } from "./lib/core-pipeline.js";
+import { deriveCore, RICH_PROFILE } from "./lib/core-pipeline.js";
+import { BOOKKEEPING, buildTargetIndex } from "./lib/report-helpers.js";
 
 const OUT_FILE = "docs/core-lossy-inventory.md";
-const BOOKKEEPING = new Set(["id", "object_type", "comments"]);
-const LOSSY_HOME = new Set(["existence-loss", "heuristic", "partial"]);
-
-function targetString(target: unknown): string {
-  if (target === null || target === undefined) return "—";
-  if (typeof target === "string") return target;
-  if (Array.isArray(target)) return target.map(targetString).join(" + ");
-  return JSON.stringify(target);
-}
+// "Lossy home" = the reasons the rich profile promotes to members (single source
+// of truth: RICH_PROFILE.memberReasons); "no home" (no-destination) is separate.
+const LOSSY_HOME = RICH_PROFILE.memberReasons;
 
 interface InvRow {
   entity: string;
@@ -52,22 +46,14 @@ async function main(): Promise<number> {
   const reqBy = new Map(d.corpus.objects.map((o) => [o.entity, new Set(o.requiredFields)]));
 
   // Join each classified row to the Carta target the mapping actually names.
-  const targetOf = new Map<string, string>();
-  for (const o of d.corpus.objects) {
-    for (const [variant, fields] of o.variants) {
-      for (const [field, entry] of Object.entries(fields)) {
-        if (isPlainObject(entry)) {
-          targetOf.set(`${o.entity} ${variant} ${field}`, targetString(entry.target));
-        }
-      }
-    }
-  }
+  const targetOf = buildTargetIndex(d.corpus.objects);
 
   const lossy: InvRow[] = [];
   const nohome: InvRow[] = [];
   for (const r of d.rows) {
     if (r.verdict.class !== "out" || BOOKKEEPING.has(r.field)) continue;
-    const reason = r.verdict.reason ?? "?";
+    const reason = r.verdict.reason;
+    if (reason === undefined) continue;
     const row: InvRow = {
       entity: r.entity,
       variant: r.variant,

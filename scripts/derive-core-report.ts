@@ -23,6 +23,7 @@ import { isPlainObject } from "./lib/mapping-validator.js";
 import { classifyField, ClassifyCtx, Verdict } from "./lib/core-classifier.js";
 import { computeAdmissibility, Admissibility } from "./lib/core-admissibility.js";
 import { loadGreenCorpus, loadReferenceGraph } from "./lib/core-corpus.js";
+import { targetString } from "./lib/report-helpers.js";
 
 const SPINE = [
   "StockIssuance",
@@ -40,13 +41,6 @@ interface Row {
   kind: string;
   target: string;
   verdict: Verdict;
-}
-
-function targetString(target: unknown): string {
-  if (target === null) return "—";
-  if (Array.isArray(target)) return target.join(" + ");
-  if (typeof target === "string") return target;
-  return JSON.stringify(target);
 }
 
 async function main(argv: { entity?: string; md?: string }): Promise<number> {
