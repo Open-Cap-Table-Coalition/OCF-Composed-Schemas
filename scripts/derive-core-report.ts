@@ -79,6 +79,9 @@ async function main(argv: { entity?: string; md?: string }): Promise<number> {
   // §3 admissibility runs over ALL rows — closure is global (a referent may be
   // outside the entity filter). We display the verdict for the filtered view.
   const graph = await loadReferenceGraph(process.cwd());
+  const aliases = new Map(
+    corpus.objects.filter((o) => o.aliasOf).map((o) => [o.entity, o.aliasOf as string])
+  );
   const adm = computeAdmissibility(
     rows.map((r) => ({
       entity: r.entity,
@@ -86,7 +89,8 @@ async function main(argv: { entity?: string; md?: string }): Promise<number> {
       field: r.field,
       klass: r.verdict.class,
     })),
-    graph
+    graph,
+    aliases
   );
   const admBy = new Map(adm.map((a) => [`${a.entity} ${a.variant}`, a]));
 
@@ -152,10 +156,17 @@ function printReport(
     `out reasons: ${[...byReason.entries()].map(([k, v]) => `${k} ${v}`).join(" · ") || "—"}`
   );
   const admN = allAdm.filter((a) => a.admissible).length;
-  const dangling = allAdm.filter((a) => a.blockers.some((b) => b.why !== "no-payload")).length;
+  const aliasAdmissible = allAdm.filter((a) => a.aliasOf && a.admissible).length;
+  const blocked = allAdm.filter((a) => !a.admissible);
+  const dangling = blocked.filter((a) =>
+    a.blockers.some((b) => b.why === "dangling-reference" || b.why === "unresolved-reference")
+  ).length;
+  const aliasBlocked = blocked.filter((a) => a.aliasOf).length;
+  const noPayload = blocked.length - dangling - aliasBlocked;
   console.log(
-    `§3 admissibility: ${admN}/${allAdm.length} (entity,variant) admissible · ` +
-      `${allAdm.length - admN} blocked (${dangling} on closure, rest no-payload)  ` +
+    `§3 admissibility: ${admN}/${allAdm.length} (entity,variant) admissible ` +
+      `(incl. ${aliasAdmissible} alias wrapper(s)) · ` +
+      `${blocked.length} blocked (${dangling} closure · ${aliasBlocked} alias · ${noPayload} no-payload)  ` +
       `[fold-required gate vacuous (Carta target required:[]); it collapses into the no-payload gate]`
   );
   if (meta.skipped.length) {
@@ -182,7 +193,11 @@ function printReport(
     const g = groups.get(key)!;
     const c = g.filter((r) => r.verdict.class === "core").length;
     const a = admBy.get(admKey(key));
-    const verdict = a?.admissible ? "✓ admissible" : `✗ blocked: ${blockerSummary(a)}`;
+    const verdict = a?.aliasOf
+      ? `${a.admissible ? "✓" : "✗"} alias-of ${a.aliasOf}`
+      : a?.admissible
+      ? "✓ admissible"
+      : `✗ blocked: ${blockerSummary(a)}`;
     console.log(
       `  ${shortEntity(key).padEnd(46)} core ${String(c).padStart(2)} / out ${String(
         g.length - c
@@ -194,7 +209,13 @@ function printReport(
 function blockerSummary(a: Admissibility | undefined): string {
   if (!a || a.blockers.length === 0) return "—";
   return a.blockers
-    .map((b) => (b.why === "no-payload" ? "no-payload" : `${b.field}→${b.referent}`))
+    .map((b) =>
+      b.why === "no-payload"
+        ? "no-payload"
+        : b.why === "alias"
+        ? `alias-of ${b.referent}`
+        : `${b.field}→${b.referent}`
+    )
     .join(", ");
 }
 

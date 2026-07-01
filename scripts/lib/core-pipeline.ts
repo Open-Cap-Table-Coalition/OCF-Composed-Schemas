@@ -71,6 +71,9 @@ export async function deriveCore(repoRoot: string): Promise<Derived> {
   }
 
   const graph = await loadReferenceGraph(repoRoot);
+  const aliases = new Map(
+    corpus.objects.filter((o) => o.aliasOf).map((o) => [o.entity, o.aliasOf as string])
+  );
   const admissibility = computeAdmissibility(
     rows.map((r) => ({
       entity: r.entity,
@@ -78,7 +81,8 @@ export async function deriveCore(repoRoot: string): Promise<Derived> {
       field: r.field,
       klass: r.verdict.class,
     })),
-    graph
+    graph,
+    aliases
   );
   const admissibleNode = new Set(
     admissibility.filter((a) => a.admissible).map((a) => `${a.entity} ${a.variant}`)

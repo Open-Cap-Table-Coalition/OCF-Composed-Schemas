@@ -7,10 +7,11 @@
  *      field flipping an unratified entity admissible) trips this gate; fix the
  *      mapping or ratify the entity. (Ratified-but-not-yet-admissible is fine —
  *      graduation is automatic once its mapping is green.)
- *   2. DRIFT — the committed Core schema PACKAGE (core/**.schema.json) must equal
- *      a fresh recompute, file-for-file (structural equality after canonical
- *      key-sort). Hand-edits, stale builds, and orphaned files trip this; run
- *      `npm run core:build` and commit.
+ *   2. DRIFT — the committed Core artifacts must equal a fresh recompute: the
+ *      schema PACKAGE (core/**.schema.json), file-for-file (structural equality
+ *      after canonical key-sort), AND the generated markdown reports
+ *      (core-ledger.md, core-gaps.md), byte-for-byte. Hand-edits, stale builds,
+ *      and orphaned files trip this; run `npm run core:build` and commit.
  *
  *   npm run core:check
  */
@@ -19,6 +20,7 @@ import { readdir, readFile } from "node:fs/promises";
 import { parse as parseYaml } from "yaml";
 
 import { deriveCore } from "./lib/core-pipeline.js";
+import { renderLedger, renderGapReport } from "./lib/core-reports.js";
 
 const ALLOW_LIST = "core/allow-list.yml";
 const CORE_DIR = "core";
@@ -112,6 +114,29 @@ async function main(): Promise<number> {
     }
   }
 
+  // Generated markdown reports — byte-for-byte against a fresh render (same
+  // `Derived`, same functions the build writes with, so equality is exact).
+  const reports: Record<string, string> = {
+    "core-ledger.md": renderLedger(derived),
+    "core-gaps.md": renderGapReport(derived),
+  };
+  for (const [name, expected] of Object.entries(reports)) {
+    try {
+      const onDisk = await readFile(path.join(repoRoot, CORE_DIR, name), "utf8");
+      if (onDisk !== expected) {
+        failures.push(
+          `DRIFT: ${CORE_DIR}/${name} differs from recompute — run \`npm run core:build\` and commit.`
+        );
+      }
+    } catch (err) {
+      failures.push(
+        `DRIFT: cannot read ${CORE_DIR}/${name} (${
+          (err as Error).message
+        }) — run \`npm run core:build\`.`
+      );
+    }
+  }
+
   // --- Report ---------------------------------------------------------------
   if (failures.length) {
     console.error("OCF Core check: FAIL\n");
@@ -120,7 +145,7 @@ async function main(): Promise<number> {
   }
   console.log(
     `OCF Core check: OK — ${drafted.length} admissible entit(y/ies) ratified; ` +
-      `${fresh.size}-file package matches recompute.` +
+      `${fresh.size}-file package + 2 generated reports match recompute.` +
       (pendingGraduation.length
         ? `\n  (${
             pendingGraduation.length

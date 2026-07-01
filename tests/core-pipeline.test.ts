@@ -46,6 +46,22 @@ describe("deriveCore (determinism — the drift gate's premise)", () => {
     for (const e of d.entities) expect(e.fields.length).toBeGreaterThan(0);
   });
 
+  it("alias wrappers get an admissibility verdict but never emit a Core schema", async () => {
+    const d = await deriveCore(process.cwd());
+    const aliasRows = d.admissibility.filter((a) => a.aliasOf);
+    expect(aliasRows.length).toBeGreaterThan(0); // the PlanSecurity* family
+
+    const psi = aliasRows.find((a) => a.entity === "PlanSecurityIssuance");
+    expect(psi?.aliasOf).toBe("EquityCompensationIssuance");
+    expect(psi?.admissible).toBe(true); // its base lands, so it has a target
+
+    // A wrapper carries no core fields of its own, so it is never drafted as a
+    // Core entity — the canonical base is emitted instead (no duplicate shape).
+    const emitted = new Set(d.entities.map((e) => e.entity));
+    for (const a of aliasRows) expect(emitted.has(a.entity)).toBe(false);
+    expect(emitted.has("EquityCompensationIssuance")).toBe(true);
+  });
+
   it("every entity carries the OCF identity spine (id + object_type)", async () => {
     const d = await deriveCore(process.cwd());
     for (const e of d.entities) {

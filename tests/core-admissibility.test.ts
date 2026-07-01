@@ -86,6 +86,46 @@ describe("computeAdmissibility — non-degeneracy (payload) gate", () => {
   });
 });
 
+describe("computeAdmissibility — alias wrappers", () => {
+  // A wrapper declares only `object_type` (an `out` field), so on its own rows it
+  // is always no-payload; the alias map makes it mirror the base instead.
+  const wrapperRows = (wrapper: string): ClassifiedRow[] => [out(wrapper, "—", "object_type")];
+
+  it("an alias of an admissible base is admissible, flagged alias-of, never no-payload", () => {
+    const rows = [
+      core("EquityCompensationIssuance", "Option", "quantity"), // base has payload
+      ...wrapperRows("PlanSecurityIssuance"),
+    ];
+    const aliases = new Map([["PlanSecurityIssuance", "EquityCompensationIssuance"]]);
+    const a = index(computeAdmissibility(rows, GRAPH, aliases)).get("PlanSecurityIssuance —")!;
+    expect(a.admissible).toBe(true);
+    expect(a.aliasOf).toBe("EquityCompensationIssuance");
+    expect(a.blockers).toEqual([
+      { field: "—", referent: "EquityCompensationIssuance", why: "alias" },
+    ]);
+    expect(a.blockers.some((b) => b.why === "no-payload")).toBe(false);
+  });
+
+  it("an alias of a degenerate base is inadmissible but still reads alias-of, not no-payload", () => {
+    const rows = [
+      out("EquityCompensationAcceptance", "—", "object_type"), // base lands no payload
+      ...wrapperRows("PlanSecurityAcceptance"),
+    ];
+    const aliases = new Map([["PlanSecurityAcceptance", "EquityCompensationAcceptance"]]);
+    const a = index(computeAdmissibility(rows, GRAPH, aliases)).get("PlanSecurityAcceptance —")!;
+    expect(a.admissible).toBe(false);
+    expect(a.aliasOf).toBe("EquityCompensationAcceptance");
+    expect(a.blockers.map((b) => b.why)).toEqual(["alias"]);
+  });
+
+  it("without an alias map, a wrapper degrades to the ordinary no-payload verdict", () => {
+    const a = index(run(wrapperRows("PlanSecurityIssuance"))).get("PlanSecurityIssuance —")!;
+    expect(a.admissible).toBe(false);
+    expect(a.aliasOf).toBeUndefined();
+    expect(a.blockers.map((b) => b.why)).toContain("no-payload");
+  });
+});
+
 describe("computeAdmissibility — referential closure", () => {
   it("admits when a core FK resolves to an admissible referent", () => {
     const adm = index(

@@ -52,4 +52,22 @@ describe("loadGreenCorpus (smoke — reads the real repo)", () => {
       expect(typeof obj.entity).toBe("string");
     }
   });
+
+  it("detects PlanSecurity* compatibility wrappers as aliases of their EquityCompensation base", async () => {
+    const corpus = await loadGreenCorpus(process.cwd());
+    const byEntity = new Map(corpus.objects.map((o) => [o.entity, o]));
+
+    const psi = byEntity.get("PlanSecurityIssuance");
+    expect(psi?.aliasOf).toBe("EquityCompensationIssuance");
+
+    // Every green PlanSecurity* is an alias; nothing else is (composition
+    // primitives are inlined, not `$ref`d to a concrete entity).
+    for (const obj of corpus.objects) {
+      if (obj.entity.startsWith("PlanSecurity")) {
+        expect(obj.aliasOf).toBe(obj.entity.replace(/^PlanSecurity/, "EquityCompensation"));
+      } else {
+        expect(obj.aliasOf).toBeUndefined();
+      }
+    }
+  });
 });

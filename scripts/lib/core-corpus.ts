@@ -139,6 +139,13 @@ export interface GreenObject {
   properties: Record<string, unknown>;
   /** variant label ("—" when not polymorphic) → effective field→entry map. */
   variants: Map<string, Record<string, unknown>>;
+  /**
+   * Set iff this schema is an OCF compatibility wrapper: it `allOf`-inherits
+   * another green entity and re-declares only bookkeeping (`object_type`), adding
+   * no economic fields of its own (e.g. `PlanSecurityIssuance` → the value is
+   * `EquityCompensationIssuance`). Its economic mapping lives in the base.
+   */
+  aliasOf?: string;
 }
 
 export interface Corpus {
@@ -208,6 +215,43 @@ export function variantFieldMaps(
     result.set(label, { ...simpleShared, ...projected[label], ...vFields });
   }
   return result;
+}
+
+/** Basenames of the schemas an `allOf` composes, e.g. `EquityCompensationIssuance`. */
+function allOfRefBasenames(schema: unknown): string[] {
+  const allOf = isPlainObject(schema) ? (schema as { allOf?: unknown }).allOf : undefined;
+  if (!Array.isArray(allOf)) return [];
+  const out: string[] = [];
+  for (const el of allOf) {
+    if (isPlainObject(el) && typeof el.$ref === "string") {
+      out.push(
+        el.$ref
+          .split("/")
+          .pop()!
+          .replace(/\.schema\.json$/, "")
+      );
+    }
+  }
+  return out;
+}
+
+/**
+ * The base entity a schema is a pure compatibility wrapper for, or undefined.
+ * A wrapper `allOf`-composes exactly one *concrete green entity* (not an OCF
+ * primitive like `Object`/`Transaction`, which are inlined during composition and
+ * are absent from `entityNames`) and re-declares only bookkeeping properties —
+ * it adds no economic field of its own. This is the `PlanSecurity*` shape.
+ */
+const WRAPPER_BOOKKEEPING = new Set(["object_type", "id", "comments"]);
+function detectAlias(schema: unknown, entityNames: Set<string>): string | undefined {
+  const base = allOfRefBasenames(schema).find((b) => entityNames.has(b));
+  if (!base) return undefined;
+  const props =
+    isPlainObject(schema) && isPlainObject((schema as { properties?: unknown }).properties)
+      ? Object.keys((schema as { properties: Record<string, unknown> }).properties)
+      : [];
+  const bookkeepingOnly = props.length > 0 && props.every((k) => WRAPPER_BOOKKEEPING.has(k));
+  return bookkeepingOnly ? base : undefined;
 }
 
 async function collectMappingFiles(repoRoot: string): Promise<string[]> {
@@ -353,6 +397,14 @@ export async function loadGreenCorpus(repoRoot: string): Promise<Corpus> {
     }
   }
 
+  // The green object entity names — the set an alias `allOf`-base must belong to
+  // (OCF composition primitives are not entities, so they never match).
+  const objectEntityNames = new Set(
+    parsed
+      .filter((p) => p.frontmatter.ocf_kind === "object" && isGreenCarta(p.frontmatter, p.mapping))
+      .map((p) => path.basename(p.rel).replace(/\.mapping\.md$/, ""))
+  );
+
   // Pass 2 — green objects with their effective field maps + source properties.
   const objects: GreenObject[] = [];
   for (const { rel, frontmatter, mapping } of parsed) {
@@ -382,6 +434,7 @@ export async function loadGreenCorpus(repoRoot: string): Promise<Corpus> {
       requiredFields,
       properties: (sourceSchema.properties ?? {}) as Record<string, unknown>,
       variants: variantFieldMaps(mapping),
+      aliasOf: detectAlias(sourceSchema, objectEntityNames),
     });
   }
 
