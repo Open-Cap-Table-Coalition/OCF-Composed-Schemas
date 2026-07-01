@@ -7,9 +7,91 @@ Fields that today fall **out** of Core, split by whether Carta offers a home at 
 `OCF-req` marks fields OCF itself requires — a lossy home on a required field is the
 strongest rich-Core / upstream-OCF signal.
 
-**A** groups the lossy-home fields by their OCF object and shows where each one flows
-in Carta; **B** flips that around — one entry per Carta slot, listing every OCF property
-that lands on it (so convergence is obvious); **C** is the no-home set for contrast.
+The **overview diagram** shows the whole flow at object granularity; **A** breaks it
+down per OCF object (where each field flows); **B** inverts it — one entry per Carta slot
+listing every OCF property that lands on it (convergence); **C** is the no-home set.
+
+## Overview — the lossy flow at a glance
+
+OCF source objects (green = in strict Core; dashed grey = not yet admissible) and the
+Carta objects their lossy-home fields flow to; each edge is labelled with the number of
+fields. Several OCF objects pointing at one Carta node = distinct OCF properties collapsing
+together — most visibly the reverse-edge lineage converging on the two `…PrecededBy`.
+
+```mermaid
+flowchart LR
+  classDef adm fill:#e6f4ea,stroke:#34a853,color:#0b3d20;
+  classDef notadm fill:#f1f3f4,stroke:#9aa0a6,color:#5f6368,stroke-dasharray:4 3;
+  classDef carta fill:#e8f0fe,stroke:#1a73e8,color:#0d2b66;
+  subgraph SRC["OCF source objects"]
+    direction TB
+    o0["ConvertibleCancellation"]:::adm
+    o1["ConvertibleIssuance"]:::adm
+    o2["Document"]:::notadm
+    o3["EquityCompensationExercise"]:::adm
+    o4["EquityCompensationIssuance"]:::adm
+    o5["EquityCompensationRelease"]:::adm
+    o6["Stakeholder"]:::adm
+    o7["StockCancellation"]:::adm
+    o8["StockClass"]:::adm
+    o9["StockClassConversionRatioAdjustment"]:::notadm
+    o10["StockConsolidation"]:::notadm
+    o11["StockConversion"]:::notadm
+    o12["StockPlan"]:::adm
+    o13["StockReissuance"]:::notadm
+    o14["StockRepurchase"]:::notadm
+    o15["StockTransfer"]:::notadm
+    o16["WarrantCancellation"]:::adm
+    o17["WarrantExercise"]:::notadm
+    o18["WarrantIssuance"]:::adm
+    o19["WarrantTransfer"]:::adm
+  end
+  subgraph TGT["Carta target objects"]
+    direction TB
+    t0["CertificatePrecededBy"]:::carta
+    t1["Compliance"]:::carta
+    t2["ConvertibleCancellationTransaction"]:::carta
+    t3["ConvertibleIssuanceTransaction"]:::carta
+    t4["Document"]:::carta
+    t5["OptionGrant"]:::carta
+    t6["OptionPoolSummary"]:::carta
+    t7["RestrictedStockAwardPrecededBy"]:::carta
+    t8["ShareClass"]:::carta
+    t9["ShareClassRightsAndPreferences"]:::carta
+    t10["Stakeholder"]:::carta
+    t11["WarrantCancellationTransaction"]:::carta
+    t12["WarrantExerciseTransaction"]:::carta
+    t13["WarrantTransferTransaction"]:::carta
+  end
+  o0 -->|1| t2
+  o1 -->|1| t1
+  o1 -->|1| t3
+  o2 -->|2| t4
+  o3 -->|1| t0
+  o4 -->|1| t5
+  o5 -->|1| t0
+  o6 -->|4| t10
+  o7 -->|1| t0
+  o7 -->|1| t7
+  o8 -->|1| t8
+  o8 -->|1| t9
+  o9 -->|1| t9
+  o10 -->|2| t0
+  o10 -->|2| t7
+  o11 -->|2| t0
+  o11 -->|2| t7
+  o12 -->|1| t6
+  o13 -->|1| t0
+  o13 -->|1| t7
+  o14 -->|1| t0
+  o14 -->|1| t7
+  o15 -->|2| t0
+  o15 -->|2| t7
+  o16 -->|1| t11
+  o17 -->|1| t12
+  o18 -->|1| t1
+  o19 -->|1| t13
+```
 
 ## A. Lossy home — by OCF object, flowing to Carta (39 (entity,variant,field) rows across 20 objects; 24 OCF-required)
 
