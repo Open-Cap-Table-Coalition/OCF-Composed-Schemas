@@ -179,42 +179,40 @@ types no green mapping writes to.
 - consideration_text: no-destination — kind unmappable
 - **resulting_security_ids** (OCF-required): existence-loss — array→scalar
 
-## (b) Carta object types no green mapping targets
+## (b) Carta object types no green mapping writes to
 
 41 of 139 Carta `$defs` are object-typed
-and unreferenced by any green mapping target (candidate Carta concepts OCF may
-lack, or simply not-yet-mapped):
+and are not the **root** of any green mapping target. They split three ways:
 
-- `#/$defs/Acceleration`
-- `#/$defs/CapitalizationTableSummary`
-- `#/$defs/CertificateTransactionItem`
-- `#/$defs/Corporation`
-- `#/$defs/Date`
+### (b1) Nested-covered — written to via a parent (9)
+
+Reached by `$ref` from a Carta object a green mapping does write to, so the concept
+is covered indirectly; it is just never named as a root target. Not a gap.
+
 - `#/$defs/DividendDetails`
 - `#/$defs/Exercise`
-- `#/$defs/Interest`
-- `#/$defs/Jurisdiction`
-- `#/$defs/NoteBlockSummary`
-- `#/$defs/OptionExercise`
-- `#/$defs/OptionExerciseMoneyMovement`
-- `#/$defs/OptionExerciseTaxWithholdingLineItem`
-- `#/$defs/OptionGrantDocuments`
-- `#/$defs/OptionTransactionItem`
 - `#/$defs/PerformanceCondition`
-- `#/$defs/PhantomCancellationTransaction`
-- `#/$defs/PhantomIssuanceTransaction`
-- `#/$defs/PhantomTransactionItem`
-- `#/$defs/PiuCancellationTransaction`
-- `#/$defs/PiuIssuanceTransaction`
-- `#/$defs/PiuTransactionItem`
 - `#/$defs/PrecededBySecurity`
 - `#/$defs/PreferredShareClassDetails`
 - `#/$defs/RestrictedStockAwardVestingEvent`
 - `#/$defs/RestrictedStockUnitVestingEvent`
+- `#/$defs/ShareClassDividendDetails`
+- `#/$defs/VestingSchedule`
+
+### (b2) Carta report roll-ups — no OCF source fact (17)
+
+Carta read-model aggregates (…Summary / …TransactionItem / stakeholder groupings).
+OCF records the leaf events, never the derived container. Expected non-targets.
+
+- `#/$defs/CapitalizationTableSummary`
+- `#/$defs/CertificateTransactionItem`
+- `#/$defs/NoteBlockSummary`
+- `#/$defs/OptionTransactionItem`
+- `#/$defs/PhantomTransactionItem`
+- `#/$defs/PiuTransactionItem`
 - `#/$defs/RsaTransactionItem`
 - `#/$defs/RsuTransactionItem`
 - `#/$defs/SarTransactionItem`
-- `#/$defs/ShareClassDividendDetails`
 - `#/$defs/ShareClassSummary`
 - `#/$defs/StakeholderCapitalizationTableSummary`
 - `#/$defs/StakeholderGroup`
@@ -222,7 +220,26 @@ lack, or simply not-yet-mapped):
 - `#/$defs/StakeholderOptionPoolSummary`
 - `#/$defs/StakeholderShareClassSummary`
 - `#/$defs/StakeholderWarrantBlockSummary`
+- `#/$defs/WarrantBlockSummary`
+
+### (b3) True gaps — OCF lacks the concept, or the parent is unmapped (15)
+
+The real candidates: OCF has no equivalent (e.g. phantom-equity / profits-interest),
+or the def sits under a Carta parent that itself has no green mapping.
+
+- `#/$defs/Acceleration`
+- `#/$defs/Corporation`
+- `#/$defs/Date`
+- `#/$defs/Interest`
+- `#/$defs/Jurisdiction`
+- `#/$defs/OptionExercise`
+- `#/$defs/OptionExerciseMoneyMovement`
+- `#/$defs/OptionExerciseTaxWithholdingLineItem`
+- `#/$defs/OptionGrantDocuments`
+- `#/$defs/PhantomCancellationTransaction`
+- `#/$defs/PhantomIssuanceTransaction`
+- `#/$defs/PiuCancellationTransaction`
+- `#/$defs/PiuIssuanceTransaction`
 - `#/$defs/ThresholdDetails`
 - `#/$defs/Vesting`
-- `#/$defs/VestingSchedule`
-- `#/$defs/WarrantBlockSummary`
+

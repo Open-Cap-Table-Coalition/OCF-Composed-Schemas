@@ -148,6 +148,16 @@ export interface Corpus {
   objects: GreenObject[];
   /** Root Carta `$def` names targeted by any green mapping (for gap report b). */
   targetedDefs: Set<string>;
+  /**
+   * Carta `$defs` reachable by `$ref` from any `targetedDefs` entry (transitive
+   * structural coverage). A green mapping writes to a parent object, and that
+   * parent `$ref`s these children — so the concept is covered indirectly even
+   * though `collectTargets` only ever credits the ROOT segment of a target
+   * pointer and never these nested defs. Used to separate "nested-covered" from
+   * "true gap" in gap report (b). Structural reachability, not a proof that a
+   * specific field writes into the child.
+   */
+  transitivelyCoveredDefs: Set<string>;
   skipped: string[];
 }
 
@@ -233,6 +243,54 @@ function collectTargets(target: unknown, into: Set<string>): void {
   else if (isPlainObject(target)) Object.values(target).forEach((t) => collectTargets(t, into));
 }
 
+/** Collect every `#/$defs/<Root>` root named by a `$ref` anywhere inside a schema node. */
+function collectRefRoots(node: unknown, into: Set<string>): void {
+  if (Array.isArray(node)) {
+    node.forEach((n) => collectRefRoots(n, into));
+    return;
+  }
+  if (!isPlainObject(node)) return;
+  for (const [key, val] of Object.entries(node)) {
+    if (key === "$ref" && typeof val === "string") {
+      const m = /^#\/\$defs\/([^/]+)/.exec(val);
+      if (m) into.add(m[1] as string);
+    } else {
+      collectRefRoots(val, into);
+    }
+  }
+}
+
+/**
+ * Transitive `$ref` closure over the Carta bundle: from the directly-targeted
+ * roots, follow every `$ref` reachable through their `$def` bodies (properties,
+ * items, oneOf/allOf, at any depth) and collect the reached roots. This credits
+ * children a green mapping writes to only indirectly — the fix for `collectTargets`
+ * crediting just the root segment of a pointer. Returns the strictly-reachable
+ * descendants (the seed roots themselves are not added).
+ */
+function closeOverRefs(bundle: unknown, roots: Set<string>): Set<string> {
+  const defs =
+    isPlainObject(bundle) && isPlainObject((bundle as { $defs?: unknown }).$defs)
+      ? (bundle as { $defs: Record<string, unknown> }).$defs
+      : {};
+  const covered = new Set<string>();
+  const queue: string[] = [...roots];
+  while (queue.length > 0) {
+    const name = queue.shift() as string;
+    const def = defs[name];
+    if (def === undefined) continue;
+    const children = new Set<string>();
+    collectRefRoots(def, children);
+    for (const child of children) {
+      if (!covered.has(child)) {
+        covered.add(child);
+        queue.push(child);
+      }
+    }
+  }
+  return covered;
+}
+
 export async function loadGreenCorpus(repoRoot: string): Promise<Corpus> {
   const registry = await loadRegistry(repoRoot);
   const bundle = JSON.parse(
@@ -270,8 +328,21 @@ export async function loadGreenCorpus(repoRoot: string): Promise<Corpus> {
     if (!isGreenCarta(frontmatter, mapping)) continue;
     for (const fm of variantFieldMaps(mapping).values()) {
       for (const entry of Object.values(fm)) {
-        if (isPlainObject(entry)) collectTargets(entry.target, targetedDefs);
+        if (isPlainObject(entry)) {
+          collectTargets(entry.target, targetedDefs);
+          // enum-value → Carta pointer maps (`values:` on a field entry) are
+          // targets too, but sit beside `target:` where the old harvest missed them.
+          collectTargets(entry.values, targetedDefs);
+        }
       }
+    }
+    // Object-level target blocks that variantFieldMaps does not surface: the
+    // top-level and per-variant `primary_targets` arrays (the Carta objects a
+    // whole variant lands on). Harvesting these closes a latent blind spot.
+    collectTargets(mapping.primary_targets, targetedDefs);
+    const variantBlocks = isPlainObject(mapping.variants) ? mapping.variants : {};
+    for (const v of Object.values(variantBlocks)) {
+      if (isPlainObject(v)) collectTargets(v.primary_targets, targetedDefs);
     }
     if (frontmatter.ocf_kind === "type") {
       const id = frontmatter.ocf_schema_id;
@@ -314,5 +385,7 @@ export async function loadGreenCorpus(repoRoot: string): Promise<Corpus> {
     });
   }
 
-  return { registry, bundle, typeLib, objects, targetedDefs, skipped };
+  const transitivelyCoveredDefs = closeOverRefs(bundle, targetedDefs);
+
+  return { registry, bundle, typeLib, objects, targetedDefs, transitivelyCoveredDefs, skipped };
 }

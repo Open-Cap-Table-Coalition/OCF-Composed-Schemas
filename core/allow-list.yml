@@ -5,7 +5,7 @@
 # includes an entity not listed here (over-derivation) — fix the mapping or ratify.
 # A name listed but not yet admissible is fine: it graduates automatically once its
 # mapping lands green. Field shapes are NOT here — the generator owns those and the
-# drift gate pins the emitted package (see ocf-core-converter-goal.md, C4).
+# drift gate pins the emitted package (see docs/ocf-core-spec.md §5).
 
 ratified:
   - ConvertibleCancellation

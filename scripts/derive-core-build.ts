@@ -150,24 +150,78 @@ function renderGapReport(d: Derived): string {
     lines.push("");
   }
 
-  lines.push("## (b) Carta object types no green mapping targets", "");
+  lines.push("## (b) Carta object types no green mapping writes to", "");
   const cartaDefs = (d.corpus.bundle as { $defs?: Record<string, unknown> }).$defs ?? {};
   const isObjectType = (def: unknown): boolean => {
     if (!isPlainObject(def) || !isPlainObject(def.properties)) return false;
     const keys = Object.keys(def.properties as Record<string, unknown>);
     return keys.length > 1 || (keys.length === 1 && keys[0] !== "value");
   };
+  // Defensive value-type denylist: defs `isObjectType` would treat as objects
+  // but that are really scalar/utility wrappers. Empty pending schema-owner
+  // sign-off — the R5 audit found `isObjectType` mis-flags none of the current
+  // set (e.g. Date, Interest are genuine objects). Add names here to exclude.
+  const VALUE_TYPE_DENYLIST = new Set<string>([]);
   const untargeted = Object.entries(cartaDefs)
-    .filter(([name, def]) => isObjectType(def) && !d.corpus.targetedDefs.has(name))
+    .filter(
+      ([name, def]) =>
+        isObjectType(def) && !VALUE_TYPE_DENYLIST.has(name) && !d.corpus.targetedDefs.has(name)
+    )
     .map(([name]) => name)
     .sort();
+
+  // Partition the untargeted object defs so the report stops reading as N equal
+  // "misses". A def is listed here iff it is object-typed and never the ROOT of
+  // a green target pointer — but that covers three very different situations:
+  //   b1 nested-covered — reached by `$ref` from a Carta object a green mapping
+  //      DOES write to; covered indirectly, never a root target. Not a gap.
+  //   b2 report roll-ups — Carta read-model aggregates (…Summary / …TransactionItem
+  //      / stakeholder groupings); OCF is transaction-centric and has no source
+  //      fact for them. Expected non-targets.
+  //   b3 true gaps — the rest: OCF lacks the concept, or the def sits under a
+  //      Carta parent that itself has no green mapping.
+  const isReportRollup = (name: string) =>
+    /(?:Summary|TransactionItem)$/.test(name) || name === "StakeholderGroup";
+  const nestedCovered = untargeted.filter((n) => d.corpus.transitivelyCoveredDefs.has(n));
+  const rest = untargeted.filter((n) => !d.corpus.transitivelyCoveredDefs.has(n));
+  const rollups = rest.filter(isReportRollup);
+  const trueGaps = rest.filter((n) => !isReportRollup(n));
+
+  const emitList = (names: string[]) => {
+    if (names.length === 0) lines.push("- (none)");
+    else for (const name of names) lines.push(`- \`#/$defs/${name}\``);
+    lines.push("");
+  };
+
   lines.push(
     `${untargeted.length} of ${Object.keys(cartaDefs).length} Carta \`$defs\` are object-typed`,
-    "and unreferenced by any green mapping target (candidate Carta concepts OCF may",
-    "lack, or simply not-yet-mapped):",
+    "and are not the **root** of any green mapping target. They split three ways:",
     ""
   );
-  for (const name of untargeted) lines.push(`- \`#/$defs/${name}\``);
+  lines.push(
+    `### (b1) Nested-covered — written to via a parent (${nestedCovered.length})`,
+    "",
+    "Reached by `$ref` from a Carta object a green mapping does write to, so the concept",
+    "is covered indirectly; it is just never named as a root target. Not a gap.",
+    ""
+  );
+  emitList(nestedCovered);
+  lines.push(
+    `### (b2) Carta report roll-ups — no OCF source fact (${rollups.length})`,
+    "",
+    "Carta read-model aggregates (…Summary / …TransactionItem / stakeholder groupings).",
+    "OCF records the leaf events, never the derived container. Expected non-targets.",
+    ""
+  );
+  emitList(rollups);
+  lines.push(
+    `### (b3) True gaps — OCF lacks the concept, or the parent is unmapped (${trueGaps.length})`,
+    "",
+    "The real candidates: OCF has no equivalent (e.g. phantom-equity / profits-interest),",
+    "or the def sits under a Carta parent that itself has no green mapping.",
+    ""
+  );
+  emitList(trueGaps);
   return lines.join("\n") + "\n";
 }
 
