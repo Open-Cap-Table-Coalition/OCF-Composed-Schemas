@@ -11,6 +11,13 @@ wins and this doc is wrong.
 > datum with nowhere to land. The fold itself is separate, already-owned machinery; Core's job is to
 > *guarantee it can run*. This spec computes which OCF fields/events satisfy that guarantee.
 
+> **Two profiles (§9).** The recap above defines the **`strict`** profile — the lossless intersection,
+> emitted to `core/`. Everything in §§1–8 is about it and it is the default everywhere. A second
+> **`rich`** profile (emitted to `core-rich/`) is the *same derivation read more permissively*: it also
+> admits the lossy-home fields strict drops (a `name`, an `address`), kept in **OCF's own shape**, at
+> the cost of the round-trip guarantee. It is a strict superset. See **§9** for the full mechanics;
+> §§1–8 describe the shared machinery both profiles run.
+
 ---
 
 ## 1. Derive, don't declare
@@ -245,10 +252,12 @@ deliberately **thin** — exactly **two small curated files**, neither of which 
   gaps** being tracked. It does **not** re-list field sets or types — the generator owns those and the
   drift gate pins them. The human ratifies *which entities are in*; they don't re-draw the spine.
 - **Reference graph (`core/reference-graph.yml`, curated) — closure metadata, not shapes.** Which OCF
-  object each `*_id` points to, which id-shaped fields are labels not FKs, and which `core` fields are
-  bookkeeping rather than payload. This is knowledge the schemas don't encode (an id is just a string);
-  it drives §3 closure and the non-degeneracy gate. Like the allow-list it names *relationships*, never
-  field types — those stay derived.
+  object each `*_id` points to, which id-shaped fields are labels not FKs, which fields reference a
+  *security* (`security_references:`, resolved like `security_id` — used only by rich's lineage members,
+  §9), and which `core` fields are bookkeeping rather than payload. This is knowledge the schemas don't
+  encode (an id is just a string); it drives §3 closure and the non-degeneracy gate. Like the allow-list
+  it names *relationships*, never field types — those stay derived. It is shared by both profiles; each
+  profile has its own `allow-list.yml`.
 - **Generated (derived, unversioned)** — the ledger + Core schema + gap report + rollup of §4,
   everything drafted so far from green mappings. Converges on the ratified set; no independent version.
 
@@ -338,3 +347,67 @@ Applying the rules to the corpus today (a snapshot; re-derived on every build, n
 Which specific entities and fields land in Core under the current Carta bundle is the **output** of
 this machinery, not part of the spec — re-derived whenever a mapping or the bundle changes, and living
 in the generated artifacts and the allow-list, never in this document.
+
+---
+
+## 9. Two profiles — `strict` (shared floor) and `rich` (relaxed-OCF)
+
+Everything above computes one thing: the **lossless intersection** — fields whose fold to Carta keeps
+existence and cardinality. That is the **`strict`** profile (`core/`). But the intersection is
+austere: a `Stakeholder` with no `name`, no `address`, no `email`, because each of those only has a
+*narrowing* Carta home. A second **`rich`** profile keeps them.
+
+**One derivation, two readings — not two pipelines.** Both profiles run the identical corpus load,
+classifier (§2), admissibility gates (§3), and emitter (§4). They differ in a single predicate —
+which loss classes still count a field as a **member** (`isMember`, `scripts/lib/core-pipeline.ts`):
+
+- **`strict`** — members are exactly the `core`-class fields. `memberReasons = ∅`. This reproduces
+  §§1–8 verbatim; `core/` must stay **byte-identical** to what it was before profiles existed (a test
+  and the drift gate both pin this).
+- **`rich`** — members are `core` **plus the lossy-home classes** `existence-loss` / `heuristic` /
+  `partial` (bucket A of the lossy-home inventory, `npm run core:lossy`). A rich member is fed to §3
+  exactly like a `core` field and rendered by the same emitter.
+
+**Rich keeps OCF's shape; the loss moves to a different edge.** The emitter's `renderNode` already
+renders from the **OCF source node**, inlining its `$ref`s — so admitting `Stakeholder.name` yields
+OCF's structured `Name` (`{legal_name, first_name?, last_name?}`), not Carta's flat `fullName`; and
+`addresses` stays an array of full `Address`, not a country string. `required` is already relaxed
+(`[]`) on every entity. So rich does not *remove* the loss strict avoided — it **relocates** it:
+
+- `strict`: the lossy edge is **OCF→Core** (richness shed on the way in); Core→Carta and Core→OCF are
+  both clean.
+- `rich`: Core is rich, so the lossy edge becomes **Core→target** (a rich `Address` narrows to Carta's
+  `country`) and possibly **Core→OCF** (a target-*sourced* rich doc may under-fill an OCF `required`).
+
+`rich` therefore **gives up strict's "everything in Core is Carta-expressible" guarantee** in exchange
+for a useful, populated Core. Both artifacts ship; neither replaces the other.
+
+**Admissibility under rich — same gates, two consequences.** §3 is unchanged; it just sees more `core`
+fields:
+
+1. **Rich re-admits an entity only when a lossy-home field gives it *payload*** — a non-reference,
+   non-bookkeeping member. Today that adds exactly `Document` (via `path`/`uri`) and
+   `StockClassConversionRatioAdjustment` (via `new_ratio_conversion_mechanism`); rich is otherwise the
+   same entity set as strict, enriched with fields (`Stakeholder` gains `name`/`addresses`/`contact_info`,
+   `StockClass` gains `conversion_rights`/`seniority`, …). Rich is always a **strict superset**.
+2. **Reference-only lossy-home fields resolve but are not payload.** The reverse-edge lineage links
+   (`resulting_security_ids`, `balance_security_id`, `security_ids`, …) are `heuristic` members in rich
+   and reference securities. So the reference graph (§5) gains a `security_references:` list (and
+   `stock_class_ids → StockClass`) — **inert for strict**, where those fields are `out` and §3 never
+   consults them — without which a rich member would dangle as an unknown FK and wrongly drop its
+   entity. Because these are references (not payload), the transactions whose *only* lossy-home fields
+   are lineage links (`StockTransfer`/`StockConversion`/`StockConsolidation`/`StockReissuance`/
+   `StockRepurchase`) still fail non-degeneracy and stay **out**. Admitting that family would require
+   **relaxing the non-degeneracy gate itself** — a deliberate, deferred decision, not done here.
+
+**The upstream-OCF report (`core-rich/core-upstream.md`, rich only).** The actionable byproduct: every
+lossy-home field rich carries, with the narrowing target home and the loss kind, OCF-*required* fields
+flagged. Each row is where Core→target is knowingly lossy, and a candidate for an **upstream OCF
+change** — e.g. relax `Address.required` so a Carta-sourced (country-only) address validates back as
+OCF. Rich-Core does **not** wait on those changes; the report is its output, not its precondition.
+
+**Build & gates run per profile.** `npm run core:build` emits both (`core/`, `core-rich/`), each with
+its package + `core-ledger.md` + `core-gaps.md` (+ rich's `core-upstream.md`) and its own thin
+`allow-list.yml`. `npm run core:check` runs the §4 drift + subset gates for **each** profile;
+`npm run core:validate-sample` validates each profile's `sample/` against its own schemas. The
+invariant that keeps this safe: the `strict` reading is the default and must never change.

@@ -1,0 +1,58 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://opencaptablecoalition.com/ocf-core/v0/files/ValuationsFile.schema.json",
+  "title": "OCF Core — ValuationsFile",
+  "description": "Generated. Core-admissible Valuation; values inlined into OCF grammar.",
+  "type": "object",
+  "properties": {
+    "file_type": {
+      "const": "OCF_VALUATIONS_FILE"
+    },
+    "items": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "title": "Valuation",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Identifier for the object"
+          },
+          "object_type": {
+            "const": "VALUATION"
+          },
+          "price_per_share": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "amount": {
+                "type": "string",
+                "pattern": "^[+-]?[0-9]+(\\.[0-9]{1,10})?$"
+              },
+              "currency": {
+                "type": "string",
+                "pattern": "^[A-Z]{3}$"
+              }
+            },
+            "required": [
+              "amount",
+              "currency"
+            ],
+            "description": "Valued price per share"
+          },
+          "stock_class_id": {
+            "type": "string",
+            "description": "Identifier of the stock class for this valuation"
+          }
+        },
+        "required": [],
+        "additionalProperties": false
+      }
+    }
+  },
+  "required": [
+    "file_type",
+    "items"
+  ],
+  "additionalProperties": false
+}

@@ -14,9 +14,50 @@ import {
   loadReferenceGraph,
   OcfPackaging,
 } from "./core-corpus.js";
-import { classifyField, ClassifyCtx, Verdict } from "./core-classifier.js";
+import { classifyField, ClassifyCtx, OutReason, Verdict } from "./core-classifier.js";
 import { Admissibility, computeAdmissibility } from "./core-admissibility.js";
 import { CoreEntity, emitCorePackage } from "./core-schema-emitter.js";
+
+/**
+ * A Core is a READING of the one derived ledger — which loss classes still count
+ * a field as a member. Both profiles share every earlier stage (corpus, classify,
+ * even the emitter); they diverge only in this predicate and where they are written.
+ *
+ *   strict — the lossless intersection: only `core`-class fields (direct / widening
+ *            / value-coarsening). Everything is faithfully Carta-expressible. This
+ *            is the original Core; its output (core/) must stay byte-identical.
+ *   rich   — the relaxed-OCF union: strict PLUS the lossy-home classes
+ *            (`existence-loss` / `heuristic` / `partial`). The field is kept in
+ *            OCF's own shape (renderNode already inlines it); the target narrows it
+ *            on the way out. Core→target — and possibly Core→OCF — is thus lossy.
+ */
+export interface CoreProfile {
+  name: "strict" | "rich";
+  /** Directory the package + reports are written to / checked against. */
+  outDir: string;
+  /** Out-reasons that, in this profile, STILL count a field as a Core member. */
+  memberReasons: ReadonlySet<OutReason>;
+}
+
+export const STRICT_PROFILE: CoreProfile = {
+  name: "strict",
+  outDir: "core",
+  memberReasons: new Set(),
+};
+
+export const RICH_PROFILE: CoreProfile = {
+  name: "rich",
+  outDir: "core-rich",
+  memberReasons: new Set<OutReason>(["existence-loss", "heuristic", "partial"]),
+};
+
+export const PROFILES: CoreProfile[] = [STRICT_PROFILE, RICH_PROFILE];
+
+/** Is this field a member of `profile`'s Core? `core` always; lossy-home iff rich. */
+export function isMember(verdict: Verdict, profile: CoreProfile): boolean {
+  if (verdict.class === "core") return true;
+  return verdict.reason !== undefined && profile.memberReasons.has(verdict.reason);
+}
 
 export interface DerivedRow {
   entity: string;
@@ -28,12 +69,14 @@ export interface DerivedRow {
 }
 
 export interface Derived {
+  /** The profile this derivation was run under. */
+  profile: CoreProfile;
   corpus: Corpus;
   rows: DerivedRow[];
   admissibility: Admissibility[];
-  /** Admissible OCF entities (variants collapsed), pruned to core fields. */
+  /** Admissible OCF entities (variants collapsed), pruned to member fields. */
   entities: CoreEntity[];
-  /** The emitted package: relative path under core/ → schema object. */
+  /** The emitted package: relative path under the profile's outDir → schema object. */
   package: Map<string, Record<string, unknown>>;
 }
 
@@ -43,7 +86,10 @@ function shortDescription(node: unknown): string | undefined {
   return d.length > 140 ? d.slice(0, 137) + "…" : d;
 }
 
-export async function deriveCore(repoRoot: string): Promise<Derived> {
+export async function deriveCore(
+  repoRoot: string,
+  profile: CoreProfile = STRICT_PROFILE
+): Promise<Derived> {
   const corpus = await loadGreenCorpus(repoRoot);
   const ctx: ClassifyCtx = {
     registry: corpus.registry,
@@ -74,12 +120,16 @@ export async function deriveCore(repoRoot: string): Promise<Derived> {
   const aliases = new Map(
     corpus.objects.filter((o) => o.aliasOf).map((o) => [o.entity, o.aliasOf as string])
   );
+  // Feed admissibility the profile's membership, not the raw class: a rich member
+  // (a lossy-home field) participates in §3 exactly like a `core` field — it can
+  // supply payload and it carries closure obligations. For the strict profile
+  // isMember ≡ (class === "core"), so this is identical to the original feed.
   const admissibility = computeAdmissibility(
     rows.map((r) => ({
       entity: r.entity,
       variant: r.variant,
       field: r.field,
-      klass: r.verdict.class,
+      klass: isMember(r.verdict, profile) ? "core" : "out",
     })),
     graph,
     aliases
@@ -93,7 +143,7 @@ export async function deriveCore(repoRoot: string): Promise<Derived> {
   const byEntity = new Map<string, Map<string, { srcRaw: unknown; description?: string }>>();
   for (const r of rows) {
     if (!admissibleNode.has(`${r.entity} ${r.variant}`)) continue;
-    if (r.verdict.class !== "core") continue;
+    if (!isMember(r.verdict, profile)) continue;
     const fields = byEntity.get(r.entity) ?? new Map();
     if (!fields.has(r.field)) fields.set(r.field, { srcRaw: r.srcRaw, description: r.description });
     byEntity.set(r.entity, fields);
@@ -123,5 +173,5 @@ export async function deriveCore(repoRoot: string): Promise<Derived> {
 
   const packaging: OcfPackaging = await loadOcfFileCategories(repoRoot);
   const pkg = emitCorePackage(entities, corpus.registry, packaging);
-  return { corpus, rows, admissibility, entities, package: pkg };
+  return { profile, corpus, rows, admissibility, entities, package: pkg };
 }

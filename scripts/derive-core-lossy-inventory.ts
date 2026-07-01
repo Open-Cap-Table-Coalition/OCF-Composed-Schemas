@@ -1,0 +1,166 @@
+#!/usr/bin/env node
+/**
+ * OCF Core — lossy-home inventory (step 1, a discussion artifact — NOT gated).
+ *
+ * Re-cuts the SAME derived ledger the build produces (one `deriveCore` call; no
+ * re-load, no re-classify) into the distinction that matters for a rich Core:
+ *
+ *   A. LOSSY HOME — the field HAS a Carta target but the fold loses fidelity:
+ *      `existence-loss` (structure→scalar, array→scalar) or `heuristic`
+ *      (combine/split/computed). These are the fields a rich (relaxed-OCF) Core
+ *      would keep; each is also an upstream-OCF-change candidate.
+ *   B. NO HOME — `no-destination`: Carta has no field at all. A different animal
+ *      (a true target gap, already surfaced by core-gaps.md); listed for contrast.
+ *
+ * OCF bookkeeping (id/object_type/comments) is excluded from both. Rows are
+ * annotated with the OCF-required flag (a lossy home on an OCF-*required* field
+ * is the strongest signal) and the entity's current §3 admissibility.
+ *
+ *   npm run core:lossy            # write docs/core-lossy-inventory.md + print summary
+ */
+import path from "node:path";
+import { writeFile } from "node:fs/promises";
+
+import { isPlainObject } from "./lib/mapping-validator.js";
+import { deriveCore } from "./lib/core-pipeline.js";
+
+const OUT_FILE = "docs/core-lossy-inventory.md";
+const BOOKKEEPING = new Set(["id", "object_type", "comments"]);
+const LOSSY_HOME = new Set(["existence-loss", "heuristic", "partial"]);
+
+function targetString(target: unknown): string {
+  if (target === null || target === undefined) return "—";
+  if (typeof target === "string") return target;
+  if (Array.isArray(target)) return target.map(targetString).join(" + ");
+  return JSON.stringify(target);
+}
+
+interface InvRow {
+  entity: string;
+  variant: string;
+  field: string;
+  reason: string;
+  detail: string;
+  target: string;
+  ocfRequired: boolean;
+  admissible: boolean;
+}
+
+async function main(): Promise<number> {
+  const d = await deriveCore(process.cwd());
+  const admBy = new Map(d.admissibility.map((a) => [`${a.entity} ${a.variant}`, a]));
+  const reqBy = new Map(d.corpus.objects.map((o) => [o.entity, new Set(o.requiredFields)]));
+
+  // Join each classified row to the Carta target the mapping actually names.
+  const targetOf = new Map<string, string>();
+  for (const o of d.corpus.objects) {
+    for (const [variant, fields] of o.variants) {
+      for (const [field, entry] of Object.entries(fields)) {
+        if (isPlainObject(entry)) {
+          targetOf.set(`${o.entity} ${variant} ${field}`, targetString(entry.target));
+        }
+      }
+    }
+  }
+
+  const lossy: InvRow[] = [];
+  const nohome: InvRow[] = [];
+  for (const r of d.rows) {
+    if (r.verdict.class !== "out" || BOOKKEEPING.has(r.field)) continue;
+    const reason = r.verdict.reason ?? "?";
+    const row: InvRow = {
+      entity: r.entity,
+      variant: r.variant,
+      field: r.field,
+      reason,
+      detail: r.verdict.detail ?? "",
+      target: targetOf.get(`${r.entity} ${r.variant} ${r.field}`) ?? "—",
+      ocfRequired: reqBy.get(r.entity)?.has(r.field) ?? false,
+      admissible: admBy.get(`${r.entity} ${r.variant}`)?.admissible ?? false,
+    };
+    if (LOSSY_HOME.has(reason)) lossy.push(row);
+    else if (reason === "no-destination") nohome.push(row);
+  }
+
+  const cmp = (a: InvRow, b: InvRow) =>
+    a.entity.localeCompare(b.entity) ||
+    a.field.localeCompare(b.field) ||
+    a.variant.localeCompare(b.variant);
+  lossy.sort(cmp);
+  nohome.sort(cmp);
+
+  await writeFile(path.join(process.cwd(), OUT_FILE), render(lossy, nohome), "utf8");
+
+  const reqLossy = lossy.filter((r) => r.ocfRequired).length;
+  const onAdmissible = new Set(lossy.filter((r) => r.admissible).map((r) => r.entity)).size;
+  console.log("OCF Core — lossy-home inventory");
+  console.log("=".repeat(60));
+  console.log(`A. lossy home (has a target, loses fidelity): ${lossy.length} rows`);
+  console.log(`   · ${reqLossy} are OCF-REQUIRED fields`);
+  console.log(`   · touching ${onAdmissible} currently-admissible entit(y/ies)`);
+  console.log(`B. no home (no Carta target): ${nohome.length} rows`);
+  console.log(`\nWritten to ${OUT_FILE}`);
+  return 0;
+}
+
+function tableA(rows: InvRow[]): string[] {
+  const out = [
+    "| entity | variant | field | OCF-req | Carta target (lossy home) | loss |",
+    "| --- | --- | --- | :---: | --- | --- |",
+  ];
+  for (const r of rows) {
+    const loss = [r.reason, r.detail].filter(Boolean).join(" — ");
+    out.push(
+      `| ${r.admissible ? "" : "*"}${r.entity} | ${r.variant} | ${r.field} | ${
+        r.ocfRequired ? "**yes**" : ""
+      } | \`${r.target}\` | ${loss} |`
+    );
+  }
+  return out;
+}
+
+function render(lossy: InvRow[], nohome: InvRow[]): string {
+  const reqLossy = lossy.filter((r) => r.ocfRequired);
+  const lines: string[] = [
+    "# OCF Core — lossy-home inventory (generated, discussion artifact)",
+    "",
+    "GENERATED by `npm run core:lossy` from the same derived ledger as the build.",
+    "NOT drift-gated — this is an analysis input for the rich-Core work, not a contract.",
+    "",
+    "Fields that today fall **out** of Core, split by whether Carta offers a home at all.",
+    "An entity prefixed `*` is not currently §3-admissible (the loss is on an entity",
+    "that isn't in Core yet). `OCF-req` marks fields OCF itself requires — a lossy",
+    "home on a required field is the strongest rich-Core / upstream-OCF signal.",
+    "",
+    `## A. Lossy home — has a Carta target, loses fidelity (${lossy.length})`,
+    "",
+    "These are the fields a rich (relaxed-OCF) Core would re-admit. `existence-loss`",
+    "= the shape collapses (a structured object or array flattened to a scalar);",
+    "`heuristic` = the value needs a non-1:1 transform (combine/split/computed).",
+    "",
+    ...tableA(lossy),
+    "",
+    `### A′. Of those, OCF-REQUIRED fields with only a lossy home (${reqLossy.length})`,
+    "",
+    "The headline cases: OCF *requires* these, but the fold can't carry them faithfully.",
+    "",
+    ...(reqLossy.length ? tableA(reqLossy) : ["(none)"]),
+    "",
+    `## B. No home — no Carta target at all (${nohome.length})`,
+    "",
+    "A different animal: Carta has no field to hold these (already in core-gaps.md §a).",
+    "Listed for contrast — NOT what rich-Core recovers.",
+    "",
+    ...tableA(nohome),
+    "",
+  ];
+  return lines.join("\n") + "\n";
+}
+
+main().then(
+  (code) => process.exit(code),
+  (err) => {
+    console.error(err);
+    process.exit(1);
+  }
+);

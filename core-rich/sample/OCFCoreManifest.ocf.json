@@ -1,0 +1,25 @@
+{
+  "file_type": "OCF_MANIFEST_FILE",
+  "ocf_version": "1.2.1-alpha+main",
+  "issuer": {
+    "object_type": "ISSUER",
+    "id": "issuer-acme",
+    "legal_name": "Acme Labs, Inc.",
+    "dba": "Acme"
+  },
+  "as_of": "2024-12-31",
+  "generated_at": "2025-01-02T12:00:00Z",
+  "comments": [
+    "Illustrative OCF Core (RICH) sample. Same cap table as the strict sample, but",
+    "stakeholders carry OCF's structured name, addresses, and contact_info — the",
+    "rich profile keeps OCF's shape (Core→Carta narrows them). Validated end-to-end",
+    "by `npm run core:validate-sample`."
+  ],
+  "documents_files": [{ "filepath": "files/Documents.ocf.json", "md5": "0a1b2c3d4e5f00112233445566778899" }],
+  "stakeholders_files": [{ "filepath": "files/Stakeholders.ocf.json", "md5": "a1b2c3d4e5f600112233445566778899" }],
+  "stock_classes_files": [{ "filepath": "files/StockClasses.ocf.json", "md5": "b2c3d4e5f6a700112233445566778899" }],
+  "stock_plans_files": [{ "filepath": "files/StockPlans.ocf.json", "md5": "c3d4e5f6a7b800112233445566778899" }],
+  "vesting_terms_files": [{ "filepath": "files/VestingTerms.ocf.json", "md5": "d4e5f6a7b8c900112233445566778899" }],
+  "valuations_files": [{ "filepath": "files/Valuations.ocf.json", "md5": "e5f6a7b8c9da00112233445566778899" }],
+  "transactions_files": [{ "filepath": "files/Transactions.ocf.json", "md5": "f6a7b8c9dab000112233445566778899" }]
+}

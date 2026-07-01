@@ -12,11 +12,23 @@
 # closure obligation: the referent must itself be Core-admissible).
 references:
   stock_class_id: StockClass
+  stock_class_ids: StockClass
   stakeholder_id: Stakeholder
   stock_plan_id: StockPlan
   vesting_terms_id: VestingTerms
   vesting_template_id: VestingTerms
   stock_legend_ids: StockLegendTemplate
+
+# Fields that reference a SECURITY (created by some issuance), resolved like
+# `security_id` against the issuance set rather than a named object. These are the
+# forward-lineage links (resulting/balance security ids); only the rich profile
+# promotes them to members, but classifying them here is inert for strict (where
+# they are `out`) and keeps a rich member from dangling as an unknown FK.
+security_references:
+  - resulting_security_ids
+  - resulting_security_id
+  - balance_security_id
+  - security_ids
 
 # id-shaped fields that are NOT outbound FKs — human labels / externally-assigned
 # ids. They impose no closure obligation.

@@ -121,6 +121,7 @@ export async function loadReferenceGraph(repoRoot: string): Promise<ReferenceGra
     new Set(Array.isArray(v) ? v.filter((x): x is string => typeof x === "string") : []);
   return {
     references,
+    securityReferences: toSet(obj.security_references),
     nonReferences: toSet(obj.non_references),
     nonPayload: toSet(obj.non_payload),
   };

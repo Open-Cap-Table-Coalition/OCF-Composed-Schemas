@@ -2,15 +2,17 @@
 /**
  * OCF Core — §4 build (the generator).
  *
- * Runs the derive pipeline (scripts/lib/core-pipeline) and EMITS the generated
- * artifacts for the admissible set, all generated / never hand-edited:
- *   - core.schema.json — the Core JSON Schema (drift-gated by core:check)
- *   - core-ledger.md   — the membership ledger (one row per entity,variant,field)
- *   - core-gaps.md     — the R5 gap report
- * Writes into --out-dir (default: ./core) and prints a summary + a sample $def.
+ * Runs the derive pipeline (scripts/lib/core-pipeline) once PER PROFILE and EMITS
+ * each profile's generated artifacts (all generated / never hand-edited):
+ *   <profile.outDir>/**.schema.json — the Core JSON Schema package (drift-gated)
+ *   <profile.outDir>/core-ledger.md — the membership ledger
+ *   <profile.outDir>/core-gaps.md   — the R5 gap report
+ *   <profile.outDir>/core-upstream.md — rich only: upstream-OCF change candidates
+ * Two profiles ship: `strict` → core/ (lossless intersection) and `rich` →
+ * core-rich/ (relaxed-OCF union). `--base` prefixes both dirs (default: repo root).
  *
- *   npm run core:build                       # emit to ./core, print summary
- *   npm run core:build -- --out-dir /tmp/x   # emit elsewhere
+ *   npm run core:build                    # emit core/ + core-rich/, print summary
+ *   npm run core:build -- --base /tmp/x   # emit /tmp/x/core + /tmp/x/core-rich
  *   npm run core:build -- --sample StockIssuance
  */
 import path from "node:path";
@@ -18,64 +20,70 @@ import { mkdir, writeFile } from "node:fs/promises";
 import yargs from "yargs";
 import { hideBin } from "yargs/helpers";
 
-import { deriveCore } from "./lib/core-pipeline.js";
-import { renderLedger, renderGapReport } from "./lib/core-reports.js";
+import { deriveCore, CoreProfile, PROFILES } from "./lib/core-pipeline.js";
+import { renderLedger, renderGapReport, renderUpstreamReport } from "./lib/core-reports.js";
 
-async function main(argv: { outDir: string; sample: string }): Promise<number> {
-  const repoRoot = process.cwd();
-  const derived = await deriveCore(repoRoot);
+async function emitProfile(repoRoot: string, base: string, profile: CoreProfile, sample: string) {
+  const derived = await deriveCore(repoRoot, profile);
+  const outDir = path.join(base, profile.outDir);
 
-  // Write the OCF-style schema package (relative path → schema), plus the
-  // generated markdown reports.
+  // Write the OCF-style schema package (relative path → schema), plus reports.
   for (const [rel, schema] of derived.package) {
-    const abs = path.join(argv.outDir, rel);
+    const abs = path.join(outDir, rel);
     await mkdir(path.dirname(abs), { recursive: true });
     await writeFile(abs, JSON.stringify(schema, null, 2) + "\n", "utf8");
   }
-  await mkdir(argv.outDir, { recursive: true });
-  await writeFile(path.join(argv.outDir, "core-ledger.md"), renderLedger(derived), "utf8");
-  await writeFile(path.join(argv.outDir, "core-gaps.md"), renderGapReport(derived), "utf8");
+  await mkdir(outDir, { recursive: true });
+  await writeFile(path.join(outDir, "core-ledger.md"), renderLedger(derived), "utf8");
+  await writeFile(path.join(outDir, "core-gaps.md"), renderGapReport(derived), "utf8");
+  // The upstream report is rich-only (empty for strict, which has no lossy members).
+  if (profile.memberReasons.size > 0) {
+    await writeFile(path.join(outDir, "core-upstream.md"), renderUpstreamReport(derived), "utf8");
+  }
 
   const objects = derived.entities.filter((e) => e.kind === "object").length;
   const events = derived.entities.filter((e) => e.kind === "event").length;
+  console.log(`\n[${profile.name}] → ${profile.outDir}/`);
+  console.log(
+    `  admissible OCF entities: ${derived.entities.length} (${objects} objects, ${events} events)`
+  );
+  console.log(`  package: ${derived.package.size} files + reports`);
+
+  const sampleRel = [...derived.package.keys()].find((r) => r.includes(sample));
+  if (sampleRel && profile.name === "rich") {
+    console.log(`  sample — ${sampleRel}:`);
+    console.log(JSON.stringify(derived.package.get(sampleRel), null, 2));
+  }
+}
+
+async function main(argv: { base: string; sample: string }): Promise<number> {
+  const repoRoot = process.cwd();
   console.log("OCF Core — §4 build (packaged like OCF)");
   console.log("=".repeat(70));
-  console.log(
-    `Admissible OCF entities: ${derived.entities.length} (${objects} objects, ${events} events)`
-  );
-  console.log(`Schema package (${derived.package.size} files) under ${argv.outDir}/:`);
-  for (const rel of [...derived.package.keys()].sort()) console.log(`  ${rel}`);
-  console.log(`  core-ledger.md\n  core-gaps.md`);
-
-  const sampleRel = [...derived.package.keys()].find((r) => r.includes(argv.sample));
-  if (sampleRel) {
-    console.log(`\nSample — ${sampleRel}:`);
-    console.log(JSON.stringify(derived.package.get(sampleRel), null, 2));
+  for (const profile of PROFILES) {
+    await emitProfile(repoRoot, argv.base, profile, argv.sample);
   }
   return 0;
 }
 
 const parsed = yargs(hideBin(process.argv))
   .scriptName("core:build")
-  .option("out-dir", {
+  .option("base", {
     type: "string",
-    describe: "Directory to write artifacts into (default ./core)",
+    describe: "Base directory both profile dirs are written under (default: repo root)",
   })
   .option("sample", {
     type: "string",
-    default: "TransactionsFile",
-    describe: "Package file (substring) to print as a sample",
+    default: "StakeholdersFile",
+    describe: "Package file (substring) to print as a sample (rich profile)",
   })
   .strict()
   .help()
   .parseSync();
 
 main({
-  outDir:
-    typeof parsed["out-dir"] === "string"
-      ? (parsed["out-dir"] as string)
-      : path.join(process.cwd(), "core"),
-  sample: typeof parsed.sample === "string" ? parsed.sample : "StockIssuance",
+  base: typeof parsed.base === "string" ? parsed.base : process.cwd(),
+  sample: typeof parsed.sample === "string" ? parsed.sample : "StakeholdersFile",
 }).then(
   (code) => process.exit(code),
   (err) => {

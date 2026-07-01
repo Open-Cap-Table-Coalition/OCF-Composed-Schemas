@@ -1,12 +1,13 @@
 #!/usr/bin/env node
 /**
- * OCF Core — end-to-end sample validation.
+ * OCF Core — end-to-end sample validation, for EVERY profile.
  *
- * Proves the emitted Core package is usable: validates every document in
- * core/sample/ against its generated package schema (ajv, draft-07), runs a few
- * NEGATIVE cases that must be rejected, and runs a referential-closure check
- * over the whole sample using the §3 reference graph. Read-only; exits non-zero
- * on any failure.
+ * Proves each emitted Core package is usable: for both strict (core/, sample
+ * core/sample/) and rich (core-rich/, sample core-rich/sample/) it validates every
+ * sample document against that profile's generated package schema (ajv, draft-07),
+ * runs a few NEGATIVE cases that must be rejected, and runs a referential-closure
+ * check over the whole sample using the §3 reference graph. Read-only; exits
+ * non-zero on any failure.
  *
  *   npm run core:validate-sample
  */
@@ -17,10 +18,8 @@ import addFormats from "ajv-formats";
 
 import { isPlainObject } from "./lib/mapping-validator.js";
 import { loadReferenceGraph } from "./lib/core-corpus.js";
+import { PROFILES } from "./lib/core-pipeline.js";
 import { referentOf, ReferenceGraph } from "./lib/core-admissibility.js";
-
-const CORE = "core";
-const SAMPLE = "core/sample";
 
 async function jsonFiles(dir: string, suffix: string): Promise<string[]> {
   const entries = await readdir(dir, { recursive: true, withFileTypes: true });
@@ -46,15 +45,26 @@ function fileTypeOf(node: unknown): string | undefined {
   return typeof node.file_type === "string" ? node.file_type : undefined;
 }
 
-async function main(): Promise<number> {
-  const repoRoot = process.cwd();
+/**
+ * Validate one profile end-to-end: compile its package schemas, validate its
+ * sample docs, run the negative cases, and check referential closure. Returns
+ * failures (empty = OK). Each profile gets its OWN ajv — strict and rich share
+ * schema `$id`s, so one shared instance would collide.
+ */
+async function validateProfile(
+  repoRoot: string,
+  coreDir: string,
+  sampleDir: string,
+  graph: ReferenceGraph
+): Promise<string[]> {
+  const failures: string[] = [];
   const ajv = new Ajv({ allErrors: true, strict: false });
   addFormats(ajv);
-  const failures: string[] = [];
+  console.log(`\n[${coreDir}]`);
 
   // Compile every generated package schema, indexed by its OCF file_type const.
   const byFileType = new Map<string, ValidateFunction>();
-  for (const abs of await jsonFiles(path.join(repoRoot, CORE), ".schema.json")) {
+  for (const abs of await jsonFiles(path.join(repoRoot, coreDir), ".schema.json")) {
     const schema = JSON.parse(await readFile(abs, "utf8"));
     const ft = fileTypeOf(schema);
     if (ft) byFileType.set(ft, ajv.compile(schema));
@@ -62,7 +72,7 @@ async function main(): Promise<number> {
 
   // Validate each sample document against its package schema.
   const sampleDocs: { rel: string; doc: unknown }[] = [];
-  for (const abs of await jsonFiles(path.join(repoRoot, SAMPLE), ".ocf.json")) {
+  for (const abs of await jsonFiles(path.join(repoRoot, sampleDir), ".ocf.json")) {
     const doc = JSON.parse(await readFile(abs, "utf8"));
     const rel = path.relative(repoRoot, abs);
     sampleDocs.push({ rel, doc });
@@ -101,11 +111,10 @@ async function main(): Promise<number> {
       }
     }
   } else {
-    failures.push("could not load TransactionsFile schema / sample for negative cases");
+    failures.push(`${coreDir}: could not load TransactionsFile schema / sample for negative cases`);
   }
 
   // CLOSURE (R4) over the whole sample, via the §3 reference graph.
-  const graph: ReferenceGraph = await loadReferenceGraph(repoRoot);
   const objectIds = new Set<string>();
   const securityIds = new Set<string>();
   const refs: { from: string; field: string; value: string; kind: "object" | "security" }[] = [];
@@ -141,13 +150,30 @@ async function main(): Promise<number> {
   console.log(
     `  ✓ closure: ${refs.length} reference(s) across ${objectIds.size} objects + ${securityIds.size} securities all resolve`
   );
+  return failures;
+}
+
+async function main(): Promise<number> {
+  const repoRoot = process.cwd();
+  const graph: ReferenceGraph = await loadReferenceGraph(repoRoot);
+  const failures: string[] = [];
+  for (const profile of PROFILES) {
+    failures.push(
+      ...(await validateProfile(
+        repoRoot,
+        profile.outDir,
+        path.join(profile.outDir, "sample"),
+        graph
+      ))
+    );
+  }
 
   if (failures.length) {
     console.error("\nOCF Core sample validation: FAIL\n");
     for (const f of failures) console.error("✗ " + f);
     return 1;
   }
-  console.log("\nOCF Core sample validation: OK");
+  console.log("\nOCF Core sample validation: OK (all profiles)");
   return 0;
 }
 

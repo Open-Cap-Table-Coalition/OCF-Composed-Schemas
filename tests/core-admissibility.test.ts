@@ -15,6 +15,7 @@ const GRAPH: ReferenceGraph = {
     vesting_terms_id: "VestingTerms",
     vesting_template_id: "VestingTerms",
   },
+  securityReferences: new Set(["resulting_security_ids", "balance_security_id"]),
   nonReferences: new Set(["custom_id", "issuer_assigned_id"]),
   nonPayload: new Set(["id", "object_type", "comments", "date", "security_id", "custom_id"]),
 };

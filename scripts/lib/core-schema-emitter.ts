@@ -53,8 +53,12 @@ export function renderNode(
     const rendered: Record<string, unknown> = {};
     for (const k of Object.keys(props).sort())
       rendered[k] = renderNode(props[k], registry, depth + 1);
+    // Dedupe: an OCF composed schema can list a field in `required` more than once
+    // (an allOf base and the local schema both name it); draft-07 forbids duplicate
+    // `required` entries. Strict never hit this — the rich profile renders composite
+    // types (e.g. StockClass.conversion_rights) strict left `out`.
     const required = Array.isArray(n.required)
-      ? n.required.filter((r): r is string => typeof r === "string" && r in rendered)
+      ? [...new Set(n.required.filter((r): r is string => typeof r === "string" && r in rendered))]
       : [];
     const node: Record<string, unknown> = { type: "object", additionalProperties: false };
     node.properties = rendered;
