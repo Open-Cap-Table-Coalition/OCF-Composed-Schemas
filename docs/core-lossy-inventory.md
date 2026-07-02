@@ -5,11 +5,8 @@ NOT drift-gated — this is an analysis input for the rich-Core work, not a cont
 
 Fields that today fall **out** of Core, split by whether Carta offers a home at all.
 `OCF-req` marks fields OCF itself requires — a lossy home on a required field is the
-strongest rich-Core / upstream-OCF signal.
-
-The **overview diagram** shows the whole flow at object granularity; **A** breaks it
-down per OCF object (where each field flows); **B** inverts it — one entry per Carta slot
-listing every OCF property that lands on it (convergence); **C** is the no-home set.
+strongest rich-Core / upstream-OCF signal. The **overview diagram** shows the whole flow;
+**A** breaks it down per OCF object; **B** inverts it (per Carta slot); **C** is no-home.
 
 ## Overview — the lossy flow at a glance
 
@@ -23,6 +20,7 @@ flowchart LR
   classDef adm fill:#e6f4ea,stroke:#34a853,color:#0b3d20;
   classDef notadm fill:#f1f3f4,stroke:#9aa0a6,color:#5f6368,stroke-dasharray:4 3;
   classDef carta fill:#e8f0fe,stroke:#1a73e8,color:#0d2b66;
+  classDef sink fill:#fce8e6,stroke:#d93025,color:#5c0d06;
   subgraph SRC["OCF source objects"]
     direction TB
     o0["ConvertibleCancellation"]:::adm
@@ -150,8 +148,8 @@ A field mapping the same way across variants is shown once, the variants listed.
 
 | field | OCF-req | variant(s) | flows to (Carta) | loss |
 | --- | :---: | --- | --- | --- |
-| balance_security_id |  | Default | CertificatePrecededBy.securities | heuristic (computed) |
 | balance_security_id |  | Rsa | RestrictedStockAwardPrecededBy.securities | heuristic (computed) |
+| balance_security_id |  | Default | CertificatePrecededBy.securities | heuristic (computed) |
 
 ### StockClass — in Core (admissible)
 
@@ -170,19 +168,19 @@ A field mapping the same way across variants is shown once, the variants listed.
 
 | field | OCF-req | variant(s) | flows to (Carta) | loss |
 | --- | :---: | --- | --- | --- |
-| resulting_security_id | **yes** | Default | CertificatePrecededBy.securities | heuristic (computed) |
 | resulting_security_id | **yes** | Rsa | RestrictedStockAwardPrecededBy.securities | heuristic (computed) |
-| security_ids | **yes** | Default | CertificatePrecededBy.securities | heuristic (computed) |
+| resulting_security_id | **yes** | Default | CertificatePrecededBy.securities | heuristic (computed) |
 | security_ids | **yes** | Rsa | RestrictedStockAwardPrecededBy.securities | heuristic (computed) |
+| security_ids | **yes** | Default | CertificatePrecededBy.securities | heuristic (computed) |
 
 ### StockConversion — not yet admissible
 
 | field | OCF-req | variant(s) | flows to (Carta) | loss |
 | --- | :---: | --- | --- | --- |
-| balance_security_id |  | Default | CertificatePrecededBy.securities | heuristic (computed) |
 | balance_security_id |  | Rsa | RestrictedStockAwardPrecededBy.securities | heuristic (computed) |
-| resulting_security_ids | **yes** | Default | CertificatePrecededBy.securities | heuristic (computed) |
+| balance_security_id |  | Default | CertificatePrecededBy.securities | heuristic (computed) |
 | resulting_security_ids | **yes** | Rsa | RestrictedStockAwardPrecededBy.securities | heuristic (computed) |
+| resulting_security_ids | **yes** | Default | CertificatePrecededBy.securities | heuristic (computed) |
 
 ### StockPlan — in Core (admissible)
 
@@ -194,24 +192,24 @@ A field mapping the same way across variants is shown once, the variants listed.
 
 | field | OCF-req | variant(s) | flows to (Carta) | loss |
 | --- | :---: | --- | --- | --- |
-| resulting_security_ids | **yes** | Default | CertificatePrecededBy.securities | heuristic (computed) |
 | resulting_security_ids | **yes** | Rsa | RestrictedStockAwardPrecededBy.securities | heuristic (computed) |
+| resulting_security_ids | **yes** | Default | CertificatePrecededBy.securities | heuristic (computed) |
 
 ### StockRepurchase — not yet admissible
 
 | field | OCF-req | variant(s) | flows to (Carta) | loss |
 | --- | :---: | --- | --- | --- |
-| balance_security_id |  | Default | CertificatePrecededBy.securities | heuristic (computed) |
 | balance_security_id |  | Rsa | RestrictedStockAwardPrecededBy.securities | heuristic (computed) |
+| balance_security_id |  | Default | CertificatePrecededBy.securities | heuristic (computed) |
 
 ### StockTransfer — not yet admissible
 
 | field | OCF-req | variant(s) | flows to (Carta) | loss |
 | --- | :---: | --- | --- | --- |
-| balance_security_id |  | Default | CertificatePrecededBy.securities | heuristic (computed) |
 | balance_security_id |  | Rsa | RestrictedStockAwardPrecededBy.securities | heuristic (computed) |
-| resulting_security_ids | **yes** | Default | CertificatePrecededBy.securities | heuristic (computed) |
+| balance_security_id |  | Default | CertificatePrecededBy.securities | heuristic (computed) |
 | resulting_security_ids | **yes** | Rsa | RestrictedStockAwardPrecededBy.securities | heuristic (computed) |
+| resulting_security_ids | **yes** | Default | CertificatePrecededBy.securities | heuristic (computed) |
 
 ### WarrantCancellation — in Core (admissible)
 
@@ -237,7 +235,7 @@ A field mapping the same way across variants is shown once, the variants listed.
 | --- | :---: | --- | --- | --- |
 | resulting_security_ids | **yes** |  | WarrantTransferTransaction.resultingSecurityId | existence-loss (array→scalar) |
 
-## B. Flow map — Carta slot ← OCF sources (19 slots)
+## B. Flow map — Carta slot ← OCF sources
 
 Sorted by fan-in. Slots with several sources are where distinct OCF properties **converge**
 onto one Carta field — most visibly the reverse-edge lineage collapsing onto `…PrecededBy.securities`.

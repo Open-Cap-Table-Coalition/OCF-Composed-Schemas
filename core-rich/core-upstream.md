@@ -7,48 +7,180 @@ narrowed form. So Core→target is lossy (expected), and a target-sourced Core d
 may not validate back as OCF without OCF relaxing a constraint. These are the
 upstream-OCF-change candidates; OCF-*required* fields (**bold**) are the strongest.
 
-## Lossy-home fields rich-Core carries (22)
+## Overview — where rich-Core's lossy fields flow (22 fields, 13 OCF-required)
 
-| entity | variant | field | OCF-req | narrowed target home | loss |
-| --- | --- | --- | :---: | --- | --- |
-| ConvertibleCancellation | — | reason_text | **yes** | `#/$defs/ConvertibleCancellationTransaction/properties/reason` | heuristic — kind computed |
-| ConvertibleIssuance | — | conversion_triggers | **yes** | `#/$defs/ConvertibleIssuanceTransaction/properties/conversionTrigger + #/$defs/ConvertibleIssuanceTransaction/properties/discountPercentage + #/$defs/ConvertibleIssuanceTransaction/properties/valuationCap` | heuristic — kind split |
-| ConvertibleIssuance | — | security_law_exemptions | **yes** | `#/$defs/Compliance/properties/federalExemption` | heuristic — kind computed |
-| Document | — | path |  | `#/$defs/Document/properties/fileId` | heuristic — kind computed |
-| Document | — | uri |  | `#/$defs/Document/properties/fileId` | heuristic — kind computed |
-| EquityCompensationExercise | Option | resulting_security_ids | **yes** | `#/$defs/CertificatePrecededBy/properties/securities` | heuristic — kind computed |
-| EquityCompensationExercise | Sar | resulting_security_ids | **yes** | `#/$defs/CertificatePrecededBy/properties/securities` | heuristic — kind computed |
-| EquityCompensationIssuance | Option | termination_exercise_windows | **yes** | `#/$defs/OptionGrant/properties/exercisePeriods` | existence-loss — array→scalar |
-| EquityCompensationRelease | Rsu | resulting_security_ids | **yes** | `#/$defs/CertificatePrecededBy/properties/securities` | heuristic — kind computed |
-| Stakeholder | — | addresses |  | `#/$defs/Stakeholder/properties/address` | existence-loss — array→scalar |
-| Stakeholder | — | contact_info |  | `#/$defs/Stakeholder/properties/email` | heuristic — kind combine |
-| Stakeholder | — | name | **yes** | `#/$defs/Stakeholder/properties/fullName` | existence-loss — structure→scalar |
-| Stakeholder | — | primary_contact |  | `#/$defs/Stakeholder/properties/email` | heuristic — kind combine |
-| StockCancellation | Default | balance_security_id |  | `#/$defs/CertificatePrecededBy/properties/securities` | heuristic — kind computed |
-| StockCancellation | Rsa | balance_security_id |  | `#/$defs/RestrictedStockAwardPrecededBy/properties/securities` | heuristic — kind computed |
-| StockClass | — | conversion_rights |  | `#/$defs/ShareClassRightsAndPreferences/properties/conversionRatio + #/$defs/ShareClassRightsAndPreferences/properties/conversionPrice` | heuristic — kind split |
-| StockClass | — | seniority | **yes** | `#/$defs/ShareClass/properties/seniority` | heuristic — kind computed |
-| StockClassConversionRatioAdjustment | — | new_ratio_conversion_mechanism | **yes** | `#/$defs/ShareClassRightsAndPreferences/properties/conversionRatio + #/$defs/ShareClassRightsAndPreferences/properties/conversionPrice` | heuristic — kind split |
-| StockPlan | — | stock_class_ids |  | `#/$defs/OptionPoolSummary/properties/shareClassId` | existence-loss — array→scalar |
-| WarrantCancellation | — | reason_text | **yes** | `#/$defs/WarrantCancellationTransaction/properties/reason` | heuristic — kind computed |
-| WarrantIssuance | — | security_law_exemptions | **yes** | `#/$defs/Compliance/properties/federalExemption` | heuristic — kind computed |
-| WarrantTransfer | — | resulting_security_ids | **yes** | `#/$defs/WarrantTransferTransaction/properties/resultingSecurityId` | existence-loss — array→scalar |
+OCF source objects → the Carta objects their lossy-home fields land on; edge labels =
+field count. Convergence (several sources on one Carta node) marks the narrowest folds.
 
-## Of those, OCF-REQUIRED — the strongest upstream asks (13)
+```mermaid
+flowchart LR
+  classDef adm fill:#e6f4ea,stroke:#34a853,color:#0b3d20;
+  classDef notadm fill:#f1f3f4,stroke:#9aa0a6,color:#5f6368,stroke-dasharray:4 3;
+  classDef carta fill:#e8f0fe,stroke:#1a73e8,color:#0d2b66;
+  classDef sink fill:#fce8e6,stroke:#d93025,color:#5c0d06;
+  subgraph SRC["OCF source objects"]
+    direction TB
+    o0["ConvertibleCancellation"]:::adm
+    o1["ConvertibleIssuance"]:::adm
+    o2["Document"]:::adm
+    o3["EquityCompensationExercise"]:::adm
+    o4["EquityCompensationIssuance"]:::adm
+    o5["EquityCompensationRelease"]:::adm
+    o6["Stakeholder"]:::adm
+    o7["StockCancellation"]:::adm
+    o8["StockClass"]:::adm
+    o9["StockClassConversionRatioAdjustment"]:::adm
+    o10["StockPlan"]:::adm
+    o11["WarrantCancellation"]:::adm
+    o12["WarrantIssuance"]:::adm
+    o13["WarrantTransfer"]:::adm
+  end
+  subgraph TGT["Carta target objects"]
+    direction TB
+    t0["CertificatePrecededBy"]:::carta
+    t1["Compliance"]:::carta
+    t2["ConvertibleCancellationTransaction"]:::carta
+    t3["ConvertibleIssuanceTransaction"]:::carta
+    t4["Document"]:::carta
+    t5["OptionGrant"]:::carta
+    t6["OptionPoolSummary"]:::carta
+    t7["RestrictedStockAwardPrecededBy"]:::carta
+    t8["ShareClass"]:::carta
+    t9["ShareClassRightsAndPreferences"]:::carta
+    t10["Stakeholder"]:::carta
+    t11["WarrantCancellationTransaction"]:::carta
+    t12["WarrantTransferTransaction"]:::carta
+  end
+  o0 -->|1| t2
+  o1 -->|1| t1
+  o1 -->|1| t3
+  o2 -->|2| t4
+  o3 -->|1| t0
+  o4 -->|1| t5
+  o5 -->|1| t0
+  o6 -->|4| t10
+  o7 -->|1| t0
+  o7 -->|1| t7
+  o8 -->|1| t8
+  o8 -->|1| t9
+  o9 -->|1| t9
+  o10 -->|1| t6
+  o11 -->|1| t11
+  o12 -->|1| t1
+  o13 -->|1| t12
+```
 
-| entity | variant | field | OCF-req | narrowed target home | loss |
-| --- | --- | --- | :---: | --- | --- |
-| ConvertibleCancellation | — | reason_text | **yes** | `#/$defs/ConvertibleCancellationTransaction/properties/reason` | heuristic — kind computed |
-| ConvertibleIssuance | — | conversion_triggers | **yes** | `#/$defs/ConvertibleIssuanceTransaction/properties/conversionTrigger + #/$defs/ConvertibleIssuanceTransaction/properties/discountPercentage + #/$defs/ConvertibleIssuanceTransaction/properties/valuationCap` | heuristic — kind split |
-| ConvertibleIssuance | — | security_law_exemptions | **yes** | `#/$defs/Compliance/properties/federalExemption` | heuristic — kind computed |
-| EquityCompensationExercise | Option | resulting_security_ids | **yes** | `#/$defs/CertificatePrecededBy/properties/securities` | heuristic — kind computed |
-| EquityCompensationExercise | Sar | resulting_security_ids | **yes** | `#/$defs/CertificatePrecededBy/properties/securities` | heuristic — kind computed |
-| EquityCompensationIssuance | Option | termination_exercise_windows | **yes** | `#/$defs/OptionGrant/properties/exercisePeriods` | existence-loss — array→scalar |
-| EquityCompensationRelease | Rsu | resulting_security_ids | **yes** | `#/$defs/CertificatePrecededBy/properties/securities` | heuristic — kind computed |
-| Stakeholder | — | name | **yes** | `#/$defs/Stakeholder/properties/fullName` | existence-loss — structure→scalar |
-| StockClass | — | seniority | **yes** | `#/$defs/ShareClass/properties/seniority` | heuristic — kind computed |
-| StockClassConversionRatioAdjustment | — | new_ratio_conversion_mechanism | **yes** | `#/$defs/ShareClassRightsAndPreferences/properties/conversionRatio + #/$defs/ShareClassRightsAndPreferences/properties/conversionPrice` | heuristic — kind split |
-| WarrantCancellation | — | reason_text | **yes** | `#/$defs/WarrantCancellationTransaction/properties/reason` | heuristic — kind computed |
-| WarrantIssuance | — | security_law_exemptions | **yes** | `#/$defs/Compliance/properties/federalExemption` | heuristic — kind computed |
-| WarrantTransfer | — | resulting_security_ids | **yes** | `#/$defs/WarrantTransferTransaction/properties/resultingSecurityId` | existence-loss — array→scalar |
+## By OCF object — each field and its narrowed Carta home
+
+### ConvertibleCancellation — in Core (admissible)
+
+| field | OCF-req | variant(s) | flows to (Carta) | loss |
+| --- | :---: | --- | --- | --- |
+| reason_text | **yes** |  | ConvertibleCancellationTransaction.reason | heuristic (computed) |
+
+### ConvertibleIssuance — in Core (admissible)
+
+| field | OCF-req | variant(s) | flows to (Carta) | loss |
+| --- | :---: | --- | --- | --- |
+| conversion_triggers | **yes** |  | ConvertibleIssuanceTransaction.{conversionTrigger, discountPercentage, valuationCap} | heuristic (split) |
+| security_law_exemptions | **yes** |  | Compliance.federalExemption | heuristic (computed) |
+
+### Document — in Core (admissible)
+
+| field | OCF-req | variant(s) | flows to (Carta) | loss |
+| --- | :---: | --- | --- | --- |
+| path |  |  | Document.fileId | heuristic (computed) |
+| uri |  |  | Document.fileId | heuristic (computed) |
+
+### EquityCompensationExercise — in Core (admissible)
+
+| field | OCF-req | variant(s) | flows to (Carta) | loss |
+| --- | :---: | --- | --- | --- |
+| resulting_security_ids | **yes** | Option, Sar | CertificatePrecededBy.securities | heuristic (computed) |
+
+### EquityCompensationIssuance — in Core (admissible)
+
+| field | OCF-req | variant(s) | flows to (Carta) | loss |
+| --- | :---: | --- | --- | --- |
+| termination_exercise_windows | **yes** | Option | OptionGrant.exercisePeriods | existence-loss (array→scalar) |
+
+### EquityCompensationRelease — in Core (admissible)
+
+| field | OCF-req | variant(s) | flows to (Carta) | loss |
+| --- | :---: | --- | --- | --- |
+| resulting_security_ids | **yes** | Rsu | CertificatePrecededBy.securities | heuristic (computed) |
+
+### Stakeholder — in Core (admissible)
+
+| field | OCF-req | variant(s) | flows to (Carta) | loss |
+| --- | :---: | --- | --- | --- |
+| addresses |  |  | Stakeholder.address | existence-loss (array→scalar) |
+| contact_info |  |  | Stakeholder.email | heuristic (combine) |
+| name | **yes** |  | Stakeholder.fullName | existence-loss (structure→scalar) |
+| primary_contact |  |  | Stakeholder.email | heuristic (combine) |
+
+### StockCancellation — in Core (admissible)
+
+| field | OCF-req | variant(s) | flows to (Carta) | loss |
+| --- | :---: | --- | --- | --- |
+| balance_security_id |  | Rsa | RestrictedStockAwardPrecededBy.securities | heuristic (computed) |
+| balance_security_id |  | Default | CertificatePrecededBy.securities | heuristic (computed) |
+
+### StockClass — in Core (admissible)
+
+| field | OCF-req | variant(s) | flows to (Carta) | loss |
+| --- | :---: | --- | --- | --- |
+| conversion_rights |  |  | ShareClassRightsAndPreferences.{conversionRatio, conversionPrice} | heuristic (split) |
+| seniority | **yes** |  | ShareClass.seniority | heuristic (computed) |
+
+### StockClassConversionRatioAdjustment — in Core (admissible)
+
+| field | OCF-req | variant(s) | flows to (Carta) | loss |
+| --- | :---: | --- | --- | --- |
+| new_ratio_conversion_mechanism | **yes** |  | ShareClassRightsAndPreferences.{conversionRatio, conversionPrice} | heuristic (split) |
+
+### StockPlan — in Core (admissible)
+
+| field | OCF-req | variant(s) | flows to (Carta) | loss |
+| --- | :---: | --- | --- | --- |
+| stock_class_ids |  |  | OptionPoolSummary.shareClassId | existence-loss (array→scalar) |
+
+### WarrantCancellation — in Core (admissible)
+
+| field | OCF-req | variant(s) | flows to (Carta) | loss |
+| --- | :---: | --- | --- | --- |
+| reason_text | **yes** |  | WarrantCancellationTransaction.reason | heuristic (computed) |
+
+### WarrantIssuance — in Core (admissible)
+
+| field | OCF-req | variant(s) | flows to (Carta) | loss |
+| --- | :---: | --- | --- | --- |
+| security_law_exemptions | **yes** |  | Compliance.federalExemption | heuristic (computed) |
+
+### WarrantTransfer — in Core (admissible)
+
+| field | OCF-req | variant(s) | flows to (Carta) | loss |
+| --- | :---: | --- | --- | --- |
+| resulting_security_ids | **yes** |  | WarrantTransferTransaction.resultingSecurityId | existence-loss (array→scalar) |
+
+## Flow map — Carta slot ← OCF sources (the narrowest are the strongest upstream asks)
+
+- `CertificatePrecededBy.securities` ← 3: `EquityCompensationExercise.resulting_security_ids [Option, Sar]`, `EquityCompensationRelease.resulting_security_ids [Rsu]`, `StockCancellation.balance_security_id [Default]`
+- `Compliance.federalExemption` ← 2: `ConvertibleIssuance.security_law_exemptions`, `WarrantIssuance.security_law_exemptions`
+- `Document.fileId` ← 2: `Document.path`, `Document.uri`
+- `ShareClassRightsAndPreferences.conversionPrice` ← 2: `StockClass.conversion_rights`, `StockClassConversionRatioAdjustment.new_ratio_conversion_mechanism`
+- `ShareClassRightsAndPreferences.conversionRatio` ← 2: `StockClass.conversion_rights`, `StockClassConversionRatioAdjustment.new_ratio_conversion_mechanism`
+- `Stakeholder.email` ← 2: `Stakeholder.contact_info`, `Stakeholder.primary_contact`
+- `ConvertibleCancellationTransaction.reason` ← 1: `ConvertibleCancellation.reason_text`
+- `ConvertibleIssuanceTransaction.conversionTrigger` ← 1: `ConvertibleIssuance.conversion_triggers`
+- `ConvertibleIssuanceTransaction.discountPercentage` ← 1: `ConvertibleIssuance.conversion_triggers`
+- `ConvertibleIssuanceTransaction.valuationCap` ← 1: `ConvertibleIssuance.conversion_triggers`
+- `OptionGrant.exercisePeriods` ← 1: `EquityCompensationIssuance.termination_exercise_windows [Option]`
+- `OptionPoolSummary.shareClassId` ← 1: `StockPlan.stock_class_ids`
+- `RestrictedStockAwardPrecededBy.securities` ← 1: `StockCancellation.balance_security_id [Rsa]`
+- `ShareClass.seniority` ← 1: `StockClass.seniority`
+- `Stakeholder.address` ← 1: `Stakeholder.addresses`
+- `Stakeholder.fullName` ← 1: `Stakeholder.name`
+- `WarrantCancellationTransaction.reason` ← 1: `WarrantCancellation.reason_text`
+- `WarrantTransferTransaction.resultingSecurityId` ← 1: `WarrantTransfer.resulting_security_ids`
 

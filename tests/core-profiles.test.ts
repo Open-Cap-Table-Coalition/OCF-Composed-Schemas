@@ -103,14 +103,18 @@ describe("deriveCore profiles over the real corpus", () => {
 });
 
 describe("upstream-OCF report", () => {
-  it("rich lists the lossy-home members (name/addresses), strict lists none", async () => {
+  it("rich groups lossy-home members by object with a flow diagram; strict lists none", async () => {
     const rich = renderUpstreamReport(await deriveCore(process.cwd(), RICH_PROFILE));
-    expect(rich).toMatch(/Stakeholder \| — \| name .*structure→scalar/);
-    expect(rich).toContain("addresses");
     expect(rich).toContain("upstream-OCF change candidates");
+    expect(rich).toContain("```mermaid"); // visual flow diagram
+    expect(rich).toContain("### Stakeholder — in Core (admissible)"); // grouped by object
+    // name flows to the flattened Carta fullName (structure→scalar), OCF-required.
+    expect(rich).toMatch(/\| name \| \*\*yes\*\* \|.*Stakeholder\.fullName.*structure→scalar/);
+    expect(rich).toContain("addresses");
 
     const strict = renderUpstreamReport(await deriveCore(process.cwd(), STRICT_PROFILE));
-    expect(strict).toContain("(none)"); // strict has no lossy members
-    expect(strict).not.toMatch(/\| Stakeholder \| — \| name/);
+    expect(strict).toContain("(none"); // strict carries no lossy-home fields
+    expect(strict).not.toContain("### Stakeholder");
+    expect(strict).not.toContain("```mermaid");
   });
 });

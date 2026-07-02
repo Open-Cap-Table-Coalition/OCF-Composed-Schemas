@@ -6,6 +6,77 @@ types no green mapping writes to.
 
 ## (a) OCF richness dropped on fold-down
 
+OCF source objects and where each dropped field goes: `existence-loss` fields narrow onto
+a Carta object (a lossy home); `no-destination` fields have no home and drain to `⌀ no Carta
+home`. Edge labels = field count. (Reverse-edge `heuristic` lineage is the upstream report's.)
+
+```mermaid
+flowchart LR
+  classDef adm fill:#e6f4ea,stroke:#34a853,color:#0b3d20;
+  classDef notadm fill:#f1f3f4,stroke:#9aa0a6,color:#5f6368,stroke-dasharray:4 3;
+  classDef carta fill:#e8f0fe,stroke:#1a73e8,color:#0d2b66;
+  classDef sink fill:#fce8e6,stroke:#d93025,color:#5c0d06;
+  subgraph SRC["OCF source objects"]
+    direction TB
+    o0["ConvertibleCancellation"]:::adm
+    o1["ConvertibleConversion"]:::adm
+    o2["ConvertibleIssuance"]:::adm
+    o3["Document"]:::adm
+    o4["EquityCompensationCancellation"]:::adm
+    o5["EquityCompensationExercise"]:::adm
+    o6["EquityCompensationIssuance"]:::adm
+    o7["EquityCompensationRelease"]:::adm
+    o8["EquityCompensationRepricing"]:::adm
+    o9["Issuer"]:::adm
+    o10["Stakeholder"]:::adm
+    o11["StakeholderRelationshipChangeEvent"]:::adm
+    o12["StockCancellation"]:::adm
+    o13["StockClass"]:::adm
+    o14["StockClassAuthorizedSharesAdjustment"]:::adm
+    o15["StockClassConversionRatioAdjustment"]:::adm
+    o16["StockIssuance"]:::adm
+    o17["StockPlan"]:::adm
+    o18["Valuation"]:::adm
+    o19["WarrantCancellation"]:::adm
+    o20["WarrantIssuance"]:::adm
+    o21["WarrantTransfer"]:::adm
+  end
+  subgraph TGT["Carta target objects"]
+    direction TB
+    t0["OptionGrant"]:::carta
+    t1["OptionPoolSummary"]:::carta
+    t2["Stakeholder"]:::carta
+    t3["WarrantTransferTransaction"]:::carta
+    sink["⌀ no Carta home"]:::sink
+  end
+  o0 -->|1| sink
+  o1 -->|5| sink
+  o2 -->|5| sink
+  o3 -->|2| sink
+  o4 -->|3| sink
+  o5 -->|2| sink
+  o6 -->|1| t0
+  o6 -->|16| sink
+  o7 -->|2| sink
+  o8 -->|2| sink
+  o9 -->|9| sink
+  o10 -->|2| t2
+  o10 -->|2| sink
+  o11 -->|1| sink
+  o12 -->|2| sink
+  o13 -->|3| sink
+  o14 -->|3| sink
+  o15 -->|1| sink
+  o16 -->|8| sink
+  o17 -->|1| t1
+  o17 -->|3| sink
+  o18 -->|5| sink
+  o19 -->|2| sink
+  o20 -->|6| sink
+  o21 -->|1| t3
+  o21 -->|2| sink
+```
+
 ### ConvertibleCancellation
 - balance_security_id: no-destination — kind unmappable
 

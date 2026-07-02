@@ -10,6 +10,13 @@
 import { isPlainObject } from "./mapping-validator.js";
 import { Derived } from "./core-pipeline.js";
 import { BOOKKEEPING, buildTargetIndex } from "./report-helpers.js";
+import {
+  FlowRow,
+  byObjectTables,
+  flowMapLines,
+  groupByEntity,
+  mermaidFlow,
+} from "./report-flow.js";
 
 // ---------------------------------------------------------------------------
 // Membership ledger.
@@ -76,6 +83,29 @@ export function renderLedger(d: Derived): string {
 export function renderGapReport(d: Derived): string {
   const admissible = new Map(d.admissibility.map((a) => [`${a.entity} ${a.variant}`, a]));
   const reqByEntity = new Map(d.corpus.objects.map((o) => [o.entity, new Set(o.requiredFields)]));
+  const targetOf = buildTargetIndex(d.corpus.objects);
+
+  // The section-(a) casualties as flow rows, for the diagram: `out`, not a heuristic
+  // reverse-edge (kept for the upstream report), not bookkeeping, on an admissible
+  // entity. `existence-loss` fields have a (lossy) Carta home; `no-destination` have
+  // none and drain to the sink.
+  const gapRows: FlowRow[] = [];
+  for (const r of d.rows) {
+    const reason = r.verdict.reason;
+    if (r.verdict.class !== "out" || reason === undefined) continue;
+    if (reason === "heuristic" || BOOKKEEPING.has(r.field)) continue;
+    if (!admissible.get(`${r.entity} ${r.variant}`)?.admissible) continue;
+    gapRows.push({
+      entity: r.entity,
+      variant: r.variant,
+      field: r.field,
+      reason,
+      detail: r.verdict.detail ?? "",
+      target: targetOf.get(`${r.entity} ${r.variant} ${r.field}`) ?? "—",
+      ocfRequired: reqByEntity.get(r.entity)?.has(r.field) ?? false,
+      admissible: true,
+    });
+  }
 
   const lines: string[] = [
     "# OCF Core — gap report (R5, generated)",
@@ -85,6 +115,12 @@ export function renderGapReport(d: Derived): string {
     "types no green mapping writes to.",
     "",
     "## (a) OCF richness dropped on fold-down",
+    "",
+    "OCF source objects and where each dropped field goes: `existence-loss` fields narrow onto",
+    "a Carta object (a lossy home); `no-destination` fields have no home and drain to `⌀ no Carta",
+    "home`. Edge labels = field count. (Reverse-edge `heuristic` lineage is the upstream report's.)",
+    "",
+    ...mermaidFlow(groupByEntity(gapRows), { sink: "⌀ no Carta home" }),
     "",
   ];
 
@@ -213,16 +249,7 @@ export function renderUpstreamReport(d: Derived): string {
   const reqByEntity = new Map(d.corpus.objects.map((o) => [o.entity, new Set(o.requiredFields)]));
   const targetOf = buildTargetIndex(d.corpus.objects);
 
-  interface Row {
-    entity: string;
-    variant: string;
-    field: string;
-    reason: string;
-    detail: string;
-    target: string;
-    ocfRequired: boolean;
-  }
-  const rows: Row[] = [];
+  const rows: FlowRow[] = [];
   for (const r of d.rows) {
     const reason = r.verdict.reason;
     if (r.verdict.class !== "out" || reason === undefined) continue;
@@ -237,31 +264,11 @@ export function renderUpstreamReport(d: Derived): string {
       detail: r.verdict.detail ?? "",
       target: targetOf.get(`${r.entity} ${r.variant} ${r.field}`) ?? "—",
       ocfRequired: reqByEntity.get(r.entity)?.has(r.field) ?? false,
+      admissible: true, // filtered to admissible above
     });
   }
-  rows.sort(
-    (a, b) =>
-      a.entity.localeCompare(b.entity) ||
-      a.field.localeCompare(b.field) ||
-      a.variant.localeCompare(b.variant)
-  );
-
-  const table = (rs: Row[]): string[] => {
-    const out = [
-      "| entity | variant | field | OCF-req | narrowed target home | loss |",
-      "| --- | --- | --- | :---: | --- | --- |",
-    ];
-    for (const r of rs) {
-      const loss = [r.reason, r.detail].filter(Boolean).join(" — ");
-      out.push(
-        `| ${r.entity} | ${r.variant} | ${r.field} | ${r.ocfRequired ? "**yes**" : ""} | \`${
-          r.target
-        }\` | ${loss} |`
-      );
-    }
-    return out;
-  };
-  const req = rows.filter((r) => r.ocfRequired);
+  const groups = groupByEntity(rows);
+  const reqCount = rows.filter((r) => r.ocfRequired).length;
 
   const lines: string[] = [
     `# OCF Core (${d.profile.name}) — upstream-OCF change candidates (generated)`,
@@ -273,13 +280,21 @@ export function renderUpstreamReport(d: Derived): string {
     "may not validate back as OCF without OCF relaxing a constraint. These are the",
     "upstream-OCF-change candidates; OCF-*required* fields (**bold**) are the strongest.",
     "",
-    `## Lossy-home fields rich-Core carries (${rows.length})`,
+    `## Overview — where rich-Core's lossy fields flow (${rows.length} fields, ${reqCount} OCF-required)`,
     "",
-    ...(rows.length ? table(rows) : ["(none)"]),
+    "OCF source objects → the Carta objects their lossy-home fields land on; edge labels =",
+    "field count. Convergence (several sources on one Carta node) marks the narrowest folds.",
     "",
-    `## Of those, OCF-REQUIRED — the strongest upstream asks (${req.length})`,
+    ...(rows.length
+      ? mermaidFlow(groups)
+      : ["(none — this profile carries no lossy-home fields.)"]),
     "",
-    ...(req.length ? table(req) : ["(none)"]),
+    "## By OCF object — each field and its narrowed Carta home",
+    "",
+    ...(rows.length ? byObjectTables(groups) : ["(none)", ""]),
+    "## Flow map — Carta slot ← OCF sources (the narrowest are the strongest upstream asks)",
+    "",
+    ...(rows.length ? flowMapLines(groups) : ["(none)"]),
     "",
   ];
   return lines.join("\n") + "\n";
