@@ -9,8 +9,120 @@ upstream-OCF-change candidates; OCF-*required* fields (**bold**) are the stronge
 
 ## Overview — where rich-Core's lossy fields flow (22 fields, 13 OCF-required)
 
-OCF source objects → the Carta objects their lossy-home fields land on; edge labels =
-field count. Convergence (several sources on one Carta node) marks the narrowest folds.
+One diagram per connected group — objects that exchange properties (directly or via a
+shared Carta target) are drawn together, unrelated mappings separately. Edge labels = field
+count; convergence (several sources on one Carta node) marks the narrowest folds.
+
+**→ CertificatePrecededBy, RestrictedStockAwardPrecededBy**
+
+```mermaid
+flowchart LR
+  classDef adm fill:#e6f4ea,stroke:#34a853,color:#0b3d20;
+  classDef notadm fill:#f1f3f4,stroke:#9aa0a6,color:#5f6368,stroke-dasharray:4 3;
+  classDef carta fill:#e8f0fe,stroke:#1a73e8,color:#0d2b66;
+  classDef sink fill:#fce8e6,stroke:#d93025,color:#5c0d06;
+  subgraph SRC["OCF source objects"]
+    direction TB
+    o0["EquityCompensationExercise"]:::adm
+    o1["EquityCompensationRelease"]:::adm
+    o2["StockCancellation"]:::adm
+  end
+  subgraph TGT["Carta target objects"]
+    direction TB
+    t0["CertificatePrecededBy"]:::carta
+    t1["RestrictedStockAwardPrecededBy"]:::carta
+  end
+  o0 -->|1| t0
+  o1 -->|1| t0
+  o2 -->|1| t1
+  o2 -->|1| t0
+```
+
+**→ Stakeholder**
+
+```mermaid
+flowchart LR
+  classDef adm fill:#e6f4ea,stroke:#34a853,color:#0b3d20;
+  classDef notadm fill:#f1f3f4,stroke:#9aa0a6,color:#5f6368,stroke-dasharray:4 3;
+  classDef carta fill:#e8f0fe,stroke:#1a73e8,color:#0d2b66;
+  classDef sink fill:#fce8e6,stroke:#d93025,color:#5c0d06;
+  subgraph SRC["OCF source objects"]
+    direction TB
+    o0["Stakeholder"]:::adm
+  end
+  subgraph TGT["Carta target objects"]
+    direction TB
+    t0["Stakeholder"]:::carta
+  end
+  o0 -->|4| t0
+```
+
+**→ Compliance, ConvertibleIssuanceTransaction**
+
+```mermaid
+flowchart LR
+  classDef adm fill:#e6f4ea,stroke:#34a853,color:#0b3d20;
+  classDef notadm fill:#f1f3f4,stroke:#9aa0a6,color:#5f6368,stroke-dasharray:4 3;
+  classDef carta fill:#e8f0fe,stroke:#1a73e8,color:#0d2b66;
+  classDef sink fill:#fce8e6,stroke:#d93025,color:#5c0d06;
+  subgraph SRC["OCF source objects"]
+    direction TB
+    o0["ConvertibleIssuance"]:::adm
+    o1["WarrantIssuance"]:::adm
+  end
+  subgraph TGT["Carta target objects"]
+    direction TB
+    t0["Compliance"]:::carta
+    t1["ConvertibleIssuanceTransaction"]:::carta
+  end
+  o0 -->|1| t1
+  o0 -->|1| t0
+  o1 -->|1| t0
+```
+
+**→ ShareClass, ShareClassRightsAndPreferences**
+
+```mermaid
+flowchart LR
+  classDef adm fill:#e6f4ea,stroke:#34a853,color:#0b3d20;
+  classDef notadm fill:#f1f3f4,stroke:#9aa0a6,color:#5f6368,stroke-dasharray:4 3;
+  classDef carta fill:#e8f0fe,stroke:#1a73e8,color:#0d2b66;
+  classDef sink fill:#fce8e6,stroke:#d93025,color:#5c0d06;
+  subgraph SRC["OCF source objects"]
+    direction TB
+    o0["StockClass"]:::adm
+    o1["StockClassConversionRatioAdjustment"]:::adm
+  end
+  subgraph TGT["Carta target objects"]
+    direction TB
+    t0["ShareClass"]:::carta
+    t1["ShareClassRightsAndPreferences"]:::carta
+  end
+  o0 -->|1| t1
+  o0 -->|1| t0
+  o1 -->|1| t1
+```
+
+**→ Document**
+
+```mermaid
+flowchart LR
+  classDef adm fill:#e6f4ea,stroke:#34a853,color:#0b3d20;
+  classDef notadm fill:#f1f3f4,stroke:#9aa0a6,color:#5f6368,stroke-dasharray:4 3;
+  classDef carta fill:#e8f0fe,stroke:#1a73e8,color:#0d2b66;
+  classDef sink fill:#fce8e6,stroke:#d93025,color:#5c0d06;
+  subgraph SRC["OCF source objects"]
+    direction TB
+    o0["Document"]:::adm
+  end
+  subgraph TGT["Carta target objects"]
+    direction TB
+    t0["Document"]:::carta
+  end
+  o0 -->|2| t0
+```
+
+**→ ConvertibleCancellationTransaction**
 
 ```mermaid
 flowchart LR
@@ -21,54 +133,90 @@ flowchart LR
   subgraph SRC["OCF source objects"]
     direction TB
     o0["ConvertibleCancellation"]:::adm
-    o1["ConvertibleIssuance"]:::adm
-    o2["Document"]:::adm
-    o3["EquityCompensationExercise"]:::adm
-    o4["EquityCompensationIssuance"]:::adm
-    o5["EquityCompensationRelease"]:::adm
-    o6["Stakeholder"]:::adm
-    o7["StockCancellation"]:::adm
-    o8["StockClass"]:::adm
-    o9["StockClassConversionRatioAdjustment"]:::adm
-    o10["StockPlan"]:::adm
-    o11["WarrantCancellation"]:::adm
-    o12["WarrantIssuance"]:::adm
-    o13["WarrantTransfer"]:::adm
   end
   subgraph TGT["Carta target objects"]
     direction TB
-    t0["CertificatePrecededBy"]:::carta
-    t1["Compliance"]:::carta
-    t2["ConvertibleCancellationTransaction"]:::carta
-    t3["ConvertibleIssuanceTransaction"]:::carta
-    t4["Document"]:::carta
-    t5["OptionGrant"]:::carta
-    t6["OptionPoolSummary"]:::carta
-    t7["RestrictedStockAwardPrecededBy"]:::carta
-    t8["ShareClass"]:::carta
-    t9["ShareClassRightsAndPreferences"]:::carta
-    t10["Stakeholder"]:::carta
-    t11["WarrantCancellationTransaction"]:::carta
-    t12["WarrantTransferTransaction"]:::carta
+    t0["ConvertibleCancellationTransaction"]:::carta
   end
-  o0 -->|1| t2
-  o1 -->|1| t1
-  o1 -->|1| t3
-  o2 -->|2| t4
-  o3 -->|1| t0
-  o4 -->|1| t5
-  o5 -->|1| t0
-  o6 -->|4| t10
-  o7 -->|1| t0
-  o7 -->|1| t7
-  o8 -->|1| t8
-  o8 -->|1| t9
-  o9 -->|1| t9
-  o10 -->|1| t6
-  o11 -->|1| t11
-  o12 -->|1| t1
-  o13 -->|1| t12
+  o0 -->|1| t0
 ```
+
+**→ OptionGrant**
+
+```mermaid
+flowchart LR
+  classDef adm fill:#e6f4ea,stroke:#34a853,color:#0b3d20;
+  classDef notadm fill:#f1f3f4,stroke:#9aa0a6,color:#5f6368,stroke-dasharray:4 3;
+  classDef carta fill:#e8f0fe,stroke:#1a73e8,color:#0d2b66;
+  classDef sink fill:#fce8e6,stroke:#d93025,color:#5c0d06;
+  subgraph SRC["OCF source objects"]
+    direction TB
+    o0["EquityCompensationIssuance"]:::adm
+  end
+  subgraph TGT["Carta target objects"]
+    direction TB
+    t0["OptionGrant"]:::carta
+  end
+  o0 -->|1| t0
+```
+
+**→ OptionPoolSummary**
+
+```mermaid
+flowchart LR
+  classDef adm fill:#e6f4ea,stroke:#34a853,color:#0b3d20;
+  classDef notadm fill:#f1f3f4,stroke:#9aa0a6,color:#5f6368,stroke-dasharray:4 3;
+  classDef carta fill:#e8f0fe,stroke:#1a73e8,color:#0d2b66;
+  classDef sink fill:#fce8e6,stroke:#d93025,color:#5c0d06;
+  subgraph SRC["OCF source objects"]
+    direction TB
+    o0["StockPlan"]:::adm
+  end
+  subgraph TGT["Carta target objects"]
+    direction TB
+    t0["OptionPoolSummary"]:::carta
+  end
+  o0 -->|1| t0
+```
+
+**→ WarrantCancellationTransaction**
+
+```mermaid
+flowchart LR
+  classDef adm fill:#e6f4ea,stroke:#34a853,color:#0b3d20;
+  classDef notadm fill:#f1f3f4,stroke:#9aa0a6,color:#5f6368,stroke-dasharray:4 3;
+  classDef carta fill:#e8f0fe,stroke:#1a73e8,color:#0d2b66;
+  classDef sink fill:#fce8e6,stroke:#d93025,color:#5c0d06;
+  subgraph SRC["OCF source objects"]
+    direction TB
+    o0["WarrantCancellation"]:::adm
+  end
+  subgraph TGT["Carta target objects"]
+    direction TB
+    t0["WarrantCancellationTransaction"]:::carta
+  end
+  o0 -->|1| t0
+```
+
+**→ WarrantTransferTransaction**
+
+```mermaid
+flowchart LR
+  classDef adm fill:#e6f4ea,stroke:#34a853,color:#0b3d20;
+  classDef notadm fill:#f1f3f4,stroke:#9aa0a6,color:#5f6368,stroke-dasharray:4 3;
+  classDef carta fill:#e8f0fe,stroke:#1a73e8,color:#0d2b66;
+  classDef sink fill:#fce8e6,stroke:#d93025,color:#5c0d06;
+  subgraph SRC["OCF source objects"]
+    direction TB
+    o0["WarrantTransfer"]:::adm
+  end
+  subgraph TGT["Carta target objects"]
+    direction TB
+    t0["WarrantTransferTransaction"]:::carta
+  end
+  o0 -->|1| t0
+```
+
 
 ## By OCF object — each field and its narrowed Carta home
 

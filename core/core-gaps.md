@@ -6,9 +6,88 @@ types no green mapping writes to.
 
 ## (a) OCF richness dropped on fold-down
 
-OCF source objects and where each dropped field goes: `existence-loss` fields narrow onto
-a Carta object (a lossy home); `no-destination` fields have no home and drain to `⌀ no Carta
-home`. Edge labels = field count. (Reverse-edge `heuristic` lineage is the upstream report's.)
+One diagram per connected group of objects that share a (lossy) Carta destination:
+`existence-loss` fields narrow onto a Carta object; `no-destination` fields have no home and
+are collected into one final `⌀ no Carta home` diagram. Edge labels = field count.
+(Reverse-edge `heuristic` lineage is the upstream report's.)
+
+**→ Stakeholder**
+
+```mermaid
+flowchart LR
+  classDef adm fill:#e6f4ea,stroke:#34a853,color:#0b3d20;
+  classDef notadm fill:#f1f3f4,stroke:#9aa0a6,color:#5f6368,stroke-dasharray:4 3;
+  classDef carta fill:#e8f0fe,stroke:#1a73e8,color:#0d2b66;
+  classDef sink fill:#fce8e6,stroke:#d93025,color:#5c0d06;
+  subgraph SRC["OCF source objects"]
+    direction TB
+    o0["Stakeholder"]:::adm
+  end
+  subgraph TGT["Carta target objects"]
+    direction TB
+    t0["Stakeholder"]:::carta
+  end
+  o0 -->|2| t0
+```
+
+**→ OptionGrant**
+
+```mermaid
+flowchart LR
+  classDef adm fill:#e6f4ea,stroke:#34a853,color:#0b3d20;
+  classDef notadm fill:#f1f3f4,stroke:#9aa0a6,color:#5f6368,stroke-dasharray:4 3;
+  classDef carta fill:#e8f0fe,stroke:#1a73e8,color:#0d2b66;
+  classDef sink fill:#fce8e6,stroke:#d93025,color:#5c0d06;
+  subgraph SRC["OCF source objects"]
+    direction TB
+    o0["EquityCompensationIssuance"]:::adm
+  end
+  subgraph TGT["Carta target objects"]
+    direction TB
+    t0["OptionGrant"]:::carta
+  end
+  o0 -->|1| t0
+```
+
+**→ OptionPoolSummary**
+
+```mermaid
+flowchart LR
+  classDef adm fill:#e6f4ea,stroke:#34a853,color:#0b3d20;
+  classDef notadm fill:#f1f3f4,stroke:#9aa0a6,color:#5f6368,stroke-dasharray:4 3;
+  classDef carta fill:#e8f0fe,stroke:#1a73e8,color:#0d2b66;
+  classDef sink fill:#fce8e6,stroke:#d93025,color:#5c0d06;
+  subgraph SRC["OCF source objects"]
+    direction TB
+    o0["StockPlan"]:::adm
+  end
+  subgraph TGT["Carta target objects"]
+    direction TB
+    t0["OptionPoolSummary"]:::carta
+  end
+  o0 -->|1| t0
+```
+
+**→ WarrantTransferTransaction**
+
+```mermaid
+flowchart LR
+  classDef adm fill:#e6f4ea,stroke:#34a853,color:#0b3d20;
+  classDef notadm fill:#f1f3f4,stroke:#9aa0a6,color:#5f6368,stroke-dasharray:4 3;
+  classDef carta fill:#e8f0fe,stroke:#1a73e8,color:#0d2b66;
+  classDef sink fill:#fce8e6,stroke:#d93025,color:#5c0d06;
+  subgraph SRC["OCF source objects"]
+    direction TB
+    o0["WarrantTransfer"]:::adm
+  end
+  subgraph TGT["Carta target objects"]
+    direction TB
+    t0["WarrantTransferTransaction"]:::carta
+  end
+  o0 -->|1| t0
+```
+
+**→ ⌀ no Carta home**
 
 ```mermaid
 flowchart LR
@@ -41,10 +120,6 @@ flowchart LR
   end
   subgraph TGT["Carta target objects"]
     direction TB
-    t0["OptionGrant"]:::carta
-    t1["OptionPoolSummary"]:::carta
-    t2["Stakeholder"]:::carta
-    t3["WarrantTransferTransaction"]:::carta
     sink["⌀ no Carta home"]:::sink
   end
   o0 -->|1| sink
@@ -52,26 +127,23 @@ flowchart LR
   o2 -->|5| sink
   o3 -->|3| sink
   o4 -->|2| sink
-  o5 -->|1| t0
   o5 -->|16| sink
   o6 -->|2| sink
   o7 -->|2| sink
   o8 -->|9| sink
-  o9 -->|2| t2
   o9 -->|2| sink
   o10 -->|1| sink
   o11 -->|2| sink
   o12 -->|3| sink
   o13 -->|3| sink
   o14 -->|8| sink
-  o15 -->|1| t1
   o15 -->|3| sink
   o16 -->|5| sink
   o17 -->|2| sink
   o18 -->|6| sink
-  o19 -->|1| t3
   o19 -->|2| sink
 ```
+
 
 ### ConvertibleCancellation
 - balance_security_id: no-destination — kind unmappable
