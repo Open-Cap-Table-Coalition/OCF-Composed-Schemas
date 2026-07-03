@@ -40,20 +40,26 @@ flowchart LR
     t0["CertificatePrecededBy"]:::carta
     t1["RestrictedStockAwardPrecededBy"]:::carta
   end
-  o0 -->|1| t0
-  o1 -->|1| t0
-  o2 -->|1| t1
-  o2 -->|1| t0
-  o3 -->|2| t1
-  o3 -->|2| t0
-  o4 -->|2| t1
-  o4 -->|2| t0
-  o5 -->|1| t1
-  o5 -->|1| t0
-  o6 -->|1| t1
-  o6 -->|1| t0
-  o7 -->|2| t1
-  o7 -->|2| t0
+  o0 -->|"resulting_security_ids → securities"| t0
+  o1 -->|"resulting_security_ids → securities"| t0
+  o2 -->|"balance_security_id → securities"| t1
+  o2 -->|"balance_security_id → securities"| t0
+  o3 -->|"resulting_security_id → securities"| t1
+  o3 -->|"resulting_security_id → securities"| t0
+  o3 -->|"security_ids → securities"| t1
+  o3 -->|"security_ids → securities"| t0
+  o4 -->|"balance_security_id → securities"| t1
+  o4 -->|"balance_security_id → securities"| t0
+  o4 -->|"resulting_security_ids → securities"| t1
+  o4 -->|"resulting_security_ids → securities"| t0
+  o5 -->|"resulting_security_ids → securities"| t1
+  o5 -->|"resulting_security_ids → securities"| t0
+  o6 -->|"balance_security_id → securities"| t1
+  o6 -->|"balance_security_id → securities"| t0
+  o7 -->|"balance_security_id → securities"| t1
+  o7 -->|"balance_security_id → securities"| t0
+  o7 -->|"resulting_security_ids → securities"| t1
+  o7 -->|"resulting_security_ids → securities"| t0
 ```
 
 **→ Stakeholder**
@@ -72,7 +78,10 @@ flowchart LR
     direction TB
     t0["Stakeholder"]:::carta
   end
-  o0 -->|4| t0
+  o0 -->|"addresses → address"| t0
+  o0 -->|"contact_info → email"| t0
+  o0 -->|"name → fullName"| t0
+  o0 -->|"primary_contact → email"| t0
 ```
 
 **→ Compliance, ConvertibleIssuanceTransaction**
@@ -93,9 +102,9 @@ flowchart LR
     t0["Compliance"]:::carta
     t1["ConvertibleIssuanceTransaction"]:::carta
   end
-  o0 -->|1| t1
-  o0 -->|1| t0
-  o1 -->|1| t0
+  o0 -->|"conversion_triggers → conversionTrigger / discountPercentage / valuationCap"| t1
+  o0 -->|"security_law_exemptions → federalExemption"| t0
+  o1 -->|"security_law_exemptions → federalExemption"| t0
 ```
 
 **→ ShareClass, ShareClassRightsAndPreferences**
@@ -116,9 +125,9 @@ flowchart LR
     t0["ShareClass"]:::carta
     t1["ShareClassRightsAndPreferences"]:::carta
   end
-  o0 -->|1| t1
-  o0 -->|1| t0
-  o1 -->|1| t1
+  o0 -->|"conversion_rights → conversionRatio / conversionPrice"| t1
+  o0 -->|"seniority → seniority"| t0
+  o1 -->|"new_ratio_conversion_mechanism → conversionRatio / conversionPrice"| t1
 ```
 
 **→ Document**
@@ -137,7 +146,8 @@ flowchart LR
     direction TB
     t0["Document"]:::carta
   end
-  o0 -->|2| t0
+  o0 -->|"path → fileId"| t0
+  o0 -->|"uri → fileId"| t0
 ```
 
 **→ ConvertibleCancellationTransaction**
@@ -156,7 +166,7 @@ flowchart LR
     direction TB
     t0["ConvertibleCancellationTransaction"]:::carta
   end
-  o0 -->|1| t0
+  o0 -->|"reason_text → reason"| t0
 ```
 
 **→ OptionGrant**
@@ -175,7 +185,7 @@ flowchart LR
     direction TB
     t0["OptionGrant"]:::carta
   end
-  o0 -->|1| t0
+  o0 -->|"termination_exercise_windows → exercisePeriods"| t0
 ```
 
 **→ OptionPoolSummary**
@@ -194,7 +204,7 @@ flowchart LR
     direction TB
     t0["OptionPoolSummary"]:::carta
   end
-  o0 -->|1| t0
+  o0 -->|"stock_class_ids → shareClassId"| t0
 ```
 
 **→ WarrantCancellationTransaction**
@@ -213,7 +223,7 @@ flowchart LR
     direction TB
     t0["WarrantCancellationTransaction"]:::carta
   end
-  o0 -->|1| t0
+  o0 -->|"reason_text → reason"| t0
 ```
 
 **→ WarrantExerciseTransaction**
@@ -232,7 +242,7 @@ flowchart LR
     direction TB
     t0["WarrantExerciseTransaction"]:::carta
   end
-  o0 -->|1| t0
+  o0 -->|"resulting_security_ids → resultingSecurityId"| t0
 ```
 
 **→ WarrantTransferTransaction**
@@ -251,7 +261,7 @@ flowchart LR
     direction TB
     t0["WarrantTransferTransaction"]:::carta
   end
-  o0 -->|1| t0
+  o0 -->|"resulting_security_ids → resultingSecurityId"| t0
 ```
 
 

@@ -27,7 +27,8 @@ flowchart LR
     direction TB
     t0["Stakeholder"]:::carta
   end
-  o0 -->|2| t0
+  o0 -->|"addresses → address"| t0
+  o0 -->|"name → fullName"| t0
 ```
 
 **→ OptionGrant**
@@ -46,7 +47,7 @@ flowchart LR
     direction TB
     t0["OptionGrant"]:::carta
   end
-  o0 -->|1| t0
+  o0 -->|"termination_exercise_windows → exercisePeriods"| t0
 ```
 
 **→ OptionPoolSummary**
@@ -65,7 +66,7 @@ flowchart LR
     direction TB
     t0["OptionPoolSummary"]:::carta
   end
-  o0 -->|1| t0
+  o0 -->|"stock_class_ids → shareClassId"| t0
 ```
 
 **→ WarrantTransferTransaction**
@@ -84,7 +85,7 @@ flowchart LR
     direction TB
     t0["WarrantTransferTransaction"]:::carta
   end
-  o0 -->|1| t0
+  o0 -->|"resulting_security_ids → resultingSecurityId"| t0
 ```
 
 **→ ⌀ no Carta home**
@@ -124,28 +125,91 @@ flowchart LR
     direction TB
     sink["⌀ no Carta home"]:::sink
   end
-  o0 -->|1| sink
-  o1 -->|5| sink
-  o2 -->|5| sink
-  o3 -->|2| sink
-  o4 -->|3| sink
-  o5 -->|2| sink
-  o6 -->|16| sink
-  o7 -->|2| sink
-  o8 -->|2| sink
-  o9 -->|9| sink
-  o10 -->|2| sink
-  o11 -->|1| sink
-  o12 -->|2| sink
-  o13 -->|3| sink
-  o14 -->|3| sink
-  o15 -->|1| sink
-  o16 -->|8| sink
-  o17 -->|3| sink
-  o18 -->|5| sink
-  o19 -->|2| sink
-  o20 -->|6| sink
-  o21 -->|2| sink
+  o0 -->|"balance_security_id"| sink
+  o1 -->|"balance_security_id"| sink
+  o1 -->|"capitalization_definition"| sink
+  o1 -->|"reason_text"| sink
+  o1 -->|"resulting_security_ids"| sink
+  o1 -->|"trigger_id"| sink
+  o2 -->|"board_approval_date"| sink
+  o2 -->|"consideration_text"| sink
+  o2 -->|"pro_rata"| sink
+  o2 -->|"seniority"| sink
+  o2 -->|"stockholder_approval_date"| sink
+  o3 -->|"md5"| sink
+  o3 -->|"related_objects"| sink
+  o4 -->|"balance_security_id"| sink
+  o4 -->|"reason_text"| sink
+  o4 -->|"security_id"| sink
+  o5 -->|"consideration_text"| sink
+  o5 -->|"security_id"| sink
+  o6 -->|"base_price"| sink
+  o6 -->|"board_approval_date"| sink
+  o6 -->|"compensation_type"| sink
+  o6 -->|"consideration_text"| sink
+  o6 -->|"custom_id"| sink
+  o6 -->|"early_exercisable"| sink
+  o6 -->|"exercise_price"| sink
+  o6 -->|"expiration_date"| sink
+  o6 -->|"option_grant_type"| sink
+  o6 -->|"security_id"| sink
+  o6 -->|"security_law_exemptions"| sink
+  o6 -->|"stakeholder_id"| sink
+  o6 -->|"stockholder_approval_date"| sink
+  o6 -->|"termination_exercise_windows"| sink
+  o6 -->|"vesting_start_date"| sink
+  o6 -->|"vestings"| sink
+  o7 -->|"consideration_text"| sink
+  o7 -->|"security_id"| sink
+  o8 -->|"date"| sink
+  o8 -->|"security_id"| sink
+  o9 -->|"address"| sink
+  o9 -->|"country_of_formation"| sink
+  o9 -->|"country_subdivision_name_of_formation"| sink
+  o9 -->|"country_subdivision_of_formation"| sink
+  o9 -->|"email"| sink
+  o9 -->|"formation_date"| sink
+  o9 -->|"initial_shares_authorized"| sink
+  o9 -->|"phone"| sink
+  o9 -->|"tax_ids"| sink
+  o10 -->|"current_status"| sink
+  o10 -->|"tax_ids"| sink
+  o11 -->|"date"| sink
+  o12 -->|"reason_text"| sink
+  o12 -->|"security_id"| sink
+  o13 -->|"board_approval_date"| sink
+  o13 -->|"stockholder_approval_date"| sink
+  o13 -->|"votes_per_share"| sink
+  o14 -->|"board_approval_date"| sink
+  o14 -->|"date"| sink
+  o14 -->|"stockholder_approval_date"| sink
+  o15 -->|"date"| sink
+  o16 -->|"board_approval_date"| sink
+  o16 -->|"consideration_text"| sink
+  o16 -->|"issuance_type"| sink
+  o16 -->|"security_law_exemptions"| sink
+  o16 -->|"share_numbers_issued"| sink
+  o16 -->|"stock_legend_ids"| sink
+  o16 -->|"stockholder_approval_date"| sink
+  o16 -->|"vestings"| sink
+  o17 -->|"board_approval_date"| sink
+  o17 -->|"default_cancellation_behavior"| sink
+  o17 -->|"stockholder_approval_date"| sink
+  o18 -->|"board_approval_date"| sink
+  o18 -->|"effective_date"| sink
+  o18 -->|"provider"| sink
+  o18 -->|"stockholder_approval_date"| sink
+  o18 -->|"valuation_type"| sink
+  o19 -->|"balance_security_id"| sink
+  o19 -->|"security_id"| sink
+  o20 -->|"board_approval_date"| sink
+  o20 -->|"consideration_text"| sink
+  o20 -->|"exercise_triggers"| sink
+  o20 -->|"quantity_source"| sink
+  o20 -->|"stockholder_approval_date"| sink
+  o20 -->|"vestings"| sink
+  o21 -->|"balance_security_id"| sink
+  o21 -->|"consideration_text"| sink
 ```
 
 
