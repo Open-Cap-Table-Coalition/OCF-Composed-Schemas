@@ -23,7 +23,8 @@ import { writeFile } from "node:fs/promises";
 
 import { deriveCore, isMember, RICH_PROFILE } from "./lib/core-pipeline.js";
 import { isPlainObject } from "./lib/mapping-validator.js";
-import { BOOKKEEPING } from "./lib/report-helpers.js";
+import { BOOKKEEPING, buildTargetIndex } from "./lib/report-helpers.js";
+import { EntityGroup, FlowRow, groupByEntity, mermaidHubFlow } from "./lib/report-flow.js";
 
 const OUT_FILE = "docs/core-bidirectional-flow.md";
 
@@ -99,9 +100,34 @@ async function main(): Promise<number> {
     carta.set(name, { filled, empty });
   }
 
+  // Member (flow-in) fields with their Carta targets, plus the per-object loss
+  // lists, for the grouped hub diagrams.
+  const targetOf = buildTargetIndex(d.corpus.objects);
+  const memberRows: FlowRow[] = [];
+  for (const r of d.rows) {
+    if (BOOKKEEPING.has(r.field) || !isMember(r.verdict, RICH_PROFILE)) continue;
+    memberRows.push({
+      entity: r.entity,
+      variant: r.variant,
+      field: r.field,
+      reason: r.verdict.reason ?? "",
+      detail: r.verdict.detail ?? "",
+      target: targetOf.get(`${r.entity} ${r.variant} ${r.field}`) ?? "—",
+      ocfRequired: false,
+      admissible: admBy.get(`${r.entity} ${r.variant}`)?.admissible ?? false,
+    });
+  }
+  const memberGroups = groupByEntity(memberRows);
+  const ocfLost = new Map<string, string[]>(
+    [...ocf].map(([e, o]) => [e, [...o.dropped].sort()] as [string, string[]])
+  );
+  const cartaUnfilled = new Map<string, string[]>(
+    [...carta].map(([n, c]) => [n, c.empty] as [string, string[]])
+  );
+
   await writeFile(
     path.join(process.cwd(), OUT_FILE),
-    render(ocf, carta, untargetedObjectCount),
+    render(ocf, carta, untargetedObjectCount, memberGroups, ocfLost, cartaUnfilled),
     "utf8"
   );
 
@@ -128,7 +154,10 @@ function render(
     { clean: Set<string>; lossy: Set<string>; dropped: Set<string>; admissible: boolean }
   >,
   carta: Map<string, { filled: string[]; empty: string[] }>,
-  untargetedObjects: number
+  untargetedObjects: number,
+  memberGroups: EntityGroup[],
+  ocfLost: Map<string, string[]>,
+  cartaUnfilled: Map<string, string[]>
 ): string {
   const ocfClean = sum([...ocf.values()].map((o) => o.clean.size));
   const ocfLossy = sum([...ocf.values()].map((o) => o.lossy.size));
@@ -165,6 +194,15 @@ function render(
     `  that Core slot); left behind = a Carta field no mapping targets. Plus **${untargetedObjects}**`,
     "  object-typed Carta `$defs` are targeted nowhere at all (whole concepts OCF lacks — gap report b).",
     "",
+    "## Hub flow — per related group (what flows in vs is lost, both sides)",
+    "",
+    "One diagram per connected group of related objects (OCF objects joined to the Carta objects",
+    "they map into). **Solid** edges = a property that FLOWS IN (`OCF field → Carta prop`). **Dashed**",
+    "edges to a red void = properties LOST: OCF fields with no Carta home, and Carta fields no OCF",
+    "source fills. Loss lists are capped per object (full names in the tables below); OCF nodes are",
+    "green (in Core) / dashed grey (not admissible). Groups are largest-first.",
+    "",
+    ...mermaidHubFlow(memberGroups, ocfLost, cartaUnfilled),
     "## OCF → Core — per object (fields; clean = direct/coarsen, lossy = has a home but narrows, left behind = no home)",
     "",
     "See `core-lossy-inventory.md` / `core-unmapped-inventory.md` for the property names. Counts here",
