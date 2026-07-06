@@ -37,19 +37,19 @@ green (in Core) / dashed grey (not admissible). Groups are largest-first.
 **→ OptionGrant, OptionIssuanceTransaction, RestrictedStockUnit, RsuIssuanceTransaction, SarIssuanceTransaction**
 
 ```mermaid
-flowchart TB
+flowchart LR
   classDef adm fill:#e6f4ea,stroke:#34a853,color:#0b3d20;
   classDef notadm fill:#f1f3f4,stroke:#9aa0a6,color:#5f6368,stroke-dasharray:4 3;
   classDef carta fill:#e8f0fe,stroke:#1a73e8,color:#0d2b66;
   classDef lost fill:#fce8e6,stroke:#d93025,color:#5c0d06;
   subgraph SRC["OCF (= Core, source)"]
-    direction LR
+    direction TB
     o0["EquityCompensationAcceptance"]:::notadm
     o1["EquityCompensationIssuance"]:::adm
     o2["EquityCompensationRepricing"]:::adm
   end
   subgraph TGT["Carta"]
-    direction LR
+    direction TB
     t0["OptionGrant"]:::carta
     t1["OptionIssuanceTransaction"]:::carta
     t2["RestrictedStockUnit"]:::carta
@@ -108,13 +108,13 @@ flowchart TB
 **→ CertificateCancellationTransaction, CertificatePrecededBy, OptionExerciseTransaction, RestrictedStockAwardPrecededBy, RestrictedStockUnitSettlement, RsaCancellationTransaction, RsuSettlementTransaction, SarExerciseTransaction**
 
 ```mermaid
-flowchart TB
+flowchart LR
   classDef adm fill:#e6f4ea,stroke:#34a853,color:#0b3d20;
   classDef notadm fill:#f1f3f4,stroke:#9aa0a6,color:#5f6368,stroke-dasharray:4 3;
   classDef carta fill:#e8f0fe,stroke:#1a73e8,color:#0d2b66;
   classDef lost fill:#fce8e6,stroke:#d93025,color:#5c0d06;
   subgraph SRC["OCF (= Core, source)"]
-    direction LR
+    direction TB
     o0["EquityCompensationExercise"]:::adm
     o1["EquityCompensationRelease"]:::adm
     o2["StockCancellation"]:::adm
@@ -125,7 +125,7 @@ flowchart TB
     o7["StockTransfer"]:::notadm
   end
   subgraph TGT["Carta"]
-    direction LR
+    direction TB
     t0["CertificateCancellationTransaction"]:::carta
     t1["CertificatePrecededBy"]:::carta
     t2["OptionExerciseTransaction"]:::carta
@@ -190,13 +190,13 @@ flowchart TB
 **→ Compliance, ConvertibleCancellationTransaction, ConvertibleIssuanceTransaction, ConvertibleNote, ConvertibleTransactionItem, NoteBlock, WarrantExerciseTransaction, WarrantIssuanceTransaction, WarrantTransactionItem, WarrantTransferTransaction**
 
 ```mermaid
-flowchart TB
+flowchart LR
   classDef adm fill:#e6f4ea,stroke:#34a853,color:#0b3d20;
   classDef notadm fill:#f1f3f4,stroke:#9aa0a6,color:#5f6368,stroke-dasharray:4 3;
   classDef carta fill:#e8f0fe,stroke:#1a73e8,color:#0d2b66;
   classDef lost fill:#fce8e6,stroke:#d93025,color:#5c0d06;
   subgraph SRC["OCF (= Core, source)"]
-    direction LR
+    direction TB
     o0["ConvertibleCancellation"]:::adm
     o1["ConvertibleConversion"]:::adm
     o2["ConvertibleIssuance"]:::adm
@@ -205,7 +205,7 @@ flowchart TB
     o5["WarrantTransfer"]:::adm
   end
   subgraph TGT["Carta"]
-    direction LR
+    direction TB
     t0["Compliance"]:::carta
     t1["ConvertibleCancellationTransaction"]:::carta
     t2["ConvertibleIssuanceTransaction"]:::carta
@@ -271,18 +271,18 @@ flowchart TB
 **→ Certificate, CertificateIssuanceTransaction, RestrictedStockAward, RsaIssuanceTransaction**
 
 ```mermaid
-flowchart TB
+flowchart LR
   classDef adm fill:#e6f4ea,stroke:#34a853,color:#0b3d20;
   classDef notadm fill:#f1f3f4,stroke:#9aa0a6,color:#5f6368,stroke-dasharray:4 3;
   classDef carta fill:#e8f0fe,stroke:#1a73e8,color:#0d2b66;
   classDef lost fill:#fce8e6,stroke:#d93025,color:#5c0d06;
   subgraph SRC["OCF (= Core, source)"]
-    direction LR
+    direction TB
     o0["StockAcceptance"]:::notadm
     o1["StockIssuance"]:::adm
   end
   subgraph TGT["Carta"]
-    direction LR
+    direction TB
     t0["Certificate"]:::carta
     t1["CertificateIssuanceTransaction"]:::carta
     t2["RestrictedStockAward"]:::carta
@@ -324,19 +324,19 @@ flowchart TB
 **→ ShareClass, ShareClassRightsAndPreferences**
 
 ```mermaid
-flowchart TB
+flowchart LR
   classDef adm fill:#e6f4ea,stroke:#34a853,color:#0b3d20;
   classDef notadm fill:#f1f3f4,stroke:#9aa0a6,color:#5f6368,stroke-dasharray:4 3;
   classDef carta fill:#e8f0fe,stroke:#1a73e8,color:#0d2b66;
   classDef lost fill:#fce8e6,stroke:#d93025,color:#5c0d06;
   subgraph SRC["OCF (= Core, source)"]
-    direction LR
+    direction TB
     o0["StockClass"]:::adm
     o1["StockClassAuthorizedSharesAdjustment"]:::adm
     o2["StockClassConversionRatioAdjustment"]:::adm
   end
   subgraph TGT["Carta"]
-    direction LR
+    direction TB
     t0["ShareClass"]:::carta
     t1["ShareClassRightsAndPreferences"]:::carta
   end
@@ -366,19 +366,19 @@ flowchart TB
 **→ Stakeholder**
 
 ```mermaid
-flowchart TB
+flowchart LR
   classDef adm fill:#e6f4ea,stroke:#34a853,color:#0b3d20;
   classDef notadm fill:#f1f3f4,stroke:#9aa0a6,color:#5f6368,stroke-dasharray:4 3;
   classDef carta fill:#e8f0fe,stroke:#1a73e8,color:#0d2b66;
   classDef lost fill:#fce8e6,stroke:#d93025,color:#5c0d06;
   subgraph SRC["OCF (= Core, source)"]
-    direction LR
+    direction TB
     o0["Stakeholder"]:::adm
     o1["StakeholderRelationshipChangeEvent"]:::adm
     o2["StakeholderStatusChangeEvent"]:::notadm
   end
   subgraph TGT["Carta"]
-    direction LR
+    direction TB
     t0["Stakeholder"]:::carta
   end
   ocflost["⌀ OCF lost (no Carta home)"]:::lost
@@ -404,17 +404,17 @@ flowchart TB
 **→ OptionCancellationTransaction, RsuCancellationTransaction, SarCancellationTransaction**
 
 ```mermaid
-flowchart TB
+flowchart LR
   classDef adm fill:#e6f4ea,stroke:#34a853,color:#0b3d20;
   classDef notadm fill:#f1f3f4,stroke:#9aa0a6,color:#5f6368,stroke-dasharray:4 3;
   classDef carta fill:#e8f0fe,stroke:#1a73e8,color:#0d2b66;
   classDef lost fill:#fce8e6,stroke:#d93025,color:#5c0d06;
   subgraph SRC["OCF (= Core, source)"]
-    direction LR
+    direction TB
     o0["EquityCompensationCancellation"]:::adm
   end
   subgraph TGT["Carta"]
-    direction LR
+    direction TB
     t0["OptionCancellationTransaction"]:::carta
     t1["RsuCancellationTransaction"]:::carta
     t2["SarCancellationTransaction"]:::carta
@@ -436,17 +436,17 @@ flowchart TB
 **→ OptionPoolSummary**
 
 ```mermaid
-flowchart TB
+flowchart LR
   classDef adm fill:#e6f4ea,stroke:#34a853,color:#0b3d20;
   classDef notadm fill:#f1f3f4,stroke:#9aa0a6,color:#5f6368,stroke-dasharray:4 3;
   classDef carta fill:#e8f0fe,stroke:#1a73e8,color:#0d2b66;
   classDef lost fill:#fce8e6,stroke:#d93025,color:#5c0d06;
   subgraph SRC["OCF (= Core, source)"]
-    direction LR
+    direction TB
     o0["StockPlan"]:::adm
   end
   subgraph TGT["Carta"]
-    direction LR
+    direction TB
     t0["OptionPoolSummary"]:::carta
   end
   ocflost["⌀ OCF lost (no Carta home)"]:::lost
@@ -462,17 +462,17 @@ flowchart TB
 **→ WarrantCancellationTransaction**
 
 ```mermaid
-flowchart TB
+flowchart LR
   classDef adm fill:#e6f4ea,stroke:#34a853,color:#0b3d20;
   classDef notadm fill:#f1f3f4,stroke:#9aa0a6,color:#5f6368,stroke-dasharray:4 3;
   classDef carta fill:#e8f0fe,stroke:#1a73e8,color:#0d2b66;
   classDef lost fill:#fce8e6,stroke:#d93025,color:#5c0d06;
   subgraph SRC["OCF (= Core, source)"]
-    direction LR
+    direction TB
     o0["WarrantCancellation"]:::adm
   end
   subgraph TGT["Carta"]
-    direction LR
+    direction TB
     t0["WarrantCancellationTransaction"]:::carta
   end
   ocflost["⌀ OCF lost (no Carta home)"]:::lost
@@ -485,17 +485,17 @@ flowchart TB
 **→ Document**
 
 ```mermaid
-flowchart TB
+flowchart LR
   classDef adm fill:#e6f4ea,stroke:#34a853,color:#0b3d20;
   classDef notadm fill:#f1f3f4,stroke:#9aa0a6,color:#5f6368,stroke-dasharray:4 3;
   classDef carta fill:#e8f0fe,stroke:#1a73e8,color:#0d2b66;
   classDef lost fill:#fce8e6,stroke:#d93025,color:#5c0d06;
   subgraph SRC["OCF (= Core, source)"]
-    direction LR
+    direction TB
     o0["Document"]:::adm
   end
   subgraph TGT["Carta"]
-    direction LR
+    direction TB
     t0["Document"]:::carta
   end
   ocflost["⌀ OCF lost (no Carta home)"]:::lost
@@ -509,17 +509,17 @@ flowchart TB
 **→ Issuer**
 
 ```mermaid
-flowchart TB
+flowchart LR
   classDef adm fill:#e6f4ea,stroke:#34a853,color:#0b3d20;
   classDef notadm fill:#f1f3f4,stroke:#9aa0a6,color:#5f6368,stroke-dasharray:4 3;
   classDef carta fill:#e8f0fe,stroke:#1a73e8,color:#0d2b66;
   classDef lost fill:#fce8e6,stroke:#d93025,color:#5c0d06;
   subgraph SRC["OCF (= Core, source)"]
-    direction LR
+    direction TB
     o0["Issuer"]:::adm
   end
   subgraph TGT["Carta"]
-    direction LR
+    direction TB
     t0["Issuer"]:::carta
   end
   ocflost["⌀ OCF lost (no Carta home)"]:::lost
@@ -533,17 +533,17 @@ flowchart TB
 **→ ShareClassValuation**
 
 ```mermaid
-flowchart TB
+flowchart LR
   classDef adm fill:#e6f4ea,stroke:#34a853,color:#0b3d20;
   classDef notadm fill:#f1f3f4,stroke:#9aa0a6,color:#5f6368,stroke-dasharray:4 3;
   classDef carta fill:#e8f0fe,stroke:#1a73e8,color:#0d2b66;
   classDef lost fill:#fce8e6,stroke:#d93025,color:#5c0d06;
   subgraph SRC["OCF (= Core, source)"]
-    direction LR
+    direction TB
     o0["Valuation"]:::adm
   end
   subgraph TGT["Carta"]
-    direction LR
+    direction TB
     t0["ShareClassValuation"]:::carta
   end
   ocflost["⌀ OCF lost (no Carta home)"]:::lost
@@ -557,17 +557,17 @@ flowchart TB
 **→ VestingScheduleTemplate**
 
 ```mermaid
-flowchart TB
+flowchart LR
   classDef adm fill:#e6f4ea,stroke:#34a853,color:#0b3d20;
   classDef notadm fill:#f1f3f4,stroke:#9aa0a6,color:#5f6368,stroke-dasharray:4 3;
   classDef carta fill:#e8f0fe,stroke:#1a73e8,color:#0d2b66;
   classDef lost fill:#fce8e6,stroke:#d93025,color:#5c0d06;
   subgraph SRC["OCF (= Core, source)"]
-    direction LR
+    direction TB
     o0["VestingTerms"]:::adm
   end
   subgraph TGT["Carta"]
-    direction LR
+    direction TB
     t0["VestingScheduleTemplate"]:::carta
   end
   cartalost["⌀ Carta lost (no OCF source)"]:::lost

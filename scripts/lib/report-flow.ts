@@ -396,17 +396,17 @@ export function mermaidHubFlow(
     out.push(`**→ ${cartaTargets(comp)}**`, "");
     out.push(
       "```mermaid",
-      "flowchart TB",
+      "flowchart LR",
       "  classDef adm fill:#e6f4ea,stroke:#34a853,color:#0b3d20;",
       "  classDef notadm fill:#f1f3f4,stroke:#9aa0a6,color:#5f6368,stroke-dasharray:4 3;",
       "  classDef carta fill:#e8f0fe,stroke:#1a73e8,color:#0d2b66;",
       "  classDef lost fill:#fce8e6,stroke:#d93025,color:#5c0d06;",
       '  subgraph SRC["OCF (= Core, source)"]',
-      "    direction LR"
+      "    direction TB"
     );
     for (const n of ocfObjs)
       out.push(`    ${oid.get(n)}["${n}"]:::${adm.get(n) ? "adm" : "notadm"}`);
-    out.push("  end", '  subgraph TGT["Carta"]', "    direction LR");
+    out.push("  end", '  subgraph TGT["Carta"]', "    direction TB");
     for (const n of cartaObjs) out.push(`    ${tid.get(n)}["${n}"]:::carta`);
     out.push("  end");
     if (anyOcfLost) out.push(`  ocflost["⌀ OCF lost (no Carta home)"]:::lost`);
