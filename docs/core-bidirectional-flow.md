@@ -37,7 +37,6 @@ green (in Core) / dashed grey (not admissible). Groups are largest-first.
 **→ OptionGrant, OptionIssuanceTransaction, RestrictedStockUnit, RsuIssuanceTransaction, SarIssuanceTransaction**
 
 ```mermaid
-%%{init: {"flowchart": {"defaultRenderer": "elk"}}}%%
 flowchart LR
   classDef adm fill:#e6f4ea,stroke:#34a853,color:#0b3d20;
   classDef notadm fill:#f1f3f4,stroke:#9aa0a6,color:#5f6368,stroke-dasharray:4 3;
@@ -109,7 +108,6 @@ flowchart LR
 **→ CertificateCancellationTransaction, CertificatePrecededBy, OptionExerciseTransaction, RestrictedStockAwardPrecededBy, RestrictedStockUnitSettlement, RsaCancellationTransaction, RsuSettlementTransaction, SarExerciseTransaction**
 
 ```mermaid
-%%{init: {"flowchart": {"defaultRenderer": "elk"}}}%%
 flowchart LR
   classDef adm fill:#e6f4ea,stroke:#34a853,color:#0b3d20;
   classDef notadm fill:#f1f3f4,stroke:#9aa0a6,color:#5f6368,stroke-dasharray:4 3;
@@ -192,7 +190,6 @@ flowchart LR
 **→ Compliance, ConvertibleCancellationTransaction, ConvertibleIssuanceTransaction, ConvertibleNote, ConvertibleTransactionItem, NoteBlock, WarrantExerciseTransaction, WarrantIssuanceTransaction, WarrantTransactionItem, WarrantTransferTransaction**
 
 ```mermaid
-%%{init: {"flowchart": {"defaultRenderer": "elk"}}}%%
 flowchart LR
   classDef adm fill:#e6f4ea,stroke:#34a853,color:#0b3d20;
   classDef notadm fill:#f1f3f4,stroke:#9aa0a6,color:#5f6368,stroke-dasharray:4 3;
@@ -274,7 +271,6 @@ flowchart LR
 **→ Certificate, CertificateIssuanceTransaction, RestrictedStockAward, RsaIssuanceTransaction**
 
 ```mermaid
-%%{init: {"flowchart": {"defaultRenderer": "elk"}}}%%
 flowchart LR
   classDef adm fill:#e6f4ea,stroke:#34a853,color:#0b3d20;
   classDef notadm fill:#f1f3f4,stroke:#9aa0a6,color:#5f6368,stroke-dasharray:4 3;
@@ -328,7 +324,6 @@ flowchart LR
 **→ ShareClass, ShareClassRightsAndPreferences**
 
 ```mermaid
-%%{init: {"flowchart": {"defaultRenderer": "elk"}}}%%
 flowchart LR
   classDef adm fill:#e6f4ea,stroke:#34a853,color:#0b3d20;
   classDef notadm fill:#f1f3f4,stroke:#9aa0a6,color:#5f6368,stroke-dasharray:4 3;
@@ -371,7 +366,6 @@ flowchart LR
 **→ Stakeholder**
 
 ```mermaid
-%%{init: {"flowchart": {"defaultRenderer": "elk"}}}%%
 flowchart LR
   classDef adm fill:#e6f4ea,stroke:#34a853,color:#0b3d20;
   classDef notadm fill:#f1f3f4,stroke:#9aa0a6,color:#5f6368,stroke-dasharray:4 3;
@@ -410,7 +404,6 @@ flowchart LR
 **→ OptionCancellationTransaction, RsuCancellationTransaction, SarCancellationTransaction**
 
 ```mermaid
-%%{init: {"flowchart": {"defaultRenderer": "elk"}}}%%
 flowchart LR
   classDef adm fill:#e6f4ea,stroke:#34a853,color:#0b3d20;
   classDef notadm fill:#f1f3f4,stroke:#9aa0a6,color:#5f6368,stroke-dasharray:4 3;
@@ -443,7 +436,6 @@ flowchart LR
 **→ OptionPoolSummary**
 
 ```mermaid
-%%{init: {"flowchart": {"defaultRenderer": "elk"}}}%%
 flowchart LR
   classDef adm fill:#e6f4ea,stroke:#34a853,color:#0b3d20;
   classDef notadm fill:#f1f3f4,stroke:#9aa0a6,color:#5f6368,stroke-dasharray:4 3;
@@ -470,7 +462,6 @@ flowchart LR
 **→ WarrantCancellationTransaction**
 
 ```mermaid
-%%{init: {"flowchart": {"defaultRenderer": "elk"}}}%%
 flowchart LR
   classDef adm fill:#e6f4ea,stroke:#34a853,color:#0b3d20;
   classDef notadm fill:#f1f3f4,stroke:#9aa0a6,color:#5f6368,stroke-dasharray:4 3;
@@ -494,7 +485,6 @@ flowchart LR
 **→ Document**
 
 ```mermaid
-%%{init: {"flowchart": {"defaultRenderer": "elk"}}}%%
 flowchart LR
   classDef adm fill:#e6f4ea,stroke:#34a853,color:#0b3d20;
   classDef notadm fill:#f1f3f4,stroke:#9aa0a6,color:#5f6368,stroke-dasharray:4 3;
@@ -519,7 +509,6 @@ flowchart LR
 **→ Issuer**
 
 ```mermaid
-%%{init: {"flowchart": {"defaultRenderer": "elk"}}}%%
 flowchart LR
   classDef adm fill:#e6f4ea,stroke:#34a853,color:#0b3d20;
   classDef notadm fill:#f1f3f4,stroke:#9aa0a6,color:#5f6368,stroke-dasharray:4 3;
@@ -544,7 +533,6 @@ flowchart LR
 **→ ShareClassValuation**
 
 ```mermaid
-%%{init: {"flowchart": {"defaultRenderer": "elk"}}}%%
 flowchart LR
   classDef adm fill:#e6f4ea,stroke:#34a853,color:#0b3d20;
   classDef notadm fill:#f1f3f4,stroke:#9aa0a6,color:#5f6368,stroke-dasharray:4 3;
@@ -569,7 +557,6 @@ flowchart LR
 **→ VestingScheduleTemplate**
 
 ```mermaid
-%%{init: {"flowchart": {"defaultRenderer": "elk"}}}%%
 flowchart LR
   classDef adm fill:#e6f4ea,stroke:#34a853,color:#0b3d20;
   classDef notadm fill:#f1f3f4,stroke:#9aa0a6,color:#5f6368,stroke-dasharray:4 3;
