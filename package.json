@@ -17,7 +17,6 @@
     "core:lossy": "node --loader ts-node/esm --no-warnings ./scripts/derive-core-lossy-inventory.ts",
     "core:unmapped": "node --loader ts-node/esm --no-warnings ./scripts/derive-core-unmapped-inventory.ts",
     "core:bidi": "node --loader ts-node/esm --no-warnings ./scripts/derive-core-bidirectional-flow.ts",
-    "core:render": "node --loader ts-node/esm --no-warnings ./scripts/render-mermaid.ts",
     "test": "node --experimental-vm-modules --experimental-json-modules --no-warnings node_modules/.bin/jest",
     "lint": "prettier --check \"scripts/**/*.ts\" \"tests/**/*.ts\"",
     "lint:fix": "prettier --write \"scripts/**/*.ts\" \"tests/**/*.ts\"",
@@ -30,7 +29,6 @@
     "yargs": "^17.7.2"
   },
   "devDependencies": {
-    "@mermaid-js/mermaid-cli": "^11.16.0",
     "@types/jest": "^29.5.12",
     "@types/node": "^24.0.0",
     "@types/yargs": "^17.0.32",
