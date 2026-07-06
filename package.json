@@ -15,6 +15,7 @@
     "core:check": "node --loader ts-node/esm --no-warnings ./scripts/derive-core-check.ts",
     "core:validate-sample": "node --loader ts-node/esm --no-warnings ./scripts/validate-core-sample.ts",
     "core:lossy": "node --loader ts-node/esm --no-warnings ./scripts/derive-core-lossy-inventory.ts",
+    "core:unmapped": "node --loader ts-node/esm --no-warnings ./scripts/derive-core-unmapped-inventory.ts",
     "test": "node --experimental-vm-modules --experimental-json-modules --no-warnings node_modules/.bin/jest",
     "lint": "prettier --check \"scripts/**/*.ts\" \"tests/**/*.ts\"",
     "lint:fix": "prettier --write \"scripts/**/*.ts\" \"tests/**/*.ts\"",
