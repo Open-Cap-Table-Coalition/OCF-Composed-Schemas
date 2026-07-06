@@ -156,6 +156,9 @@ export interface Corpus {
   objects: GreenObject[];
   /** Root Carta `$def` names targeted by any green mapping (for gap report b). */
   targetedDefs: Set<string>;
+  /** FULL Carta pointers (`#/$defs/Root/properties/x`) targeted by any green mapping —
+   *  property-level, for the bidirectional-coverage report (which Carta slots receive OCF data). */
+  targetedPointers: Set<string>;
   /**
    * Carta `$defs` reachable by `$ref` from any `targetedDefs` entry (transitive
    * structural coverage). A green mapping writes to a parent object, and that
@@ -288,6 +291,15 @@ function collectTargets(target: unknown, into: Set<string>): void {
   else if (isPlainObject(target)) Object.values(target).forEach((t) => collectTargets(t, into));
 }
 
+/** Like collectTargets but keeps the FULL pointer (`#/$defs/Root/properties/x`), for
+ *  property-level Carta coverage (which Carta slots a green mapping actually writes to). */
+function collectPointers(target: unknown, into: Set<string>): void {
+  if (typeof target === "string") {
+    if (/^#\/\$defs\//.test(target)) into.add(target);
+  } else if (Array.isArray(target)) target.forEach((t) => collectPointers(t, into));
+  else if (isPlainObject(target)) Object.values(target).forEach((t) => collectPointers(t, into));
+}
+
 /** Collect every `#/$defs/<Root>` root named by a `$ref` anywhere inside a schema node. */
 function collectRefRoots(node: unknown, into: Set<string>): void {
   if (Array.isArray(node)) {
@@ -343,6 +355,7 @@ export async function loadGreenCorpus(repoRoot: string): Promise<Corpus> {
   );
   const typeLib = new Map<string, TypeVerdict>();
   const targetedDefs = new Set<string>();
+  const targetedPointers = new Set<string>();
   const skipped: string[] = [];
 
   const files = await collectMappingFiles(repoRoot);
@@ -375,9 +388,11 @@ export async function loadGreenCorpus(repoRoot: string): Promise<Corpus> {
       for (const entry of Object.values(fm)) {
         if (isPlainObject(entry)) {
           collectTargets(entry.target, targetedDefs);
+          collectPointers(entry.target, targetedPointers);
           // enum-value → Carta pointer maps (`values:` on a field entry) are
           // targets too, but sit beside `target:` where the old harvest missed them.
           collectTargets(entry.values, targetedDefs);
+          collectPointers(entry.values, targetedPointers);
         }
       }
     }
@@ -385,9 +400,13 @@ export async function loadGreenCorpus(repoRoot: string): Promise<Corpus> {
     // top-level and per-variant `primary_targets` arrays (the Carta objects a
     // whole variant lands on). Harvesting these closes a latent blind spot.
     collectTargets(mapping.primary_targets, targetedDefs);
+    collectPointers(mapping.primary_targets, targetedPointers);
     const variantBlocks = isPlainObject(mapping.variants) ? mapping.variants : {};
     for (const v of Object.values(variantBlocks)) {
-      if (isPlainObject(v)) collectTargets(v.primary_targets, targetedDefs);
+      if (isPlainObject(v)) {
+        collectTargets(v.primary_targets, targetedDefs);
+        collectPointers(v.primary_targets, targetedPointers);
+      }
     }
     if (frontmatter.ocf_kind === "type") {
       const id = frontmatter.ocf_schema_id;
@@ -441,5 +460,14 @@ export async function loadGreenCorpus(repoRoot: string): Promise<Corpus> {
 
   const transitivelyCoveredDefs = closeOverRefs(bundle, targetedDefs);
 
-  return { registry, bundle, typeLib, objects, targetedDefs, transitivelyCoveredDefs, skipped };
+  return {
+    registry,
+    bundle,
+    typeLib,
+    objects,
+    targetedDefs,
+    targetedPointers,
+    transitivelyCoveredDefs,
+    skipped,
+  };
 }
