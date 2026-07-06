@@ -24,7 +24,13 @@ import { writeFile } from "node:fs/promises";
 import { deriveCore, isMember, RICH_PROFILE } from "./lib/core-pipeline.js";
 import { isPlainObject } from "./lib/mapping-validator.js";
 import { BOOKKEEPING, buildTargetIndex } from "./lib/report-helpers.js";
-import { EntityGroup, FlowRow, groupByEntity, mermaidHubFlow } from "./lib/report-flow.js";
+import {
+  EntityGroup,
+  FlowRow,
+  embedMermaid,
+  groupByEntity,
+  mermaidHubFlow,
+} from "./lib/report-flow.js";
 
 const OUT_FILE = "docs/core-bidirectional-flow.md";
 
@@ -176,17 +182,23 @@ function render(
     "",
     "## Overview",
     "",
-    "```mermaid",
-    "flowchart LR",
-    "  classDef core fill:#fff4d6,stroke:#f9a825,color:#5c4400;",
-    "  classDef in fill:#e6f4ea,stroke:#34a853,color:#0b3d20;",
-    "  classDef out fill:#fce8e6,stroke:#d93025,color:#5c0d06;",
-    `  OCF["OCF"]:::in -->|"${ocfClean} clean + ${ocfLossy} lossy"| CORE`,
-    `  OCF -.->|"${ocfDropped} left behind"| ocfvoid["⌀ dropped (no Carta home)"]:::out`,
-    '  CORE["OCF Core (rich)"]:::core',
-    `  Carta["Carta"]:::in -->|"${cartaFilled} fields"| CORE`,
-    `  Carta -.->|"${cartaEmpty} left behind"| cartavoid["⌀ Core can't hold"]:::out`,
-    "```",
+    ...embedMermaid(
+      [
+        "```mermaid",
+        "flowchart LR",
+        "  classDef core fill:#fff4d6,stroke:#f9a825,color:#5c4400;",
+        "  classDef in fill:#e6f4ea,stroke:#34a853,color:#0b3d20;",
+        "  classDef out fill:#fce8e6,stroke:#d93025,color:#5c0d06;",
+        `  OCF["OCF"]:::in -->|"${ocfClean} clean + ${ocfLossy} lossy"| CORE`,
+        `  OCF -.->|"${ocfDropped} left behind"| ocfvoid["⌀ dropped (no Carta home)"]:::out`,
+        '  CORE["OCF Core (rich)"]:::core',
+        `  Carta["Carta"]:::in -->|"${cartaFilled} fields"| CORE`,
+        `  Carta -.->|"${cartaEmpty} left behind"| cartavoid["⌀ Core can't hold"]:::out`,
+        "```",
+      ],
+      "img/core-bidirectional-flow-overview.svg",
+      "coverage overview"
+    ),
     "",
     "- **OCF → Core**: a property flows in if it is a Core member (mapped, even lossily); it is",
     "  left behind only if it has **no Carta home** (`no-destination`).",
@@ -202,7 +214,9 @@ function render(
     "source fills. Loss lists are capped per object (full names in the tables below); OCF nodes are",
     "green (in Core) / dashed grey (not admissible). Groups are largest-first.",
     "",
-    ...mermaidHubFlow(memberGroups, ocfLost, cartaUnfilled),
+    ...mermaidHubFlow(memberGroups, ocfLost, cartaUnfilled, {
+      imgBase: "img/core-bidirectional-flow-hub",
+    }),
     "## OCF → Core — per object (fields; clean = direct/coarsen, lossy = has a home but narrows, left behind = no home)",
     "",
     "See `core-lossy-inventory.md` / `core-unmapped-inventory.md` for the property names. Counts here",

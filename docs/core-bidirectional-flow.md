@@ -8,6 +8,10 @@ shows, from each side, what flows IN and what is LEFT BEHIND.
 
 ## Overview
 
+![coverage overview](img/core-bidirectional-flow-overview.svg)
+
+<details><summary>mermaid source</summary>
+
 ```mermaid
 flowchart LR
   classDef core fill:#fff4d6,stroke:#f9a825,color:#5c4400;
@@ -19,6 +23,8 @@ flowchart LR
   Carta["Carta"]:::in -->|"175 fields"| CORE
   Carta -.->|"193 left behind"| cartavoid["⌀ Core can't hold"]:::out
 ```
+
+</details>
 
 - **OCF → Core**: a property flows in if it is a Core member (mapped, even lossily); it is
   left behind only if it has **no Carta home** (`no-destination`).
@@ -35,6 +41,10 @@ source fills. Loss lists are capped per object (full names in the tables below);
 green (in Core) / dashed grey (not admissible). Groups are largest-first.
 
 **→ OptionGrant, OptionIssuanceTransaction, RestrictedStockUnit, RsuIssuanceTransaction, SarIssuanceTransaction**
+
+![OptionGrant, OptionIssuanceTransaction, RestrictedStockUnit, RsuIssuanceTransaction, SarIssuanceTransaction](img/core-bidirectional-flow-hub-0.svg)
+
+<details><summary>mermaid source</summary>
 
 ```mermaid
 flowchart LR
@@ -105,7 +115,13 @@ flowchart LR
   t2 -.->|"id, shareClassId, vestingScheduleTemplateId, issuerId, equityIncentivePlanName, issueDate +15 more"| cartalost
 ```
 
+</details>
+
 **→ CertificateCancellationTransaction, CertificatePrecededBy, OptionExerciseTransaction, RestrictedStockAwardPrecededBy, RestrictedStockUnitSettlement, RsaCancellationTransaction, RsuSettlementTransaction, SarExerciseTransaction**
+
+![CertificateCancellationTransaction, CertificatePrecededBy, OptionExerciseTransaction, RestrictedStockAwardPrecededBy, RestrictedStockUnitSettlement, RsaCancellationTransaction, RsuSettlementTransaction, SarExerciseTransaction](img/core-bidirectional-flow-hub-1.svg)
+
+<details><summary>mermaid source</summary>
 
 ```mermaid
 flowchart LR
@@ -187,7 +203,13 @@ flowchart LR
   t7 -.->|"withheldQuantity, settledQuantity, resultingSecurityId, resultingSecurityType, resultingSecurityLabel, cashAcquired"| cartalost
 ```
 
+</details>
+
 **→ Compliance, ConvertibleCancellationTransaction, ConvertibleIssuanceTransaction, ConvertibleNote, ConvertibleTransactionItem, NoteBlock, WarrantExerciseTransaction, WarrantIssuanceTransaction, WarrantTransactionItem, WarrantTransferTransaction**
+
+![Compliance, ConvertibleCancellationTransaction, ConvertibleIssuanceTransaction, ConvertibleNote, ConvertibleTransactionItem, NoteBlock, WarrantExerciseTransaction, WarrantIssuanceTransaction, WarrantTransactionItem, WarrantTransferTransaction](img/core-bidirectional-flow-hub-2.svg)
+
+<details><summary>mermaid source</summary>
 
 ```mermaid
 flowchart LR
@@ -268,7 +290,13 @@ flowchart LR
   t9 -.->|"resultingSecurityLabel"| cartalost
 ```
 
+</details>
+
 **→ Certificate, CertificateIssuanceTransaction, RestrictedStockAward, RsaIssuanceTransaction**
+
+![Certificate, CertificateIssuanceTransaction, RestrictedStockAward, RsaIssuanceTransaction](img/core-bidirectional-flow-hub-3.svg)
+
+<details><summary>mermaid source</summary>
 
 ```mermaid
 flowchart LR
@@ -321,7 +349,13 @@ flowchart LR
   t3 -.->|"shareClassId"| cartalost
 ```
 
+</details>
+
 **→ ShareClass, ShareClassRightsAndPreferences**
+
+![ShareClass, ShareClassRightsAndPreferences](img/core-bidirectional-flow-hub-4.svg)
+
+<details><summary>mermaid source</summary>
 
 ```mermaid
 flowchart LR
@@ -363,7 +397,13 @@ flowchart LR
   t1 -.->|"participating"| cartalost
 ```
 
+</details>
+
 **→ Stakeholder**
+
+![Stakeholder](img/core-bidirectional-flow-hub-5.svg)
+
+<details><summary>mermaid source</summary>
 
 ```mermaid
 flowchart LR
@@ -401,7 +441,13 @@ flowchart LR
   t0 -.->|"issuerId, group"| cartalost
 ```
 
+</details>
+
 **→ OptionCancellationTransaction, RsuCancellationTransaction, SarCancellationTransaction**
+
+![OptionCancellationTransaction, RsuCancellationTransaction, SarCancellationTransaction](img/core-bidirectional-flow-hub-6.svg)
+
+<details><summary>mermaid source</summary>
 
 ```mermaid
 flowchart LR
@@ -433,7 +479,13 @@ flowchart LR
   t2 -.->|"reason, terminationDatetime, forfeitureDatetime"| cartalost
 ```
 
+</details>
+
 **→ OptionPoolSummary**
+
+![OptionPoolSummary](img/core-bidirectional-flow-hub-7.svg)
+
+<details><summary>mermaid source</summary>
 
 ```mermaid
 flowchart LR
@@ -459,7 +511,13 @@ flowchart LR
   t0 -.->|"optionPoolId, fullyDilutedShares, outstandingEquityAwardDerivatives, outstandingCommittedRestrictedStockAwards, terminatedDatetime"| cartalost
 ```
 
+</details>
+
 **→ WarrantCancellationTransaction**
+
+![WarrantCancellationTransaction](img/core-bidirectional-flow-hub-8.svg)
+
+<details><summary>mermaid source</summary>
 
 ```mermaid
 flowchart LR
@@ -482,7 +540,13 @@ flowchart LR
   o0 -.->|"balance_security_id, security_id"| ocflost
 ```
 
+</details>
+
 **→ Document**
+
+![Document](img/core-bidirectional-flow-hub-9.svg)
+
+<details><summary>mermaid source</summary>
 
 ```mermaid
 flowchart LR
@@ -506,7 +570,13 @@ flowchart LR
   t0 -.->|"name, url"| cartalost
 ```
 
+</details>
+
 **→ Issuer**
+
+![Issuer](img/core-bidirectional-flow-hub-10.svg)
+
+<details><summary>mermaid source</summary>
 
 ```mermaid
 flowchart LR
@@ -530,7 +600,13 @@ flowchart LR
   t0 -.->|"id, website"| cartalost
 ```
 
+</details>
+
 **→ ShareClassValuation**
+
+![ShareClassValuation](img/core-bidirectional-flow-hub-11.svg)
+
+<details><summary>mermaid source</summary>
 
 ```mermaid
 flowchart LR
@@ -554,7 +630,13 @@ flowchart LR
   t0 -.->|"shareClassName, common"| cartalost
 ```
 
+</details>
+
 **→ VestingScheduleTemplate**
+
+![VestingScheduleTemplate](img/core-bidirectional-flow-hub-12.svg)
+
+<details><summary>mermaid source</summary>
 
 ```mermaid
 flowchart LR
@@ -574,6 +656,8 @@ flowchart LR
   o0 -->|"statements → periods"| t0
   t0 -.->|"issuerId, name, description, vestingScheduleType, uuid"| cartalost
 ```
+
+</details>
 
 ## OCF → Core — per object (fields; clean = direct/coarsen, lossy = has a home but narrows, left behind = no home)
 
