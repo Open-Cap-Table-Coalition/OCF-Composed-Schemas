@@ -25,7 +25,13 @@ import { pathToFileURL } from "node:url";
 import { deriveCore, isMember, RICH_PROFILE } from "./lib/core-pipeline.js";
 import { isPlainObject } from "./lib/mapping-validator.js";
 import { BOOKKEEPING, buildTargetIndex } from "./lib/report-helpers.js";
-import { EntityGroup, FlowRow, groupByEntity, mermaidHubFlow } from "./lib/report-flow.js";
+import {
+  EntityGroup,
+  FlowRow,
+  flavorLabel,
+  groupByVariant,
+  mermaidHubFlow,
+} from "./lib/report-flow.js";
 
 const OUT_FILE = "docs/core-bidirectional-flow.md";
 
@@ -118,10 +124,19 @@ export async function writeBidiDoc(base: string = process.cwd()): Promise<number
       admissible: admBy.get(`${r.entity} ${r.variant}`)?.admissible ?? false,
     });
   }
-  const memberGroups = groupByEntity(memberRows);
-  const ocfLost = new Map<string, string[]>(
-    [...ocf].map(([e, o]) => [e, [...o.dropped].sort()] as [string, string[]])
-  );
+  const memberGroups = groupByVariant(memberRows);
+  // ocfLost keyed by FLAVOR — the hub diagram now splits polymorphic flavors into
+  // separate OCF nodes, so its dashed "no Carta home" loss edge is computed per
+  // (entity, variant) rather than collapsed per entity.
+  const ocfLost = new Map<string, string[]>();
+  for (const r of d.rows) {
+    if (BOOKKEEPING.has(r.field) || r.verdict.reason !== "no-destination") continue;
+    const key = flavorLabel(r.entity, r.variant);
+    const arr = ocfLost.get(key) ?? [];
+    if (!arr.includes(r.field)) arr.push(r.field);
+    ocfLost.set(key, arr);
+  }
+  for (const arr of ocfLost.values()) arr.sort();
   const cartaUnfilled = new Map<string, string[]>(
     [...carta].map(([n, c]) => [n, c.empty] as [string, string[]])
   );
@@ -197,11 +212,11 @@ function render(
     "",
     "## Hub flow — per related group (what flows in vs is lost, both sides)",
     "",
-    "One diagram per connected group of related objects (OCF objects joined to the Carta objects",
-    "they map into). **Solid** edges = a property that FLOWS IN (`OCF field → Carta prop`). **Dashed**",
-    "edges to a red void = properties LOST: OCF fields with no Carta home, and Carta fields no OCF",
-    "source fills. Loss lists are capped per object (full names in the tables below); OCF nodes are",
-    "green (in Core) / dashed grey (not admissible). Groups are largest-first.",
+    "One diagram per OCF object — each polymorphic flavor (`Object [Variant]`) fully separate — with",
+    "the Carta objects it maps into. **Solid** edges = a property that FLOWS IN",
+    "(`OCF field → Carta prop`). **Dashed** edges to a red void = properties LOST: OCF fields with",
+    "no Carta home, and Carta fields no OCF source fills. Loss lists are capped per object (full",
+    "names in the tables below); OCF nodes are green (in Core) / dashed grey (not admissible).",
     "",
     ...mermaidHubFlow(memberGroups, ocfLost, cartaUnfilled),
     "## OCF → Core — per object (fields; clean = direct/coarsen, lossy = has a home but narrows, left behind = no home)",

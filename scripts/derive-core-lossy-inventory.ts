@@ -31,6 +31,7 @@ import {
   byObjectTables,
   flowMapLines,
   groupByEntity,
+  groupByVariant,
   mermaidFlow,
 } from "./lib/report-flow.js";
 
@@ -81,6 +82,7 @@ export async function writeLossyInventory(base: string = process.cwd()): Promise
 
 function render(lossy: FlowRow[], nohome: FlowRow[]): string {
   const groupedLossy = groupByEntity(lossy);
+  const diagramLossy = groupByVariant(lossy); // diagrams split polymorphic flavors apart
   const noHomeGroups = groupByEntity(nohome);
   const reqCount = lossy.filter((r) => r.ocfRequired).length;
 
@@ -95,15 +97,15 @@ function render(lossy: FlowRow[], nohome: FlowRow[]): string {
     "strongest rich-Core / upstream-OCF signal. The **overview diagram** shows the whole flow;",
     "**A** breaks it down per OCF object; **B** inverts it (per Carta slot); **C** is no-home.",
     "",
-    "## Overview — flow diagrams, one per connected group",
+    "## Overview — flow diagrams, one per OCF object flavor",
     "",
-    "Objects that exchange properties — directly, or transitively via a shared Carta target —",
-    "are drawn in the SAME diagram; unrelated mappings get their own. OCF source objects are",
-    "green (in strict Core) or dashed grey (not yet admissible); each edge is labelled with the",
-    "field count. Groups are largest-first — the opener is the reverse-edge lineage converging",
-    "on the two `…PrecededBy`.",
+    "One diagram per OCF object — each polymorphic flavor (`Object [Variant]`) fully separate —",
+    "flowing to the Carta objects it lands on. OCF source nodes are green (in strict Core) or dashed",
+    "grey (not yet admissible); each edge is labelled with the property flowing. Largest-first.",
+    "Cross-object convergence onto a shared Carta slot (e.g. the reverse-edge lineage on the two",
+    "`…PrecededBy`) is in flow map **B** below.",
     "",
-    ...mermaidFlow(groupedLossy),
+    ...mermaidFlow(diagramLossy),
     "",
     `## A. Lossy home — by OCF object, flowing to Carta (${lossy.length} (entity,variant,field) rows across ${groupedLossy.length} objects; ${reqCount} OCF-required)`,
     "",

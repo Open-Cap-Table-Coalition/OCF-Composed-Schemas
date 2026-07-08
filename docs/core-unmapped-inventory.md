@@ -27,47 +27,65 @@ flowchart LR
     o0["ConvertibleCancellation"]:::adm
     o1["ConvertibleConversion"]:::adm
     o2["ConvertibleIssuance"]:::adm
-    o3["EquityCompensationCancellation"]:::adm
-    o4["EquityCompensationExercise"]:::adm
-    o5["EquityCompensationIssuance"]:::adm
-    o6["EquityCompensationRelease"]:::adm
-    o7["EquityCompensationRepricing"]:::adm
-    o8["Issuer"]:::adm
-    o9["Stakeholder"]:::adm
-    o10["StakeholderRelationshipChangeEvent"]:::adm
-    o11["StockCancellation"]:::adm
-    o12["StockClass"]:::adm
-    o13["StockClassAuthorizedSharesAdjustment"]:::adm
-    o14["StockIssuance"]:::adm
-    o15["StockPlan"]:::adm
-    o16["StockTransfer"]:::adm
-    o17["Valuation"]:::adm
-    o18["WarrantCancellation"]:::adm
-    o19["WarrantIssuance"]:::adm
-    o20["WarrantTransfer"]:::adm
+    o3["EquityCompensationCancellation [Option]"]:::adm
+    o4["EquityCompensationCancellation [Rsu]"]:::adm
+    o5["EquityCompensationCancellation [Sar]"]:::adm
+    o6["EquityCompensationExercise [Option]"]:::adm
+    o7["EquityCompensationExercise [Sar]"]:::adm
+    o8["EquityCompensationIssuance [Option]"]:::adm
+    o9["EquityCompensationIssuance [Rsu]"]:::adm
+    o10["EquityCompensationIssuance [Sar]"]:::adm
+    o11["EquityCompensationRelease [Rsu]"]:::adm
+    o12["EquityCompensationRepricing [Option]"]:::adm
+    o13["EquityCompensationRepricing [Sar]"]:::adm
+    o14["Issuer"]:::adm
+    o15["Stakeholder"]:::adm
+    o16["StakeholderRelationshipChangeEvent"]:::adm
+    o17["StockCancellation [Default]"]:::adm
+    o18["StockCancellation [Rsa]"]:::adm
+    o19["StockClass"]:::adm
+    o20["StockClassAuthorizedSharesAdjustment"]:::adm
+    o21["StockIssuance [Default]"]:::adm
+    o22["StockIssuance [Rsa]"]:::adm
+    o23["StockPlan"]:::adm
+    o24["StockTransfer [Default]"]:::adm
+    o25["StockTransfer [Rsa]"]:::adm
+    o26["Valuation"]:::adm
+    o27["WarrantCancellation"]:::adm
+    o28["WarrantIssuance"]:::adm
+    o29["WarrantTransfer"]:::adm
   end
   void["⌀ not mapped (no Carta home)"]:::sink
   o0 -->|1| void
   o1 -->|5| void
   o2 -->|5| void
   o3 -->|3| void
-  o4 -->|5| void
-  o5 -->|16| void
-  o6 -->|7| void
-  o7 -->|3| void
-  o8 -->|9| void
-  o9 -->|2| void
-  o10 -->|1| void
+  o4 -->|3| void
+  o5 -->|3| void
+  o6 -->|2| void
+  o7 -->|2| void
+  o8 -->|4| void
+  o9 -->|10| void
+  o10 -->|14| void
   o11 -->|2| void
-  o12 -->|3| void
-  o13 -->|3| void
-  o14 -->|8| void
-  o15 -->|3| void
-  o16 -->|2| void
-  o17 -->|5| void
+  o12 -->|2| void
+  o13 -->|2| void
+  o14 -->|9| void
+  o15 -->|2| void
+  o16 -->|1| void
+  o17 -->|2| void
   o18 -->|2| void
-  o19 -->|6| void
-  o20 -->|2| void
+  o19 -->|3| void
+  o20 -->|3| void
+  o21 -->|8| void
+  o22 -->|6| void
+  o23 -->|3| void
+  o24 -->|2| void
+  o25 -->|2| void
+  o26 -->|5| void
+  o27 -->|2| void
+  o28 -->|6| void
+  o29 -->|2| void
 ```
 
 **Not-yet-admissible objects**
@@ -83,56 +101,88 @@ flowchart LR
     o1["ConvertibleRetraction"]:::notadm
     o2["ConvertibleTransfer"]:::notadm
     o3["Document"]:::notadm
-    o4["EquityCompensationAcceptance"]:::notadm
-    o5["EquityCompensationRetraction"]:::notadm
-    o6["EquityCompensationTransfer"]:::notadm
-    o7["Financing"]:::notadm
-    o8["IssuerAuthorizedSharesAdjustment"]:::notadm
-    o9["StakeholderStatusChangeEvent"]:::notadm
-    o10["StockAcceptance"]:::notadm
-    o11["StockClassConversionRatioAdjustment"]:::notadm
-    o12["StockClassSplit"]:::notadm
-    o13["StockConsolidation"]:::notadm
-    o14["StockConversion"]:::notadm
-    o15["StockLegendTemplate"]:::notadm
-    o16["StockPlanPoolAdjustment"]:::notadm
-    o17["StockPlanReturnToPool"]:::notadm
-    o18["StockReissuance"]:::notadm
-    o19["StockRepurchase"]:::notadm
-    o20["StockRetraction"]:::notadm
-    o21["VestingAcceleration"]:::notadm
-    o22["VestingEvent"]:::notadm
-    o23["WarrantAcceptance"]:::notadm
-    o24["WarrantExercise"]:::notadm
-    o25["WarrantRetraction"]:::notadm
+    o4["EquityCompensationAcceptance [Option]"]:::notadm
+    o5["EquityCompensationAcceptance [Rsu]"]:::notadm
+    o6["EquityCompensationAcceptance [Sar]"]:::notadm
+    o7["EquityCompensationExercise [Rsu]"]:::notadm
+    o8["EquityCompensationRelease [Option]"]:::notadm
+    o9["EquityCompensationRelease [Sar]"]:::notadm
+    o10["EquityCompensationRepricing [Rsu]"]:::notadm
+    o11["EquityCompensationRetraction [Option]"]:::notadm
+    o12["EquityCompensationRetraction [Rsu]"]:::notadm
+    o13["EquityCompensationRetraction [Sar]"]:::notadm
+    o14["EquityCompensationTransfer [Option]"]:::notadm
+    o15["EquityCompensationTransfer [Rsu]"]:::notadm
+    o16["EquityCompensationTransfer [Sar]"]:::notadm
+    o17["Financing"]:::notadm
+    o18["IssuerAuthorizedSharesAdjustment"]:::notadm
+    o19["StakeholderStatusChangeEvent"]:::notadm
+    o20["StockAcceptance [Default]"]:::notadm
+    o21["StockAcceptance [Rsa]"]:::notadm
+    o22["StockClassConversionRatioAdjustment"]:::notadm
+    o23["StockClassSplit"]:::notadm
+    o24["StockConsolidation [Default]"]:::notadm
+    o25["StockConsolidation [Rsa]"]:::notadm
+    o26["StockConversion [Default]"]:::notadm
+    o27["StockConversion [Rsa]"]:::notadm
+    o28["StockLegendTemplate"]:::notadm
+    o29["StockPlanPoolAdjustment"]:::notadm
+    o30["StockPlanReturnToPool"]:::notadm
+    o31["StockReissuance [Default]"]:::notadm
+    o32["StockReissuance [Rsa]"]:::notadm
+    o33["StockRepurchase [Default]"]:::notadm
+    o34["StockRepurchase [Rsa]"]:::notadm
+    o35["StockRetraction [Default]"]:::notadm
+    o36["StockRetraction [Rsa]"]:::notadm
+    o37["VestingAcceleration"]:::notadm
+    o38["VestingEvent"]:::notadm
+    o39["WarrantAcceptance"]:::notadm
+    o40["WarrantExercise"]:::notadm
+    o41["WarrantRetraction"]:::notadm
   end
   void["⌀ not mapped (no Carta home)"]:::sink
   o0 -->|2| void
   o1 -->|3| void
   o2 -->|6| void
   o3 -->|2| void
-  o4 -->|2| void
-  o5 -->|3| void
-  o6 -->|6| void
-  o7 -->|3| void
-  o8 -->|5| void
-  o9 -->|2| void
-  o10 -->|2| void
-  o11 -->|1| void
+  o4 -->|1| void
+  o5 -->|1| void
+  o6 -->|2| void
+  o7 -->|5| void
+  o8 -->|7| void
+  o9 -->|7| void
+  o10 -->|3| void
+  o11 -->|3| void
   o12 -->|3| void
-  o13 -->|2| void
-  o14 -->|3| void
-  o15 -->|2| void
-  o16 -->|5| void
-  o17 -->|5| void
-  o18 -->|4| void
-  o19 -->|5| void
-  o20 -->|3| void
-  o21 -->|4| void
-  o22 -->|3| void
-  o23 -->|2| void
+  o13 -->|3| void
+  o14 -->|6| void
+  o15 -->|6| void
+  o16 -->|6| void
+  o17 -->|3| void
+  o18 -->|5| void
+  o19 -->|2| void
+  o20 -->|2| void
+  o21 -->|1| void
+  o22 -->|1| void
+  o23 -->|3| void
   o24 -->|2| void
-  o25 -->|3| void
+  o25 -->|2| void
+  o26 -->|3| void
+  o27 -->|3| void
+  o28 -->|2| void
+  o29 -->|5| void
+  o30 -->|5| void
+  o31 -->|4| void
+  o32 -->|4| void
+  o33 -->|5| void
+  o34 -->|5| void
+  o35 -->|3| void
+  o36 -->|3| void
+  o37 -->|4| void
+  o38 -->|3| void
+  o39 -->|2| void
+  o40 -->|2| void
+  o41 -->|3| void
 ```
 
 ## By OCF object — the dropped properties

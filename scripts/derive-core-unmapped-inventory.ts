@@ -21,7 +21,7 @@ import { pathToFileURL } from "node:url";
 
 import { deriveCore } from "./lib/core-pipeline.js";
 import { BOOKKEEPING } from "./lib/report-helpers.js";
-import { FlowRow, groupByEntity, mermaidVoid } from "./lib/report-flow.js";
+import { FlowRow, groupByEntity, groupByVariant, mermaidVoid } from "./lib/report-flow.js";
 
 const OUT_FILE = "docs/core-unmapped-inventory.md";
 const VOID = "⌀ not mapped (no Carta home)";
@@ -73,8 +73,9 @@ export async function writeUnmappedInventory(base: string = process.cwd()): Prom
 
 function render(rows: Row[], descOf: Map<string, string>): string {
   const groups = groupByEntity(rows);
-  const inCore = groups.filter((g) => g.admissible);
-  const notYet = groups.filter((g) => !g.admissible);
+  const flavorGroups = groupByVariant(rows); // diagrams split polymorphic flavors apart
+  const inCore = flavorGroups.filter((g) => g.admissible);
+  const notYet = flavorGroups.filter((g) => !g.admissible);
   const reqCount = rows.filter((r) => r.ocfRequired).length;
 
   const lines: string[] = [

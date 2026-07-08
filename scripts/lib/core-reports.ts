@@ -15,6 +15,7 @@ import {
   byObjectTables,
   flowMapLines,
   groupByEntity,
+  groupByVariant,
   mermaidFlow,
 } from "./report-flow.js";
 
@@ -140,12 +141,12 @@ export function renderGapReport(d: Derived): string {
     "",
     "## (a) OCF richness dropped on fold-down",
     "",
-    "One diagram per connected group of objects that share a (lossy) Carta destination:",
+    "One diagram per OCF object — each polymorphic flavor (`Object [Variant]`) fully separate:",
     "`existence-loss` fields narrow onto a Carta object; `no-destination` fields have no home and",
-    "are collected into one final `⌀ no Carta home` diagram. Edge labels = field count.",
+    "drop to that flavor's own `⌀ no Carta home` sink. Edge labels = field count.",
     "(Reverse-edge `heuristic` lineage is the upstream report's.)",
     "",
-    ...mermaidFlow(groupByEntity(gapRows), { sink: "⌀ no Carta home" }),
+    ...mermaidFlow(groupByVariant(gapRows), { sink: "⌀ no Carta home" }),
     "",
   ];
 
@@ -293,6 +294,7 @@ export function renderUpstreamReport(d: Derived): string {
     });
   }
   const groups = groupByEntity(rows);
+  const diagramGroups = groupByVariant(rows); // diagrams split polymorphic flavors apart
   const reqCount = rows.filter((r) => r.ocfRequired).length;
 
   const lines: string[] = [
@@ -307,12 +309,12 @@ export function renderUpstreamReport(d: Derived): string {
     "",
     `## Overview — where rich-Core's lossy fields flow (${rows.length} fields, ${reqCount} OCF-required)`,
     "",
-    "One diagram per connected group — objects that exchange properties (directly or via a",
-    "shared Carta target) are drawn together, unrelated mappings separately. Edge labels = field",
-    "count; convergence (several sources on one Carta node) marks the narrowest folds.",
+    "One diagram per OCF object — each polymorphic flavor (`Object [Variant]`) fully separate — with",
+    "the Carta objects it lands on. Edge labels = the property flowing; cross-object convergence",
+    "(several sources on one Carta slot) is in the flow map below.",
     "",
     ...(rows.length
-      ? mermaidFlow(groups)
+      ? mermaidFlow(diagramGroups)
       : ["(none — this profile carries no lossy-home fields.)"]),
     "",
     "## By OCF object — each field and its narrowed Carta home",

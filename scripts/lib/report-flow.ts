@@ -29,6 +29,8 @@ export interface FieldRow {
 }
 
 export interface EntityGroup {
+  /** Display name — the bare entity, or `Entity [Variant]` for a polymorphic flavor.
+   *  Diagrams render one per group, so each flavor gets a fully separate diagram. */
   entity: string;
   admissible: boolean;
   fields: FieldRow[];
@@ -117,6 +119,61 @@ export function groupByEntity(rows: FlowRow[]): EntityGroup[] {
   return out.sort((a, b) => a.entity.localeCompare(b.entity));
 }
 
+/**
+ * Display name for a polymorphic flavor: `Entity [Variant]`, or just `Entity`
+ * when the object is not polymorphic (variant `—`). Each flavor is its own node,
+ * but the base entity is still named, so lineage stays explicit.
+ */
+export function flavorLabel(entity: string, variant: string): string {
+  return variant === "—" ? entity : `${entity} [${variant}]`;
+}
+
+/**
+ * Like {@link groupByEntity}, but ONE group per `(entity, variant)` — each
+ * polymorphic flavor becomes its own node, labelled `Entity [Variant]`. Used for
+ * the flow DIAGRAMS: collapsing every variant of a polymorphic object into a single
+ * node overcrowds the graph and hides which flavor lands where (e.g. `StockIssuance`
+ * [Rsa] vs [Default] target different Carta objects). Tables keep {@link groupByEntity}
+ * (with a variant column), so only the visual layer splits.
+ */
+export function groupByVariant(rows: FlowRow[]): EntityGroup[] {
+  const byFlavor = new Map<string, FlowRow[]>();
+  for (const r of rows) {
+    const key = flavorLabel(r.entity, r.variant);
+    const arr = byFlavor.get(key) ?? [];
+    arr.push(r);
+    byFlavor.set(key, arr);
+  }
+  const out: EntityGroup[] = [];
+  for (const [label, rs] of byFlavor) {
+    // Within a single flavor each field appears once; the merge just dedupes and
+    // normalizes into FieldRow (variants stay empty — the flavor is in the label).
+    const byField = new Map<string, FieldRow>();
+    for (const r of rs) {
+      const key = `${r.field}|${r.target}|${r.reason}|${r.detail}`;
+      let f = byField.get(key);
+      if (!f) {
+        f = {
+          field: r.field,
+          ocfRequired: false,
+          variants: [],
+          target: r.target,
+          reason: r.reason,
+          detail: r.detail,
+        };
+        byField.set(key, f);
+      }
+      f.ocfRequired = f.ocfRequired || r.ocfRequired;
+    }
+    out.push({
+      entity: label,
+      admissible: rs.some((r) => r.admissible),
+      fields: [...byField.values()].sort((a, b) => a.field.localeCompare(b.field)),
+    });
+  }
+  return out.sort((a, b) => a.entity.localeCompare(b.entity));
+}
+
 // --- Renderers. ---
 
 /** `### <entity>` + a `field | OCF-req | variant(s) | flows to | loss` table per object. */
@@ -165,7 +222,7 @@ export function flowMapLines(groups: EntityGroup[]): string[] {
 const SINK = "__SINK__"; // dst sentinel for a field with no Carta home
 
 interface Edge {
-  src: string; // OCF entity
+  src: string; // OCF source node (entity, or `Entity [Variant]` flavor) — one diagram each
   dst: string; // Carta object, or SINK
   label: string; // the property flowing, e.g. "name -> fullName"
   adm: boolean; // is the OCF source admissible
@@ -241,46 +298,26 @@ export function mermaidFlow(groups: EntityGroup[], opts: { sink?: string } = {})
     }
   }
 
-  // Connected components over the REAL edges (the sink is excluded — it is a shared
-  // void, not a real shared destination). Union-find on `o:<entity>` / `c:<object>`.
-  const parent = new Map<string, string>();
-  const find = (x: string): string => {
-    const p = parent.get(x);
-    if (p === undefined || p === x) {
-      parent.set(x, x);
-      return x;
-    }
-    const root = find(p);
-    parent.set(x, root);
-    return root;
-  };
-  const union = (a: string, b: string) => parent.set(find(a), find(b));
+  // One FULLY SEPARATE diagram per OCF source node: each object, and each polymorphic
+  // flavor (`Object [Variant]`), gets its own diagram with just the Carta objects it
+  // flows to (plus a sink for its no-home fields). Nothing unrelated is drawn together.
+  const bySrc = new Map<string, Edge[]>();
   for (const e of edges) {
-    if (e.dst === SINK) continue;
-    union(`o:${e.src}`, `c:${e.dst}`);
-  }
-  const comps = new Map<string, Edge[]>();
-  for (const e of edges) {
-    if (e.dst === SINK) continue;
-    const root = find(`o:${e.src}`);
-    const arr = comps.get(root) ?? [];
+    const arr = bySrc.get(e.src) ?? [];
     arr.push(e);
-    comps.set(root, arr);
+    bySrc.set(e.src, arr);
   }
-  const cartaTargets = (es: Edge[]) => [...new Set(es.map((e) => e.dst))].sort().join(", ");
-  const ordered = [...comps.values()].sort(
-    (a, b) => b.length - a.length || cartaTargets(a).localeCompare(cartaTargets(b))
+  const realTargets = (es: Edge[]) =>
+    [...new Set(es.filter((e) => e.dst !== SINK).map((e) => e.dst))].sort();
+  const ordered = [...bySrc.entries()].sort(
+    (a, b) => b[1].length - a[1].length || a[0].localeCompare(b[0])
   );
 
   const out: string[] = [];
-  for (const comp of ordered) {
-    out.push(`**→ ${cartaTargets(comp)}**`, "");
-    out.push(...renderDiagram(comp), "");
-  }
-  const sinkEdges = edges.filter((e) => e.dst === SINK);
-  if (sinkEdges.length) {
-    out.push(`**→ ${opts.sink}**`, "");
-    out.push(...renderDiagram(sinkEdges, opts.sink), "");
+  for (const [src, es] of ordered) {
+    const tgts = realTargets(es);
+    out.push(`**${src}${tgts.length ? ` → ${tgts.join(", ")}` : ""}**`, "");
+    out.push(...renderDiagram(es, opts.sink), "");
   }
   return out;
 }
@@ -359,32 +396,21 @@ export function mermaidHubFlow(
     }
   }
 
-  const parent = new Map<string, string>();
-  const find = (x: string): string => {
-    const p = parent.get(x);
-    if (p === undefined || p === x) {
-      parent.set(x, x);
-      return x;
-    }
-    const root = find(p);
-    parent.set(x, root);
-    return root;
-  };
-  for (const e of flows) parent.set(find(`o:${e.src}`), find(`c:${e.dst}`));
-  const comps = new Map<string, FE[]>();
+  // One FULLY SEPARATE diagram per OCF source node — each object, and each polymorphic
+  // flavor (`Object [Variant]`), gets its own hub diagram; nothing unrelated shares one.
+  const bySrc = new Map<string, FE[]>();
   for (const e of flows) {
-    const root = find(`o:${e.src}`);
-    const arr = comps.get(root) ?? [];
+    const arr = bySrc.get(e.src) ?? [];
     arr.push(e);
-    comps.set(root, arr);
+    bySrc.set(e.src, arr);
   }
   const cartaTargets = (es: FE[]) => [...new Set(es.map((e) => e.dst))].sort().join(", ");
-  const ordered = [...comps.values()].sort(
-    (a, b) => b.length - a.length || cartaTargets(a).localeCompare(cartaTargets(b))
+  const ordered = [...bySrc.entries()].sort(
+    (a, b) => b[1].length - a[1].length || a[0].localeCompare(b[0])
   );
 
   const out: string[] = [];
-  for (const comp of ordered) {
+  for (const [src, comp] of ordered) {
     const ocfObjs = [...new Set(comp.map((e) => e.src))].sort();
     const cartaObjs = [...new Set(comp.map((e) => e.dst))].sort();
     const adm = new Map(comp.map((e) => [e.src, e.adm]));
@@ -393,7 +419,7 @@ export function mermaidHubFlow(
     const anyOcfLost = ocfObjs.some((n) => (ocfLost.get(n) ?? []).length);
     const anyCartaLost = cartaObjs.some((n) => (cartaUnfilled.get(n) ?? []).length);
 
-    out.push(`**→ ${cartaTargets(comp)}**`, "");
+    out.push(`**${src} → ${cartaTargets(comp)}**`, "");
     out.push(
       "```mermaid",
       "flowchart LR",
