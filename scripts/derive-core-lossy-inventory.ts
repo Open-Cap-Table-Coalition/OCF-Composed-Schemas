@@ -22,6 +22,7 @@
  */
 import path from "node:path";
 import { writeFile } from "node:fs/promises";
+import { pathToFileURL } from "node:url";
 
 import { deriveCore, RICH_PROFILE } from "./lib/core-pipeline.js";
 import { BOOKKEEPING, buildTargetIndex } from "./lib/report-helpers.js";
@@ -38,7 +39,7 @@ const OUT_FILE = "docs/core-lossy-inventory.md";
 // of truth: RICH_PROFILE.memberReasons); "no home" (no-destination) is separate.
 const LOSSY_HOME = RICH_PROFILE.memberReasons;
 
-async function main(): Promise<number> {
+export async function writeLossyInventory(base: string = process.cwd()): Promise<number> {
   const d = await deriveCore(process.cwd());
   const admBy = new Map(d.admissibility.map((a) => [`${a.entity} ${a.variant}`, a]));
   const reqBy = new Map(d.corpus.objects.map((o) => [o.entity, new Set(o.requiredFields)]));
@@ -64,7 +65,7 @@ async function main(): Promise<number> {
     else if (reason === "no-destination") nohome.push(row);
   }
 
-  await writeFile(path.join(process.cwd(), OUT_FILE), render(lossy, nohome), "utf8");
+  await writeFile(path.join(base, OUT_FILE), render(lossy, nohome), "utf8");
 
   const reqLossy = lossy.filter((r) => r.ocfRequired).length;
   const onAdmissible = new Set(lossy.filter((r) => r.admissible).map((r) => r.entity)).size;
@@ -132,10 +133,13 @@ function render(lossy: FlowRow[], nohome: FlowRow[]): string {
   return lines.join("\n") + "\n";
 }
 
-main().then(
-  (code) => process.exit(code),
-  (err) => {
-    console.error(err);
-    process.exit(1);
-  }
-);
+// Run as a CLI only when invoked directly (not when imported by core:build).
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
+  writeLossyInventory().then(
+    (code) => process.exit(code),
+    (err) => {
+      console.error(err);
+      process.exit(1);
+    }
+  );
+}

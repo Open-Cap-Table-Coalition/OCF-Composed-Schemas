@@ -17,6 +17,7 @@
  */
 import path from "node:path";
 import { writeFile } from "node:fs/promises";
+import { pathToFileURL } from "node:url";
 
 import { deriveCore } from "./lib/core-pipeline.js";
 import { BOOKKEEPING } from "./lib/report-helpers.js";
@@ -29,7 +30,7 @@ interface Row extends FlowRow {
   description: string;
 }
 
-async function main(): Promise<number> {
+export async function writeUnmappedInventory(base: string = process.cwd()): Promise<number> {
   const d = await deriveCore(process.cwd());
   const admBy = new Map(d.admissibility.map((a) => [`${a.entity} ${a.variant}`, a]));
   const reqBy = new Map(d.corpus.objects.map((o) => [o.entity, new Set(o.requiredFields)]));
@@ -52,7 +53,7 @@ async function main(): Promise<number> {
   }
   const descOf = new Map(rows.map((r) => [`${r.entity} ${r.field}`, r.description]));
 
-  await writeFile(path.join(process.cwd(), OUT_FILE), render(rows, descOf), "utf8");
+  await writeFile(path.join(base, OUT_FILE), render(rows, descOf), "utf8");
 
   const groups = groupByEntity(rows);
   const req = rows.filter((r) => r.ocfRequired).length;
@@ -122,10 +123,13 @@ function render(rows: Row[], descOf: Map<string, string>): string {
   return lines.join("\n") + "\n";
 }
 
-main().then(
-  (code) => process.exit(code),
-  (err) => {
-    console.error(err);
-    process.exit(1);
-  }
-);
+// Run as a CLI only when invoked directly (not when imported by core:build).
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
+  writeUnmappedInventory().then(
+    (code) => process.exit(code),
+    (err) => {
+      console.error(err);
+      process.exit(1);
+    }
+  );
+}

@@ -10,6 +10,9 @@
  *   <profile.outDir>/core-upstream.md — rich only: upstream-OCF change candidates
  * Two profiles ship: `strict` → core/ (lossless intersection) and `rich` →
  * core-rich/ (relaxed-OCF union). `--base` prefixes both dirs (default: repo root).
+ * It ALSO regenerates the non-drift-gated analysis docs (docs/core-bidirectional-flow,
+ * -lossy-inventory, -unmapped-inventory) so one `core:build` refreshes every generated
+ * artifact — a stale analysis doc can't slip past `core:check` (see main()).
  *
  *   npm run core:build                    # emit core/ + core-rich/, print summary
  *   npm run core:build -- --base /tmp/x   # emit /tmp/x/core + /tmp/x/core-rich
@@ -22,6 +25,9 @@ import { hideBin } from "yargs/helpers";
 
 import { deriveCore, CoreProfile, PROFILES } from "./lib/core-pipeline.js";
 import { renderLedger, renderGapReport, renderUpstreamReport } from "./lib/core-reports.js";
+import { writeBidiDoc } from "./derive-core-bidirectional-flow.js";
+import { writeLossyInventory } from "./derive-core-lossy-inventory.js";
+import { writeUnmappedInventory } from "./derive-core-unmapped-inventory.js";
 
 async function emitProfile(repoRoot: string, base: string, profile: CoreProfile, sample: string) {
   const derived = await deriveCore(repoRoot, profile);
@@ -63,6 +69,16 @@ async function main(argv: { base: string; sample: string }): Promise<number> {
   for (const profile of PROFILES) {
     await emitProfile(repoRoot, argv.base, profile, argv.sample);
   }
+
+  // Analysis docs (docs/*.md) — NOT drift-gated, but regenerated here so ONE
+  // `core:build` refreshes EVERY generated artifact. A stale analysis doc can't
+  // slip through: any pipeline change that stales one also stales a drift-gated
+  // report, which `core:check` catches and forces a rebuild.
+  console.log("\nAnalysis docs (docs/, not drift-gated) — regenerating:");
+  await writeBidiDoc(argv.base);
+  await writeLossyInventory(argv.base);
+  await writeUnmappedInventory(argv.base);
+
   return 0;
 }
 

@@ -392,6 +392,54 @@ Implemented in `validateSharedTargetMaps` (`scripts/lib/mapping-validator.ts`): 
 
 ---
 
+### 4.9 Composite steps (one OCF verb → an ordered set of Carta transactions)
+
+Some OCF transactions have **no single Carta target** because Carta records ledger *state*, not the event: a stock transfer is not a `*TransferTransaction` (there is none for certificates) but a **pair** of certificate events — cancel the source, issue the transferee's. `composite:` models that fold. It is orthogonal to variants: variants are **mutually exclusive** (pick one family), whereas composite steps are **additive** (all emitted, in declared order).
+
+```yaml
+route_by_security: { via: security_id, resolve: issuance_type, ... }   # family axis (kept)
+
+composite:                                   # ordered steps, ALL emitted
+  - step: cancel
+    target:                                  # per-family Carta $def (diverges by family)
+      Default: "#/$defs/CertificateCancellationTransaction"
+      Rsa:     "#/$defs/RsaCancellationTransaction"
+    const: { Default: { reason: CERTIFICATE_CANCELLATION_REASON_TRANSFERRED } }
+  - step: issue
+    target:
+      Default: "#/$defs/CertificateIssuanceTransaction"
+      Rsa:     "#/$defs/RsaIssuanceTransaction"
+    const: { Default: { issuanceReason: CERTIFICATE_ISSUANCE_REASON_TRANSFERRED } }
+
+shared:
+  quantity:                                  # the payload that had no home now lands
+    kind: rename
+    target:                                  # per-STEP, then per-family (reuses §4.8's map shape)
+      cancel: { Default: ".../CertificateCancellationTransaction/properties/quantity",
+                Rsa:     ".../RsaCancellationTransaction/properties/quantity" }
+      issue:  { Default: ".../CertificateIssuanceTransaction/properties/quantity",
+                Rsa:     ".../RsaIssuanceTransaction/properties/quantity" }
+```
+
+**The step map reuses §4.8's `{ key: pointer }` shape**, keyed by step id instead of variant label — the two key spaces are disjoint, so a `target:` map is read as per-step when its keys are step ids and per-variant otherwise. A payload field's target may nest both axes (`{ step: { family: pointer } }`). The Core converter reduces the step dimension to one landing pointer per family (the `issue` step wins where it lands, else `cancel`); the full per-step maps are kept for the coverage/ledger docs.
+
+`const:` captures the fixed Carta values a step always carries (the `*_TRANSFERRED` reason enums). It is validated against the step's `$def`: the property must exist and, if enum-typed, the value must be a member. `const` may be per-family (`{ Default: { reason: … } }`) — needed here because `RsaCancellationReason` has no `*_TRANSFERRED` member, so the RSA steps omit it.
+
+Validator rules:
+
+| Rule | Error when violated |
+|---|---|
+| **Non-empty ordered steps** | `composite: must declare at least one step` |
+| **Unique step ids** | `composite step id "cancel" is declared more than once` |
+| **Step target resolves** (per family) | `composite step "cancel" target for variant "Rsa" "#/$defs/X" does not resolve…` |
+| **`const` field exists on the step $def** | `composite step "cancel" const.reason has no property "reason" on #/$defs/…` |
+| **`const` enum value is a member** | `composite step "cancel" const.reason = "BOGUS" is not a member of the target enum…` |
+| **Requires a polymorphic block** | `composite: is only supported alongside a route_by_security or discriminator + variants block` |
+
+**Why it matters for Core.** Before, a stock transfer landed only lineage references → no payload → held out of Core (§3 non-degeneracy). With `composite:`, `quantity` lands on the step transactions — a real payload — so `StockTransfer` becomes Core-admissible. The generated membership ledger (`core/core-ledger.md`) gains a **Composite folds** section listing each composite entity and the Carta objects each step lands on, and `--verbose` renders the steps beneath the routing line. Implemented in `validateCompositeBlock` + `validateSharedTargetMaps` (`scripts/lib/mapping-validator.ts`) and projected by `variantFieldMaps` (`scripts/lib/core-corpus.ts`). Proven on `StockTransfer`; the sibling transfers (`ConvertibleTransfer`, `EquityCompensationTransfer`, `PlanSecurityTransfer`) are the same "cancel + reissue" shape.
+
+---
+
 ## 5. Migration
 
 Roughly ten mappings are affected. The convention is purely additive, so adoption is incremental and each file migrates independently. **Status:** the validator + `--verbose` report and the two issuance fan-outs (`EquityCompensationIssuance`, `StockIssuance`, both with per-variant target maps) are implemented in this PR; the downstream `route_by_security:` verbs below remain a roadmap.
@@ -407,6 +455,7 @@ Roughly ten mappings are affected. The convention is purely additive, so adoptio
 | `retraction/EquityCompensationRetraction.mapping.md` | `fields:` | `route_by_security:` (all-unmappable) | no Carta retraction tx anywhere |
 | `acceptance/EquityCompensationAcceptance.mapping.md` | `fields:` | `route_by_security:` | Option/RSU/RSA set `stakeholderAcceptanceDate` on the security (not a tx); SAR/Certificate variants = unmappable (no such field) |
 | `transfer/EquityCompensationTransfer.mapping.md` | `fields:` | `route_by_security:` (all-unmappable) | no equity-comp transfer tx (only Warrant) |
+| `transfer/StockTransfer.mapping.md` | `route_by_security:` all-unmappable event | `route_by_security:` + `composite:` (cancel + issue) | **§4.9** — folds to Certificate/Rsa cancel + issue; `quantity`/`date` land, so it enters Core |
 | `repricing/EquityCompensationRepricing.mapping.md` | `fields:` | `route_by_security:` | Option/SAR mutate `exercisePrice`; RSU = unmappable |
 
 Adoption path:
@@ -429,7 +478,7 @@ Because the dispatch is "discriminator/route_by_security absent ⇒ old path," n
 | **Coverage is per-variant only** | A field mapped in Option but unmappable in RSU has no single coverage number; the scalar `X/N` had to become a map. |
 | **Cross-field precedence** | `compensation_type` and deprecated `option_grant_type` both target `stockOptionType`; the format lists both but cannot say which wins. Importer logic. |
 | **Shared field, divergent *kind*** | Per-variant target maps (§4.8) **solve** the divergent-*home* case — a shared field of uniform kind landing on `OptionGrant` vs `RestrictedStockUnit` now names each directly. The residual: a field whose *kind* differs per variant (e.g. `StockIssuance.issuance_type`: a structural router in RSA but `enum-remap` in default, §3.2) cannot be `shared:` at all — it lives in each variant's `fields:` instead. |
-| **One discriminator axis** | The convention routes on a single field. A two-axis discriminant (type × settlement mode) would need nested variants or a composite key, undefined here. |
+| **One discriminator axis** | Routing is on a single field. `composite:` (§4.9) adds an orthogonal *additive* step axis (family × step, all steps emitted), but a second mutually-exclusive *discriminant* (type × settlement mode) would still need nested variants — undefined here. |
 | **Lossy collapses are recorded, not repaired** | CSAR vs SSAR collapse; `OPTION` (unspecified) → `OTHER`. Visible as enum-remap values / `no-equivalent`, but lossy by Carta's design. |
 
 ### 6.2 Carta-side import assumptions

@@ -490,3 +490,174 @@ describe("polymorphic mapping — downstream (route_by_security)", () => {
     expect(messages(dinput({ mapping: m }))).toEqual([]);
   });
 });
+
+// A miniature of the StockTransfer composite: one OCF transaction folds into an
+// ordered pair of Carta transactions (cancel + issue, both emitted), keyed by step
+// id, whose targets diverge by family. const captures the fixed reason enums.
+const COMPOSITE_BUNDLE = {
+  $defs: {
+    ...BUNDLE.$defs,
+    CancelTx: {
+      type: "object",
+      properties: { quantity: { type: "number" }, reason: { $ref: "#/$defs/CancelReason" } },
+    },
+    IssueTx: {
+      type: "object",
+      properties: {
+        quantity: { type: "number" },
+        issuanceReason: { $ref: "#/$defs/IssueReason" },
+      },
+    },
+    CancelReason: { enum: ["CANCELED", "TRANSFERRED"] },
+    IssueReason: { enum: ["ISSUED", "TRANSFERRED"] },
+  },
+};
+
+function compositeMapping(over: Record<string, unknown> = {}): Record<string, unknown> {
+  return {
+    status: "complete",
+    route_by_security: {
+      via: "security_id",
+      resolve: "comp_type",
+      resolve_enum: "test://comptype",
+      source_mapping: "../issuance/EquityComp.mapping.md",
+      exhaustive: true,
+    },
+    composite: [
+      {
+        step: "cancel",
+        target: { Option: "#/$defs/CancelTx", Rsu: "#/$defs/CancelTx" },
+        const: { Option: { reason: "TRANSFERRED" } },
+      },
+      {
+        step: "issue",
+        target: { Option: "#/$defs/IssueTx", Rsu: "#/$defs/IssueTx" },
+        const: { Option: { issuanceReason: "TRANSFERRED" } },
+      },
+    ],
+    shared: {
+      // per-STEP, per-family target map: the single source property lands on both
+      // step transactions' quantity, keyed by step then family.
+      security_id: {
+        kind: "rename",
+        target: {
+          cancel: {
+            Option: "#/$defs/CancelTx/properties/quantity",
+            Rsu: "#/$defs/CancelTx/properties/quantity",
+          },
+          issue: {
+            Option: "#/$defs/IssueTx/properties/quantity",
+            Rsu: "#/$defs/IssueTx/properties/quantity",
+          },
+        },
+      },
+    },
+    variants: {
+      Option: { when: ["OPT"], primary_targets: null, fields: {} },
+      Rsu: { when: ["RSU"], primary_targets: null, fields: {} },
+    },
+    coverage: { Option: "1/1", Rsu: "1/1" },
+    ...over,
+  };
+}
+
+describe("composite: (one OCF transaction → an ordered set of Carta steps)", () => {
+  function cinput(over: Partial<ValidateInput> = {}): ValidateInput {
+    return input({
+      file: "objects/transactions/transfer/EC.mapping.md",
+      mapping: compositeMapping(),
+      sourceSchema: DOWNSTREAM_SOURCE,
+      targetBundle: COMPOSITE_BUNDLE,
+      ...over,
+    });
+  }
+
+  it("accepts a valid composite mapping (per-family step targets + const + per-step field map)", () => {
+    expect(messages(cinput())).toEqual([]);
+  });
+
+  it("rejects a composite step whose target does not resolve", () => {
+    const m = compositeMapping();
+    (m.composite as { target: unknown }[])[0]!.target = {
+      Option: "#/$defs/Nope",
+      Rsu: "#/$defs/CancelTx",
+    };
+    const errs = messages(cinput({ mapping: m }));
+    expect(errs.some((s) => /composite step "cancel".*does not resolve/i.test(s))).toBe(true);
+  });
+
+  it("rejects duplicate step ids", () => {
+    const m = compositeMapping();
+    (m.composite as { step: string }[])[1]!.step = "cancel";
+    const errs = messages(cinput({ mapping: m }));
+    expect(errs.some((s) => /step id "cancel" is declared more than once/i.test(s))).toBe(true);
+  });
+
+  it("rejects an empty composite block", () => {
+    const errs = messages(cinput({ mapping: compositeMapping({ composite: [] }) }));
+    expect(errs.some((s) => /composite.*at least one step/i.test(s))).toBe(true);
+  });
+
+  it("rejects a const value that is not a member of the target enum", () => {
+    const m = compositeMapping();
+    (m.composite as { const: unknown }[])[0]!.const = { Option: { reason: "BOGUS" } };
+    const errs = messages(cinput({ mapping: m }));
+    expect(
+      errs.some((s) => /const\.reason = "BOGUS".*not a member of the target enum/i.test(s))
+    ).toBe(true);
+  });
+
+  it("rejects a const on a property the step's $def does not have", () => {
+    const m = compositeMapping();
+    (m.composite as { const: unknown }[])[0]!.const = { Option: { nope: "TRANSFERRED" } };
+    const errs = messages(cinput({ mapping: m }));
+    expect(errs.some((s) => /const\.nope has no property/i.test(s))).toBe(true);
+  });
+
+  it("rejects a composite step target keyed by an unknown variant", () => {
+    const m = compositeMapping();
+    (m.composite as { target: Record<string, unknown> }[])[0]!.target.Bogus = "#/$defs/CancelTx";
+    const errs = messages(cinput({ mapping: m }));
+    expect(
+      errs.some((s) => /composite step "cancel" target key "Bogus" is not a variant/i.test(s))
+    ).toBe(true);
+  });
+
+  it("validates a per-step field target map's inner pointers (a bad one errors)", () => {
+    const m = compositeMapping();
+    (
+      m.shared as { security_id: { target: { issue: Record<string, unknown> } } }
+    ).security_id.target.issue.Rsu = "#/$defs/Nope";
+    const errs = messages(cinput({ mapping: m }));
+    expect(
+      errs.some((s) => /security_id/.test(s) && /step "issue".*"Rsu".*does not resolve/i.test(s))
+    ).toBe(true);
+  });
+
+  it("rejects a per-step field target map with an unknown inner variant", () => {
+    const m = compositeMapping();
+    (m.shared as { security_id: { target: { issue: unknown } } }).security_id.target.issue = {
+      Option: "#/$defs/IssueTx/properties/quantity",
+      Bogus: "#/$defs/IssueTx/properties/quantity",
+    };
+    const errs = messages(cinput({ mapping: m }));
+    expect(errs.some((s) => /step "issue" target key "Bogus" is not a variant/i.test(s))).toBe(
+      true
+    );
+  });
+
+  it("rejects composite: in a non-polymorphic mapping (no variants)", () => {
+    const m = {
+      status: "complete",
+      composite: [{ step: "cancel", target: "#/$defs/CancelTx" }],
+      fields: { security_id: { kind: "unmappable", target: null, reason: "no-equivalent" } },
+      coverage: "1/1",
+    };
+    const errs = messages(cinput({ mapping: m }));
+    expect(
+      errs.some((s) =>
+        /composite.*only supported alongside.*route_by_security or discriminator/i.test(s)
+      )
+    ).toBe(true);
+  });
+});

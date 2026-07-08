@@ -7,7 +7,7 @@ narrowed form. So Core→target is lossy (expected), and a target-sourced Core d
 may not validate back as OCF without OCF relaxing a constraint. These are the
 upstream-OCF-change candidates; OCF-*required* fields (**bold**) are the strongest.
 
-## Overview — where rich-Core's lossy fields flow (22 fields, 13 OCF-required)
+## Overview — where rich-Core's lossy fields flow (26 fields, 15 OCF-required)
 
 One diagram per connected group — objects that exchange properties (directly or via a
 shared Carta target) are drawn together, unrelated mappings separately. Edge labels = field
@@ -26,6 +26,7 @@ flowchart LR
     o0["EquityCompensationExercise"]:::adm
     o1["EquityCompensationRelease"]:::adm
     o2["StockCancellation"]:::adm
+    o3["StockTransfer"]:::adm
   end
   subgraph TGT["Carta target objects"]
     direction TB
@@ -36,6 +37,10 @@ flowchart LR
   o1 -->|"resulting_security_ids → securities"| t0
   o2 -->|"balance_security_id → securities"| t1
   o2 -->|"balance_security_id → securities"| t0
+  o3 -->|"balance_security_id → securities"| t1
+  o3 -->|"balance_security_id → securities"| t0
+  o3 -->|"resulting_security_ids → securities"| t1
+  o3 -->|"resulting_security_ids → securities"| t0
 ```
 
 **→ Stakeholder**
@@ -297,6 +302,15 @@ flowchart LR
 | --- | :---: | --- | --- | --- |
 | stock_class_ids |  |  | OptionPoolSummary.shareClassId | existence-loss (array→scalar) |
 
+### StockTransfer — in Core (admissible)
+
+| field | OCF-req | variant(s) | flows to (Carta) | loss |
+| --- | :---: | --- | --- | --- |
+| balance_security_id |  | Rsa | RestrictedStockAwardPrecededBy.securities | heuristic (computed) |
+| balance_security_id |  | Default | CertificatePrecededBy.securities | heuristic (computed) |
+| resulting_security_ids | **yes** | Rsa | RestrictedStockAwardPrecededBy.securities | heuristic (computed) |
+| resulting_security_ids | **yes** | Default | CertificatePrecededBy.securities | heuristic (computed) |
+
 ### WarrantCancellation — in Core (admissible)
 
 | field | OCF-req | variant(s) | flows to (Carta) | loss |
@@ -317,7 +331,8 @@ flowchart LR
 
 ## Flow map — Carta slot ← OCF sources (the narrowest are the strongest upstream asks)
 
-- `CertificatePrecededBy.securities` ← 3: `EquityCompensationExercise.resulting_security_ids [Option, Sar]`, `EquityCompensationRelease.resulting_security_ids [Rsu]`, `StockCancellation.balance_security_id [Default]`
+- `CertificatePrecededBy.securities` ← 5: `EquityCompensationExercise.resulting_security_ids [Option, Sar]`, `EquityCompensationRelease.resulting_security_ids [Rsu]`, `StockCancellation.balance_security_id [Default]`, `StockTransfer.balance_security_id [Default]`, `StockTransfer.resulting_security_ids [Default]`
+- `RestrictedStockAwardPrecededBy.securities` ← 3: `StockCancellation.balance_security_id [Rsa]`, `StockTransfer.balance_security_id [Rsa]`, `StockTransfer.resulting_security_ids [Rsa]`
 - `Compliance.federalExemption` ← 2: `ConvertibleIssuance.security_law_exemptions`, `WarrantIssuance.security_law_exemptions`
 - `Document.fileId` ← 2: `Document.path`, `Document.uri`
 - `ShareClassRightsAndPreferences.conversionPrice` ← 2: `StockClass.conversion_rights`, `StockClassConversionRatioAdjustment.new_ratio_conversion_mechanism`
@@ -329,7 +344,6 @@ flowchart LR
 - `ConvertibleIssuanceTransaction.valuationCap` ← 1: `ConvertibleIssuance.conversion_triggers`
 - `OptionGrant.exercisePeriods` ← 1: `EquityCompensationIssuance.termination_exercise_windows [Option]`
 - `OptionPoolSummary.shareClassId` ← 1: `StockPlan.stock_class_ids`
-- `RestrictedStockAwardPrecededBy.securities` ← 1: `StockCancellation.balance_security_id [Rsa]`
 - `ShareClass.seniority` ← 1: `StockClass.seniority`
 - `Stakeholder.address` ← 1: `Stakeholder.addresses`
 - `Stakeholder.fullName` ← 1: `Stakeholder.name`

@@ -13,8 +13,8 @@ flowchart LR
   classDef core fill:#fff4d6,stroke:#f9a825,color:#5c4400;
   classDef in fill:#e6f4ea,stroke:#34a853,color:#0b3d20;
   classDef out fill:#fce8e6,stroke:#d93025,color:#5c0d06;
-  OCF["OCF"]:::in -->|"97 clean + 29 lossy"| CORE
-  OCF -.->|"152 left behind"| ocfvoid["⌀ dropped (no Carta home)"]:::out
+  OCF["OCF"]:::in -->|"99 clean + 29 lossy"| CORE
+  OCF -.->|"150 left behind"| ocfvoid["⌀ dropped (no Carta home)"]:::out
   CORE["OCF Core (rich)"]:::core
   Carta["Carta"]:::in -->|"175 fields"| CORE
   Carta -.->|"193 left behind"| cartavoid["⌀ Core can't hold"]:::out
@@ -33,6 +33,127 @@ they map into). **Solid** edges = a property that FLOWS IN (`OCF field → Carta
 edges to a red void = properties LOST: OCF fields with no Carta home, and Carta fields no OCF
 source fills. Loss lists are capped per object (full names in the tables below); OCF nodes are
 green (in Core) / dashed grey (not admissible). Groups are largest-first.
+
+**→ Certificate, CertificateCancellationTransaction, CertificateIssuanceTransaction, CertificatePrecededBy, OptionExerciseTransaction, RestrictedStockAward, RestrictedStockAwardPrecededBy, RestrictedStockUnitSettlement, RsaCancellationTransaction, RsaIssuanceTransaction, RsuSettlementTransaction, SarExerciseTransaction**
+
+```mermaid
+flowchart LR
+  classDef adm fill:#e6f4ea,stroke:#34a853,color:#0b3d20;
+  classDef notadm fill:#f1f3f4,stroke:#9aa0a6,color:#5f6368,stroke-dasharray:4 3;
+  classDef carta fill:#e8f0fe,stroke:#1a73e8,color:#0d2b66;
+  classDef lost fill:#fce8e6,stroke:#d93025,color:#5c0d06;
+  subgraph SRC["OCF (= Core, source)"]
+    direction TB
+    o0["EquityCompensationExercise"]:::adm
+    o1["EquityCompensationRelease"]:::adm
+    o2["StockAcceptance"]:::notadm
+    o3["StockCancellation"]:::adm
+    o4["StockConsolidation"]:::notadm
+    o5["StockConversion"]:::notadm
+    o6["StockIssuance"]:::adm
+    o7["StockReissuance"]:::notadm
+    o8["StockRepurchase"]:::notadm
+    o9["StockTransfer"]:::adm
+  end
+  subgraph TGT["Carta"]
+    direction TB
+    t0["Certificate"]:::carta
+    t1["CertificateCancellationTransaction"]:::carta
+    t2["CertificateIssuanceTransaction"]:::carta
+    t3["CertificatePrecededBy"]:::carta
+    t4["OptionExerciseTransaction"]:::carta
+    t5["RestrictedStockAward"]:::carta
+    t6["RestrictedStockAwardPrecededBy"]:::carta
+    t7["RestrictedStockUnitSettlement"]:::carta
+    t8["RsaCancellationTransaction"]:::carta
+    t9["RsaIssuanceTransaction"]:::carta
+    t10["RsuSettlementTransaction"]:::carta
+    t11["SarExerciseTransaction"]:::carta
+  end
+  ocflost["⌀ OCF lost (no Carta home)"]:::lost
+  cartalost["⌀ Carta lost (no OCF source)"]:::lost
+  o0 -->|"date → sharesAcquiredDatetime"| t4
+  o0 -->|"date → sharesAcquiredDatetime"| t11
+  o0 -->|"quantity → quantity"| t4
+  o0 -->|"quantity → quantity"| t11
+  o0 -->|"resulting_security_ids → securities"| t3
+  o1 -->|"date → settlementDatetime"| t10
+  o1 -->|"quantity → settledQuantity"| t10
+  o1 -->|"release_price → settlementPrice"| t7
+  o1 -->|"resulting_security_ids → securities"| t3
+  o1 -->|"settlement_date → settlementDate"| t7
+  o2 -->|"date → stakeholderAcceptanceDate"| t5
+  o3 -->|"balance_security_id → securities"| t6
+  o3 -->|"balance_security_id → securities"| t3
+  o3 -->|"date → effectiveDatetime"| t8
+  o3 -->|"date → effectiveDatetime"| t1
+  o3 -->|"quantity → quantity"| t8
+  o3 -->|"quantity → quantity"| t1
+  o4 -->|"resulting_security_id → securities"| t6
+  o4 -->|"resulting_security_id → securities"| t3
+  o4 -->|"security_ids → securities"| t6
+  o4 -->|"security_ids → securities"| t3
+  o5 -->|"balance_security_id → securities"| t6
+  o5 -->|"balance_security_id → securities"| t3
+  o5 -->|"resulting_security_ids → securities"| t6
+  o5 -->|"resulting_security_ids → securities"| t3
+  o6 -->|"board_approval_date → boardApprovalDate"| t5
+  o6 -->|"cost_basis → acquisitionCost"| t9
+  o6 -->|"cost_basis → acquisitionCost"| t2
+  o6 -->|"custom_id → securityLabel"| t5
+  o6 -->|"custom_id → securityLabel"| t0
+  o6 -->|"date → issueDatetime"| t9
+  o6 -->|"date → issueDatetime"| t2
+  o6 -->|"quantity → quantity"| t9
+  o6 -->|"quantity → quantity"| t2
+  o6 -->|"security_id → securityId"| t5
+  o6 -->|"security_id → securityId"| t0
+  o6 -->|"share_price → pricePerShare"| t5
+  o6 -->|"share_price → pricePerShare"| t0
+  o6 -->|"stakeholder_id → stakeholderId"| t5
+  o6 -->|"stakeholder_id → stakeholderId"| t0
+  o6 -->|"stock_class_id → shareClassId"| t5
+  o6 -->|"stock_class_id → shareClassId"| t0
+  o6 -->|"stock_plan_id → equityPlanId"| t9
+  o6 -->|"stock_plan_id → equityPlanId"| t2
+  o6 -->|"vesting_terms_id → vestingScheduleTemplateId"| t9
+  o6 -->|"vesting_terms_id → vestingScheduleTemplateId"| t2
+  o6 -->|"vestings → vestingEvents"| t5
+  o7 -->|"resulting_security_ids → securities"| t6
+  o7 -->|"resulting_security_ids → securities"| t3
+  o8 -->|"balance_security_id → securities"| t6
+  o8 -->|"balance_security_id → securities"| t3
+  o9 -->|"balance_security_id → securities"| t6
+  o9 -->|"balance_security_id → securities"| t3
+  o9 -->|"date → issueDatetime"| t9
+  o9 -->|"date → issueDatetime"| t2
+  o9 -->|"quantity → quantity"| t9
+  o9 -->|"quantity → quantity"| t2
+  o9 -->|"resulting_security_ids → securities"| t6
+  o9 -->|"resulting_security_ids → securities"| t3
+  o0 -.->|"consideration_text, security_id"| ocflost
+  o1 -.->|"consideration_text, security_id"| ocflost
+  o2 -.->|"security_id"| ocflost
+  o3 -.->|"reason_text, security_id"| ocflost
+  o4 -.->|"date, reason_text"| ocflost
+  o5 -.->|"date, quantity_converted, security_id"| ocflost
+  o6 -.->|"consideration_text, issuance_type, security_law_exemptions, share_numbers_issued, stock_legend_ids, stockholder_approval_date"| ocflost
+  o7 -.->|"date, reason_text, security_id, split_transaction_id"| ocflost
+  o8 -.->|"consideration_text, date, price, quantity, security_id"| ocflost
+  o9 -.->|"consideration_text, security_id"| ocflost
+  t0 -.->|"id, vestingScheduleTemplateId, issuerId, shareClassName, issueDate, quantity +6 more"| cartalost
+  t1 -.->|"reason, terminationDatetime, forfeitureDatetime"| cartalost
+  t2 -.->|"shareClassId, issuanceReason, precededBySecurityId"| cartalost
+  t3 -.->|"reason"| cartalost
+  t4 -.->|"id, exerciseMethod, recordType, resultingSecurityId, resultingSecurityType, resultingSecurityLabel"| cartalost
+  t5 -.->|"id, vestingScheduleTemplateId, issuerId, equityIncentivePlanName, shareClassName, issueDate +11 more"| cartalost
+  t6 -.->|"reason"| cartalost
+  t7 -.->|"releaseQuantity, saleQuantity, withholdingQuantity, netSettlementQuantity, certificateId, certificateLabel"| cartalost
+  t8 -.->|"reason, terminationDatetime, forfeitureDatetime"| cartalost
+  t9 -.->|"shareClassId"| cartalost
+  t10 -.->|"id, withheldQuantity, resultingSecurityId, resultingSecurityType, resultingSecurityLabel"| cartalost
+  t11 -.->|"withheldQuantity, settledQuantity, resultingSecurityId, resultingSecurityType, resultingSecurityLabel, cashAcquired"| cartalost
+```
 
 **→ OptionGrant, OptionIssuanceTransaction, RestrictedStockUnit, RsuIssuanceTransaction, SarIssuanceTransaction**
 
@@ -103,88 +224,6 @@ flowchart LR
   t0 -.->|"id, shareClassId, vestingScheduleTemplateId, issuerId, equityIncentivePlanName, issueDate +18 more"| cartalost
   t1 -.->|"stockOptionType"| cartalost
   t2 -.->|"id, shareClassId, vestingScheduleTemplateId, issuerId, equityIncentivePlanName, issueDate +15 more"| cartalost
-```
-
-**→ CertificateCancellationTransaction, CertificatePrecededBy, OptionExerciseTransaction, RestrictedStockAwardPrecededBy, RestrictedStockUnitSettlement, RsaCancellationTransaction, RsuSettlementTransaction, SarExerciseTransaction**
-
-```mermaid
-flowchart LR
-  classDef adm fill:#e6f4ea,stroke:#34a853,color:#0b3d20;
-  classDef notadm fill:#f1f3f4,stroke:#9aa0a6,color:#5f6368,stroke-dasharray:4 3;
-  classDef carta fill:#e8f0fe,stroke:#1a73e8,color:#0d2b66;
-  classDef lost fill:#fce8e6,stroke:#d93025,color:#5c0d06;
-  subgraph SRC["OCF (= Core, source)"]
-    direction TB
-    o0["EquityCompensationExercise"]:::adm
-    o1["EquityCompensationRelease"]:::adm
-    o2["StockCancellation"]:::adm
-    o3["StockConsolidation"]:::notadm
-    o4["StockConversion"]:::notadm
-    o5["StockReissuance"]:::notadm
-    o6["StockRepurchase"]:::notadm
-    o7["StockTransfer"]:::notadm
-  end
-  subgraph TGT["Carta"]
-    direction TB
-    t0["CertificateCancellationTransaction"]:::carta
-    t1["CertificatePrecededBy"]:::carta
-    t2["OptionExerciseTransaction"]:::carta
-    t3["RestrictedStockAwardPrecededBy"]:::carta
-    t4["RestrictedStockUnitSettlement"]:::carta
-    t5["RsaCancellationTransaction"]:::carta
-    t6["RsuSettlementTransaction"]:::carta
-    t7["SarExerciseTransaction"]:::carta
-  end
-  ocflost["⌀ OCF lost (no Carta home)"]:::lost
-  cartalost["⌀ Carta lost (no OCF source)"]:::lost
-  o0 -->|"date → sharesAcquiredDatetime"| t2
-  o0 -->|"date → sharesAcquiredDatetime"| t7
-  o0 -->|"quantity → quantity"| t2
-  o0 -->|"quantity → quantity"| t7
-  o0 -->|"resulting_security_ids → securities"| t1
-  o1 -->|"date → settlementDatetime"| t6
-  o1 -->|"quantity → settledQuantity"| t6
-  o1 -->|"release_price → settlementPrice"| t4
-  o1 -->|"resulting_security_ids → securities"| t1
-  o1 -->|"settlement_date → settlementDate"| t4
-  o2 -->|"balance_security_id → securities"| t3
-  o2 -->|"balance_security_id → securities"| t1
-  o2 -->|"date → effectiveDatetime"| t5
-  o2 -->|"date → effectiveDatetime"| t0
-  o2 -->|"quantity → quantity"| t5
-  o2 -->|"quantity → quantity"| t0
-  o3 -->|"resulting_security_id → securities"| t3
-  o3 -->|"resulting_security_id → securities"| t1
-  o3 -->|"security_ids → securities"| t3
-  o3 -->|"security_ids → securities"| t1
-  o4 -->|"balance_security_id → securities"| t3
-  o4 -->|"balance_security_id → securities"| t1
-  o4 -->|"resulting_security_ids → securities"| t3
-  o4 -->|"resulting_security_ids → securities"| t1
-  o5 -->|"resulting_security_ids → securities"| t3
-  o5 -->|"resulting_security_ids → securities"| t1
-  o6 -->|"balance_security_id → securities"| t3
-  o6 -->|"balance_security_id → securities"| t1
-  o7 -->|"balance_security_id → securities"| t3
-  o7 -->|"balance_security_id → securities"| t1
-  o7 -->|"resulting_security_ids → securities"| t3
-  o7 -->|"resulting_security_ids → securities"| t1
-  o0 -.->|"consideration_text, security_id"| ocflost
-  o1 -.->|"consideration_text, security_id"| ocflost
-  o2 -.->|"reason_text, security_id"| ocflost
-  o3 -.->|"date, reason_text"| ocflost
-  o4 -.->|"date, quantity_converted, security_id"| ocflost
-  o5 -.->|"date, reason_text, security_id, split_transaction_id"| ocflost
-  o6 -.->|"consideration_text, date, price, quantity, security_id"| ocflost
-  o7 -.->|"consideration_text, date, quantity, security_id"| ocflost
-  t0 -.->|"reason, terminationDatetime, forfeitureDatetime"| cartalost
-  t1 -.->|"reason"| cartalost
-  t2 -.->|"id, exerciseMethod, recordType, resultingSecurityId, resultingSecurityType, resultingSecurityLabel"| cartalost
-  t3 -.->|"reason"| cartalost
-  t4 -.->|"releaseQuantity, saleQuantity, withholdingQuantity, netSettlementQuantity, certificateId, certificateLabel"| cartalost
-  t5 -.->|"reason, terminationDatetime, forfeitureDatetime"| cartalost
-  t6 -.->|"id, withheldQuantity, resultingSecurityId, resultingSecurityType, resultingSecurityLabel"| cartalost
-  t7 -.->|"withheldQuantity, settledQuantity, resultingSecurityId, resultingSecurityType, resultingSecurityLabel, cashAcquired"| cartalost
 ```
 
 **→ Compliance, ConvertibleCancellationTransaction, ConvertibleIssuanceTransaction, ConvertibleNote, ConvertibleTransactionItem, NoteBlock, WarrantExerciseTransaction, WarrantIssuanceTransaction, WarrantTransactionItem, WarrantTransferTransaction**
@@ -266,59 +305,6 @@ flowchart LR
   t7 -.->|"shareClassId"| cartalost
   t8 -.->|"issuance, exercises, transfers, cancellations"| cartalost
   t9 -.->|"resultingSecurityLabel"| cartalost
-```
-
-**→ Certificate, CertificateIssuanceTransaction, RestrictedStockAward, RsaIssuanceTransaction**
-
-```mermaid
-flowchart LR
-  classDef adm fill:#e6f4ea,stroke:#34a853,color:#0b3d20;
-  classDef notadm fill:#f1f3f4,stroke:#9aa0a6,color:#5f6368,stroke-dasharray:4 3;
-  classDef carta fill:#e8f0fe,stroke:#1a73e8,color:#0d2b66;
-  classDef lost fill:#fce8e6,stroke:#d93025,color:#5c0d06;
-  subgraph SRC["OCF (= Core, source)"]
-    direction TB
-    o0["StockAcceptance"]:::notadm
-    o1["StockIssuance"]:::adm
-  end
-  subgraph TGT["Carta"]
-    direction TB
-    t0["Certificate"]:::carta
-    t1["CertificateIssuanceTransaction"]:::carta
-    t2["RestrictedStockAward"]:::carta
-    t3["RsaIssuanceTransaction"]:::carta
-  end
-  ocflost["⌀ OCF lost (no Carta home)"]:::lost
-  cartalost["⌀ Carta lost (no OCF source)"]:::lost
-  o0 -->|"date → stakeholderAcceptanceDate"| t2
-  o1 -->|"board_approval_date → boardApprovalDate"| t2
-  o1 -->|"cost_basis → acquisitionCost"| t3
-  o1 -->|"cost_basis → acquisitionCost"| t1
-  o1 -->|"custom_id → securityLabel"| t2
-  o1 -->|"custom_id → securityLabel"| t0
-  o1 -->|"date → issueDatetime"| t3
-  o1 -->|"date → issueDatetime"| t1
-  o1 -->|"quantity → quantity"| t3
-  o1 -->|"quantity → quantity"| t1
-  o1 -->|"security_id → securityId"| t2
-  o1 -->|"security_id → securityId"| t0
-  o1 -->|"share_price → pricePerShare"| t2
-  o1 -->|"share_price → pricePerShare"| t0
-  o1 -->|"stakeholder_id → stakeholderId"| t2
-  o1 -->|"stakeholder_id → stakeholderId"| t0
-  o1 -->|"stock_class_id → shareClassId"| t2
-  o1 -->|"stock_class_id → shareClassId"| t0
-  o1 -->|"stock_plan_id → equityPlanId"| t3
-  o1 -->|"stock_plan_id → equityPlanId"| t1
-  o1 -->|"vesting_terms_id → vestingScheduleTemplateId"| t3
-  o1 -->|"vesting_terms_id → vestingScheduleTemplateId"| t1
-  o1 -->|"vestings → vestingEvents"| t2
-  o0 -.->|"security_id"| ocflost
-  o1 -.->|"consideration_text, issuance_type, security_law_exemptions, share_numbers_issued, stock_legend_ids, stockholder_approval_date"| ocflost
-  t0 -.->|"id, vestingScheduleTemplateId, issuerId, shareClassName, issueDate, quantity +6 more"| cartalost
-  t1 -.->|"shareClassId, issuanceReason, precededBySecurityId"| cartalost
-  t2 -.->|"id, vestingScheduleTemplateId, issuerId, equityIncentivePlanName, shareClassName, issueDate +11 more"| cartalost
-  t3 -.->|"shareClassId"| cartalost
 ```
 
 **→ ShareClass, ShareClassRightsAndPreferences**
@@ -591,7 +577,6 @@ are DISTINCT fields per object (variants collapsed; a field that lands in any va
 | Stakeholder | ✓ | 4 | 4 | 2 |
 | StockIssuance | ✓ | 12 | 0 | 6 |
 | StockRepurchase | ✗ | 0 | 1 | 5 |
-| StockTransfer | ✗ | 0 | 2 | 4 |
 | ConvertibleConversion | ✓ | 3 | 0 | 5 |
 | IssuerAuthorizedSharesAdjustment | ✗ | 0 | 0 | 5 |
 | StockClass | ✓ | 8 | 2 | 3 |
@@ -604,6 +589,7 @@ are DISTINCT fields per object (variants collapsed; a field that lands in any va
 | EquityCompensationIssuance | ✓ | 17 | 1 | 3 |
 | StockConsolidation | ✗ | 0 | 2 | 2 |
 | StockPlan | ✓ | 3 | 1 | 3 |
+| StockTransfer | ✓ | 2 | 2 | 2 |
 | VestingAcceleration | ✗ | 0 | 0 | 4 |
 | ConvertibleRetraction | ✗ | 0 | 0 | 3 |
 | EquityCompensationCancellation | ✓ | 2 | 0 | 3 |

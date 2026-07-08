@@ -114,10 +114,11 @@ flowchart LR
     o13["StockClassAuthorizedSharesAdjustment"]:::adm
     o14["StockIssuance"]:::adm
     o15["StockPlan"]:::adm
-    o16["Valuation"]:::adm
-    o17["WarrantCancellation"]:::adm
-    o18["WarrantIssuance"]:::adm
-    o19["WarrantTransfer"]:::adm
+    o16["StockTransfer"]:::adm
+    o17["Valuation"]:::adm
+    o18["WarrantCancellation"]:::adm
+    o19["WarrantIssuance"]:::adm
+    o20["WarrantTransfer"]:::adm
   end
   subgraph TGT["Carta target objects"]
     direction TB
@@ -190,21 +191,23 @@ flowchart LR
   o15 -->|"board_approval_date"| sink
   o15 -->|"default_cancellation_behavior"| sink
   o15 -->|"stockholder_approval_date"| sink
-  o16 -->|"board_approval_date"| sink
-  o16 -->|"effective_date"| sink
-  o16 -->|"provider"| sink
-  o16 -->|"stockholder_approval_date"| sink
-  o16 -->|"valuation_type"| sink
-  o17 -->|"balance_security_id"| sink
-  o17 -->|"security_id"| sink
-  o18 -->|"board_approval_date"| sink
-  o18 -->|"consideration_text"| sink
-  o18 -->|"exercise_triggers"| sink
-  o18 -->|"quantity_source"| sink
-  o18 -->|"stockholder_approval_date"| sink
-  o18 -->|"vestings"| sink
-  o19 -->|"balance_security_id"| sink
+  o16 -->|"consideration_text"| sink
+  o16 -->|"security_id"| sink
+  o17 -->|"board_approval_date"| sink
+  o17 -->|"effective_date"| sink
+  o17 -->|"provider"| sink
+  o17 -->|"stockholder_approval_date"| sink
+  o17 -->|"valuation_type"| sink
+  o18 -->|"balance_security_id"| sink
+  o18 -->|"security_id"| sink
+  o19 -->|"board_approval_date"| sink
   o19 -->|"consideration_text"| sink
+  o19 -->|"exercise_triggers"| sink
+  o19 -->|"quantity_source"| sink
+  o19 -->|"stockholder_approval_date"| sink
+  o19 -->|"vestings"| sink
+  o20 -->|"balance_security_id"| sink
+  o20 -->|"consideration_text"| sink
 ```
 
 
@@ -356,6 +359,14 @@ flowchart LR
 - default_cancellation_behavior: no-destination — kind unmappable
 - stock_class_ids: existence-loss — array→scalar
 - stockholder_approval_date: no-destination — kind unmappable
+
+### StockTransfer [Default]
+- consideration_text: no-destination — kind unmappable
+- **security_id** (OCF-required): no-destination — kind unmappable
+
+### StockTransfer [Rsa]
+- consideration_text: no-destination — kind unmappable
+- **security_id** (OCF-required): no-destination — kind unmappable
 
 ### Valuation
 - board_approval_date: no-destination — kind unmappable

@@ -9,7 +9,7 @@ inventory (`core-lossy-inventory.md`), which covers properties that DO land, onl
 OCF bookkeeping (`id`/`object_type`/`comments`) is excluded. `OCF-req` marks fields OCF
 itself requires; an unmapped field on an **in-Core** object is the sharper loss.
 
-## Magnitude — unmapped properties per OCF object (263 across 47 objects; 169 OCF-required)
+## Magnitude — unmapped properties per OCF object (259 across 47 objects; 165 OCF-required)
 
 Each OCF object → the void, edge labelled with how many of its properties are dropped.
 Green = the object is in strict Core (we carry it but lose these fields); dashed grey = the
@@ -40,10 +40,11 @@ flowchart LR
     o13["StockClassAuthorizedSharesAdjustment"]:::adm
     o14["StockIssuance"]:::adm
     o15["StockPlan"]:::adm
-    o16["Valuation"]:::adm
-    o17["WarrantCancellation"]:::adm
-    o18["WarrantIssuance"]:::adm
-    o19["WarrantTransfer"]:::adm
+    o16["StockTransfer"]:::adm
+    o17["Valuation"]:::adm
+    o18["WarrantCancellation"]:::adm
+    o19["WarrantIssuance"]:::adm
+    o20["WarrantTransfer"]:::adm
   end
   void["⌀ not mapped (no Carta home)"]:::sink
   o0 -->|1| void
@@ -62,10 +63,11 @@ flowchart LR
   o13 -->|3| void
   o14 -->|8| void
   o15 -->|3| void
-  o16 -->|5| void
-  o17 -->|2| void
-  o18 -->|6| void
-  o19 -->|2| void
+  o16 -->|2| void
+  o17 -->|5| void
+  o18 -->|2| void
+  o19 -->|6| void
+  o20 -->|2| void
 ```
 
 **Not-yet-admissible objects**
@@ -98,12 +100,11 @@ flowchart LR
     o18["StockReissuance"]:::notadm
     o19["StockRepurchase"]:::notadm
     o20["StockRetraction"]:::notadm
-    o21["StockTransfer"]:::notadm
-    o22["VestingAcceleration"]:::notadm
-    o23["VestingEvent"]:::notadm
-    o24["WarrantAcceptance"]:::notadm
-    o25["WarrantExercise"]:::notadm
-    o26["WarrantRetraction"]:::notadm
+    o21["VestingAcceleration"]:::notadm
+    o22["VestingEvent"]:::notadm
+    o23["WarrantAcceptance"]:::notadm
+    o24["WarrantExercise"]:::notadm
+    o25["WarrantRetraction"]:::notadm
   end
   void["⌀ not mapped (no Carta home)"]:::sink
   o0 -->|2| void
@@ -128,11 +129,10 @@ flowchart LR
   o19 -->|5| void
   o20 -->|3| void
   o21 -->|4| void
-  o22 -->|4| void
-  o23 -->|3| void
+  o22 -->|3| void
+  o23 -->|2| void
   o24 -->|2| void
-  o25 -->|2| void
-  o26 -->|3| void
+  o25 -->|3| void
 ```
 
 ## By OCF object — the dropped properties
@@ -467,13 +467,11 @@ flowchart LR
 | reason_text | **yes** | Reason for the retraction |
 | security_id | **yes** | Identifier for the security (stock, plan security, warrant, or convertible) by which it can be referenced by other transaction objects. N… |
 
-### StockTransfer — not yet admissible (4 unmapped)
+### StockTransfer — in Core (admissible) (2 unmapped)
 
 | property | OCF-req | what it is (OCF) |
 | --- | :---: | --- |
 | consideration_text |  | Unstructured text description of consideration provided in exchange for security transfer |
-| date | **yes** | Date on which the transaction occurred |
-| quantity | **yes** | Quantity of non-monetary security units transferred |
 | security_id | **yes** | Identifier for the security (stock, plan security, warrant, or convertible) by which it can be referenced by other transaction objects. N… |
 
 ### Valuation — in Core (admissible) (5 unmapped)

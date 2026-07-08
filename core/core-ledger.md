@@ -80,8 +80,8 @@ mapping lives in `X`. The core/payload counts are the wrapper's own (only
 | StockRepurchase | Rsa | 0 | 0 | ✗ | no-payload |
 | StockRetraction | Default | 0 | 0 | ✗ | no-payload |
 | StockRetraction | Rsa | 0 | 0 | ✗ | no-payload |
-| StockTransfer | Default | 0 | 0 | ✗ | no-payload |
-| StockTransfer | Rsa | 0 | 0 | ✗ | no-payload |
+| StockTransfer | Default | 2 | 1 | ✓ | — |
+| StockTransfer | Rsa | 2 | 1 | ✓ | — |
 | Valuation | — | 2 | 1 | ✓ | — |
 | VestingAcceleration | — | 0 | 0 | ✗ | no-payload |
 | VestingEvent | — | 0 | 0 | ✗ | no-payload |
@@ -92,6 +92,17 @@ mapping lives in `X`. The core/payload counts are the wrapper's own (only
 | WarrantIssuance | — | 9 | 4 | ✓ | — |
 | WarrantRetraction | — | 0 | 0 | ✗ | no-payload |
 | WarrantTransfer | — | 3 | 1 | ✓ | — |
+
+## Composite folds (§4.9)
+
+Transactions that fold into an ordered SET of Carta transactions (all emitted,
+unlike mutually-exclusive variants). Each step names the Carta object(s) it lands
+on — the target diverges by family where the step `$def` does.
+
+| entity | step | Carta object(s) |
+| --- | --- | --- |
+| StockTransfer | cancel | `CertificateCancellationTransaction`, `RsaCancellationTransaction` |
+| StockTransfer | issue | `CertificateIssuanceTransaction`, `RsaIssuanceTransaction` |
 
 ## Fields (§2)
 
@@ -718,24 +729,24 @@ mapping lives in `X`. The core/payload counts are the wrapper's own (only
 | EquityCompensationTransfer  | Sar | resulting_security_ids | out | no-destination | kind unmappable |
 | EquityCompensationTransfer  | Sar | quantity | out | no-destination | kind unmappable |
 | PlanSecurityTransfer  | — | object_type | out | no-destination | kind unmappable |
-| StockTransfer  | Rsa | id | out | no-destination | kind unmappable |
-| StockTransfer  | Rsa | comments | out | no-destination | kind unmappable |
-| StockTransfer  | Rsa | object_type | out | no-destination | kind unmappable |
-| StockTransfer  | Rsa | date | out | no-destination | kind unmappable |
-| StockTransfer  | Rsa | security_id | out | no-destination | kind unmappable |
-| StockTransfer  | Rsa | consideration_text | out | no-destination | kind unmappable |
-| StockTransfer  | Rsa | quantity | out | no-destination | kind unmappable |
-| StockTransfer  | Rsa | balance_security_id | out | heuristic | kind computed; ⚑ possible reverse-edge (ruling B) — target is an array; confirm lossless lineage |
-| StockTransfer  | Rsa | resulting_security_ids | out | heuristic | kind computed; ⚑ possible reverse-edge (ruling B) — target is an array; confirm lossless lineage |
-| StockTransfer  | Default | id | out | no-destination | kind unmappable |
-| StockTransfer  | Default | comments | out | no-destination | kind unmappable |
-| StockTransfer  | Default | object_type | out | no-destination | kind unmappable |
-| StockTransfer  | Default | date | out | no-destination | kind unmappable |
-| StockTransfer  | Default | security_id | out | no-destination | kind unmappable |
-| StockTransfer  | Default | consideration_text | out | no-destination | kind unmappable |
-| StockTransfer  | Default | quantity | out | no-destination | kind unmappable |
-| StockTransfer  | Default | balance_security_id | out | heuristic | kind computed; ⚑ possible reverse-edge (ruling B) — target is an array; confirm lossless lineage |
-| StockTransfer  | Default | resulting_security_ids | out | heuristic | kind computed; ⚑ possible reverse-edge (ruling B) — target is an array; confirm lossless lineage |
+| StockTransfer | Rsa | id | out | no-destination | kind unmappable |
+| StockTransfer | Rsa | comments | out | no-destination | kind unmappable |
+| StockTransfer | Rsa | object_type | out | no-destination | kind unmappable |
+| StockTransfer | Rsa | security_id | out | no-destination | kind unmappable |
+| StockTransfer | Rsa | consideration_text | out | no-destination | kind unmappable |
+| StockTransfer | Rsa | date | core | widening |  |
+| StockTransfer | Rsa | balance_security_id | out | heuristic | kind computed; ⚑ possible reverse-edge (ruling B) — target is an array; confirm lossless lineage |
+| StockTransfer | Rsa | resulting_security_ids | out | heuristic | kind computed; ⚑ possible reverse-edge (ruling B) — target is an array; confirm lossless lineage |
+| StockTransfer | Rsa | quantity | core | widening |  |
+| StockTransfer | Default | id | out | no-destination | kind unmappable |
+| StockTransfer | Default | comments | out | no-destination | kind unmappable |
+| StockTransfer | Default | object_type | out | no-destination | kind unmappable |
+| StockTransfer | Default | security_id | out | no-destination | kind unmappable |
+| StockTransfer | Default | consideration_text | out | no-destination | kind unmappable |
+| StockTransfer | Default | date | core | widening |  |
+| StockTransfer | Default | balance_security_id | out | heuristic | kind computed; ⚑ possible reverse-edge (ruling B) — target is an array; confirm lossless lineage |
+| StockTransfer | Default | resulting_security_ids | out | heuristic | kind computed; ⚑ possible reverse-edge (ruling B) — target is an array; confirm lossless lineage |
+| StockTransfer | Default | quantity | core | widening |  |
 | WarrantTransfer | — | id | out | no-destination | kind unmappable |
 | WarrantTransfer | — | comments | out | no-destination | kind unmappable |
 | WarrantTransfer | — | object_type | out | no-destination | kind unmappable |

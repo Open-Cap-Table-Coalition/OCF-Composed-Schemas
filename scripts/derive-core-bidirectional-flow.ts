@@ -20,6 +20,7 @@
  */
 import path from "node:path";
 import { writeFile } from "node:fs/promises";
+import { pathToFileURL } from "node:url";
 
 import { deriveCore, isMember, RICH_PROFILE } from "./lib/core-pipeline.js";
 import { isPlainObject } from "./lib/mapping-validator.js";
@@ -35,7 +36,7 @@ function isObjectType(def: unknown): boolean {
   return keys.length > 1 || (keys.length === 1 && keys[0] !== "value");
 }
 
-async function main(): Promise<number> {
+export async function writeBidiDoc(base: string = process.cwd()): Promise<number> {
   const d = await deriveCore(process.cwd(), RICH_PROFILE);
 
   // --- OCF → Core: per object, clean / lossy / dropped (distinct fields). ---
@@ -126,7 +127,7 @@ async function main(): Promise<number> {
   );
 
   await writeFile(
-    path.join(process.cwd(), OUT_FILE),
+    path.join(base, OUT_FILE),
     render(ocf, carta, untargetedObjectCount, memberGroups, ocfLost, cartaUnfilled),
     "utf8"
   );
@@ -244,10 +245,13 @@ function render(
   return lines.join("\n") + "\n";
 }
 
-main().then(
-  (code) => process.exit(code),
-  (err) => {
-    console.error(err);
-    process.exit(1);
-  }
-);
+// Run as a CLI only when invoked directly (not when imported by core:build).
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
+  writeBidiDoc().then(
+    (code) => process.exit(code),
+    (err) => {
+      console.error(err);
+      process.exit(1);
+    }
+  );
+}

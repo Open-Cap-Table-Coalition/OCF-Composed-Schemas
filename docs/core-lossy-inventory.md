@@ -33,7 +33,7 @@ flowchart LR
     o4["StockConversion"]:::notadm
     o5["StockReissuance"]:::notadm
     o6["StockRepurchase"]:::notadm
-    o7["StockTransfer"]:::notadm
+    o7["StockTransfer"]:::adm
   end
   subgraph TGT["Carta target objects"]
     direction TB
@@ -376,7 +376,7 @@ A field mapping the same way across variants is shown once, the variants listed.
 | balance_security_id |  | Rsa | RestrictedStockAwardPrecededBy.securities | heuristic (computed) |
 | balance_security_id |  | Default | CertificatePrecededBy.securities | heuristic (computed) |
 
-### StockTransfer — not yet admissible
+### StockTransfer — in Core (admissible)
 
 | field | OCF-req | variant(s) | flows to (Carta) | loss |
 | --- | :---: | --- | --- | --- |
@@ -434,7 +434,7 @@ onto one Carta field — most visibly the reverse-edge lineage collapsing onto `
 - `WarrantExerciseTransaction.resultingSecurityId` ← 1: `WarrantExercise.resulting_security_ids`
 - `WarrantTransferTransaction.resultingSecurityId` ← 1: `WarrantTransfer.resulting_security_ids`
 
-## C. No home — no Carta target at all (263 across 47 objects)
+## C. No home — no Carta target at all (259 across 47 objects)
 
 A different animal: Carta has no field to hold these (also in core-gaps.md §a). NOT what
 rich-Core recovers — listed for contrast.
@@ -476,7 +476,7 @@ rich-Core recovers — listed for contrast.
 - **StockReissuance** *(not yet admissible)* — **date**, reason_text, **security_id**, split_transaction_id
 - **StockRepurchase** *(not yet admissible)* — consideration_text, **date**, **price**, **quantity**, **security_id**
 - **StockRetraction** *(not yet admissible)* — **date**, **reason_text**, **security_id**
-- **StockTransfer** *(not yet admissible)* — consideration_text, **date**, **quantity**, **security_id**
+- **StockTransfer** — consideration_text, **security_id**
 - **Valuation** — board_approval_date, **effective_date**, provider, stockholder_approval_date, **valuation_type**
 - **VestingAcceleration** *(not yet admissible)* — **date**, **quantity**, **reason_text**, **security_id**
 - **VestingEvent** *(not yet admissible)* — **date**, **event_id**, **security_id**

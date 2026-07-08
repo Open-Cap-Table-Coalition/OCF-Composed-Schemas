@@ -57,6 +57,30 @@ export function renderLedger(d: Derived): string {
     );
   }
 
+  // Composite folds (§4.9): transactions with no single Carta target that fold
+  // into an ordered SET of Carta transactions. Surfaced so the docs make clear
+  // which mappings compose and through which Carta objects.
+  const composites = d.corpus.objects.filter((o) => o.composite && o.composite.length > 0);
+  if (composites.length > 0) {
+    lines.push(
+      "",
+      "## Composite folds (§4.9)",
+      "",
+      "Transactions that fold into an ordered SET of Carta transactions (all emitted,",
+      "unlike mutually-exclusive variants). Each step names the Carta object(s) it lands",
+      "on — the target diverges by family where the step `$def` does.",
+      "",
+      "| entity | step | Carta object(s) |",
+      "| --- | --- | --- |"
+    );
+    for (const o of composites) {
+      for (const s of o.composite!) {
+        const objs = s.targets.map((t) => `\`${t}\``).join(", ") || "—";
+        lines.push(`| ${o.entity} | ${s.step} | ${objs} |`);
+      }
+    }
+  }
+
   lines.push(
     "",
     "## Fields (§2)",

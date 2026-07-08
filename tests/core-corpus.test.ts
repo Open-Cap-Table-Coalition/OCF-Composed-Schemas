@@ -36,6 +36,33 @@ describe("variantFieldMaps", () => {
     expect(v2.sm).toEqual({ kind: "unmappable", target: null, reason: "no-equivalent" }); // null → unmappable
     expect(v2.f1).toBeUndefined();
   });
+
+  it("reduces a composite per-step target map to one landing pointer per family", () => {
+    const m = variantFieldMaps({
+      route_by_security: { via: "security_id", resolve: "x" },
+      composite: [
+        { step: "cancel", target: {} },
+        { step: "issue", target: {} },
+      ],
+      shared: {
+        quantity: {
+          kind: "rename",
+          target: {
+            cancel: { A: "#/cancelA", B: "#/cancelB" },
+            issue: { A: "#/issueA", B: null },
+          },
+        },
+      },
+      variants: {
+        A: { when: ["P"], fields: {} },
+        B: { when: ["Q"], fields: {} },
+      },
+    });
+    // issue step wins over cancel where it lands …
+    expect(m.get("A")!.quantity).toEqual({ kind: "rename", target: "#/issueA" });
+    // … and falls back to the cancel step where the issue slot is null.
+    expect(m.get("B")!.quantity).toEqual({ kind: "rename", target: "#/cancelB" });
+  });
 });
 
 describe("loadGreenCorpus (smoke — reads the real repo)", () => {

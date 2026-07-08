@@ -25,6 +25,7 @@ ratified:
   - StockClassConversionRatioAdjustment
   - StockIssuance
   - StockPlan
+  - StockTransfer
   - Valuation
   - VestingTerms
   - WarrantCancellation

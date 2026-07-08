@@ -834,6 +834,42 @@
           },
           {
             "type": "object",
+            "title": "StockTransfer",
+            "properties": {
+              "balance_security_id": {
+                "type": "string",
+                "description": "Identifier for the security that holds the remainder balance (for partial transfers)"
+              },
+              "date": {
+                "type": "string",
+                "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+                "description": "Date on which the transaction occurred"
+              },
+              "id": {
+                "type": "string",
+                "description": "Identifier for the object"
+              },
+              "object_type": {
+                "const": "TX_STOCK_TRANSFER"
+              },
+              "quantity": {
+                "type": "string",
+                "pattern": "^[+-]?[0-9]+(\\.[0-9]{1,10})?$",
+                "description": "Quantity of non-monetary security units transferred"
+              },
+              "resulting_security_ids": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "Array of identifiers for new security (or securities) created as a result of the transaction"
+              }
+            },
+            "required": [],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
             "title": "WarrantCancellation",
             "properties": {
               "date": {

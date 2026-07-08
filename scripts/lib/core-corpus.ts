@@ -13,7 +13,13 @@ import { parse as parseYaml } from "yaml";
 
 import { loadRegistry, RawSchema, Registry } from "./registry.js";
 import { parseMappingDocument, MappingParseError } from "./mapping-parser.js";
-import { TARGET_BUNDLES, isPlainObject } from "./mapping-validator.js";
+import {
+  TARGET_BUNDLES,
+  isPlainObject,
+  compositeStepIds,
+  isStepKeyedTarget,
+  reduceStepTarget,
+} from "./mapping-validator.js";
 import { classifyType, TypeVerdict } from "./core-classifier.js";
 import { ReferenceGraph } from "./core-admissibility.js";
 
@@ -130,6 +136,13 @@ export async function loadReferenceGraph(repoRoot: string): Promise<ReferenceGra
 const MAPPING_DIRS = ["objects", "types"] as const;
 const GREEN = new Set(["complete", "reviewed"]);
 
+/** One step of a `composite:` fold: its id and the Carta `$def` root(s) it lands on. */
+export interface CompositeStep {
+  step: string;
+  /** Carta `$def` root names this step targets (deduped, sorted; per-family where it diverges). */
+  targets: string[];
+}
+
 export interface GreenObject {
   /** Canonical entity name (the mapping filename, camelCase). */
   entity: string;
@@ -140,6 +153,14 @@ export interface GreenObject {
   properties: Record<string, unknown>;
   /** variant label ("—" when not polymorphic) → effective field→entry map. */
   variants: Map<string, Record<string, unknown>>;
+  /**
+   * Composite steps iff this transaction folds into an ordered SET of Carta
+   * transactions (the `composite:` block, all emitted) — each step id and the
+   * Carta `$def` root(s) it lands on. Undefined for ordinary mappings. Surfaced
+   * in the membership ledger so the docs show which mappings compose and through
+   * which Carta objects.
+   */
+  composite?: CompositeStep[];
   /**
    * Set iff this schema is an OCF compatibility wrapper: it `allOf`-inherits
    * another green entity and re-declares only bookkeeping (`object_type`), adding
@@ -190,6 +211,7 @@ export function variantFieldMaps(
   const variants = isPlainObject(mapping.variants) ? mapping.variants : {};
   const shared = isPlainObject(mapping.shared) ? (mapping.shared as Record<string, unknown>) : {};
   const labels = Object.keys(variants);
+  const stepIds = compositeStepIds(mapping);
 
   const simpleShared: Record<string, unknown> = {};
   const projected: Record<string, Record<string, unknown>> = Object.fromEntries(
@@ -198,8 +220,15 @@ export function variantFieldMaps(
   for (const [field, entry] of Object.entries(shared)) {
     if (isPlainObject(entry) && isPlainObject(entry.target)) {
       const map = entry.target as Record<string, unknown>;
+      // A composite per-step map reduces to one landing pointer per family (the
+      // issue step wins over cancel); a per-variant map indexes directly by family.
+      const stepKeyed = isStepKeyedTarget(map, stepIds);
       for (const label of labels) {
-        const val = label in map ? map[label] : null;
+        const val = stepKeyed
+          ? reduceStepTarget(map, label, stepIds)
+          : label in map && typeof map[label] === "string"
+          ? (map[label] as string)
+          : null;
         projected[label]![field] =
           typeof val === "string"
             ? { ...entry, target: val }
@@ -289,6 +318,19 @@ function collectTargets(target: unknown, into: Set<string>): void {
   if (typeof target === "string") add(target);
   else if (Array.isArray(target)) target.forEach((t) => collectTargets(t, into));
   else if (isPlainObject(target)) Object.values(target).forEach((t) => collectTargets(t, into));
+}
+
+/** The `composite:` steps of a mapping (each step id + the Carta $def roots it lands on), or undefined. */
+function compositeSteps(mapping: Record<string, unknown>): CompositeStep[] | undefined {
+  if (!Array.isArray(mapping.composite)) return undefined;
+  const steps: CompositeStep[] = [];
+  for (const s of mapping.composite) {
+    if (!isPlainObject(s) || typeof s.step !== "string") continue;
+    const roots = new Set<string>();
+    collectTargets(s.target, roots);
+    steps.push({ step: s.step, targets: [...roots].sort() });
+  }
+  return steps.length > 0 ? steps : undefined;
 }
 
 /** Like collectTargets but keeps the FULL pointer (`#/$defs/Root/properties/x`), for
@@ -408,6 +450,25 @@ export async function loadGreenCorpus(repoRoot: string): Promise<Corpus> {
         collectPointers(v.primary_targets, targetedPointers);
       }
     }
+    // composite: harvest each step's Carta $def target and the FULL per-step field
+    // maps. variantFieldMaps only surfaces the reduced (issue-step) landing target
+    // per family, so the cancel-step slots and the step $defs themselves would
+    // otherwise be missed by the coverage/gap reports.
+    if (Array.isArray(mapping.composite)) {
+      for (const step of mapping.composite) {
+        if (isPlainObject(step)) {
+          collectTargets(step.target, targetedDefs);
+          collectPointers(step.target, targetedPointers);
+        }
+      }
+      const sharedBlock = isPlainObject(mapping.shared) ? mapping.shared : {};
+      for (const e of Object.values(sharedBlock)) {
+        if (isPlainObject(e)) {
+          collectTargets(e.target, targetedDefs);
+          collectPointers(e.target, targetedPointers);
+        }
+      }
+    }
     if (frontmatter.ocf_kind === "type") {
       const id = frontmatter.ocf_schema_id;
       const fields = isPlainObject(mapping.fields)
@@ -454,6 +515,7 @@ export async function loadGreenCorpus(repoRoot: string): Promise<Corpus> {
       requiredFields,
       properties: (sourceSchema.properties ?? {}) as Record<string, unknown>,
       variants: variantFieldMaps(mapping),
+      composite: compositeSteps(mapping),
       aliasOf: detectAlias(sourceSchema, objectEntityNames),
     });
   }
