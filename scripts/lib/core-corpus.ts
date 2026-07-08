@@ -18,7 +18,7 @@ import {
   isPlainObject,
   compositeStepIds,
   isStepKeyedTarget,
-  reduceStepTarget,
+  collectStepTargets,
 } from "./mapping-validator.js";
 import { classifyType, TypeVerdict } from "./core-classifier.js";
 import { ReferenceGraph } from "./core-admissibility.js";
@@ -220,19 +220,25 @@ export function variantFieldMaps(
   for (const [field, entry] of Object.entries(shared)) {
     if (isPlainObject(entry) && isPlainObject(entry.target)) {
       const map = entry.target as Record<string, unknown>;
-      // A composite per-step map reduces to one landing pointer per family (the
-      // issue step wins over cancel); a per-variant map indexes directly by family.
+      // A composite per-step map lands on EVERY step (cancel + issue), so project the
+      // full set of per-family step targets — the fold shows both transactions in the
+      // flow diagrams. A per-variant map indexes directly by family (single target).
       const stepKeyed = isStepKeyedTarget(map, stepIds);
       for (const label of labels) {
-        const val = stepKeyed
-          ? reduceStepTarget(map, label, stepIds)
-          : label in map && typeof map[label] === "string"
-          ? (map[label] as string)
-          : null;
-        projected[label]![field] =
-          typeof val === "string"
-            ? { ...entry, target: val }
-            : { kind: "unmappable", target: null, reason: "no-equivalent" };
+        if (stepKeyed) {
+          const targets = collectStepTargets(map, label, stepIds);
+          projected[label]![field] =
+            targets.length === 0
+              ? { kind: "unmappable", target: null, reason: "no-equivalent" }
+              : { ...entry, target: targets.length === 1 ? targets[0] : targets };
+        } else {
+          const val =
+            label in map && typeof map[label] === "string" ? (map[label] as string) : null;
+          projected[label]![field] =
+            typeof val === "string"
+              ? { ...entry, target: val }
+              : { kind: "unmappable", target: null, reason: "no-equivalent" };
+        }
       }
     } else {
       simpleShared[field] = entry;

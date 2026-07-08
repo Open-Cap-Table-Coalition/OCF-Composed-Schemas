@@ -37,7 +37,7 @@ describe("variantFieldMaps", () => {
     expect(v2.f1).toBeUndefined();
   });
 
-  it("reduces a composite per-step target map to one landing pointer per family", () => {
+  it("projects a composite per-step target map onto ALL its step targets per family", () => {
     const m = variantFieldMaps({
       route_by_security: { via: "security_id", resolve: "x" },
       composite: [
@@ -58,9 +58,9 @@ describe("variantFieldMaps", () => {
         B: { when: ["Q"], fields: {} },
       },
     });
-    // issue step wins over cancel where it lands …
-    expect(m.get("A")!.quantity).toEqual({ kind: "rename", target: "#/issueA" });
-    // … and falls back to the cancel step where the issue slot is null.
+    // Lands on BOTH steps → an array (both transactions show in the flow diagram).
+    expect(m.get("A")!.quantity).toEqual({ kind: "rename", target: ["#/cancelA", "#/issueA"] });
+    // Lands on only one step (issue slot null) → a single scalar target.
     expect(m.get("B")!.quantity).toEqual({ kind: "rename", target: "#/cancelB" });
   });
 });

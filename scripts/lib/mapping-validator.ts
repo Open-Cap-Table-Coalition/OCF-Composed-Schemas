@@ -114,6 +114,35 @@ export function reduceStepTarget(
   return chosen;
 }
 
+/**
+ * ALL per-family landing pointers of a step-keyed target map, in declared step
+ * order (deduped). Where {@link reduceStepTarget} keeps the single issue-step
+ * landing (for validation's scalar shape check), this keeps EVERY step a composite
+ * field lands on — so the Core projection and the flow diagrams show the whole fold
+ * (e.g. `quantity` landing on both the cancel AND the issue transaction), not just
+ * one. Classified as a `rename` onto multiple slots (same source, replicated).
+ */
+export function collectStepTargets(
+  map: Record<string, unknown>,
+  family: string,
+  stepIds: string[]
+): string[] {
+  const out: string[] = [];
+  for (const step of stepIds) {
+    if (!(step in map)) continue;
+    const sv = map[step];
+    if (sv === null || sv === undefined) continue;
+    const fam =
+      typeof sv === "string"
+        ? sv
+        : isPlainObject(sv) && typeof sv[family] === "string"
+        ? (sv[family] as string)
+        : null;
+    if (typeof fam === "string" && !out.includes(fam)) out.push(fam);
+  }
+  return out;
+}
+
 export const KIND_VOCABULARY = [
   "rename",
   "split",
