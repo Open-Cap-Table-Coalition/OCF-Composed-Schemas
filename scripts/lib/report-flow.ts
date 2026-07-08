@@ -372,7 +372,8 @@ function capList(names: string[], max = 6): string {
 export function mermaidHubFlow(
   groups: EntityGroup[],
   ocfLost: Map<string, string[]>,
-  cartaUnfilled: Map<string, string[]>
+  cartaUnfilled: Map<string, string[]>,
+  constFills: Map<string, { dst: string; label: string }[]> = new Map()
 ): string[] {
   interface FE {
     src: string;
@@ -411,8 +412,11 @@ export function mermaidHubFlow(
 
   const out: string[] = [];
   for (const [src, comp] of ordered) {
+    const srcConst = constFills.get(src) ?? [];
     const ocfObjs = [...new Set(comp.map((e) => e.src))].sort();
-    const cartaObjs = [...new Set(comp.map((e) => e.dst))].sort();
+    const cartaObjs = [
+      ...new Set([...comp.map((e) => e.dst), ...srcConst.map((c) => c.dst)]),
+    ].sort();
     const adm = new Map(comp.map((e) => [e.src, e.adm]));
     const oid = new Map(ocfObjs.map((n, i) => [n, `o${i}`]));
     const tid = new Map(cartaObjs.map((n, i) => [n, `t${i}`]));
@@ -439,6 +443,10 @@ export function mermaidHubFlow(
     if (anyCartaLost) out.push(`  cartalost["⌀ Carta lost (no OCF source)"]:::lost`);
     for (const e of comp)
       out.push(`  ${oid.get(e.src)} -->|${edgeLabel(e.label)}| ${tid.get(e.dst)}`);
+    // Const fills: Carta slots the composite populates with a fixed value (the reason
+    // codes) — a known value, not an OCF-field flow. Drawn `⊙` so it reads as filled.
+    for (const c of srcConst)
+      out.push(`  ${oid.get(src)} -->|${edgeLabel("⊙ " + c.label)}| ${tid.get(c.dst)}`);
     for (const n of ocfObjs) {
       const lost = ocfLost.get(n) ?? [];
       if (lost.length) out.push(`  ${oid.get(n)} -.->|${edgeLabel(capList(lost))}| ocflost`);

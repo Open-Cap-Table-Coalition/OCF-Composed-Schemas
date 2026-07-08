@@ -141,9 +141,25 @@ export async function writeBidiDoc(base: string = process.cwd()): Promise<number
     [...carta].map(([n, c]) => [n, c.empty] as [string, string[]])
   );
 
+  // Composite const fills, keyed by flavor: the Carta slots a step populates with a
+  // fixed value (the *_TRANSFERRED reason codes). Drawn as `⊙` edges so the diagram
+  // shows the reason we know implicitly, rather than reading it as "no OCF source".
+  const constFills = new Map<string, { dst: string; label: string }[]>();
+  for (const o of d.corpus.objects) {
+    if (!o.composite) continue;
+    for (const step of o.composite) {
+      for (const [family, fills] of Object.entries(step.fills)) {
+        const flavor = flavorLabel(o.entity, family);
+        const arr = constFills.get(flavor) ?? [];
+        for (const f of fills) arr.push({ dst: f.object, label: `${f.prop}=${f.value}` });
+        constFills.set(flavor, arr);
+      }
+    }
+  }
+
   await writeFile(
     path.join(base, OUT_FILE),
-    render(ocf, carta, untargetedObjectCount, memberGroups, ocfLost, cartaUnfilled),
+    render(ocf, carta, untargetedObjectCount, memberGroups, ocfLost, cartaUnfilled, constFills),
     "utf8"
   );
 
@@ -173,7 +189,8 @@ function render(
   untargetedObjects: number,
   memberGroups: EntityGroup[],
   ocfLost: Map<string, string[]>,
-  cartaUnfilled: Map<string, string[]>
+  cartaUnfilled: Map<string, string[]>,
+  constFills: Map<string, { dst: string; label: string }[]>
 ): string {
   const ocfClean = sum([...ocf.values()].map((o) => o.clean.size));
   const ocfLossy = sum([...ocf.values()].map((o) => o.lossy.size));
@@ -214,11 +231,13 @@ function render(
     "",
     "One diagram per OCF object — each polymorphic flavor (`Object [Variant]`) fully separate — with",
     "the Carta objects it maps into. **Solid** edges = a property that FLOWS IN",
-    "(`OCF field → Carta prop`). **Dashed** edges to a red void = properties LOST: OCF fields with",
-    "no Carta home, and Carta fields no OCF source fills. Loss lists are capped per object (full",
-    "names in the tables below); OCF nodes are green (in Core) / dashed grey (not admissible).",
+    "(`OCF field → Carta prop`). **`⊙`** edges = a Carta slot the composite fills with a FIXED value",
+    "(the `*_TRANSFERRED` reason codes) — known implicitly, not from an OCF field. **Dashed** edges to",
+    "a red void = properties LOST: OCF fields with no Carta home, and Carta fields no OCF source fills.",
+    "Loss lists are capped per object (full names in the tables below); OCF nodes are green (in Core) /",
+    "dashed grey (not admissible).",
     "",
-    ...mermaidHubFlow(memberGroups, ocfLost, cartaUnfilled),
+    ...mermaidHubFlow(memberGroups, ocfLost, cartaUnfilled, constFills),
     "## OCF → Core — per object (fields; clean = direct/coarsen, lossy = has a home but narrows, left behind = no home)",
     "",
     "See `core-lossy-inventory.md` / `core-unmapped-inventory.md` for the property names. Counts here",

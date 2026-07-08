@@ -69,15 +69,26 @@ export function renderLedger(d: Derived): string {
       "",
       "Transactions that fold into an ordered SET of Carta transactions (all emitted,",
       "unlike mutually-exclusive variants). Each step names the Carta object(s) it lands",
-      "on — the target diverges by family where the step `$def` does.",
+      "on — the target diverges by family where the step `$def` does — and the fixed",
+      "values its `const:` supplies implicitly (the reason codes we always know).",
       "",
-      "| entity | step | Carta object(s) |",
-      "| --- | --- | --- |"
+      "| entity | step | Carta object(s) | fixed values (const) |",
+      "| --- | --- | --- | --- |"
     );
     for (const o of composites) {
       for (const s of o.composite!) {
         const objs = s.targets.map((t) => `\`${t}\``).join(", ") || "—";
-        lines.push(`| ${o.entity} | ${s.step} | ${objs} |`);
+        const fixed =
+          [
+            ...new Set(
+              Object.values(s.fills)
+                .flat()
+                .map((f) => `${f.prop}=${f.value}`)
+            ),
+          ]
+            .sort()
+            .join(", ") || "—";
+        lines.push(`| ${o.entity} | ${s.step} | ${objs} | ${fixed} |`);
       }
     }
   }

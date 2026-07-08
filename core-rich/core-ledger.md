@@ -97,12 +97,13 @@ mapping lives in `X`. The core/payload counts are the wrapper's own (only
 
 Transactions that fold into an ordered SET of Carta transactions (all emitted,
 unlike mutually-exclusive variants). Each step names the Carta object(s) it lands
-on — the target diverges by family where the step `$def` does.
+on — the target diverges by family where the step `$def` does — and the fixed
+values its `const:` supplies implicitly (the reason codes we always know).
 
-| entity | step | Carta object(s) |
-| --- | --- | --- |
-| StockTransfer | cancel | `CertificateCancellationTransaction`, `RsaCancellationTransaction` |
-| StockTransfer | issue | `CertificateIssuanceTransaction`, `RsaIssuanceTransaction` |
+| entity | step | Carta object(s) | fixed values (const) |
+| --- | --- | --- | --- |
+| StockTransfer | cancel | `CertificateCancellationTransaction`, `RsaCancellationTransaction` | reason=CERTIFICATE_CANCELLATION_REASON_TRANSFERRED |
+| StockTransfer | issue | `CertificateIssuanceTransaction`, `RsaIssuanceTransaction` | issuanceReason=CERTIFICATE_ISSUANCE_REASON_TRANSFERRED |
 
 ## Fields (§2)
 

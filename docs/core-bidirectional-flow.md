@@ -16,8 +16,8 @@ flowchart LR
   OCF["OCF"]:::in -->|"99 clean + 29 lossy"| CORE
   OCF -.->|"150 left behind"| ocfvoid["⌀ dropped (no Carta home)"]:::out
   CORE["OCF Core (rich)"]:::core
-  Carta["Carta"]:::in -->|"175 fields"| CORE
-  Carta -.->|"193 left behind"| cartavoid["⌀ Core can't hold"]:::out
+  Carta["Carta"]:::in -->|"177 fields"| CORE
+  Carta -.->|"191 left behind"| cartavoid["⌀ Core can't hold"]:::out
 ```
 
 - **OCF → Core**: a property flows in if it is a Core member (mapped, even lossily); it is
@@ -30,9 +30,11 @@ flowchart LR
 
 One diagram per OCF object — each polymorphic flavor (`Object [Variant]`) fully separate — with
 the Carta objects it maps into. **Solid** edges = a property that FLOWS IN
-(`OCF field → Carta prop`). **Dashed** edges to a red void = properties LOST: OCF fields with
-no Carta home, and Carta fields no OCF source fills. Loss lists are capped per object (full
-names in the tables below); OCF nodes are green (in Core) / dashed grey (not admissible).
+(`OCF field → Carta prop`). **`⊙`** edges = a Carta slot the composite fills with a FIXED value
+(the `*_TRANSFERRED` reason codes) — known implicitly, not from an OCF field. **Dashed** edges to
+a red void = properties LOST: OCF fields with no Carta home, and Carta fields no OCF source fills.
+Loss lists are capped per object (full names in the tables below); OCF nodes are green (in Core) /
+dashed grey (not admissible).
 
 **EquityCompensationIssuance [Option] → OptionGrant, OptionIssuanceTransaction**
 
@@ -210,7 +212,7 @@ flowchart LR
   o0 -->|"vesting_terms_id → vestingScheduleTemplateId"| t1
   o0 -.->|"board_approval_date, consideration_text, issuance_type, security_law_exemptions, share_numbers_issued, stock_legend_ids +2 more"| ocflost
   t0 -.->|"id, vestingScheduleTemplateId, issuerId, shareClassName, issueDate, quantity +6 more"| cartalost
-  t1 -.->|"shareClassId, issuanceReason, precededBySecurityId"| cartalost
+  t1 -.->|"shareClassId, precededBySecurityId"| cartalost
 ```
 
 **WarrantIssuance → Compliance, WarrantIssuanceTransaction, WarrantTransactionItem**
@@ -368,9 +370,11 @@ flowchart LR
   o0 -->|"quantity → quantity"| t0
   o0 -->|"quantity → quantity"| t1
   o0 -->|"resulting_security_ids → securities"| t2
+  o0 -->|"⊙ reason=CERTIFICATE_CANCELLATION_REASON_TRANSFERRED"| t0
+  o0 -->|"⊙ issuanceReason=CERTIFICATE_ISSUANCE_REASON_TRANSFERRED"| t1
   o0 -.->|"consideration_text, security_id"| ocflost
-  t0 -.->|"reason, terminationDatetime, forfeitureDatetime"| cartalost
-  t1 -.->|"shareClassId, issuanceReason, precededBySecurityId"| cartalost
+  t0 -.->|"terminationDatetime, forfeitureDatetime"| cartalost
+  t1 -.->|"shareClassId, precededBySecurityId"| cartalost
   t2 -.->|"reason"| cartalost
 ```
 
@@ -646,7 +650,7 @@ flowchart LR
   o0 -->|"date → effectiveDatetime"| t0
   o0 -->|"quantity → quantity"| t0
   o0 -.->|"reason_text, security_id"| ocflost
-  t0 -.->|"reason, terminationDatetime, forfeitureDatetime"| cartalost
+  t0 -.->|"terminationDatetime, forfeitureDatetime"| cartalost
   t1 -.->|"reason"| cartalost
 ```
 
@@ -1347,14 +1351,14 @@ populate; `left behind` = Carta capability Core (being OCF-shaped) doesn't repre
 | ConvertibleTransactionItem | 1 | 4 | stakeholderId, securityLabel, issuance, cancellations |
 | NoteBlock | 1 | 4 | id, name, prefix, status |
 | WarrantTransactionItem | 3 | 4 | issuance, exercises, transfers, cancellations |
-| CertificateCancellationTransaction | 2 | 3 | reason, terminationDatetime, forfeitureDatetime |
-| CertificateIssuanceTransaction | 5 | 3 | shareClassId, issuanceReason, precededBySecurityId |
 | OptionCancellationTransaction | 2 | 3 | reason, terminationDatetime, forfeitureDatetime |
 | RsaCancellationTransaction | 2 | 3 | reason, terminationDatetime, forfeitureDatetime |
 | RsuCancellationTransaction | 2 | 3 | reason, terminationDatetime, forfeitureDatetime |
 | SarCancellationTransaction | 2 | 3 | reason, terminationDatetime, forfeitureDatetime |
 | ShareClass | 7 | 3 | issuerId, pariPassu, preferredShareClassDetails |
 | VestingPeriod | 9 | 3 | vestingOccurs, immediatePercentage, milestoneName |
+| CertificateCancellationTransaction | 3 | 2 | terminationDatetime, forfeitureDatetime |
+| CertificateIssuanceTransaction | 6 | 2 | shareClassId, precededBySecurityId |
 | Compliance | 1 | 2 | countryOfResidency, stateOfResidency |
 | Document | 1 | 2 | name, url |
 | Issuer | 2 | 2 | id, website |

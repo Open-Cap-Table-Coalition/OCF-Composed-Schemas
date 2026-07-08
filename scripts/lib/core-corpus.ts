@@ -136,11 +136,23 @@ export async function loadReferenceGraph(repoRoot: string): Promise<ReferenceGra
 const MAPPING_DIRS = ["objects", "types"] as const;
 const GREEN = new Set(["complete", "reviewed"]);
 
-/** One step of a `composite:` fold: its id and the Carta `$def` root(s) it lands on. */
+/** A fixed value a composite step's `const:` supplies to a Carta slot (e.g. a reason code). */
+export interface CompositeConstFill {
+  object: string; // Carta `$def` root, e.g. CertificateCancellationTransaction
+  prop: string; // property on it, e.g. reason
+  value: string; // the fixed value, e.g. CERTIFICATE_CANCELLATION_REASON_TRANSFERRED
+}
+
+/** One step of a `composite:` fold: its id, the Carta `$def`(s) it lands on, and its const fills. */
 export interface CompositeStep {
   step: string;
   /** Carta `$def` root names this step targets (deduped, sorted; per-family where it diverges). */
   targets: string[];
+  /**
+   * Slots the step's `const:` populates implicitly (the `*_TRANSFERRED` reason codes),
+   * keyed by family label. These are KNOWN Carta values — filled, not "no OCF source".
+   */
+  fills: Record<string, CompositeConstFill[]>;
 }
 
 export interface GreenObject {
@@ -329,14 +341,63 @@ function collectTargets(target: unknown, into: Set<string>): void {
 /** The `composite:` steps of a mapping (each step id + the Carta $def roots it lands on), or undefined. */
 function compositeSteps(mapping: Record<string, unknown>): CompositeStep[] | undefined {
   if (!Array.isArray(mapping.composite)) return undefined;
+  const variantLabels = isPlainObject(mapping.variants) ? Object.keys(mapping.variants) : [];
   const steps: CompositeStep[] = [];
   for (const s of mapping.composite) {
     if (!isPlainObject(s) || typeof s.step !== "string") continue;
     const roots = new Set<string>();
     collectTargets(s.target, roots);
-    steps.push({ step: s.step, targets: [...roots].sort() });
+    steps.push({
+      step: s.step,
+      targets: [...roots].sort(),
+      fills: compositeFills(s, variantLabels),
+    });
   }
   return steps.length > 0 ? steps : undefined;
+}
+
+/**
+ * The Carta slots a composite step's `const:` populates with fixed values, keyed by
+ * family. `const` is `{ family: { prop: value } }` (per-family) or `{ prop: value }`
+ * (applies to every family); the slot's object is the step's target `$def` for that
+ * family. These are known values (the `*_TRANSFERRED` reason codes) — filled, not lost.
+ */
+function compositeFills(
+  step: Record<string, unknown>,
+  variantLabels: string[]
+): Record<string, CompositeConstFill[]> {
+  const out: Record<string, CompositeConstFill[]> = {};
+  if (!isPlainObject(step.const)) return out;
+  const target = step.target;
+  const c = step.const as Record<string, unknown>;
+  const perFamily = variantLabels.some((l) => l in c);
+  const families = variantLabels.length > 0 ? variantLabels : ["—"];
+  const rootOf = (family: string): string | null => {
+    const ptr =
+      typeof target === "string"
+        ? target
+        : isPlainObject(target) && typeof target[family] === "string"
+        ? (target[family] as string)
+        : null;
+    const m = typeof ptr === "string" ? /^#\/\$defs\/([^/]+)/.exec(ptr) : null;
+    return m ? (m[1] as string) : null;
+  };
+  for (const family of families) {
+    const consts = perFamily
+      ? isPlainObject(c[family])
+        ? (c[family] as Record<string, unknown>)
+        : null
+      : c;
+    if (!consts) continue;
+    const object = rootOf(family);
+    if (!object) continue;
+    const fills: CompositeConstFill[] = [];
+    for (const [prop, value] of Object.entries(consts)) {
+      if (typeof value === "string") fills.push({ object, prop, value });
+    }
+    if (fills.length > 0) out[family] = fills;
+  }
+  return out;
 }
 
 /** Like collectTargets but keeps the FULL pointer (`#/$defs/Root/properties/x`), for
@@ -461,10 +522,18 @@ export async function loadGreenCorpus(repoRoot: string): Promise<Corpus> {
     // per family, so the cancel-step slots and the step $defs themselves would
     // otherwise be missed by the coverage/gap reports.
     if (Array.isArray(mapping.composite)) {
+      const varLabels = isPlainObject(mapping.variants) ? Object.keys(mapping.variants) : [];
       for (const step of mapping.composite) {
-        if (isPlainObject(step)) {
-          collectTargets(step.target, targetedDefs);
-          collectPointers(step.target, targetedPointers);
+        if (!isPlainObject(step)) continue;
+        collectTargets(step.target, targetedDefs);
+        collectPointers(step.target, targetedPointers);
+        // const populates fixed Carta slots (the *_TRANSFERRED reason codes) implicitly —
+        // credit them as targeted so they read as filled, not "no OCF source".
+        for (const fills of Object.values(compositeFills(step, varLabels))) {
+          for (const { object, prop } of fills) {
+            targetedDefs.add(object);
+            targetedPointers.add(`#/$defs/${object}/properties/${prop}`);
+          }
         }
       }
       const sharedBlock = isPlainObject(mapping.shared) ? mapping.shared : {};
