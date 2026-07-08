@@ -16,8 +16,8 @@ flowchart LR
   OCF["OCF"]:::in -->|"99 clean + 29 lossy"| CORE
   OCF -.->|"150 left behind"| ocfvoid["⌀ dropped (no Carta home)"]:::out
   CORE["OCF Core (rich)"]:::core
-  Carta["Carta"]:::in -->|"177 fields"| CORE
-  Carta -.->|"191 left behind"| cartavoid["⌀ Core can't hold"]:::out
+  Carta["Carta"]:::in -->|"179 fields"| CORE
+  Carta -.->|"189 left behind"| cartavoid["⌀ Core can't hold"]:::out
 ```
 
 - **OCF → Core**: a property flows in if it is a Core member (mapped, even lossily); it is
@@ -372,10 +372,11 @@ flowchart LR
   o0 -->|"resulting_security_ids → securities"| t2
   o0 -->|"⊙ reason=CERTIFICATE_CANCELLATION_REASON_TRANSFERRED"| t0
   o0 -->|"⊙ issuanceReason=CERTIFICATE_ISSUANCE_REASON_TRANSFERRED"| t1
+  o0 -->|"⊙ reason=CERTIFICATE_PRECEDED_BY_REASON_BALANCE_REISSUED"| t2
+  o0 -->|"⊙ reason=CERTIFICATE_PRECEDED_BY_REASON_TRANSFERRED"| t2
   o0 -.->|"consideration_text, security_id"| ocflost
   t0 -.->|"terminationDatetime, forfeitureDatetime"| cartalost
   t1 -.->|"shareClassId, precededBySecurityId"| cartalost
-  t2 -.->|"reason"| cartalost
 ```
 
 **StockTransfer [Rsa] → RestrictedStockAwardPrecededBy, RsaCancellationTransaction, RsaIssuanceTransaction**
@@ -404,8 +405,9 @@ flowchart LR
   o0 -->|"quantity → quantity"| t1
   o0 -->|"quantity → quantity"| t2
   o0 -->|"resulting_security_ids → securities"| t0
+  o0 -->|"⊙ reason=RESTRICTED_STOCK_AWARD_PRECEDED_BY_REASON_BALANCE_REISSUED"| t0
+  o0 -->|"⊙ reason=RESTRICTED_STOCK_AWARD_PRECEDED_BY_REASON_TRANSFERRED"| t0
   o0 -.->|"consideration_text, security_id"| ocflost
-  t0 -.->|"reason"| cartalost
   t1 -.->|"reason, terminationDatetime, forfeitureDatetime"| cartalost
   t2 -.->|"shareClassId"| cartalost
 ```
@@ -436,7 +438,6 @@ flowchart LR
   o0 -->|"resulting_security_ids → securities"| t0
   o0 -->|"settlement_date → settlementDate"| t1
   o0 -.->|"consideration_text, security_id"| ocflost
-  t0 -.->|"reason"| cartalost
   t1 -.->|"releaseQuantity, saleQuantity, withholdingQuantity, netSettlementQuantity, certificateId, certificateLabel"| cartalost
   t2 -.->|"id, withheldQuantity, resultingSecurityId, resultingSecurityType, resultingSecurityLabel"| cartalost
 ```
@@ -571,7 +572,6 @@ flowchart LR
   o0 -->|"quantity → quantity"| t1
   o0 -->|"resulting_security_ids → securities"| t0
   o0 -.->|"consideration_text, security_id"| ocflost
-  t0 -.->|"reason"| cartalost
   t1 -.->|"id, exerciseMethod, recordType, resultingSecurityId, resultingSecurityType, resultingSecurityLabel"| cartalost
 ```
 
@@ -598,7 +598,6 @@ flowchart LR
   o0 -->|"quantity → quantity"| t1
   o0 -->|"resulting_security_ids → securities"| t0
   o0 -.->|"consideration_text, security_id"| ocflost
-  t0 -.->|"reason"| cartalost
   t1 -.->|"withheldQuantity, settledQuantity, resultingSecurityId, resultingSecurityType, resultingSecurityLabel, cashAcquired"| cartalost
 ```
 
@@ -651,7 +650,6 @@ flowchart LR
   o0 -->|"quantity → quantity"| t0
   o0 -.->|"reason_text, security_id"| ocflost
   t0 -.->|"terminationDatetime, forfeitureDatetime"| cartalost
-  t1 -.->|"reason"| cartalost
 ```
 
 **StockCancellation [Rsa] → RestrictedStockAwardPrecededBy, RsaCancellationTransaction**
@@ -677,7 +675,6 @@ flowchart LR
   o0 -->|"date → effectiveDatetime"| t1
   o0 -->|"quantity → quantity"| t1
   o0 -.->|"reason_text, security_id"| ocflost
-  t0 -.->|"reason"| cartalost
   t1 -.->|"reason, terminationDatetime, forfeitureDatetime"| cartalost
 ```
 
@@ -918,11 +915,9 @@ flowchart LR
     t0["CertificatePrecededBy"]:::carta
   end
   ocflost["⌀ OCF lost (no Carta home)"]:::lost
-  cartalost["⌀ Carta lost (no OCF source)"]:::lost
   o0 -->|"resulting_security_id → securities"| t0
   o0 -->|"security_ids → securities"| t0
   o0 -.->|"date, reason_text"| ocflost
-  t0 -.->|"reason"| cartalost
 ```
 
 **StockConsolidation [Rsa] → RestrictedStockAwardPrecededBy**
@@ -942,11 +937,9 @@ flowchart LR
     t0["RestrictedStockAwardPrecededBy"]:::carta
   end
   ocflost["⌀ OCF lost (no Carta home)"]:::lost
-  cartalost["⌀ Carta lost (no OCF source)"]:::lost
   o0 -->|"resulting_security_id → securities"| t0
   o0 -->|"security_ids → securities"| t0
   o0 -.->|"date, reason_text"| ocflost
-  t0 -.->|"reason"| cartalost
 ```
 
 **StockConversion [Default] → CertificatePrecededBy**
@@ -966,11 +959,9 @@ flowchart LR
     t0["CertificatePrecededBy"]:::carta
   end
   ocflost["⌀ OCF lost (no Carta home)"]:::lost
-  cartalost["⌀ Carta lost (no OCF source)"]:::lost
   o0 -->|"balance_security_id → securities"| t0
   o0 -->|"resulting_security_ids → securities"| t0
   o0 -.->|"date, quantity_converted, security_id"| ocflost
-  t0 -.->|"reason"| cartalost
 ```
 
 **StockConversion [Rsa] → RestrictedStockAwardPrecededBy**
@@ -990,11 +981,9 @@ flowchart LR
     t0["RestrictedStockAwardPrecededBy"]:::carta
   end
   ocflost["⌀ OCF lost (no Carta home)"]:::lost
-  cartalost["⌀ Carta lost (no OCF source)"]:::lost
   o0 -->|"balance_security_id → securities"| t0
   o0 -->|"resulting_security_ids → securities"| t0
   o0 -.->|"date, quantity_converted, security_id"| ocflost
-  t0 -.->|"reason"| cartalost
 ```
 
 **Valuation → ShareClassValuation**
@@ -1174,10 +1163,8 @@ flowchart LR
     t0["CertificatePrecededBy"]:::carta
   end
   ocflost["⌀ OCF lost (no Carta home)"]:::lost
-  cartalost["⌀ Carta lost (no OCF source)"]:::lost
   o0 -->|"resulting_security_ids → securities"| t0
   o0 -.->|"date, reason_text, security_id, split_transaction_id"| ocflost
-  t0 -.->|"reason"| cartalost
 ```
 
 **StockReissuance [Rsa] → RestrictedStockAwardPrecededBy**
@@ -1197,10 +1184,8 @@ flowchart LR
     t0["RestrictedStockAwardPrecededBy"]:::carta
   end
   ocflost["⌀ OCF lost (no Carta home)"]:::lost
-  cartalost["⌀ Carta lost (no OCF source)"]:::lost
   o0 -->|"resulting_security_ids → securities"| t0
   o0 -.->|"date, reason_text, security_id, split_transaction_id"| ocflost
-  t0 -.->|"reason"| cartalost
 ```
 
 **StockRepurchase [Default] → CertificatePrecededBy**
@@ -1220,10 +1205,8 @@ flowchart LR
     t0["CertificatePrecededBy"]:::carta
   end
   ocflost["⌀ OCF lost (no Carta home)"]:::lost
-  cartalost["⌀ Carta lost (no OCF source)"]:::lost
   o0 -->|"balance_security_id → securities"| t0
   o0 -.->|"consideration_text, date, price, quantity, security_id"| ocflost
-  t0 -.->|"reason"| cartalost
 ```
 
 **StockRepurchase [Rsa] → RestrictedStockAwardPrecededBy**
@@ -1243,10 +1226,8 @@ flowchart LR
     t0["RestrictedStockAwardPrecededBy"]:::carta
   end
   ocflost["⌀ OCF lost (no Carta home)"]:::lost
-  cartalost["⌀ Carta lost (no OCF source)"]:::lost
   o0 -->|"balance_security_id → securities"| t0
   o0 -.->|"consideration_text, date, price, quantity, security_id"| ocflost
-  t0 -.->|"reason"| cartalost
 ```
 
 **VestingTerms → VestingScheduleTemplate**
@@ -1365,16 +1346,16 @@ populate; `left behind` = Carta capability Core (being OCF-shaped) doesn't repre
 | PointOfContact | 2 | 2 | issuerId, type |
 | ShareClassValuation | 2 | 2 | shareClassName, common |
 | Stakeholder | 7 | 2 | issuerId, group |
-| CertificatePrecededBy | 1 | 1 | reason |
 | OptionIssuanceTransaction | 7 | 1 | stockOptionType |
-| RestrictedStockAwardPrecededBy | 1 | 1 | reason |
 | RsaIssuanceTransaction | 5 | 1 | shareClassId |
 | ShareClassRightsAndPreferences | 5 | 1 | participating |
 | WarrantIssuanceTransaction | 6 | 1 | shareClassId |
 | WarrantTransferTransaction | 3 | 1 | resultingSecurityLabel |
+| CertificatePrecededBy | 2 | 0 | — |
 | ConvertibleCancellationTransaction | 3 | 0 | — |
 | ExercisePeriods | 12 | 0 | — |
 | Money | 2 | 0 | — |
+| RestrictedStockAwardPrecededBy | 2 | 0 | — |
 | RsuIssuanceTransaction | 5 | 0 | — |
 | SarIssuanceTransaction | 7 | 0 | — |
 | StakeholderAddress | 1 | 0 | — |

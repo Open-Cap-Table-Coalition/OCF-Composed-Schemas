@@ -790,15 +790,28 @@ function validateCompositeBlock(
     }
 
     if (raw.const !== undefined) {
-      validateStepConst(step, raw.const, variantLabels, familyDef, bundle, err);
+      validateConstFills(
+        `composite step "${step}"`,
+        raw.const,
+        variantLabels,
+        familyDef,
+        bundle,
+        err
+      );
     }
   });
   return stepIds;
 }
 
-/** Validate a composite step's `const:` fixed values against the step's per-family $def. */
-function validateStepConst(
-  step: string,
+/**
+ * Validate a `const:` block's fixed values against a per-family target `$def`. Used
+ * for composite STEP const (reason codes on the cancel/issue transactions) and for
+ * FIELD const (the precededBy reason on the lineage objects). `where` labels the
+ * source in errors (e.g. `composite step "cancel"` / `field "resulting_security_ids"`);
+ * `familyDef` maps each family to the `#/$defs/<Root>` the const's props sit on.
+ */
+function validateConstFills(
+  where: string,
   constVal: unknown,
   variantLabels: string[],
   familyDef: Record<string, string | null>,
@@ -806,7 +819,7 @@ function validateStepConst(
   err: ErrFn
 ): void {
   if (!isPlainObject(constVal)) {
-    err(null, `composite step "${step}" const: must be a map of field → value`);
+    err(null, `${where} const: must be a map of field → value`);
     return;
   }
   // Per-family { label: { field: value } } when any key is a variant label;
@@ -817,14 +830,11 @@ function validateStepConst(
     : Object.fromEntries(variantLabels.map((l) => [l, constVal]));
   for (const [label, consts] of Object.entries(byFamily)) {
     if (!variantLabels.includes(label)) {
-      err(null, `composite step "${step}" const key "${label}" is not a variant`);
+      err(null, `${where} const key "${label}" is not a variant`);
       continue;
     }
     if (!isPlainObject(consts)) {
-      err(
-        null,
-        `composite step "${step}" const for variant "${label}" must be a map of field → value`
-      );
+      err(null, `${where} const for variant "${label}" must be a map of field → value`);
       continue;
     }
     const def = familyDef[label];
@@ -833,16 +843,14 @@ function validateStepConst(
       const ptr = `${def}/properties/${prop}`;
       const res = resolveJsonPointer(bundle, ptr);
       if (!res.found) {
-        err(null, `composite step "${step}" const.${prop} has no property "${prop}" on ${def}`);
+        err(null, `${where} const.${prop} has no property "${prop}" on ${def}`);
         continue;
       }
       const enumVals = targetEnumValuesAt(bundle, derefNode(bundle, res.value));
       if (enumVals !== null && (typeof value !== "string" || !enumVals.includes(value))) {
         err(
           null,
-          `composite step "${step}" const.${prop} = "${String(
-            value
-          )}" is not a member of the target enum at ${ptr}`
+          `${where} const.${prop} = "${String(value)}" is not a member of the target enum at ${ptr}`
         );
       }
     }
@@ -959,6 +967,19 @@ function validateSharedTargetMaps(
       )
         ? { ...entry, target: val }
         : unmappableProjection();
+    }
+
+    // Field-level `const:` — fixed values populated on sibling slots of this field's
+    // target object (the precededBy `reason` on the lineage objects). Validated against
+    // each family's target `$def` root.
+    if (entry.const !== undefined) {
+      const familyDef: Record<string, string | null> = {};
+      for (const label of variantLabels) {
+        const val = label in map ? map[label] : null;
+        const m = typeof val === "string" ? /^(#\/\$defs\/[^/]+)/.exec(val) : null;
+        familyDef[label] = m ? (m[1] as string) : null;
+      }
+      validateConstFills(`field "${field}"`, entry.const, variantLabels, familyDef, bundle, err);
     }
   }
   return { mapped, projected };

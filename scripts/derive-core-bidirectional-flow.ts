@@ -146,14 +146,11 @@ export async function writeBidiDoc(base: string = process.cwd()): Promise<number
   // shows the reason we know implicitly, rather than reading it as "no OCF source".
   const constFills = new Map<string, { dst: string; label: string }[]>();
   for (const o of d.corpus.objects) {
-    if (!o.composite) continue;
-    for (const step of o.composite) {
-      for (const [family, fills] of Object.entries(step.fills)) {
-        const flavor = flavorLabel(o.entity, family);
-        const arr = constFills.get(flavor) ?? [];
-        for (const f of fills) arr.push({ dst: f.object, label: `${f.prop}=${f.value}` });
-        constFills.set(flavor, arr);
-      }
+    for (const [family, fills] of Object.entries(o.constFills)) {
+      const flavor = flavorLabel(o.entity, family);
+      const arr = constFills.get(flavor) ?? [];
+      for (const f of fills) arr.push({ dst: f.object, label: `${f.prop}=${f.value}` });
+      constFills.set(flavor, arr);
     }
   }
 

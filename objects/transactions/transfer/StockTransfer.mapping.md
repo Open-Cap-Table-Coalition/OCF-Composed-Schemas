@@ -182,11 +182,17 @@ shared:
     target:
       Rsa:     "#/$defs/RestrictedStockAwardPrecededBy/properties/securities"
       Default: "#/$defs/CertificatePrecededBy/properties/securities"
+    const:                         # the remainder is reissued from the source — a known reason
+      Rsa:     { reason: RESTRICTED_STOCK_AWARD_PRECEDED_BY_REASON_BALANCE_REISSUED }
+      Default: { reason: CERTIFICATE_PRECEDED_BY_REASON_BALANCE_REISSUED }
   resulting_security_ids:
     kind: computed                 # lineage: the transferred-in security precededBy
     target:
       Rsa:     "#/$defs/RestrictedStockAwardPrecededBy/properties/securities"
       Default: "#/$defs/CertificatePrecededBy/properties/securities"
+    const:                         # the transferred-in security was preceded by a transfer
+      Rsa:     { reason: RESTRICTED_STOCK_AWARD_PRECEDED_BY_REASON_TRANSFERRED }
+      Default: { reason: CERTIFICATE_PRECEDED_BY_REASON_TRANSFERRED }
   quantity:
     kind: rename                   # ← the payload that was being dropped; now lands
     target:

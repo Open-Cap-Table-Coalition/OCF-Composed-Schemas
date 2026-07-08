@@ -661,3 +661,61 @@ describe("composite: (one OCF transaction → an ordered set of Carta steps)", (
     ).toBe(true);
   });
 });
+
+describe("field-level const (fixed values on the target object)", () => {
+  // A shared per-family field (the lineage precededBy) that also carries a fixed
+  // `reason` its target object always takes — the "known constant into the final obj".
+  function fieldConstMapping(over: Record<string, unknown> = {}): Record<string, unknown> {
+    return {
+      status: "complete",
+      route_by_security: {
+        via: "security_id",
+        resolve: "comp_type",
+        resolve_enum: "test://comptype",
+        source_mapping: "x",
+        exhaustive: true,
+      },
+      shared: {
+        security_id: {
+          kind: "computed",
+          target: {
+            Option: "#/$defs/CancelTx/properties/quantity",
+            Rsu: "#/$defs/IssueTx/properties/quantity",
+          },
+          const: { Option: { reason: "TRANSFERRED" } },
+        },
+      },
+      variants: {
+        Option: { when: ["OPT"], primary_targets: null, fields: {} },
+        Rsu: { when: ["RSU"], primary_targets: null, fields: {} },
+      },
+      coverage: { Option: "1/1", Rsu: "1/1" },
+      ...over,
+    };
+  }
+
+  function fcInput(over: Partial<ValidateInput> = {}): ValidateInput {
+    return input({
+      file: "objects/transactions/transfer/EC.mapping.md",
+      mapping: fieldConstMapping(),
+      sourceSchema: DOWNSTREAM_SOURCE,
+      targetBundle: COMPOSITE_BUNDLE,
+      ...over,
+    });
+  }
+
+  it("accepts a field const whose value is a member of the target-object enum", () => {
+    expect(messages(fcInput())).toEqual([]);
+  });
+
+  it("rejects a field const value that is not a member of the target enum", () => {
+    const m = fieldConstMapping();
+    (m.shared as { security_id: { const: unknown } }).security_id.const = {
+      Option: { reason: "BOGUS" },
+    };
+    const errs = messages(fcInput({ mapping: m }));
+    expect(
+      errs.some((s) => /field "security_id" const\.reason = "BOGUS".*not a member/i.test(s))
+    ).toBe(true);
+  });
+});

@@ -174,6 +174,13 @@ export interface GreenObject {
    */
   composite?: CompositeStep[];
   /**
+   * Implicit const fills, per family (family label → the fixed Carta values). The
+   * reason codes the mapping supplies on the step transactions and the precededBy
+   * lineage objects — known values that flow into the final Carta objects. Drawn as
+   * `⊙` edges in the bidirectional flow so they read as filled, not "no OCF source".
+   */
+  constFills: Record<string, CompositeConstFill[]>;
+  /**
    * Set iff this schema is an OCF compatibility wrapper: it `allOf`-inherits
    * another green entity and re-declares only bookkeeping (`object_type`), adding
    * no economic fields of its own (e.g. `PlanSecurityIssuance` → the value is
@@ -350,26 +357,28 @@ function compositeSteps(mapping: Record<string, unknown>): CompositeStep[] | und
     steps.push({
       step: s.step,
       targets: [...roots].sort(),
-      fills: compositeFills(s, variantLabels),
+      fills: constFillsOf(s, variantLabels),
     });
   }
   return steps.length > 0 ? steps : undefined;
 }
 
 /**
- * The Carta slots a composite step's `const:` populates with fixed values, keyed by
- * family. `const` is `{ family: { prop: value } }` (per-family) or `{ prop: value }`
- * (applies to every family); the slot's object is the step's target `$def` for that
- * family. These are known values (the `*_TRANSFERRED` reason codes) — filled, not lost.
+ * The Carta slots an entry's `const:` populates with fixed values, keyed by family.
+ * Works for a composite STEP (reason codes on the cancel/issue transactions) and for
+ * a FIELD entry (the precededBy reason on the lineage objects) — both carry a `target`
+ * (scalar or per-family map) whose `$def` root the const's props sit on. `const` is
+ * `{ family: { prop: value } }` (per-family) or `{ prop: value }` (every family).
+ * These are known values (the reason codes) — filled implicitly, not "no OCF source".
  */
-function compositeFills(
-  step: Record<string, unknown>,
+function constFillsOf(
+  entry: Record<string, unknown>,
   variantLabels: string[]
 ): Record<string, CompositeConstFill[]> {
   const out: Record<string, CompositeConstFill[]> = {};
-  if (!isPlainObject(step.const)) return out;
-  const target = step.target;
-  const c = step.const as Record<string, unknown>;
+  if (!isPlainObject(entry.const)) return out;
+  const target = entry.target;
+  const c = entry.const as Record<string, unknown>;
   const perFamily = variantLabels.some((l) => l in c);
   const families = variantLabels.length > 0 ? variantLabels : ["—"];
   const rootOf = (family: string): string | null => {
@@ -397,6 +406,36 @@ function compositeFills(
     }
     if (fills.length > 0) out[family] = fills;
   }
+  return out;
+}
+
+/**
+ * Every implicit const fill of a mapping, per family — aggregated from the composite
+ * steps AND every field entry that carries a `const:` (shared, top-level, per-variant).
+ * Powers "the constant flows into the final objects": the reason codes on the step
+ * transactions and on the precededBy lineage objects. Deduped per (object, prop, value).
+ */
+function objectConstFills(mapping: Record<string, unknown>): Record<string, CompositeConstFill[]> {
+  const variantLabels = isPlainObject(mapping.variants) ? Object.keys(mapping.variants) : [];
+  const out: Record<string, CompositeConstFill[]> = {};
+  const add = (fills: Record<string, CompositeConstFill[]>) => {
+    for (const [family, arr] of Object.entries(fills)) {
+      const cur = out[family] ?? (out[family] = []);
+      for (const f of arr)
+        if (!cur.some((x) => x.object === f.object && x.prop === f.prop && x.value === f.value))
+          cur.push(f);
+    }
+  };
+  if (Array.isArray(mapping.composite))
+    for (const s of mapping.composite) if (isPlainObject(s)) add(constFillsOf(s, variantLabels));
+  const fieldBlocks: unknown[] = [mapping.shared, mapping.fields];
+  if (isPlainObject(mapping.variants))
+    for (const v of Object.values(mapping.variants))
+      if (isPlainObject(v)) fieldBlocks.push(v.fields);
+  for (const block of fieldBlocks)
+    if (isPlainObject(block))
+      for (const e of Object.values(block))
+        if (isPlainObject(e)) add(constFillsOf(e, variantLabels));
   return out;
 }
 
@@ -522,19 +561,10 @@ export async function loadGreenCorpus(repoRoot: string): Promise<Corpus> {
     // per family, so the cancel-step slots and the step $defs themselves would
     // otherwise be missed by the coverage/gap reports.
     if (Array.isArray(mapping.composite)) {
-      const varLabels = isPlainObject(mapping.variants) ? Object.keys(mapping.variants) : [];
       for (const step of mapping.composite) {
         if (!isPlainObject(step)) continue;
         collectTargets(step.target, targetedDefs);
         collectPointers(step.target, targetedPointers);
-        // const populates fixed Carta slots (the *_TRANSFERRED reason codes) implicitly —
-        // credit them as targeted so they read as filled, not "no OCF source".
-        for (const fills of Object.values(compositeFills(step, varLabels))) {
-          for (const { object, prop } of fills) {
-            targetedDefs.add(object);
-            targetedPointers.add(`#/$defs/${object}/properties/${prop}`);
-          }
-        }
       }
       const sharedBlock = isPlainObject(mapping.shared) ? mapping.shared : {};
       for (const e of Object.values(sharedBlock)) {
@@ -542,6 +572,15 @@ export async function loadGreenCorpus(repoRoot: string): Promise<Corpus> {
           collectTargets(e.target, targetedDefs);
           collectPointers(e.target, targetedPointers);
         }
+      }
+    }
+    // const fills (composite step reason codes + precededBy lineage reasons) populate
+    // fixed Carta slots implicitly — credit them as targeted so they read as filled,
+    // not "no OCF source".
+    for (const fills of Object.values(objectConstFills(mapping))) {
+      for (const { object, prop } of fills) {
+        targetedDefs.add(object);
+        targetedPointers.add(`#/$defs/${object}/properties/${prop}`);
       }
     }
     if (frontmatter.ocf_kind === "type") {
@@ -591,6 +630,7 @@ export async function loadGreenCorpus(repoRoot: string): Promise<Corpus> {
       properties: (sourceSchema.properties ?? {}) as Record<string, unknown>,
       variants: variantFieldMaps(mapping),
       composite: compositeSteps(mapping),
+      constFills: objectConstFills(mapping),
       aliasOf: detectAlias(sourceSchema, objectEntityNames),
     });
   }
