@@ -56,7 +56,9 @@ A/B/C from the goal doc; restated operationally:
 - **`core`** — the field's data **lands in the Carta snapshot** via a clear, deterministic, **total**
   rule, with **no existence-loss**. Value-coarsening (precision clamp, enum→bucket) is fine; the datum
   is still there. "Lands" includes landing on a *different* Carta object via a **lossless reverse
-  edge** (ruling B), not only on the field's own counterpart.
+  edge** (ruling B), not only on the field's own counterpart — but **only when that reverse edge is
+  provably lossless**; the classifier does not assume it, and today holds every such lineage field
+  `out` (see the Note).
 - **`out`** — no Carta destination, or the rule is **partial** (undefined on some legal OCF inputs —
   ruling C), **heuristic** (ruling A), or **existence-losing** (drops elements/entities/relationships
   — R2).
@@ -92,10 +94,14 @@ classify(entry, src, tgt):           # src/tgt = source & target nodes, resolved
 
 **Note on `computed` / `combine` / `split` (where rulings A and B split).** The `kind` alone doesn't
 decide these — what decides is whether the datum *provably lands* in the snapshot with no
-existence-loss. **Ruling B:** a field whose target is a **lossless reverse edge** on another Carta
-object (e.g. transfer/cancellation lineage written to `precededBy.securities` on the resulting
-security) **is `core`, and that is a schema-level verdict** (`basis: schema`, per goal R3) — no human
-sign-off needed, because the mapping's resolved target shows the datum has a home. **Ruling A:** a
+existence-loss. **Ruling B:** the goal-doc rule credits a datum that lands on a *different* Carta
+object via a **lossless reverse edge** (transfer/cancellation lineage on the resulting security's
+`precededBy.securities`, not on the tx). The classifier does **not** realize this automatically:
+`computed`/`combine`/`split` all default to **`out`** (`heuristic`), and a lineage field whose target
+is an **array** only earns the diagnostic *"possible reverse-edge (ruling B) — target is an array;
+confirm lossless lineage"* while staying `out`. So today there is **no** reverse-edge `core` row —
+ruling B is a flagged candidate, not a verdict; the field is promoted to `core` only if the mapping is
+sharpened to establish the landing is genuinely lossless. **Ruling A:** a
 `computed` free-text→enum classification (heuristic, drops the prose) is **`out`** — it neither lands
 totally nor losslessly. Everything else `computed`/`combine`/`split` whose landing a static read can't
 establish is `out` by default; `basis: confirmed` (§6) is for *empirically hardening* a `core` verdict
@@ -186,8 +192,10 @@ collapses it into snapshot state is a translation-time concern, not a demotion. 
 
 > **Note on the current corpus.** Closure never actually fires today — once
 > `StockClass`/`Stakeholder`/`StockPlan`/`VestingTerms` went green, every reference resolves. What
-> bounds Core is non-degeneracy: the transfers/retractions/acceptances whose only payload was an
-> `array → scalar` lineage field (held `out`) land nothing, so they are `no-payload`-blocked.
+> bounds Core is non-degeneracy: the retractions/acceptances and the lineage-only transfers whose only
+> payload was an `array → scalar` lineage field (held `out`) land nothing, so they are
+> `no-payload`-blocked — except where a `composite:` fold hands the event real payload (§4.9;
+> `StockTransfer`).
 
 ---
 
@@ -198,9 +206,10 @@ emits, all **generated, never hand-edited**:
 
 - **Membership ledger** — one row per `(entity, variant, field)`: `class` (core/out), `target`, source
   & target type names, and for `out` rows the reason (`no-destination` / `existence-loss` / `partial` /
-  `heuristic`), for `core` rows the loss kind (`direct` / `widening` / `value-coarsening` /
-  `reverse-edge`). Plus the per-entity admissibility verdict and any closure blocker. This holds the
-  fold-relevant truth a JSON Schema can't.
+  `heuristic`), for `core` rows the loss kind (`direct` / `widening` / `value-coarsening`). Plus the
+  per-entity admissibility verdict and any closure blocker, and — for composite entities (§4.9) — a
+  **Composite folds** section naming the Carta step objects each event lands on and the fixed `const:`
+  values each step supplies. This holds the fold-relevant truth a JSON Schema can't.
 - **Core schema package** — packaged like OCF proper (`core/`): a manifest plus per-category `*File`
   schemas, **reusing OCF `file_type` consts** so a Core package is also a shape-valid OCF package.
   `files/TransactionsFile.schema.json` holds every admissible **event** (`items.oneOf`); one
@@ -221,6 +230,13 @@ emits, all **generated, never hand-edited**:
   `out` with `no-destination`/`existence-loss`), and (b) generally-applicable Carta concepts OCF
   lacks. These are the OCF↔Carta gaps to discuss; they are never smuggled into Core.
 - **Human rollup** (markdown) — per-entity core/out field lists and admissibility, for review.
+- **Analysis docs (non-gated, `docs/*.md`)** — the same `core:build` run also regenerates the
+  discussion artifacts the coverage reports render: [`core-bidirectional-flow.md`](./core-bidirectional-flow.md)
+  (the OCF ⇄ Core ⇄ Carta "interop hub"), [`core-lossy-inventory.md`](./core-lossy-inventory.md), and
+  [`core-unmapped-inventory.md`](./core-unmapped-inventory.md). Unlike the artifacts above these are
+  **not drift-gated** — analysis inputs, not contracts — but refreshing them on every build keeps them
+  from silently rotting. (Each can also be regenerated on its own via `core:bidi` / `core:lossy` /
+  `core:unmapped`.)
 
 ### CI gates — the trust model already in this repo
 
@@ -269,12 +285,10 @@ no annotation step. If the draft and allow-list disagree, CI fails.
 
 ## 6. Honesty boundary — schema-derived vs importer-confirmed
 
-Every class in §2 is **schema-derived** — including a reverse-edge `core` (ruling B): the verdict
-states what the two JSON Schemas *permit* a fold to do, not what a live Carta importer *does*. The
-ledger records a two-value **`basis`**:
+Every class in §2 is **schema-derived**: the verdict states what the two JSON Schemas *permit* a fold
+to do, not what a live Carta importer *does*. The ledger records a two-value **`basis`**:
 
-- **`schema`** (default) — decided by the type/enum/cardinality read alone. This includes reverse-edge
-  `core` rows: the resolved target shows the datum has a lossless home, no human needed.
+- **`schema`** (default) — decided by the type/enum/cardinality read alone.
 - **`confirmed`** — a human verified the behavior against a live importer and recorded it in the
   allow-list. This *hardens* an existing `core` verdict; it is never required for membership and never
   assigned automatically.
@@ -289,40 +303,41 @@ schema-permits / folds-in-production line each claim sits on.
 
 ## 7. Current state — first cut against the corpus
 
-Applying the rules to the corpus today (a snapshot; re-derived on every build, not part of the spec):
+Applying the rules to the corpus today (a snapshot; the live truth is the generated
+`core/core-ledger.md` / `core-rich/core-ledger.md`, re-derived on every build — this section is not
+part of the spec):
 
-- **The intended spine is the four issuances** — `StockIssuance`, `EquityCompensationIssuance`,
-  `WarrantIssuance`, `ConvertibleIssuance` — with a clean value layer (`Monetary`→Carta `Money`,
-  `Date`, `Numeric`, `CurrencyCode`) and cliff vesting mechanics; cancellation lineage rides in as a
-  reverse-edge `core` (ruling B). But **today none of them are Core-admissible: they are `blocked` on
-  closure** (§3) — every issuance references `StockClass`/`Stakeholder`, whose mappings aren't green,
-  so the references have no Core projection to resolve to. Most *other* transactions (transfers,
-  retractions, acceptances, conversions) are blocked for a deeper reason — Carta has no transaction to
-  reflect them, or they fan out `array→scalar`.
-- **That closure block is an *artifact*, not a real gap — and a focused analysis says it clears.** The
-  `StockClass`/`Stakeholder` references score 0-core today only because **their mappings are still
-  draft skeletons** (the open draft PRs #112/#113, all `kind: TODO`), not because Carta lacks the
-  concept — Carta carries both (`#/$defs/ShareClass`, `#/$defs/Stakeholder`). Once a small **minimal
-  Core projection** of each lands green, the spine becomes admissible (R4):
-  - `StockClass → ShareClass`: `{ id, name, class_type, default_id_prefix, seniority }` (plus optional
-    `par_value`→`parValue`, `initial_shares_authorized`→`authorizedShareCount`). Preferred-class
-    economics like the participation cap live on the **nested** `preferredShareClassDetails` /
-    `ShareClassRightsAndPreferences`, not on `ShareClass` directly, and OCF `price_per_share` has no
-    `ShareClass` home at all.
-  - `Stakeholder → Stakeholder`: `{ id, name.legal_name }` (Carta `Stakeholder` has no required
-    fields, so `id` alone closes the FK; `legal_name` is the minimum for a *useful* snapshot).
-  - Note `WarrantIssuance`/`ConvertibleIssuance` don't reference `StockClass` at all — only
-    `StockIssuance` and `EquityCompensationIssuance` do.
-  The remaining `StockClass`/`Stakeholder` fields are R5 gaps (reported, not blocking) — the one
-  uncomfortable case is **`StockClass.votes_per_share`**: OCF-*required* yet homeless in Carta. It is
-  not fold-required, so it stays out of the Core projection and is logged as an R5 gap; a folded doc
-  silently loses voting rights.
-- **Vesting under R6 lands as quantum + cliff, not cadence or milestones.** `VestingScheduleCliff` and
-  the segment quantum (length, unit, percentage, order) fold cleanly; but `VestingScheduleSegment.period
-  → vestingMethod` is a **partial lookup** (every-5-days, every-4-months have no Carta target), which
-  by ruling C is `out` and cascades up to block the time-vesting spine. The milestone axis
-  (`VestingEventCondition`, `TX_VESTING_EVENT`) is unmapped entirely. The "closer to Carta" hope held
-  only for the grid quantum.
+- **The spine is admissible.** All four issuances now fold: `StockIssuance` (Default + Rsa),
+  `EquityCompensationIssuance` (Option/Rsu/Sar), `WarrantIssuance`, and `ConvertibleIssuance` are all
+  Core-admissible over a clean value layer (`Monetary`→Carta `Money`, `Date`, `Numeric`,
+  `CurrencyCode`). This reverses the earlier straw-man, where the spine was `blocked` on closure: the
+  block cleared the moment `StockClass` and `Stakeholder` went green (PRs #112/#113, now **merged**),
+  joined by `StockPlan` and `VestingTerms`. With every referenced object green, **§3 closure never
+  fires today** — what bounds Core is now **non-degeneracy** (no-payload), not closure.
+- **The referenced objects carry a minimal Core projection** (their remaining fields are R5 gaps, not
+  blockers). `StockClass → ShareClass` lands several core fields (`class_type`, `name`, `seniority`,
+  `par_value`, `default_id_prefix`, `initial_shares_authorized`, …); preferred-class economics like the
+  participation cap live on the **nested** `ShareClassRightsAndPreferences`, not on `ShareClass`
+  directly. `Stakeholder → Stakeholder` lands `id` + `name.legal_name` (Carta `Stakeholder` requires
+  nothing, so `id` alone closes the FK; `legal_name` is the minimum for a *useful* snapshot). The one
+  uncomfortable R5 gap is **`StockClass.votes_per_share`** — OCF-*required* yet homeless in Carta; not
+  fold-required, so it drops out of the projection and a folded doc silently loses voting rights.
+- **The downstream verbs are all green now, but green ≠ admissible.** Every `route_by_security:` verb
+  (`EquityCompensation{Exercise,Cancellation,Release,Retraction,Acceptance,Transfer,Repricing}` and the
+  convertible/warrant/stock cancellations) is a complete mapping; whether it enters Core is decided by
+  §3, not by mapping status. Those that land a real payload are in (e.g. `ConvertibleCancellation`,
+  `ConvertibleConversion`); those whose only fields are lineage references, or that Carta can't reflect
+  at all, stay `no-payload`-blocked (the retractions, the acceptances, and the lineage-only transfers).
+- **Transfers enter via `composite:` (§4.9).** A stock transfer has no single Carta transaction, so it
+  folds into an ordered **cancel + reissue** pair of certificate events; `quantity`/`date` land on
+  those step transactions as real payload, so **`StockTransfer` (Default + Rsa) is now admissible in
+  both profiles**. Its lineage-only siblings — `StockConversion`, `StockConsolidation`,
+  `StockReissuance`, `StockRepurchase` — share the shape but have no composite mapping yet, so they stay
+  `no-payload`-blocked; a composite fold would admit them without touching the non-degeneracy gate.
+- **Vesting under R6 lands via `VestingTerms`, not the event axis.** `VestingTerms` is admissible; the
+  standalone vesting *transactions* (`VestingEvent`, `VestingAcceleration`) land no payload Carta can
+  reflect and are `no-payload`-blocked, and the milestone/event-condition axis is unmapped. The
+  "closer to Carta" hope held for the declarative template, not the event stream.
 
 ---
 
@@ -395,10 +410,13 @@ fields:
    and reference securities. So the reference graph (§5) gains a `security_references:` list (and
    `stock_class_ids → StockClass`) — **inert for strict**, where those fields are `out` and §3 never
    consults them — without which a rich member would dangle as an unknown FK and wrongly drop its
-   entity. Because these are references (not payload), the transactions whose *only* lossy-home fields
-   are lineage links (`StockTransfer`/`StockConversion`/`StockConsolidation`/`StockReissuance`/
-   `StockRepurchase`) still fail non-degeneracy and stay **out**. Admitting that family would require
-   **relaxing the non-degeneracy gate itself** — a deliberate, deferred decision, not done here.
+   entity. Because these are references (not payload), a transaction whose *only* lossy-home fields are
+   lineage links lands nothing on its own and fails non-degeneracy. The `composite:` construct (§4.9)
+   is the escape hatch: folding the event into an ordered pair of Carta step transactions gives the
+   payload (`quantity`/`date`) a real home — which is exactly how **`StockTransfer`** is now admissible
+   in **both** profiles. Its lineage-only siblings (`StockConversion`/`StockConsolidation`/
+   `StockReissuance`/`StockRepurchase`) share the shape but have no composite mapping yet, so they stay
+   **out** — a composite fold admits them via real payload, without relaxing the non-degeneracy gate.
 
 **The upstream-OCF report (`core-rich/core-upstream.md`, rich only).** The actionable byproduct: every
 lossy-home field rich carries, with the narrowing target home and the loss kind, OCF-*required* fields
