@@ -1,0 +1,520 @@
+#!/usr/bin/env python3
+"""OCF Core explainer — SVG frame generator.
+
+Modes:
+  python gen.py manifest              # print scene list + timings
+  python gen.py stills OUTDIR         # one representative PNG-ready SVG per scene
+  python gen.py all OUTDIR [--fps N]  # full frame sequence (SVG) for the whole timeline
+
+Design system (matches the repo's own diagram palette):
+  green = OCF   blue = Carta   gold = Core   red/dashed = lost
+"""
+import sys, os, math
+
+W, H = 1920, 1080
+FPS = 15
+
+# ---- palette ---------------------------------------------------------------
+BG        = "#0b1017"
+PANEL     = "#161b22"
+BORDER    = "#2b3440"
+WHITE     = "#e9eef4"
+MUTE      = "#8b949e"
+FAINT     = "#5c6773"
+OCF       = "#34a853"; OCF_FILL = "#12301c"; OCF_TXT = "#7fd39b"
+CARTA     = "#3b82f6"; CARTA_FILL = "#10233f"; CARTA_TXT = "#8fb8f5"
+CORE      = "#f2b705"; CORE_FILL = "#332905"; CORE_TXT = "#f7cf5a"
+LOST      = "#ef5350"; LOST_FILL = "#331414"
+AMBER     = "#f0a020"
+
+FONT = "Helvetica Neue, Helvetica, Arial, sans-serif"
+MONO = "Menlo, monospace"
+
+# ---- easing / util ---------------------------------------------------------
+def clamp(x, a=0.0, b=1.0): return max(a, min(b, x))
+def lerp(a, b, t): return a + (b - a) * t
+def ease_out(t): t = clamp(t); return 1 - (1 - t) ** 3
+def ease_io(t):
+    t = clamp(t)
+    return 4 * t * t * t if t < 0.5 else 1 - (-2 * t + 2) ** 3 / 2
+
+def appear(t, start, dur=0.5):
+    """opacity 0..1 easing in, given local time t and a start time."""
+    return ease_out((t - start) / dur) if dur > 0 else (1.0 if t >= start else 0.0)
+
+def esc(s):
+    return (str(s).replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;"))
+
+def wrap(s, n):
+    out, line = [], ""
+    for w in s.split():
+        if len(line) + len(w) + 1 <= n:
+            line = (line + " " + w).strip()
+        else:
+            out.append(line); line = w
+    if line: out.append(line)
+    return out
+
+# ---- svg primitives --------------------------------------------------------
+def text(x, y, s, size=32, fill=WHITE, weight="normal", anchor="start",
+         opacity=1.0, family=FONT, spacing=None, italic=False):
+    if opacity <= 0.001: return ""
+    ls = f' letter-spacing="{spacing}"' if spacing else ""
+    st = ' font-style="italic"' if italic else ""
+    return (f'<text x="{x:.1f}" y="{y:.1f}" font-family="{family}" '
+            f'font-size="{size}" fill="{fill}" font-weight="{weight}" '
+            f'text-anchor="{anchor}" opacity="{opacity:.3f}"{ls}{st}>{esc(s)}</text>')
+
+def multiline(x, y, lines, size, lh, **kw):
+    return "".join(text(x, y + i * lh, ln, size, **kw) for i, ln in enumerate(lines))
+
+def rrect(x, y, w, h, r=16, fill=PANEL, stroke=None, sw=2, opacity=1.0, dash=None, blur=None):
+    if opacity <= 0.001: return ""
+    s = f' stroke="{stroke}" stroke-width="{sw}"' if stroke else ""
+    d = f' stroke-dasharray="{dash}"' if dash else ""
+    b = f' filter="url(#blur)"' if blur else ""
+    return (f'<rect x="{x:.1f}" y="{y:.1f}" width="{w:.1f}" height="{h:.1f}" rx="{r}" '
+            f'fill="{fill}"{s}{d}{b} opacity="{opacity:.3f}"/>')
+
+def line(x1, y1, x2, y2, color=MUTE, w=3, opacity=1.0, dash=None):
+    if opacity <= 0.001: return ""
+    d = f' stroke-dasharray="{dash}"' if dash else ""
+    return (f'<line x1="{x1:.1f}" y1="{y1:.1f}" x2="{x2:.1f}" y2="{y2:.1f}" '
+            f'stroke="{color}" stroke-width="{w}"{d} opacity="{opacity:.3f}" stroke-linecap="round"/>')
+
+def arrow(x1, y1, x2, y2, color=MUTE, w=3, opacity=1.0, dash=None, head=12):
+    if opacity <= 0.001: return ""
+    ang = math.atan2(y2 - y1, x2 - x1)
+    bx, by = x2 - head * math.cos(ang), y2 - head * math.sin(ang)
+    p1 = (x2, y2)
+    p2 = (bx - head * 0.6 * math.sin(ang), by + head * 0.6 * math.cos(ang))
+    p3 = (bx + head * 0.6 * math.sin(ang), by - head * 0.6 * math.cos(ang))
+    tri = f'<polygon points="{p1[0]:.1f},{p1[1]:.1f} {p2[0]:.1f},{p2[1]:.1f} {p3[0]:.1f},{p3[1]:.1f}" fill="{color}" opacity="{opacity:.3f}"/>'
+    return line(x1, y1, bx, by, color, w, opacity, dash) + tri
+
+def circle(cx, cy, r, fill, opacity=1.0, stroke=None, sw=2):
+    if opacity <= 0.001: return ""
+    s = f' stroke="{stroke}" stroke-width="{sw}"' if stroke else ""
+    return f'<circle cx="{cx:.1f}" cy="{cy:.1f}" r="{r:.1f}" fill="{fill}"{s} opacity="{opacity:.3f}"/>'
+
+def check(cx, cy, r, color=OCF, opacity=1.0):
+    if opacity <= 0.001: return ""
+    return (circle(cx, cy, r, color, opacity) +
+            f'<path d="M {cx-r*0.42:.1f} {cy:.1f} L {cx-r*0.08:.1f} {cy+r*0.34:.1f} L {cx+r*0.46:.1f} {cy-r*0.34:.1f}" '
+            f'stroke="#0b1017" stroke-width="{max(3,r*0.22):.1f}" fill="none" stroke-linecap="round" stroke-linejoin="round" opacity="{opacity:.3f}"/>')
+
+def cross(cx, cy, r, color=LOST, opacity=1.0):
+    if opacity <= 0.001: return ""
+    o = r * 0.4
+    return (circle(cx, cy, r, color, opacity) +
+            f'<path d="M {cx-o:.1f} {cy-o:.1f} L {cx+o:.1f} {cy+o:.1f} M {cx+o:.1f} {cy-o:.1f} L {cx-o:.1f} {cy+o:.1f}" '
+            f'stroke="#0b1017" stroke-width="{max(3,r*0.22):.1f}" stroke-linecap="round" opacity="{opacity:.3f}"/>')
+
+def warn(cx, cy, r, color=AMBER, opacity=1.0):
+    if opacity <= 0.001: return ""
+    p = f'{cx:.1f},{cy-r:.1f} {cx-r*0.92:.1f},{cy+r*0.7:.1f} {cx+r*0.92:.1f},{cy+r*0.7:.1f}'
+    return (f'<polygon points="{p}" fill="{color}" opacity="{opacity:.3f}"/>'
+            f'<rect x="{cx-r*0.09:.1f}" y="{cy-r*0.35:.1f}" width="{r*0.18:.1f}" height="{r*0.62:.1f}" rx="{r*0.09:.1f}" fill="#0b1017" opacity="{opacity:.3f}"/>'
+            f'<circle cx="{cx:.1f}" cy="{cy+r*0.48:.1f}" r="{r*0.1:.1f}" fill="#0b1017" opacity="{opacity:.3f}"/>')
+
+def badge(cx, y, label, color, glyph="check", opacity=1.0, w=560):
+    if opacity <= 0.001: return ""
+    x = cx - w / 2
+    g = ""
+    gi = x + 44
+    if glyph == "check": g = check(gi, y + 34, 22, color, opacity)
+    elif glyph == "cross": g = cross(gi, y + 34, 22, color, opacity)
+    elif glyph == "warn": g = warn(gi, y + 34, 22, color, opacity)
+    return (rrect(x, y, w, 68, 34, fill="#11161d", stroke=color, sw=2.5, opacity=opacity) +
+            g + text(gi + 40, y + 46, label, 30, fill=color, weight="bold", opacity=opacity))
+
+# ---- higher-level: a data card ---------------------------------------------
+def card(x, y, w, title, subtitle, rows, accent=OCF, accent_fill=OCF_FILL,
+         opacity=1.0, row_reveal=None, t=0.0, row_h=52, head_h=96, blur_rows=None):
+    """rows: list of (label, state) where state in {'in','out','warn','plain'} or a dict.
+       row_reveal: (start, stagger) to fade rows in sequentially by local time t."""
+    blur_rows = blur_rows or set()
+    n = len(rows)
+    h = head_h + n * row_h + 24
+    out = [rrect(x, y, w, h, 20, fill=PANEL, stroke=accent, sw=2.5, opacity=opacity)]
+    out.append(rrect(x, y, w, head_h, 20, fill=accent_fill, opacity=opacity))
+    out.append(rrect(x, y + head_h - 20, w, 20, 0, fill=accent_fill, opacity=opacity))
+    out.append(text(x + 30, y + 44, title, 34, fill=WHITE, weight="bold", opacity=opacity))
+    out.append(text(x + 30, y + 78, subtitle, 22, fill=accent, weight="bold", opacity=opacity, spacing="1"))
+    for i, row in enumerate(rows):
+        ry = y + head_h + 12 + i * row_h
+        ro = opacity
+        if row_reveal:
+            st, stag = row_reveal
+            ro = opacity * appear(t, st + i * stag, 0.45)
+        if ro <= 0.001:
+            continue
+        label, state = row if isinstance(row, tuple) else (row, "plain")
+        blurred = i in blur_rows
+        col = {"in": OCF_TXT, "out": LOST, "warn": AMBER, "plain": WHITE, "carta": CARTA_TXT}.get(state, WHITE)
+        dot = {"in": OCF, "out": LOST, "warn": AMBER, "carta": CARTA}.get(state)
+        if blurred:
+            out.append(f'<g filter="url(#blur)">' + text(x + 62, ry + 34, label, 26, fill=MUTE, opacity=ro * 0.8) + '</g>')
+            continue
+        if dot:
+            out.append(circle(x + 40, ry + 26, 7, dot, ro))
+        out.append(text(x + 62, ry + 34, label, 26, fill=col, opacity=ro))
+    return "".join(out), h
+
+# ---- scene chrome ----------------------------------------------------------
+def background(vignette=True):
+    out = [f'<rect width="{W}" height="{H}" fill="{BG}"/>']
+    if vignette:
+        out.append(f'<rect width="{W}" height="{H}" fill="url(#vig)"/>')
+    return "".join(out)
+
+def heading(t, title, sub=None, start=0.0):
+    o = appear(t, start, 0.5)
+    dy = lerp(18, 0, ease_out((t - start) / 0.5))
+    out = text(W/2, 150 - dy, title, 62, fill=WHITE, weight="bold", anchor="middle", opacity=o)
+    if sub:
+        out += text(W/2, 205 - dy, sub, 30, fill=MUTE, anchor="middle", opacity=appear(t, start+0.15, 0.5))
+    return out
+
+def caption(t, lines, start=0.0):
+    o = appear(t, start, 0.5)
+    if o <= 0.001: return ""
+    bw = 1500; bx = (W - bw) / 2; by = 946; bh = 100
+    out = [rrect(bx, by, bw, bh, 22, fill="#0e141b", stroke=BORDER, sw=1.5, opacity=o*0.96)]
+    out.append(rrect(bx, by, 8, bh, 4, fill=CORE, opacity=o))
+    if isinstance(lines, str): lines = wrap(lines, 78)
+    ty = by + bh/2 - (len(lines)-1)*20 + 10
+    for i, ln in enumerate(lines):
+        out.append(text(bx + 44, ty + i*40, ln, 27, fill="#c9d3de", opacity=o))
+    return "".join(out)
+
+def scene_opacity(t, dur, fin=0.45, fout=0.4):
+    return min(appear(t, 0, fin), ease_out((dur - t)/fout) if t > dur-fout else 1.0)
+
+# ============================================================================
+# SCENES  (each returns inner svg for local time t within [0,dur])
+# ============================================================================
+def s_title(t, dur):
+    o = scene_opacity(t, dur)
+    out = [background()]
+    cx = W/2
+    # legend dots rising
+    o1 = appear(t, 0.2, 0.6)
+    out.append(text(cx, 400, "OCF Core", 150, fill=WHITE, weight="bold", anchor="middle", opacity=appear(t,0.0,0.7)))
+    # underline sweep
+    sw = ease_out((t-0.4)/0.8);
+    out.append(line(cx-360*sw, 448, cx+360*sw, 448, CORE, 6, appear(t,0.4,0.3)))
+    out.append(multiline(cx, 540, wrap("How a rich cap-table standard becomes a clean, always-convertible core", 52),
+                         34, 48, fill=MUTE, anchor="middle", opacity=appear(t,0.5,0.7)))
+    # palette legend
+    ly = 720; items = [("OCF", OCF), ("Carta", CARTA), ("Core", CORE)]
+    lo = appear(t, 1.0, 0.7)
+    gap = 300; startx = cx - gap
+    for i,(lab,co) in enumerate(items):
+        gx = startx + i*gap
+        out.append(circle(gx-70, ly-10, 13, co, lo))
+        out.append(text(gx-45, ly, lab, 34, fill=co, weight="bold", opacity=lo))
+    out.append(text(cx, 860, "a plain-English tour", 26, fill=FAINT, anchor="middle", opacity=appear(t,1.4,0.6), italic=True, spacing="3"))
+    return f'<g opacity="{o:.3f}">' + "".join(out) + '</g>'
+
+def s_captable(t, dur):
+    o = scene_opacity(t, dur); out=[background()]
+    out.append(heading(t, "Every company has a cap table"))
+    cx=W/2; cy=520
+    # company node
+    co=appear(t,0.5,0.5)
+    out.append(circle(cx, cy, 82, PANEL, co, stroke=CORE, sw=3))
+    out.append(text(cx, cy-6, "Company", 26, fill=WHITE, weight="bold", anchor="middle", opacity=co))
+    out.append(text(cx, cy+30, "cap table", 20, fill=CORE, anchor="middle", opacity=co))
+    owners=[("Founder", -520),("Investors",-175),("Employees",175),("Option pool",520)]
+    for i,(lab,dx) in enumerate(owners):
+        oo=appear(t,0.9+i*0.18,0.5)
+        ox=cx+dx; oy=cy+250
+        out.append(line(cx,cy+82, ox,oy-46, BORDER, 2.5, oo))
+        out.append(circle(ox,oy,46, "#11161d", oo, stroke=CARTA, sw=2.5))
+        out.append(text(ox,oy+6, lab.split()[0][0], 30, fill=CARTA_TXT, weight="bold", anchor="middle", opacity=oo))
+        out.append(text(ox,oy+90, lab, 24, fill=MUTE, anchor="middle", opacity=oo))
+    out.append(caption(t, "Think of it as the company's ledger of who owns what — and every event that changes it.", start=1.6))
+    return f'<g opacity="{o:.3f}">'+"".join(out)+'</g>'
+
+def s_ocf(t, dur):
+    o=scene_opacity(t,dur); out=[background()]
+    out.append(heading(t,"An OCF object","OCF = Open Cap Format, an open standard for cap-table data"))
+    rows=[("name  ·  full legal name","plain"),("relationship  ·  employee, investor…","plain"),
+          ("addresses  ·  a list","plain"),("tax IDs  ·  a list","plain"),
+          ("contact info  ·  emails & phones","plain"),("issuer-assigned id","plain")]
+    c,ch=card(W/2-320, 260, 640, "Stakeholder", "OCF OBJECT · A PERSON", rows, accent=OCF, accent_fill=OCF_FILL,
+              opacity=appear(t,0.4,0.5), row_reveal=(0.7,0.16), t=t)
+    out.append(c)
+    out.append(text(W/2, 880, "One object = one record. OCF captures each fact in rich detail.", 28,
+                    fill=OCF_TXT, anchor="middle", opacity=appear(t,1.8,0.6)))
+    out.append(caption(t, "An OCF object is one record — here, a person on the cap table.", start=0.9))
+    return f'<g opacity="{o:.3f}">'+"".join(out)+'</g>'
+
+def s_carta(t, dur):
+    o=scene_opacity(t,dur); out=[background()]
+    out.append(heading(t,"A Carta object","Carta is a cap-table platform — it stores the same idea, its own way"))
+    rows=[("fullName","carta"),("relationship","carta"),("email","carta")]
+    c,ch=card(W/2-320, 300, 640, "Stakeholder", "CARTA OBJECT · A PERSON", rows, accent=CARTA, accent_fill=CARTA_FILL,
+              opacity=appear(t,0.4,0.5), row_reveal=(0.7,0.2), t=t)
+    out.append(c)
+    out.append(text(W/2, 720, "Same person — fewer fields.", 30, fill=CARTA_TXT, anchor="middle", weight="bold", opacity=appear(t,1.5,0.6)))
+    out.append(text(W/2, 770, "Carta often holds less detail than OCF.", 26, fill=MUTE, anchor="middle", opacity=appear(t,1.7,0.6)))
+    out.append(caption(t, "A Carta object holds the same concept — but sometimes with less detail.", start=0.9))
+    return f'<g opacity="{o:.3f}">'+"".join(out)+'</g>'
+
+def s_core(t, dur):
+    o=scene_opacity(t,dur); out=[background()]
+    out.append(heading(t,"So what is OCF Core?"))
+    cx=W/2; cy=500; r=210
+    oa=appear(t,0.5,0.6)
+    # two overlapping circles
+    out.append(circle(cx-120, cy, r, "none", oa, stroke=OCF, sw=4))
+    out.append(f'<circle cx="{cx-120}" cy="{cy}" r="{r}" fill="{OCF}" opacity="{oa*0.10:.3f}"/>')
+    out.append(circle(cx+120, cy, r, "none", oa, stroke=CARTA, sw=4))
+    out.append(f'<circle cx="{cx+120}" cy="{cy}" r="{r}" fill="{CARTA}" opacity="{oa*0.10:.3f}"/>')
+    out.append(text(cx-235, cy-r-24, "OCF", 40, fill=OCF, weight="bold", anchor="middle", opacity=oa))
+    out.append(text(cx+235, cy-r-24, "Carta", 40, fill=CARTA, weight="bold", anchor="middle", opacity=oa))
+    # intersection highlight
+    io=appear(t,1.3,0.6)
+    out.append(f'<ellipse cx="{cx}" cy="{cy}" rx="150" ry="150" fill="{CORE}" opacity="{io*0.22:.3f}"/>')
+    out.append(text(cx, cy-6, "CORE", 44, fill=CORE_TXT, weight="bold", anchor="middle", opacity=io))
+    out.append(text(cx, cy+40, "always converts", 24, fill=CORE_TXT, anchor="middle", opacity=io))
+    out.append(text(W/2, 830, "Core = the part of OCF that always converts cleanly into Carta.", 32,
+                    fill=WHITE, anchor="middle", weight="bold", opacity=appear(t,2.0,0.6)))
+    out.append(caption(t, "We don't hand-pick Core. We derive it — checking every object, field by field.", start=2.4))
+    return f'<g opacity="{o:.3f}">'+"".join(out)+'</g>'
+
+def s_rule(t, dur):
+    o=scene_opacity(t,dur); out=[background()]
+    out.append(heading(t,"The rule we apply to every field"))
+    cx=W/2; x=cx-620; y=290; lh=118
+    rules=[
+        (OCF,  "check", "Keep a fact if Carta can hold it.", "It joins Core."),
+        (CORE, "warn",  "Losing a little precision is OK.", "A rounded number, a date format — fine."),
+        (LOST, "cross", "Losing a whole thing is not.", "A dropped list or relationship — flagged, left out."),
+    ]
+    for i,(co,g,main,sub) in enumerate(rules):
+        ro=appear(t,0.6+i*0.4,0.5); ry=y+i*lh
+        out.append(rrect(x, ry, 1240, 96, 18, fill="#11161d", stroke=BORDER, sw=1.5, opacity=ro))
+        gi=x+58
+        if g=="check": out.append(check(gi,ry+48,28,co,ro))
+        elif g=="cross": out.append(cross(gi,ry+48,28,co,ro))
+        else: out.append(warn(gi,ry+48,28,co,ro))
+        out.append(text(x+120, ry+44, main, 34, fill=WHITE, weight="bold", opacity=ro))
+        out.append(text(x+120, ry+80, sub, 25, fill=MUTE, opacity=ro))
+    # object gate line
+    go=appear(t,2.2,0.6)
+    out.append(text(cx, 780, "And an object joins Core only if at least one real fact lands.", 32,
+                    fill=CORE_TXT, anchor="middle", weight="bold", opacity=go))
+    out.append(caption(t, "Simple test: does it land in Carta — without dropping anything essential?", start=2.6))
+    return f'<g opacity="{o:.3f}">'+"".join(out)+'</g>'
+
+def _example_frame(t, dur, n, title, sub):
+    out=[background()]
+    out.append(text(160, 120, f"EXAMPLE {n}", 26, fill=CORE, weight="bold", opacity=appear(t,0.0,0.4), spacing="4"))
+    out.append(text(160, 178, title, 54, fill=WHITE, weight="bold", opacity=appear(t,0.1,0.5)))
+    out.append(text(160, 226, sub, 28, fill=MUTE, opacity=appear(t,0.2,0.5)))
+    return out
+
+def s_stockclass(t, dur):
+    o=scene_opacity(t,dur)
+    out=_example_frame(t,dur,1,"A share class","StockClass · e.g. “Common Stock” — the backbone of a cap table")
+    # OCF card left
+    rows=[("name","in"),("class type","in"),("shares authorized","in"),("par value","in"),
+          ("price per share","in"),("liquidation preference","in")]
+    lx=170; ly=300
+    c,ch=card(lx,ly,560,"StockClass","OCF", rows, accent=OCF, accent_fill=OCF_FILL,
+              opacity=appear(t,0.4,0.5), row_reveal=(0.7,0.13), t=t)
+    out.append(c)
+    # blurred drops beneath
+    bo=appear(t,2.4,0.6)
+    out.append(f'<g filter="url(#blur)" opacity="{bo*0.7:.3f}">'
+               + text(lx+20, ly+ch+58, "votes per share · board dates · conversion rights", 22, fill=MUTE) + '</g>')
+    out.append(text(lx, ly+ch+96, "…a little extra detail stays behind", 21, fill=FAINT, opacity=bo, italic=True))
+    # Carta card right
+    crows=[("name","carta"),("shareClass","carta"),("authorized","carta"),("parValue","carta"),
+           ("issuePrice","carta"),("liquidationMultiple","carta")]
+    rx=1190
+    cc,cch=card(rx,ly,560,"ShareClass","CARTA", crows, accent=CARTA, accent_fill=CARTA_FILL,
+              opacity=appear(t,0.9,0.5), row_reveal=(1.2,0.13), t=t)
+    out.append(cc)
+    # flow arrows between rows
+    for i in range(6):
+        ao=appear(t,1.6+i*0.09,0.4)
+        yy=ly+96+12+i*52+26
+        out.append(arrow(lx+560, yy, rx, yy, OCF, 3, ao*0.9))
+    out.append(badge(W/2, 852, "Comfortably in Core — 8 facts land", OCF, "check", appear(t,2.7,0.6), w=640))
+    out.append(caption(t, "Its core economics land cleanly in Carta, so StockClass sits comfortably in Core.", start=2.9))
+    return f'<g opacity="{o:.3f}">'+"".join(out)+'</g>'
+
+def s_transfer(t, dur):
+    o=scene_opacity(t,dur)
+    out=_example_frame(t,dur,2,"Transferring shares","StockTransfer · one event becomes two Carta records")
+    lx=170; ly=360
+    c,ch=card(lx,ly,520,"StockTransfer","OCF · ONE EVENT",
+              [("quantity","in"),("date","in"),("from / to","plain")], accent=OCF, accent_fill=OCF_FILL,
+              opacity=appear(t,0.4,0.5), row_reveal=(0.7,0.15), t=t)
+    out.append(c)
+    out.append(text(lx+10, ly+ch+66, "Carta has no “transfer” record…", 26, fill=MUTE, opacity=appear(t,1.4,0.5)))
+    out.append(text(lx+10, ly+ch+106, "so it becomes a pair:", 26, fill=CARTA_TXT, weight="bold", opacity=appear(t,1.6,0.5)))
+    # two carta cards
+    rx=1120
+    c1,_=card(rx,250,640,"Cancel certificate","CARTA · STEP 1 (the old shares)",
+              [("quantity","carta"),("effective date","carta"),("reason: TRANSFERRED","carta")],
+              accent=CARTA, accent_fill=CARTA_FILL, opacity=appear(t,1.2,0.5), row_reveal=(1.5,0.12), t=t)
+    c2,_=card(rx,556,640,"Issue certificate","CARTA · STEP 2 (the new owner)",
+              [("quantity","carta"),("issue date","carta"),("reason: TRANSFERRED","carta")],
+              accent=CARTA, accent_fill=CARTA_FILL, opacity=appear(t,1.6,0.5), row_reveal=(1.9,0.12), t=t)
+    out.append(c1); out.append(c2)
+    out.append(arrow(lx+520, ly+64, rx, 340, OCF, 3.5, appear(t,2.0,0.4)))
+    out.append(arrow(lx+520, ly+112, rx, 646, OCF, 3.5, appear(t,2.2,0.4)))
+    out.append(badge(W/2, 852, "In Core — as a composite pair", OCF, "check", appear(t,2.6,0.6), w=600))
+    out.append(caption(t, "One real-world event, recorded as two Carta steps. Quantity and date ride along.", start=2.8))
+    return f'<g opacity="{o:.3f}">'+"".join(out)+'</g>'
+
+def s_stakeholder(t, dur):
+    o=scene_opacity(t,dur)
+    out=_example_frame(t,dur,3,"A person","Stakeholder · joins Core, but some detail is lost")
+    lx=170; ly=300
+    rows=[("relationship  →  kept (coarsened)","in"),("investor id  →  kept","in"),
+          ("full structured name  →  flattened","out"),("address list  →  only one survives","out"),
+          ("tax IDs  →  dropped","out"),("contact methods  →  flattened","out")]
+    c,ch=card(lx,ly,760,"Stakeholder","OCF · A PERSON", rows, accent=OCF, accent_fill=OCF_FILL,
+              opacity=appear(t,0.4,0.5), row_reveal=(0.7,0.16), t=t)
+    out.append(c)
+    # right side: kept vs lost columns
+    rx=1120
+    ko=appear(t,1.8,0.6)
+    out.append(text(rx, 330, "Lands in Carta", 30, fill=OCF_TXT, weight="bold", opacity=ko))
+    for i,lab in enumerate(["relationship","investor id"]):
+        out.append(check(rx+20, 388+i*56, 16, OCF, appear(t,2.0+i*0.15,0.4)))
+        out.append(text(rx+52, 398+i*56, lab, 26, fill=WHITE, opacity=appear(t,2.0+i*0.15,0.4)))
+    lo=appear(t,2.4,0.6)
+    out.append(text(rx, 560, "Lost on the way", 30, fill=LOST, weight="bold", opacity=lo))
+    for i,lab in enumerate(["address list","tax IDs","structured name","contact methods"]):
+        out.append(cross(rx+20, 618+i*56, 16, LOST, appear(t,2.6+i*0.12,0.4)))
+        out.append(text(rx+52, 628+i*56, lab, 26, fill=MUTE, opacity=appear(t,2.6+i*0.12,0.4)))
+    out.append(badge(W/2, 852, "In Core — but with losses", AMBER, "warn", appear(t,3.3,0.6), w=560))
+    out.append(caption(t, "The person joins Core, but their address list, tax IDs and contact details don't fully survive.", start=3.5))
+    return f'<g opacity="{o:.3f}">'+"".join(out)+'</g>'
+
+def s_acceptance(t, dur):
+    o=scene_opacity(t,dur)
+    out=_example_frame(t,dur,4,"Accepting shares","StockAcceptance · nothing for Carta to carry")
+    lx=170; ly=340
+    c,ch=card(lx,ly,560,"StockAcceptance","OCF · AN EVENT",
+              [("which security","plain"),("date","plain"),("(that's all it records)","plain")],
+              accent=OCF, accent_fill=OCF_FILL, opacity=appear(t,0.4,0.5), row_reveal=(0.7,0.15), t=t)
+    out.append(c)
+    out.append(text(lx+4, ly+ch+70, "This just records that a shareholder", 26, fill=MUTE, opacity=appear(t,1.4,0.5)))
+    out.append(text(lx+4, ly+ch+108, "accepted their shares.", 26, fill=WHITE, weight="bold", opacity=appear(t,1.5,0.5)))
+    # no-home sink
+    rx=1230; ry=440
+    so=appear(t,1.6,0.6)
+    out.append(circle(rx, ry, 120, LOST_FILL, so, stroke=LOST, sw=3))
+    out.append(text(rx, ry-6, "⌀", 90, fill=LOST, anchor="middle", opacity=so))
+    out.append(text(rx, ry+150, "Carta stores no", 28, fill=LOST, anchor="middle", weight="bold", opacity=appear(t,1.9,0.5)))
+    out.append(text(rx, ry+188, "“acceptance” data", 28, fill=LOST, anchor="middle", weight="bold", opacity=appear(t,1.9,0.5)))
+    out.append(arrow(lx+560, ly+60, rx-120, ry, LOST, 3, appear(t,2.1,0.4), dash="8 8"))
+    out.append(badge(W/2, 852, "Not in Core — no facts land", LOST, "cross", appear(t,2.6,0.6), w=560))
+    out.append(caption(t, "With no real fact that Carta can hold, StockAcceptance stays out of Core.", start=2.8))
+    return f'<g opacity="{o:.3f}">'+"".join(out)+'</g>'
+
+def s_recap(t, dur):
+    o=scene_opacity(t,dur); out=[background()]
+    out.append(heading(t,"Four objects, one rule"))
+    cards=[("StockClass","comfortable",OCF,"check","8 facts land"),
+           ("StockTransfer","composite",CARTA,"check","one event → two"),
+           ("Stakeholder","lossy",AMBER,"warn","lands, loses detail"),
+           ("StockAcceptance","out",LOST,"cross","nothing lands")]
+    cw=400; gap=30; total=4*cw+3*gap; sx=(W-total)/2; y=320
+    for i,(nm,tag,co,g,note) in enumerate(cards):
+        ro=appear(t,0.6+i*0.25,0.5); x=sx+i*(cw+gap)
+        out.append(rrect(x,y,cw,360,20, fill=PANEL, stroke=co, sw=2.5, opacity=ro))
+        out.append(rrect(x,y,cw,10,4, fill=co, opacity=ro))
+        if g=="check": out.append(check(x+cw/2,y+120,44,co,ro))
+        elif g=="warn": out.append(warn(x+cw/2,y+120,44,co,ro))
+        else: out.append(cross(x+cw/2,y+120,44,co,ro))
+        out.append(text(x+cw/2,y+220,nm,30,fill=WHITE,weight="bold",anchor="middle",opacity=ro))
+        out.append(text(x+cw/2,y+266,tag.upper(),24,fill=co,weight="bold",anchor="middle",opacity=ro,spacing="2"))
+        out.append(text(x+cw/2,y+312,note,22,fill=MUTE,anchor="middle",opacity=ro))
+    out.append(text(W/2, 790, "Every OCF object gets this test — automatically, field by field.", 32,
+                    fill=WHITE, anchor="middle", weight="bold", opacity=appear(t,1.9,0.6)))
+    out.append(caption(t, "The same rule, applied to everything, is what defines OCF Core.", start=2.2))
+    return f'<g opacity="{o:.3f}">'+"".join(out)+'</g>'
+
+def s_close(t, dur):
+    o=scene_opacity(t,dur); out=[background()]
+    cx=W/2
+    out.append(text(cx, 430, "That's OCF Core.", 96, fill=WHITE, weight="bold", anchor="middle", opacity=appear(t,0.1,0.7)))
+    out.append(line(cx-300, 480, cx+300, 480, CORE, 5, appear(t,0.5,0.4)))
+    out.append(multiline(cx, 570, wrap("The reliable, always-convertible heart of OCF — derived from the mappings, not declared by hand.", 56),
+                         34, 50, fill=MUTE, anchor="middle", opacity=appear(t,0.7,0.7)))
+    for i,(lab,co) in enumerate([("OCF",OCF),("Core",CORE),("Carta",CARTA)]):
+        lo=appear(t,1.3+i*0.1,0.6); gx=cx-330+i*330
+        out.append(circle(gx-90,740,12,co,lo)); out.append(text(gx-65,750,lab,32,fill=co,weight="bold",opacity=lo))
+        if i<2: out.append(text(gx+120,750,"→",34,fill=FAINT,anchor="middle",opacity=lo))
+    return f'<g opacity="{o:.3f}">'+"".join(out)+'</g>'
+
+# ---- timeline --------------------------------------------------------------
+SCENES = [
+    ("title",       s_title,       5.0),
+    ("captable",    s_captable,    9.0),
+    ("ocf",         s_ocf,         10.0),
+    ("carta",       s_carta,       9.0),
+    ("core",        s_core,        12.0),
+    ("rule",        s_rule,        11.0),
+    ("stockclass",  s_stockclass,  13.0),
+    ("transfer",    s_transfer,    14.0),
+    ("stakeholder", s_stakeholder, 14.0),
+    ("acceptance",  s_acceptance,  12.0),
+    ("recap",       s_recap,       10.0),
+    ("close",       s_close,       7.0),
+]
+
+DEFS = f'''<defs>
+  <filter id="blur" x="-20%" y="-20%" width="140%" height="140%"><feGaussianBlur stdDeviation="5"/></filter>
+  <radialGradient id="vig" cx="50%" cy="42%" r="75%">
+    <stop offset="55%" stop-color="#0b1017" stop-opacity="0"/>
+    <stop offset="100%" stop-color="#05070a" stop-opacity="0.9"/>
+  </radialGradient>
+</defs>'''
+
+def doc(inner):
+    return (f'<svg xmlns="http://www.w3.org/2000/svg" width="{W}" height="{H}" '
+            f'viewBox="0 0 {W} {H}">{DEFS}{inner}</svg>')
+
+def main():
+    mode = sys.argv[1] if len(sys.argv) > 1 else "manifest"
+    if mode == "manifest":
+        tacc = 0
+        for nm, fn, dur in SCENES:
+            print(f"{nm:14s} start={tacc:6.1f}s  dur={dur:5.1f}s")
+            tacc += dur
+        print(f"{'TOTAL':14s} {tacc:6.1f}s")
+        return
+    outdir = sys.argv[2]
+    os.makedirs(outdir, exist_ok=True)
+    if mode == "stills":
+        for nm, fn, dur in SCENES:
+            svg = doc(fn(dur * 0.72, dur))  # representative: near-end, fully revealed
+            open(os.path.join(outdir, f"{nm}.svg"), "w").write(svg)
+            print("wrote", nm)
+        return
+    if mode == "all":
+        fps = FPS
+        if "--fps" in sys.argv: fps = int(sys.argv[sys.argv.index("--fps")+1])
+        idx = 0
+        for nm, fn, dur in SCENES:
+            nfr = int(round(dur * fps))
+            for f in range(nfr):
+                t = f / fps
+                svg = doc(fn(t, dur))
+                open(os.path.join(outdir, f"f{idx:05d}.svg"), "w").write(svg)
+                idx += 1
+        print(f"wrote {idx} frames at {fps}fps -> {idx/fps:.1f}s")
+        return
+
+if __name__ == "__main__":
+    main()
