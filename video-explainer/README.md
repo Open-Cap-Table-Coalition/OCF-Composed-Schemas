@@ -6,8 +6,8 @@ example objects.
 
 | File | What it is |
 | --- | --- |
-| `ocf-core-explainer.mp4` | 1920×1080, h264, 30 fps, 126 s, ~3.8 MB (primary) |
-| `ocf-core-explainer.gif` | 900×506, 12 fps, 1512 frames, ~7.1 MB (for embeds/chat) |
+| `ocf-core-explainer.mp4` | 1920×1080, h264, 30 fps, 139 s, ~4.3 MB (primary) |
+| `ocf-core-explainer.gif` | 900×506, 12 fps, ~7.8 MB (for embeds/chat) |
 | `poster.png` | still thumbnail (the recap scene) |
 | `gen.py` | the SVG frame generator (see *Rebuilding* below) |
 
@@ -19,11 +19,14 @@ example objects.
 1. **What a cap table is** — a company's ledger of who owns what.
 2. **What an OCF object is** — one rich record in the Open Cap Format standard.
 3. **What a Carta object is** — the same idea in Carta's own, often simpler, shape.
-4. **What OCF Core is** — the part of OCF that *always* converts cleanly into Carta —
+4. **Two ways to keep the ledger** — OCF is **event-driven** (a stream of events you replay to get
+   today's picture); Carta is **hybrid** — a live snapshot/**statement** of current state *plus*
+   some events. This is *why* some OCF events convert into state changes rather than Carta events.
+5. **What OCF Core is** — the part of OCF that *always* converts cleanly into Carta —
    **derived**, field by field, not hand-declared.
-5. **The rule** — keep a fact if Carta can hold it; losing a little *precision* is OK, losing a
+6. **The rule** — keep a fact if Carta can hold it; losing a little *precision* is OK, losing a
    whole *thing* is not; an object joins Core only if at least one real fact lands.
-6. **Four worked examples** (below), then a recap of the whole spectrum.
+7. **Four worked examples** (below), then a recap of the whole spectrum.
 
 ## The four example objects
 
@@ -45,7 +48,7 @@ deliberately blurred (still visible, not the focus).
 Requires `rsvg-convert` (librsvg), `ffmpeg`, and `python3` — no browser needed.
 
 ```sh
-# 1. generate the SVG frame sequence (20 fps → 2520 frames)
+# 1. generate the SVG frame sequence (20 fps → 2780 frames)
 python3 gen.py all frames --fps 20
 
 # 2. render every frame to PNG (parallel)

@@ -263,6 +263,47 @@ def s_carta(t, dur):
     out.append(caption(t, "A Carta object holds the same concept — but sometimes with less detail.", start=0.9))
     return f'<g opacity="{o:.3f}">'+"".join(out)+'</g>'
 
+def s_architecture(t, dur):
+    o=scene_opacity(t,dur); out=[background()]
+    out.append(heading(t,"Two ways to keep the ledger","the deeper difference between OCF and Carta"))
+    # LEFT — OCF: a stream of events
+    lx=190; pw=520; ph=60; gap=13; y0=316
+    events=["Company formed","Shares issued","Shares transferred","Options granted","Vesting event"]
+    lo=appear(t,0.5,0.5)
+    out.append(text(lx+40, 288, "OCF · EVENT-DRIVEN", 27, fill=OCF, weight="bold", opacity=lo, spacing="2"))
+    ys=[y0+i*(ph+gap) for i in range(len(events))]
+    sx=lx+18
+    out.append(line(sx, ys[0]+ph/2, sx, ys[-1]+ph/2, OCF, 3, appear(t,0.7,0.5)))
+    for i,ev in enumerate(events):
+        ro=appear(t,0.8+i*0.16,0.45); y=ys[i]
+        out.append(circle(sx, y+ph/2, 9, OCF, ro, stroke=BG, sw=3))
+        out.append(rrect(lx+44, y, pw, ph, 12, fill=PANEL, stroke=OCF, sw=2, opacity=ro))
+        out.append(text(lx+72, y+ph/2+9, ev, 25, fill=WHITE, opacity=ro))
+    out.append(text(lx+40, ys[-1]+ph+52, "Every change is an event —", 25, fill=OCF_TXT, opacity=appear(t,1.8,0.5)))
+    out.append(text(lx+40, ys[-1]+ph+86, "replay them to see today's picture.", 25, fill=MUTE, opacity=appear(t,1.9,0.5)))
+    # RIGHT — Carta: a snapshot + some events
+    rx=1120
+    co=appear(t,1.3,0.5)
+    out.append(text(rx+40, 288, "CARTA · HYBRID", 27, fill=CARTA, weight="bold", opacity=co, spacing="2"))
+    snap,sh=card(rx, 316, 600, "Current holdings", "A STATEMENT · SNAPSHOT OF STATE NOW",
+                 [("Alice  —  1,000 shares","carta"),("Bob  —  500 shares","carta"),("Pool  —  200 shares","carta")],
+                 accent=CARTA, accent_fill=CARTA_FILL, opacity=appear(t,1.4,0.5), row_reveal=(1.7,0.14), t=t)
+    out.append(snap)
+    ey=316+sh+34
+    out.append(text(rx+6, ey, "…plus some events", 26, fill=CARTA_TXT, weight="bold", opacity=appear(t,2.5,0.5)))
+    for i,ev in enumerate(["Issuance","Exercise"]):
+        ro=appear(t,2.7+i*0.2,0.45); px=rx+i*306
+        out.append(rrect(px, ey+22, 286, 58, 12, fill=PANEL, stroke=CARTA, sw=2, opacity=ro))
+        out.append(circle(px+30, ey+51, 7, CARTA, ro))
+        out.append(text(px+52, ey+59, ev, 24, fill=WHITE, opacity=ro))
+    # insight bar
+    io=appear(t,3.4,0.6)
+    out.append(rrect(W/2-830, 812, 1660, 72, 18, fill="#1a1405", stroke=CORE, sw=2, opacity=io))
+    out.append(text(W/2, 857, "So an OCF event lands either as a Carta event — or as a change to Carta's snapshot.",
+                    30, fill=CORE_TXT, anchor="middle", weight="bold", opacity=io))
+    out.append(caption(t, "OCF logs every event. Carta keeps a live snapshot plus some events — a hybrid. That's why some events convert into state changes.", start=3.8))
+    return f'<g opacity="{o:.3f}">'+"".join(out)+'</g>'
+
 def s_core(t, dur):
     o=scene_opacity(t,dur); out=[background()]
     out.append(heading(t,"So what is OCF Core?"))
@@ -356,8 +397,8 @@ def s_transfer(t, dur):
               [("quantity","in"),("date","in"),("from / to","plain")], accent=OCF, accent_fill=OCF_FILL,
               opacity=appear(t,0.4,0.5), row_reveal=(0.7,0.15), t=t)
     out.append(c)
-    out.append(text(lx+10, ly+ch+66, "Carta has no “transfer” record…", 26, fill=MUTE, opacity=appear(t,1.4,0.5)))
-    out.append(text(lx+10, ly+ch+106, "so it becomes a pair:", 26, fill=CARTA_TXT, weight="bold", opacity=appear(t,1.6,0.5)))
+    out.append(text(lx+10, ly+ch+66, "Carta records state — no “transfer” event…", 26, fill=MUTE, opacity=appear(t,1.4,0.5)))
+    out.append(text(lx+10, ly+ch+106, "so it becomes a pair of state changes:", 26, fill=CARTA_TXT, weight="bold", opacity=appear(t,1.6,0.5)))
     # two carta cards
     rx=1120
     c1,_=card(rx,250,640,"Cancel certificate","CARTA · STEP 1 (the old shares)",
@@ -463,6 +504,7 @@ SCENES = [
     ("captable",    s_captable,    9.0),
     ("ocf",         s_ocf,         10.0),
     ("carta",       s_carta,       9.0),
+    ("architecture",s_architecture,13.0),
     ("core",        s_core,        12.0),
     ("rule",        s_rule,        11.0),
     ("stockclass",  s_stockclass,  13.0),
