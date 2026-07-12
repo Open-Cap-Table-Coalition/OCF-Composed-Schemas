@@ -24,7 +24,7 @@ import path from "node:path";
 import { writeFile } from "node:fs/promises";
 import { pathToFileURL } from "node:url";
 
-import { deriveCore, RICH_PROFILE } from "./lib/core-pipeline.js";
+import { deriveCore, Derived, RICH_PROFILE } from "./lib/core-pipeline.js";
 import { BOOKKEEPING, buildTargetIndex } from "./lib/report-helpers.js";
 import {
   FlowRow,
@@ -40,8 +40,8 @@ const OUT_FILE = "docs/core-lossy-inventory.md";
 // of truth: RICH_PROFILE.memberReasons); "no home" (no-destination) is separate.
 const LOSSY_HOME = RICH_PROFILE.memberReasons;
 
-export async function writeLossyInventory(base: string = process.cwd()): Promise<number> {
-  const d = await deriveCore(process.cwd());
+/** The lossy-home and no-home FlowRows for a derivation (shared by write + check). */
+function collectLossy(d: Derived): { lossy: FlowRow[]; nohome: FlowRow[] } {
   const admBy = new Map(d.admissibility.map((a) => [`${a.entity} ${a.variant}`, a]));
   const reqBy = new Map(d.corpus.objects.map((o) => [o.entity, new Set(o.requiredFields)]));
   const targetOf = buildTargetIndex(d.corpus.objects);
@@ -65,9 +65,20 @@ export async function writeLossyInventory(base: string = process.cwd()): Promise
     if (LOSSY_HOME.has(reason)) lossy.push(row);
     else if (reason === "no-destination") nohome.push(row);
   }
+  return { lossy, nohome };
+}
 
-  await writeFile(path.join(base, OUT_FILE), render(lossy, nohome), "utf8");
+/** Pure render of docs/core-lossy-inventory.md from a derivation — shared by build + check. */
+export function renderLossyInventory(d: Derived): string {
+  const { lossy, nohome } = collectLossy(d);
+  return render(lossy, nohome);
+}
 
+export async function writeLossyInventory(base: string = process.cwd()): Promise<number> {
+  const d = await deriveCore(process.cwd());
+  await writeFile(path.join(base, OUT_FILE), renderLossyInventory(d), "utf8");
+
+  const { lossy, nohome } = collectLossy(d);
   const reqLossy = lossy.filter((r) => r.ocfRequired).length;
   const onAdmissible = new Set(lossy.filter((r) => r.admissible).map((r) => r.entity)).size;
   console.log("OCF Core — lossy-home inventory");

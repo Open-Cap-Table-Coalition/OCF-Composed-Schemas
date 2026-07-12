@@ -22,7 +22,7 @@ import path from "node:path";
 import { writeFile } from "node:fs/promises";
 import { pathToFileURL } from "node:url";
 
-import { deriveCore, isMember, RICH_PROFILE } from "./lib/core-pipeline.js";
+import { deriveCore, Derived, isMember, RICH_PROFILE } from "./lib/core-pipeline.js";
 import { isPlainObject } from "./lib/mapping-validator.js";
 import { BOOKKEEPING, buildTargetIndex } from "./lib/report-helpers.js";
 import {
@@ -42,9 +42,8 @@ function isObjectType(def: unknown): boolean {
   return keys.length > 1 || (keys.length === 1 && keys[0] !== "value");
 }
 
-export async function writeBidiDoc(base: string = process.cwd()): Promise<number> {
-  const d = await deriveCore(process.cwd(), RICH_PROFILE);
-
+/** Pure render of docs/core-bidirectional-flow.md from a (rich) derivation — shared by build + check. */
+export function renderBidiDoc(d: Derived): string {
   // --- OCF → Core: per object, clean / lossy / dropped (distinct fields). ---
   interface OcfObj {
     clean: Set<string>;
@@ -162,33 +161,23 @@ export async function writeBidiDoc(base: string = process.cwd()): Promise<number
     }
   }
 
-  await writeFile(
-    path.join(base, OUT_FILE),
-    render(
-      ocf,
-      carta,
-      untargetedObjectCount,
-      untargetedReachable,
-      memberGroups,
-      ocfLost,
-      cartaUnfilled,
-      constFills
-    ),
-    "utf8"
+  return render(
+    ocf,
+    carta,
+    untargetedObjectCount,
+    untargetedReachable,
+    memberGroups,
+    ocfLost,
+    cartaUnfilled,
+    constFills
   );
+}
 
-  const ocfClean = sum([...ocf.values()].map((o) => o.clean.size));
-  const ocfLossy = sum([...ocf.values()].map((o) => o.lossy.size));
-  const ocfDropped = sum([...ocf.values()].map((o) => o.dropped.size));
-  const cartaFilled = sum([...carta.values()].map((c) => c.filled.length));
-  const cartaEmpty = sum([...carta.values()].map((c) => c.empty.length));
-  console.log("OCF Core — bidirectional coverage (rich hub)");
-  console.log("=".repeat(60));
-  console.log(`OCF → Core : ${ocfClean} clean + ${ocfLossy} lossy IN · ${ocfDropped} left behind`);
-  console.log(
-    `Carta → Core : ${cartaFilled} fields IN · ${cartaEmpty} left behind (+ ${untargetedObjectCount} untargeted Carta objects)`
-  );
-  console.log(`\nWritten to ${OUT_FILE}`);
+/** Derive (rich profile) and write docs/core-bidirectional-flow.md. */
+export async function writeBidiDoc(base: string = process.cwd()): Promise<number> {
+  const d = await deriveCore(process.cwd(), RICH_PROFILE);
+  await writeFile(path.join(base, OUT_FILE), renderBidiDoc(d), "utf8");
+  console.log(`Written to ${OUT_FILE}`);
   return 0;
 }
 

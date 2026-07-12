@@ -19,7 +19,7 @@ import path from "node:path";
 import { writeFile } from "node:fs/promises";
 import { pathToFileURL } from "node:url";
 
-import { deriveCore, isMember, RICH_PROFILE } from "./lib/core-pipeline.js";
+import { deriveCore, Derived, isMember, RICH_PROFILE } from "./lib/core-pipeline.js";
 import { BOOKKEEPING } from "./lib/report-helpers.js";
 import { FlowRow, groupByEntity, groupByVariant, mermaidVoid } from "./lib/report-flow.js";
 
@@ -30,8 +30,13 @@ interface Row extends FlowRow {
   description: string;
 }
 
-export async function writeUnmappedInventory(base: string = process.cwd()): Promise<number> {
-  const d = await deriveCore(process.cwd());
+/** The no-home rows + variant-scope facts for a derivation (shared by write + check). */
+function collectUnmapped(d: Derived): {
+  rows: Row[];
+  descOf: Map<string, string>;
+  partialKeys: Set<string>;
+  distinctCount: number;
+} {
   const admBy = new Map(d.admissibility.map((a) => [`${a.entity} ${a.variant}`, a]));
   const reqBy = new Map(d.corpus.objects.map((o) => [o.entity, new Set(o.requiredFields)]));
 
@@ -68,13 +73,20 @@ export async function writeUnmappedInventory(base: string = process.cwd()): Prom
   }
   const partialKeys = new Set([...noHomeKeys].filter((k) => memberKeys.has(k)));
   const distinctCount = noHomeKeys.size;
+  return { rows, descOf, partialKeys, distinctCount };
+}
 
-  await writeFile(
-    path.join(base, OUT_FILE),
-    render(rows, descOf, partialKeys, distinctCount),
-    "utf8"
-  );
+/** Pure render of docs/core-unmapped-inventory.md from a derivation — shared by build + check. */
+export function renderUnmappedInventory(d: Derived): string {
+  const { rows, descOf, partialKeys, distinctCount } = collectUnmapped(d);
+  return render(rows, descOf, partialKeys, distinctCount);
+}
 
+export async function writeUnmappedInventory(base: string = process.cwd()): Promise<number> {
+  const d = await deriveCore(process.cwd());
+  await writeFile(path.join(base, OUT_FILE), renderUnmappedInventory(d), "utf8");
+
+  const { rows } = collectUnmapped(d);
   const groups = groupByEntity(rows);
   const req = rows.filter((r) => r.ocfRequired).length;
   const onAdmissible = groups.filter((g) => g.admissible).length;
