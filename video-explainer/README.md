@@ -6,8 +6,8 @@ example objects.
 
 | File | What it is |
 | --- | --- |
-| `ocf-core-explainer.mp4` | 1920×1080, h264, 30 fps, 237 s, ~7.8 MB (primary) |
-| `ocf-core-explainer.gif` | 900×506, 12 fps, ~10 MB (for embeds/chat) |
+| `ocf-core-explainer.mp4` | 1920×1080, h264, 30 fps, 240 s, ~8.0 MB (primary) |
+| `ocf-core-explainer.gif` | 900×506, 12 fps, ~11 MB (for embeds/chat) |
 | `poster.png` | still thumbnail (the recap scene) |
 | `gen.py` | the SVG frame generator (see *Rebuilding* below) |
 
@@ -75,7 +75,7 @@ the brand so the multi-colour field coding keeps its contrast.
 Requires `rsvg-convert` (librsvg), `ffmpeg`, and `python3` — no browser needed.
 
 ```sh
-# 1. generate the SVG frame sequence (20 fps → 4740 frames)
+# 1. generate the SVG frame sequence (20 fps → 4800 frames)
 python3 gen.py all frames --fps 20
 
 # 2. render every frame to PNG (parallel)

@@ -343,23 +343,44 @@ def s_coalition(t, dur):
 
 def s_problem(t, dur):
     o=scene_opacity(t,dur); out=[background()]
-    out.append(heading(t,"The problem it set out to solve"))
-    silos=[("Platform A",CARTA),("A spreadsheet",OCF),("Another platform",CORE)]
-    sw2=420; gap=96; total=3*sw2+2*gap; sx=(W-total)/2; y=320
-    for i,(lab,co) in enumerate(silos):
-        ro=appear(t,0.5+i*0.2,0.5); x=sx+i*(sw2+gap)
-        out.append(rrect(x,y,sw2,300,18, fill=PANEL, stroke=co, sw=2, opacity=ro))
-        out.append(text(x+sw2/2,y+52,lab,26,fill=co,weight="bold",anchor="middle",opacity=ro))
-        out.append(f'<g filter="url(#blur)" opacity="{ro*0.55:.3f}">')
-        for r in range(4):
-            out.append(rrect(x+40,y+92+r*44,sw2-80,26,6, fill="#2a2f58"))
-        out.append('</g>')
-    for i in range(2):
-        ro=appear(t,1.5+i*0.2,0.5); gx=sx+sw2+gap/2+i*(sw2+gap)
-        out.append(line(gx-46, y+150, gx+46, y+150, LOST, 3, ro, dash="9 9"))
-        out.append(cross(gx, y+150, 18, LOST, ro))
-    out.append(text(W/2, 712, "Dozens of tools — but no shared standard.", 32, fill=WHITE, weight="bold", anchor="middle", opacity=appear(t,1.9,0.6)))
-    out.append(caption(t, "Cap-table data was trapped in each platform — hard to move, reconcile, or audit across systems.", start=2.2))
+    out.append(heading(t,"The problem it set out to solve","everyone working off the same data — with no shared language"))
+    # party-type legend (centered)
+    leg=appear(t,0.3,0.5)
+    TYP=[("Law firms","#f0a020"),("Platforms","#4d8bff"),("Companies","#8f8bff")]
+    for i,(lab,co) in enumerate(TYP):
+        gx=660+i*300
+        out.append(circle(gx,252,9,co,leg)); out.append(text(gx+18,260,lab,23,fill=MUTE,opacity=leg))
+    def ring(ccx,ccy,rad,n,phase=-90):
+        return [(ccx+rad*math.cos(math.radians(phase+i*360.0/n)),
+                 ccy+rad*math.sin(math.radians(phase+i*360.0/n))) for i in range(n)]
+    n=6; rad=150; tcol=[TYP[i%3][1] for i in range(n)]
+    # LEFT — the N x N mesh (everyone builds their own converters)
+    lcx,lcy=600,516; Lp=ring(lcx,lcy,rad,n)
+    out.append(text(lcx,330,"WITHOUT A STANDARD",24,fill=LOST,weight="bold",anchor="middle",opacity=appear(t,0.5,0.5),spacing="2"))
+    eo=appear(t,0.9,0.7)
+    for i in range(n):
+        for j in range(i+1,n):
+            out.append(line(Lp[i][0],Lp[i][1],Lp[j][0],Lp[j][1],LOST,1.6,eo*0.45))
+    for i,(px,py) in enumerate(Lp):
+        out.append(circle(px,py,15,tcol[i],appear(t,0.6+i*0.05,0.4),stroke=BG,sw=3))
+    out.append(text(lcx,724,"N × N custom converters",27,fill=WHITE,weight="bold",anchor="middle",opacity=appear(t,1.8,0.5)))
+    # middle — collapse to one format
+    out.append(arrow(892,516,1028,516,MUTE,3,appear(t,2.1,0.5)))
+    out.append(text(960,490,"one format",19,fill=MUTE,anchor="middle",opacity=appear(t,2.2,0.5)))
+    # RIGHT — hub-and-spoke through the shared standard
+    rcx,rcy=1320,516; Rp=ring(rcx,rcy,rad,n)
+    out.append(text(rcx,330,"WITH ONE STANDARD",24,fill=OCF,weight="bold",anchor="middle",opacity=appear(t,2.3,0.5),spacing="2"))
+    for i,(px,py) in enumerate(Rp):
+        out.append(line(rcx,rcy,px,py,OCF,2,appear(t,2.5+i*0.05,0.4)*0.6))
+    out.append(circle(rcx,rcy,36,CORE_FILL,appear(t,2.4,0.5),stroke=CORE,sw=3))
+    out.append(text(rcx,rcy+8,"OCF",22,fill=CORE_TXT,weight="bold",anchor="middle",opacity=appear(t,2.4,0.5)))
+    for i,(px,py) in enumerate(Rp):
+        out.append(circle(px,py,15,tcol[i],appear(t,2.5+i*0.05,0.4),stroke=BG,sw=3))
+    out.append(text(rcx,724,"N connections — one each",27,fill=WHITE,weight="bold",anchor="middle",opacity=appear(t,3.0,0.5)))
+    # the agentic amplifier
+    out.append(text(W/2,800,"And agentic tools now let anyone spin up new models — even new platforms.",28,
+                    fill=AMBER,weight="bold",anchor="middle",opacity=appear(t,3.4,0.6)))
+    out.append(caption(t,"N firms × N platforms × N companies, each rolling their own converters — or one shared format everyone speaks.",start=3.6))
     return f'<g opacity="{o:.3f}">'+"".join(out)+'</g>'
 
 def s_ocf_standard(t, dur):
@@ -822,7 +843,7 @@ def s_close(t, dur):
 SCENES = [
     ("title",       s_title,       5.0),
     ("coalition",   s_coalition,   11.0),
-    ("problem",     s_problem,     10.0),
+    ("problem",     s_problem,     13.0),
     ("ocfstd",      s_ocf_standard,12.0),
     ("why",         s_why,         13.0),
     ("analysis",    s_analysis,    12.0),
