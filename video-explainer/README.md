@@ -6,8 +6,8 @@ example objects.
 
 | File | What it is |
 | --- | --- |
-| `ocf-core-explainer.mp4` | 1920×1080, h264, 30 fps, 139 s, ~4.7 MB (primary) |
-| `ocf-core-explainer.gif` | 900×506, 12 fps, ~6.4 MB (for embeds/chat) |
+| `ocf-core-explainer.mp4` | 1920×1080, h264, 30 fps, 183 s, ~5.8 MB (primary) |
+| `ocf-core-explainer.gif` | 900×506, 12 fps, ~8.5 MB (for embeds/chat) |
 | `poster.png` | still thumbnail (the recap scene) |
 | `gen.py` | the SVG frame generator (see *Rebuilding* below) |
 
@@ -15,6 +15,14 @@ example objects.
 > binaries are large for a schema repo, so it's left out of the tree by default.
 
 ## What it teaches (in order)
+
+**Intro (context, ~40 s):** the Open Cap Table Coalition (its makeup and mission), the
+fragmentation **problem** it set out to solve, **OCF v1's** story (an open, event-driven format,
+2021→2022), and **why this analysis** was commissioned by the board — to map the OCF ⇄ Carta
+migration pathway and surface the gaps in each. *(Sourced from the OCT Law Firm Working Group
+briefing deck; per direction, OCX is not covered.)*
+
+Then the **explainer**:
 
 1. **What a cap table is** — a company's ledger of who owns what.
 2. **What an OCF object is** — one rich record in the Open Cap Format standard.
@@ -53,7 +61,7 @@ the brand so the multi-colour field coding keeps its contrast.
 Requires `rsvg-convert` (librsvg), `ffmpeg`, and `python3` — no browser needed.
 
 ```sh
-# 1. generate the SVG frame sequence (20 fps → 2780 frames)
+# 1. generate the SVG frame sequence (20 fps → 3660 frames)
 python3 gen.py all frames --fps 20
 
 # 2. render every frame to PNG (parallel)

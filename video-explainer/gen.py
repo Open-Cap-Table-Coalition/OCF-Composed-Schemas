@@ -238,9 +238,85 @@ def s_title(t, dur):
                     opacity=appear(t,1.5,0.6), spacing="6"))
     return f'<g opacity="{o:.3f}">' + "".join(out) + '</g>'
 
+def s_coalition(t, dur):
+    o=scene_opacity(t,dur); out=[background()]
+    out.append(heading(t,"The Open Cap Table Coalition","an industry coalition for open equity data"))
+    cats=[("Cap-table platforms",CARTA),("Transfer agents & banks",CORE),("Law firms",OCF),("Registries & markets","#8f8bff")]
+    cw=400; gap=24; total=4*cw+3*gap; sx=(W-total)/2; y=330
+    for i,(lab,co) in enumerate(cats):
+        ro=appear(t,0.5+i*0.16,0.5); x=sx+i*(cw+gap)
+        out.append(rrect(x,y,cw,96,16, fill=PANEL, stroke=co, sw=2, opacity=ro))
+        out.append(circle(x+34,y+48,8,co,ro))
+        out.append(text(x+56,y+57,lab,24,fill=WHITE,opacity=ro))
+    mo=appear(t,1.4,0.6)
+    out.append(text(W/2, 528, "FOUNDING MEMBERS INCLUDE", 22, fill=FAINT, anchor="middle", opacity=mo, spacing="4"))
+    members="Carta · Cooley · Fenwick · Goodwin · Gunderson Dettmer · Latham & Watkins · Morgan Stanley · Orrick · Wilson Sonsini"
+    out.append(multiline(W/2, 580, wrap(members, 62), 27, 44, fill="#c3c9ec", anchor="middle", opacity=mo))
+    out.append(caption(t, "Substantially all of the private-company equity industry — software, banks and law firms — at one table.", start=1.9))
+    return f'<g opacity="{o:.3f}">'+"".join(out)+'</g>'
+
+def s_problem(t, dur):
+    o=scene_opacity(t,dur); out=[background()]
+    out.append(heading(t,"The problem it set out to solve"))
+    silos=[("Platform A",CARTA),("A spreadsheet",OCF),("Another platform",CORE)]
+    sw2=420; gap=96; total=3*sw2+2*gap; sx=(W-total)/2; y=320
+    for i,(lab,co) in enumerate(silos):
+        ro=appear(t,0.5+i*0.2,0.5); x=sx+i*(sw2+gap)
+        out.append(rrect(x,y,sw2,300,18, fill=PANEL, stroke=co, sw=2, opacity=ro))
+        out.append(text(x+sw2/2,y+52,lab,26,fill=co,weight="bold",anchor="middle",opacity=ro))
+        out.append(f'<g filter="url(#blur)" opacity="{ro*0.55:.3f}">')
+        for r in range(4):
+            out.append(rrect(x+40,y+92+r*44,sw2-80,26,6, fill="#2a2f58"))
+        out.append('</g>')
+    for i in range(2):
+        ro=appear(t,1.5+i*0.2,0.5); gx=sx+sw2+gap/2+i*(sw2+gap)
+        out.append(line(gx-46, y+150, gx+46, y+150, LOST, 3, ro, dash="9 9"))
+        out.append(cross(gx, y+150, 18, LOST, ro))
+    out.append(text(W/2, 712, "Dozens of tools — but no shared standard.", 32, fill=WHITE, weight="bold", anchor="middle", opacity=appear(t,1.9,0.6)))
+    out.append(caption(t, "Cap-table data was trapped in each platform — hard to move, reconcile, or audit across systems.", start=2.2))
+    return f'<g opacity="{o:.3f}">'+"".join(out)+'</g>'
+
+def s_ocf_standard(t, dur):
+    o=scene_opacity(t,dur); out=[background()]
+    out.append(heading(t,"OCF — one open standard","built by the Coalition's Technical Working Group"))
+    y=470; x0=360; x1=1560
+    out.append(line(x0,y,x1,y,OCF,3,appear(t,0.6,0.6)))
+    nodes=[("Oct 2021","first preview",0.08),("Dec 2021","event-driven redesign",0.5),("2022","v1.0 released",0.92)]
+    for i,(date,desc,fx) in enumerate(nodes):
+        ro=appear(t,0.9+i*0.32,0.5); nx=x0+(x1-x0)*fx
+        out.append(circle(nx,y,13,OCF,ro,stroke=BG,sw=4))
+        out.append(text(nx,y-38,date,29,fill=WHITE,weight="bold",anchor="middle",opacity=ro))
+        out.append(text(nx,y+58,desc,24,fill=OCF_TXT,anchor="middle",opacity=ro))
+    out.append(text(W/2, 706, "An open, event-driven file format any platform can read and write —", 30, fill=WHITE, anchor="middle", opacity=appear(t,2.1,0.6)))
+    out.append(text(W/2, 748, "so a cap table can move intact.", 30, fill=WHITE, weight="bold", anchor="middle", opacity=appear(t,2.2,0.6)))
+    out.append(caption(t, "The Open Cap Format (OCF) v1.0 — a shared, event-driven format for cap-table data.", start=2.5))
+    return f'<g opacity="{o:.3f}">'+"".join(out)+'</g>'
+
+def s_analysis(t, dur):
+    o=scene_opacity(t,dur); out=[background()]
+    out.append(heading(t,"Why this analysis"))
+    bw=400; bh=150; y=330; ox=470; cx2=1050
+    oo=appear(t,0.5,0.5); co=appear(t,0.7,0.5)
+    out.append(rrect(ox,y,bw,bh,18, fill=PANEL, stroke=OCF, sw=2.5, opacity=oo))
+    out.append(text(ox+bw/2,y+72,"OCF",46,fill=OCF,weight="bold",anchor="middle",opacity=oo))
+    out.append(text(ox+bw/2,y+114,"the open standard",22,fill=MUTE,anchor="middle",opacity=oo))
+    out.append(rrect(cx2,y,bw,bh,18, fill=PANEL, stroke=CARTA, sw=2.5, opacity=co))
+    out.append(text(cx2+bw/2,y+72,"Carta",46,fill=CARTA,weight="bold",anchor="middle",opacity=co))
+    out.append(text(cx2+bw/2,y+114,"a leading platform",22,fill=MUTE,anchor="middle",opacity=co))
+    ao=appear(t,1.1,0.5)
+    out.append(arrow(ox+bw+20, y+60, cx2-20, y+60, CORE, 3.5, ao))
+    out.append(arrow(cx2-20, y+96, ox+bw+20, y+96, CORE, 3.5, ao))
+    out.append(text(960, y-22, "migration pathway", 24, fill=CORE_TXT, anchor="middle", weight="bold", opacity=appear(t,1.3,0.5)))
+    go=appear(t,1.9,0.6)
+    out.append(warn(ox+bw/2, y+bh+72, 22, AMBER, go)); out.append(text(ox+bw/2, y+bh+142, "gaps in OCF v1", 26, fill=AMBER, anchor="middle", weight="bold", opacity=go))
+    out.append(warn(cx2+bw/2, y+bh+72, 22, AMBER, go)); out.append(text(cx2+bw/2, y+bh+142, "gaps in Carta", 26, fill=AMBER, anchor="middle", weight="bold", opacity=go))
+    out.append(text(W/2, 800, "Commissioned by the board: map the pathway between them, and find what each can't yet hold.", 28, fill=WHITE, anchor="middle", opacity=appear(t,2.3,0.6)))
+    out.append(caption(t, "The rest of this tour shows how we did it — and what we found.", start=2.7))
+    return f'<g opacity="{o:.3f}">'+"".join(out)+'</g>'
+
 def s_captable(t, dur):
     o = scene_opacity(t, dur); out=[background()]
-    out.append(heading(t, "Every company has a cap table"))
+    out.append(heading(t, "First, the basics — a cap table"))
     cx=W/2; cy=520
     # company node
     co=appear(t,0.5,0.5)
@@ -523,6 +599,10 @@ def s_close(t, dur):
 # ---- timeline --------------------------------------------------------------
 SCENES = [
     ("title",       s_title,       5.0),
+    ("coalition",   s_coalition,   11.0),
+    ("problem",     s_problem,     10.0),
+    ("ocfstd",      s_ocf_standard,12.0),
+    ("analysis",    s_analysis,    11.0),
     ("captable",    s_captable,    9.0),
     ("ocf",         s_ocf,         10.0),
     ("carta",       s_carta,       9.0),
