@@ -399,6 +399,56 @@ def s_ocf_standard(t, dur):
     out.append(caption(t, "The Open Cap Format (OCF) v1.0 — a shared, event-driven format for cap-table data.", start=2.5))
     return f'<g opacity="{o:.3f}">'+"".join(out)+'</g>'
 
+def s_events_why(t, dur):
+    o=scene_opacity(t,dur); out=[background()]
+    out.append(heading(t,"Why an event-driven standard?","because a cap table is always moving"))
+    cx=960
+    out.append(text(cx,262,"WHAT YOU USUALLY SEE",22,fill=MUTE,anchor="middle",opacity=appear(t,0.4,0.5),spacing="3"))
+    sc,sh=card(cx-260,286,520,"Cap table","A SNAPSHOT · AS OF ONE DATE",
+               [("Founders — 58%","carta"),("Investors — 29%","carta"),("Option pool — 13%","carta")],
+               accent=CARTA,accent_fill=CARTA_FILL,opacity=appear(t,0.5,0.5),row_reveal=(0.8,0.14),t=t)
+    out.append(sc)
+    tly=692; co=appear(t,1.7,0.5)
+    out.append(line(cx,286+sh,cx,tly-16,MUTE,2,co,dash="6 7"))
+    out.append(_arrowhead(cx,tly-16,math.pi/2,13,MUTE,co))
+    out.append(text(cx+22,616,"just one moment in time",20,fill=MUTE,opacity=co))
+    out.append(text(232,648,"THE EVENTS THAT ACTUALLY CHANGE IT",22,fill=OCF_TXT,opacity=appear(t,1.9,0.6),spacing="2"))
+    out.append(line(232,tly,1688,tly,OCF,3,appear(t,1.9,0.6)))
+    evs=["issuance","option pool +","grant","transfer","pool +","exercise"]
+    for i,ev in enumerate(evs):
+        ex=300+i*264; ro=appear(t,2.1+i*0.11,0.4)
+        out.append(circle(ex,tly,11,OCF,ro,stroke=BG,sw=3))
+        out.append(text(ex,tly+44,ev,21,fill=WHITE,anchor="middle",opacity=ro))
+    out.append(caption(t,"Lawyers and SMEs constantly audit the snapshot against the events that changed it — issuances, transfers, pool increases.",start=2.9))
+    return f'<g opacity="{o:.3f}">'+"".join(out)+'</g>'
+
+def s_ocf_events(t, dur):
+    o=scene_opacity(t,dur); out=[background()]
+    out.append(heading(t,"So OCF models the events","the source of truth — the snapshot is computed from it"))
+    lc,lh=card(180,330,470,"OCF event log","THE SOURCE OF TRUTH",
+               [("Stock issued","in"),("Option pool +","in"),("Transfer","in"),("Option granted","in")],
+               accent=OCF,accent_fill=OCF_FILL,opacity=appear(t,0.5,0.5),row_reveal=(0.8,0.13),t=t)
+    out.append(lc)
+    my=330+lh/2
+    out.append(arrow(650,my,878,my,MUTE,3,appear(t,1.3,0.5)))
+    ex=960
+    eo=appear(t,1.5,0.55)
+    out.append(circle(ex,my,74,CORE_FILL,eo,stroke=CORE,sw=3))
+    out.append(icon_loop(ex,my,34,CORE,eo))
+    out.append(text(ex,my+110,"OCF-Tools",28,fill=CORE_TXT,weight="bold",anchor="middle",opacity=eo))
+    out.append(text(ex,my+144,"compute + validate",22,fill=MUTE,anchor="middle",opacity=eo))
+    out.append(arrow(ex+80,my,1250,my,MUTE,3,appear(t,1.9,0.5)))
+    rc,rh=card(1250,330,490,"Snapshot","AS OF ANY DATE",
+               [("Founders — 58%","carta"),("Investors — 29%","carta"),("Option pool — 13%","carta")],
+               accent=CARTA,accent_fill=CARTA_FILL,opacity=appear(t,2.1,0.5),row_reveal=(2.3,0.12),t=t)
+    out.append(rc)
+    vy=330+rh+34; vo=appear(t,2.7,0.5)
+    out.append(check(1425,vy,16,OCF,vo)); out.append(text(1451,vy+8,"validated",24,fill=OCF_TXT,weight="bold",opacity=vo))
+    out.append(text(W/2,812,"Compute the cap table at any point in time — and validate it. Real today in OCF-Tools (demo later).",
+                    26,fill=WHITE,anchor="middle",opacity=appear(t,3.0,0.6)))
+    out.append(caption(t,"OCF's plan from day one: model the events, then derive and check the snapshot at any date.",start=3.2))
+    return f'<g opacity="{o:.3f}">'+"".join(out)+'</g>'
+
 def s_why(t, dur):
     o=scene_opacity(t,dur); out=[background()]
     out.append(heading(t,"Why now","why trustworthy cap-table data matters more than ever"))
@@ -845,6 +895,8 @@ SCENES = [
     ("coalition",   s_coalition,   11.0),
     ("problem",     s_problem,     13.0),
     ("ocfstd",      s_ocf_standard,12.0),
+    ("eventswhy",   s_events_why,  13.0),
+    ("ocfevents",   s_ocf_events,  13.0),
     ("why",         s_why,         13.0),
     ("analysis",    s_analysis,    12.0),
     ("captable",    s_captable,    9.0),

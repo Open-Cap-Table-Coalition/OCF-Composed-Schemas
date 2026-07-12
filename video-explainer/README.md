@@ -6,8 +6,8 @@ example objects.
 
 | File | What it is |
 | --- | --- |
-| `ocf-core-explainer.mp4` | 1920×1080, h264, 30 fps, 240 s, ~8.0 MB (primary) |
-| `ocf-core-explainer.gif` | 900×506, 12 fps, ~11 MB (for embeds/chat) |
+| `ocf-core-explainer.mp4` | 1920×1080, h264, 30 fps, 266 s, ~8.7 MB (primary) |
+| `ocf-core-explainer.gif` | 900×506, 12 fps, ~12 MB (for embeds/chat) |
 | `poster.png` | still thumbnail (the recap scene) |
 | `gen.py` | the SVG frame generator (see *Rebuilding* below) |
 
@@ -16,9 +16,13 @@ example objects.
 
 ## What it teaches (in order)
 
-**Intro (context, ~55 s):** the Open Cap Table Coalition (its makeup and mission), the
-fragmentation **problem** it set out to solve, **OCF v1's** story (an open, event-driven format,
-2021→2022), then the **board mandate** in two beats — *"Why now"* (agentic workflows heighten the
+**Intro (context, ~80 s):** the Open Cap Table Coalition (its makeup and mission), the
+fragmentation **N×N problem** it set out to solve (many firms/platforms/companies each building
+their own converters — worse now that agentic tools let anyone spin up new models/platforms),
+**OCF v1's** story (2021→2022), **why event-driven** (a snapshot is a photo at one moment; the
+underlying event stream is the source of truth SMEs audit against — so OCF models the events and
+**computes/validates** the snapshot at any date, now real in **OCF-Tools**, demoed later), then the
+**board mandate** in two beats — *"Why now"* (agentic workflows heighten the
 need for a **deterministic oracle**; OCF + its validation tools already provide predictable
 cap-table integrity; aligning OCF with Carta unlocks the agentic future) and *"So we propose OCF
 Core"* (a strict, verifiable subset that transforms **to and from Carta**, with a **migration path
@@ -75,7 +79,7 @@ the brand so the multi-colour field coding keeps its contrast.
 Requires `rsvg-convert` (librsvg), `ffmpeg`, and `python3` — no browser needed.
 
 ```sh
-# 1. generate the SVG frame sequence (20 fps → 4800 frames)
+# 1. generate the SVG frame sequence (20 fps → 5320 frames)
 python3 gen.py all frames --fps 20
 
 # 2. render every frame to PNG (parallel)
