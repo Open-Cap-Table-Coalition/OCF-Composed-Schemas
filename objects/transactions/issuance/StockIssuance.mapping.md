@@ -218,7 +218,9 @@ shared:
       Default: "#/$defs/Certificate/properties/stakeholderId"
   stockholder_approval_date: { kind: unmappable, target: null, reason: no-equivalent }
   consideration_text:        { kind: unmappable, target: null, reason: no-equivalent }
-  security_law_exemptions:   { kind: unmappable, target: null, reason: no-equivalent }
+  security_law_exemptions:
+    kind: computed                 # federal exemption classified onto stakeholder-level Compliance
+    target: "#/$defs/Compliance/properties/federalExemption"
   stock_class_id:
     kind: rename
     target:

@@ -35,7 +35,6 @@ flowchart LR
   o0 -->|"exercise_price"| sink
   o0 -->|"option_grant_type"| sink
   o0 -->|"security_id"| sink
-  o0 -->|"security_law_exemptions"| sink
   o0 -->|"stakeholder_id"| sink
   o0 -->|"stockholder_approval_date"| sink
   o0 -->|"termination_exercise_windows"| sink
@@ -66,7 +65,6 @@ flowchart LR
   o0 -->|"exercise_price"| sink
   o0 -->|"expiration_date"| sink
   o0 -->|"option_grant_type"| sink
-  o0 -->|"security_law_exemptions"| sink
   o0 -->|"stockholder_approval_date"| sink
   o0 -->|"termination_exercise_windows"| sink
 ```
@@ -117,35 +115,10 @@ flowchart LR
   o0 -->|"board_approval_date"| sink
   o0 -->|"consideration_text"| sink
   o0 -->|"issuance_type"| sink
-  o0 -->|"security_law_exemptions"| sink
   o0 -->|"share_numbers_issued"| sink
   o0 -->|"stock_legend_ids"| sink
   o0 -->|"stockholder_approval_date"| sink
   o0 -->|"vestings"| sink
-```
-
-**StockIssuance [Rsa]**
-
-```mermaid
-flowchart LR
-  classDef adm fill:#e6f4ea,stroke:#34a853,color:#0b3d20;
-  classDef notadm fill:#f1f3f4,stroke:#9aa0a6,color:#5f6368,stroke-dasharray:4 3;
-  classDef carta fill:#e8f0fe,stroke:#1a73e8,color:#0d2b66;
-  classDef sink fill:#fce8e6,stroke:#d93025,color:#5c0d06;
-  subgraph SRC["OCF source objects"]
-    direction TB
-    o0["StockIssuance [Rsa]"]:::adm
-  end
-  subgraph TGT["Carta target objects"]
-    direction TB
-    sink["⌀ no Carta home"]:::sink
-  end
-  o0 -->|"consideration_text"| sink
-  o0 -->|"issuance_type"| sink
-  o0 -->|"security_law_exemptions"| sink
-  o0 -->|"share_numbers_issued"| sink
-  o0 -->|"stock_legend_ids"| sink
-  o0 -->|"stockholder_approval_date"| sink
 ```
 
 **WarrantIssuance**
@@ -218,7 +191,7 @@ flowchart LR
   o0 -->|"stockholder_approval_date"| sink
 ```
 
-**EquityCompensationIssuance [Option] → OptionGrant**
+**StockIssuance [Rsa]**
 
 ```mermaid
 flowchart LR
@@ -228,18 +201,17 @@ flowchart LR
   classDef sink fill:#fce8e6,stroke:#d93025,color:#5c0d06;
   subgraph SRC["OCF source objects"]
     direction TB
-    o0["EquityCompensationIssuance [Option]"]:::adm
+    o0["StockIssuance [Rsa]"]:::adm
   end
   subgraph TGT["Carta target objects"]
     direction TB
-    t0["OptionGrant"]:::carta
     sink["⌀ no Carta home"]:::sink
   end
-  o0 -->|"base_price"| sink
   o0 -->|"consideration_text"| sink
-  o0 -->|"security_law_exemptions"| sink
+  o0 -->|"issuance_type"| sink
+  o0 -->|"share_numbers_issued"| sink
+  o0 -->|"stock_legend_ids"| sink
   o0 -->|"stockholder_approval_date"| sink
-  o0 -->|"termination_exercise_windows → exercisePeriods"| t0
 ```
 
 **Valuation**
@@ -263,6 +235,29 @@ flowchart LR
   o0 -->|"provider"| sink
   o0 -->|"stockholder_approval_date"| sink
   o0 -->|"valuation_type"| sink
+```
+
+**EquityCompensationIssuance [Option] → OptionGrant**
+
+```mermaid
+flowchart LR
+  classDef adm fill:#e6f4ea,stroke:#34a853,color:#0b3d20;
+  classDef notadm fill:#f1f3f4,stroke:#9aa0a6,color:#5f6368,stroke-dasharray:4 3;
+  classDef carta fill:#e8f0fe,stroke:#1a73e8,color:#0d2b66;
+  classDef sink fill:#fce8e6,stroke:#d93025,color:#5c0d06;
+  subgraph SRC["OCF source objects"]
+    direction TB
+    o0["EquityCompensationIssuance [Option]"]:::adm
+  end
+  subgraph TGT["Carta target objects"]
+    direction TB
+    t0["OptionGrant"]:::carta
+    sink["⌀ no Carta home"]:::sink
+  end
+  o0 -->|"base_price"| sink
+  o0 -->|"consideration_text"| sink
+  o0 -->|"stockholder_approval_date"| sink
+  o0 -->|"termination_exercise_windows → exercisePeriods"| t0
 ```
 
 **Stakeholder → Stakeholder**
@@ -309,69 +304,6 @@ flowchart LR
   o0 -->|"default_cancellation_behavior"| sink
   o0 -->|"stock_class_ids → shareClassId"| t0
   o0 -->|"stockholder_approval_date"| sink
-```
-
-**EquityCompensationCancellation [Option]**
-
-```mermaid
-flowchart LR
-  classDef adm fill:#e6f4ea,stroke:#34a853,color:#0b3d20;
-  classDef notadm fill:#f1f3f4,stroke:#9aa0a6,color:#5f6368,stroke-dasharray:4 3;
-  classDef carta fill:#e8f0fe,stroke:#1a73e8,color:#0d2b66;
-  classDef sink fill:#fce8e6,stroke:#d93025,color:#5c0d06;
-  subgraph SRC["OCF source objects"]
-    direction TB
-    o0["EquityCompensationCancellation [Option]"]:::adm
-  end
-  subgraph TGT["Carta target objects"]
-    direction TB
-    sink["⌀ no Carta home"]:::sink
-  end
-  o0 -->|"balance_security_id"| sink
-  o0 -->|"reason_text"| sink
-  o0 -->|"security_id"| sink
-```
-
-**EquityCompensationCancellation [Rsu]**
-
-```mermaid
-flowchart LR
-  classDef adm fill:#e6f4ea,stroke:#34a853,color:#0b3d20;
-  classDef notadm fill:#f1f3f4,stroke:#9aa0a6,color:#5f6368,stroke-dasharray:4 3;
-  classDef carta fill:#e8f0fe,stroke:#1a73e8,color:#0d2b66;
-  classDef sink fill:#fce8e6,stroke:#d93025,color:#5c0d06;
-  subgraph SRC["OCF source objects"]
-    direction TB
-    o0["EquityCompensationCancellation [Rsu]"]:::adm
-  end
-  subgraph TGT["Carta target objects"]
-    direction TB
-    sink["⌀ no Carta home"]:::sink
-  end
-  o0 -->|"balance_security_id"| sink
-  o0 -->|"reason_text"| sink
-  o0 -->|"security_id"| sink
-```
-
-**EquityCompensationCancellation [Sar]**
-
-```mermaid
-flowchart LR
-  classDef adm fill:#e6f4ea,stroke:#34a853,color:#0b3d20;
-  classDef notadm fill:#f1f3f4,stroke:#9aa0a6,color:#5f6368,stroke-dasharray:4 3;
-  classDef carta fill:#e8f0fe,stroke:#1a73e8,color:#0d2b66;
-  classDef sink fill:#fce8e6,stroke:#d93025,color:#5c0d06;
-  subgraph SRC["OCF source objects"]
-    direction TB
-    o0["EquityCompensationCancellation [Sar]"]:::adm
-  end
-  subgraph TGT["Carta target objects"]
-    direction TB
-    sink["⌀ no Carta home"]:::sink
-  end
-  o0 -->|"balance_security_id"| sink
-  o0 -->|"reason_text"| sink
-  o0 -->|"security_id"| sink
 ```
 
 **StockClass**
@@ -456,6 +388,66 @@ flowchart LR
   end
   o0 -->|"md5"| sink
   o0 -->|"related_objects"| sink
+```
+
+**EquityCompensationCancellation [Option]**
+
+```mermaid
+flowchart LR
+  classDef adm fill:#e6f4ea,stroke:#34a853,color:#0b3d20;
+  classDef notadm fill:#f1f3f4,stroke:#9aa0a6,color:#5f6368,stroke-dasharray:4 3;
+  classDef carta fill:#e8f0fe,stroke:#1a73e8,color:#0d2b66;
+  classDef sink fill:#fce8e6,stroke:#d93025,color:#5c0d06;
+  subgraph SRC["OCF source objects"]
+    direction TB
+    o0["EquityCompensationCancellation [Option]"]:::adm
+  end
+  subgraph TGT["Carta target objects"]
+    direction TB
+    sink["⌀ no Carta home"]:::sink
+  end
+  o0 -->|"balance_security_id"| sink
+  o0 -->|"security_id"| sink
+```
+
+**EquityCompensationCancellation [Rsu]**
+
+```mermaid
+flowchart LR
+  classDef adm fill:#e6f4ea,stroke:#34a853,color:#0b3d20;
+  classDef notadm fill:#f1f3f4,stroke:#9aa0a6,color:#5f6368,stroke-dasharray:4 3;
+  classDef carta fill:#e8f0fe,stroke:#1a73e8,color:#0d2b66;
+  classDef sink fill:#fce8e6,stroke:#d93025,color:#5c0d06;
+  subgraph SRC["OCF source objects"]
+    direction TB
+    o0["EquityCompensationCancellation [Rsu]"]:::adm
+  end
+  subgraph TGT["Carta target objects"]
+    direction TB
+    sink["⌀ no Carta home"]:::sink
+  end
+  o0 -->|"balance_security_id"| sink
+  o0 -->|"security_id"| sink
+```
+
+**EquityCompensationCancellation [Sar]**
+
+```mermaid
+flowchart LR
+  classDef adm fill:#e6f4ea,stroke:#34a853,color:#0b3d20;
+  classDef notadm fill:#f1f3f4,stroke:#9aa0a6,color:#5f6368,stroke-dasharray:4 3;
+  classDef carta fill:#e8f0fe,stroke:#1a73e8,color:#0d2b66;
+  classDef sink fill:#fce8e6,stroke:#d93025,color:#5c0d06;
+  subgraph SRC["OCF source objects"]
+    direction TB
+    o0["EquityCompensationCancellation [Sar]"]:::adm
+  end
+  subgraph TGT["Carta target objects"]
+    direction TB
+    sink["⌀ no Carta home"]:::sink
+  end
+  o0 -->|"balance_security_id"| sink
+  o0 -->|"security_id"| sink
 ```
 
 **EquityCompensationExercise [Option]**
@@ -558,46 +550,6 @@ flowchart LR
   o0 -->|"security_id"| sink
 ```
 
-**StockCancellation [Default]**
-
-```mermaid
-flowchart LR
-  classDef adm fill:#e6f4ea,stroke:#34a853,color:#0b3d20;
-  classDef notadm fill:#f1f3f4,stroke:#9aa0a6,color:#5f6368,stroke-dasharray:4 3;
-  classDef carta fill:#e8f0fe,stroke:#1a73e8,color:#0d2b66;
-  classDef sink fill:#fce8e6,stroke:#d93025,color:#5c0d06;
-  subgraph SRC["OCF source objects"]
-    direction TB
-    o0["StockCancellation [Default]"]:::adm
-  end
-  subgraph TGT["Carta target objects"]
-    direction TB
-    sink["⌀ no Carta home"]:::sink
-  end
-  o0 -->|"reason_text"| sink
-  o0 -->|"security_id"| sink
-```
-
-**StockCancellation [Rsa]**
-
-```mermaid
-flowchart LR
-  classDef adm fill:#e6f4ea,stroke:#34a853,color:#0b3d20;
-  classDef notadm fill:#f1f3f4,stroke:#9aa0a6,color:#5f6368,stroke-dasharray:4 3;
-  classDef carta fill:#e8f0fe,stroke:#1a73e8,color:#0d2b66;
-  classDef sink fill:#fce8e6,stroke:#d93025,color:#5c0d06;
-  subgraph SRC["OCF source objects"]
-    direction TB
-    o0["StockCancellation [Rsa]"]:::adm
-  end
-  subgraph TGT["Carta target objects"]
-    direction TB
-    sink["⌀ no Carta home"]:::sink
-  end
-  o0 -->|"reason_text"| sink
-  o0 -->|"security_id"| sink
-```
-
 **StockTransfer [Default]**
 
 ```mermaid
@@ -696,6 +648,44 @@ flowchart LR
   o0 -->|"date"| sink
 ```
 
+**StockCancellation [Default]**
+
+```mermaid
+flowchart LR
+  classDef adm fill:#e6f4ea,stroke:#34a853,color:#0b3d20;
+  classDef notadm fill:#f1f3f4,stroke:#9aa0a6,color:#5f6368,stroke-dasharray:4 3;
+  classDef carta fill:#e8f0fe,stroke:#1a73e8,color:#0d2b66;
+  classDef sink fill:#fce8e6,stroke:#d93025,color:#5c0d06;
+  subgraph SRC["OCF source objects"]
+    direction TB
+    o0["StockCancellation [Default]"]:::adm
+  end
+  subgraph TGT["Carta target objects"]
+    direction TB
+    sink["⌀ no Carta home"]:::sink
+  end
+  o0 -->|"security_id"| sink
+```
+
+**StockCancellation [Rsa]**
+
+```mermaid
+flowchart LR
+  classDef adm fill:#e6f4ea,stroke:#34a853,color:#0b3d20;
+  classDef notadm fill:#f1f3f4,stroke:#9aa0a6,color:#5f6368,stroke-dasharray:4 3;
+  classDef carta fill:#e8f0fe,stroke:#1a73e8,color:#0d2b66;
+  classDef sink fill:#fce8e6,stroke:#d93025,color:#5c0d06;
+  subgraph SRC["OCF source objects"]
+    direction TB
+    o0["StockCancellation [Rsa]"]:::adm
+  end
+  subgraph TGT["Carta target objects"]
+    direction TB
+    sink["⌀ no Carta home"]:::sink
+  end
+  o0 -->|"security_id"| sink
+```
+
 **StockClassConversionRatioAdjustment**
 
 ```mermaid
@@ -739,17 +729,14 @@ flowchart LR
 
 ### EquityCompensationCancellation [Option]
 - balance_security_id: no-destination — kind unmappable
-- **reason_text** (OCF-required): no-destination — kind unmappable
 - **security_id** (OCF-required): no-destination — kind unmappable
 
 ### EquityCompensationCancellation [Rsu]
 - balance_security_id: no-destination — kind unmappable
-- **reason_text** (OCF-required): no-destination — kind unmappable
 - **security_id** (OCF-required): no-destination — kind unmappable
 
 ### EquityCompensationCancellation [Sar]
 - balance_security_id: no-destination — kind unmappable
-- **reason_text** (OCF-required): no-destination — kind unmappable
 - **security_id** (OCF-required): no-destination — kind unmappable
 
 ### EquityCompensationExercise [Option]
@@ -763,7 +750,6 @@ flowchart LR
 ### EquityCompensationIssuance [Option]
 - base_price: no-destination — kind unmappable
 - consideration_text: no-destination — kind unmappable
-- **security_law_exemptions** (OCF-required): no-destination — kind unmappable
 - stockholder_approval_date: no-destination — kind unmappable
 - **termination_exercise_windows** (OCF-required): existence-loss — array→scalar
 
@@ -775,7 +761,6 @@ flowchart LR
 - exercise_price: no-destination — kind unmappable
 - **expiration_date** (OCF-required): no-destination — kind unmappable
 - option_grant_type: no-destination — kind unmappable
-- **security_law_exemptions** (OCF-required): no-destination — kind unmappable
 - stockholder_approval_date: no-destination — kind unmappable
 - **termination_exercise_windows** (OCF-required): no-destination — kind unmappable
 
@@ -788,7 +773,6 @@ flowchart LR
 - exercise_price: no-destination — kind unmappable
 - option_grant_type: no-destination — kind unmappable
 - **security_id** (OCF-required): no-destination — kind unmappable
-- **security_law_exemptions** (OCF-required): no-destination — kind unmappable
 - **stakeholder_id** (OCF-required): no-destination — kind unmappable
 - stockholder_approval_date: no-destination — kind unmappable
 - **termination_exercise_windows** (OCF-required): no-destination — kind unmappable
@@ -828,11 +812,9 @@ flowchart LR
 - **date** (OCF-required): no-destination — kind unmappable
 
 ### StockCancellation [Default]
-- **reason_text** (OCF-required): no-destination — kind unmappable
 - **security_id** (OCF-required): no-destination — kind unmappable
 
 ### StockCancellation [Rsa]
-- **reason_text** (OCF-required): no-destination — kind unmappable
 - **security_id** (OCF-required): no-destination — kind unmappable
 
 ### StockClass
@@ -852,7 +834,6 @@ flowchart LR
 - board_approval_date: no-destination — kind unmappable
 - consideration_text: no-destination — kind unmappable
 - issuance_type: no-destination — kind unmappable
-- **security_law_exemptions** (OCF-required): no-destination — kind unmappable
 - share_numbers_issued: no-destination — kind unmappable
 - **stock_legend_ids** (OCF-required): no-destination — kind unmappable
 - stockholder_approval_date: no-destination — kind unmappable
@@ -861,7 +842,6 @@ flowchart LR
 ### StockIssuance [Rsa]
 - consideration_text: no-destination — kind unmappable
 - issuance_type: no-destination — kind unmappable
-- **security_law_exemptions** (OCF-required): no-destination — kind unmappable
 - share_numbers_issued: no-destination — kind unmappable
 - **stock_legend_ids** (OCF-required): no-destination — kind unmappable
 - stockholder_approval_date: no-destination — kind unmappable
