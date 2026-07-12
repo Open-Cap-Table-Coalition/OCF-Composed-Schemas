@@ -58,6 +58,91 @@ export function isPlainObject(v: unknown): v is Record<string, unknown> {
   return typeof v === "object" && v !== null && !Array.isArray(v);
 }
 
+/**
+ * The step ids declared by a `composite:` block, in order. A composite mapping
+ * folds ONE OCF transaction into an ordered list of Carta transactions ("steps"),
+ * ALL emitted — unlike variants, which are mutually exclusive. Empty when the
+ * mapping has no composite block. See docs/polymorphic-transaction-routing.md §4.9.
+ */
+export function compositeStepIds(mapping: Record<string, unknown>): string[] {
+  if (!Array.isArray(mapping.composite)) return [];
+  const ids: string[] = [];
+  for (const s of mapping.composite) {
+    if (isPlainObject(s) && typeof s.step === "string") ids.push(s.step);
+  }
+  return ids;
+}
+
+/**
+ * True iff a target MAP is keyed by composite step ids (rather than variant
+ * labels). Step ids and variant labels are disjoint sets, so key membership
+ * disambiguates a per-step map `{ cancel, issue }` from a per-variant map
+ * `{ Rsa, Default }` without any extra syntax.
+ */
+export function isStepKeyedTarget(map: Record<string, unknown>, stepIds: string[]): boolean {
+  const keys = Object.keys(map);
+  return stepIds.length > 0 && keys.length > 0 && keys.every((k) => stepIds.includes(k));
+}
+
+/**
+ * Reduce a per-step target map to the single per-family landing pointer: the last
+ * non-null target in declared step order (the issue step's slot wins over the
+ * cancel step's — the payload conceptually lands on the resulting security), or
+ * null when the field lands on no step for this family. A step's value may be a
+ * scalar pointer (family-agnostic) or a per-family `{ label: pointer|null }` map.
+ * The Core classifier only needs "does it land"; the full per-step maps are kept
+ * verbatim in the mapping (and harvested for the coverage report).
+ */
+export function reduceStepTarget(
+  map: Record<string, unknown>,
+  family: string,
+  stepIds: string[]
+): string | null {
+  let chosen: string | null = null;
+  for (const step of stepIds) {
+    if (!(step in map)) continue;
+    const sv = map[step];
+    if (sv === null || sv === undefined) continue;
+    const fam =
+      typeof sv === "string"
+        ? sv
+        : isPlainObject(sv) && typeof sv[family] === "string"
+        ? (sv[family] as string)
+        : null;
+    if (typeof fam === "string") chosen = fam;
+  }
+  return chosen;
+}
+
+/**
+ * ALL per-family landing pointers of a step-keyed target map, in declared step
+ * order (deduped). Where {@link reduceStepTarget} keeps the single issue-step
+ * landing (for validation's scalar shape check), this keeps EVERY step a composite
+ * field lands on — so the Core projection and the flow diagrams show the whole fold
+ * (e.g. `quantity` landing on both the cancel AND the issue transaction), not just
+ * one. Classified as a `rename` onto multiple slots (same source, replicated).
+ */
+export function collectStepTargets(
+  map: Record<string, unknown>,
+  family: string,
+  stepIds: string[]
+): string[] {
+  const out: string[] = [];
+  for (const step of stepIds) {
+    if (!(step in map)) continue;
+    const sv = map[step];
+    if (sv === null || sv === undefined) continue;
+    const fam =
+      typeof sv === "string"
+        ? sv
+        : isPlainObject(sv) && typeof sv[family] === "string"
+        ? (sv[family] as string)
+        : null;
+    if (typeof fam === "string" && !out.includes(fam)) out.push(fam);
+  }
+  return out;
+}
+
 export const KIND_VOCABULARY = [
   "rename",
   "split",
@@ -192,6 +277,17 @@ export function validateMapping(input: ValidateInput, opts: ValidateOptions): Va
   ) {
     validatePolymorphicMapping(input, strict, opts, err);
     return errors;
+  }
+
+  // composite: (a transaction folding into an ordered set of Carta steps) is only
+  // meaningful alongside a route_by_security/discriminator + variants block, which
+  // supplies the family axis its per-step target maps key into. A bare composite
+  // (no variants) is not yet supported — flag it rather than silently ignore it.
+  if (Array.isArray(input.mapping.composite)) {
+    err(
+      null,
+      "composite: is only supported alongside a route_by_security or discriminator + variants block"
+    );
   }
 
   // fields: with no entries parses as null (property-less schemas) — treat as {}.
@@ -379,9 +475,17 @@ function validatePolymorphicMapping(
   // scalar-target entry to splice into each variant's effective field map below.
   // `simpleShared` is every other (uniform-target) shared field.
   const variantLabels = Object.keys(variants);
+  // composite: an ordered set of Carta transactions this OCF transaction folds
+  // into (all emitted). Orthogonal to the family axis — its per-step field target
+  // maps key into the step ids, and each step's target/const may diverge by family.
+  const stepIds =
+    "composite" in mapping
+      ? validateCompositeBlock(mapping.composite, variantLabels, input.targetBundle, err)
+      : [];
   const { mapped: mappedShared, projected: projectedShared } = validateSharedTargetMaps(
     shared,
     variantLabels,
+    stepIds,
     input.targetBundle,
     err
   );
@@ -578,6 +682,182 @@ function unmappableProjection(): Record<string, unknown> {
 const PER_VARIANT_TARGET_KINDS = new Set(["rename", "computed", "combine"]);
 
 /**
+ * A per-variant/per-step target value: null (= unmappable here) or a "#/..."
+ * pointer that resolves in the bundle and is not Carta's `true` no-home marker.
+ * `ctx` labels the value in error messages (e.g. `target for variant "Rsa"`).
+ */
+function pointerResolves(
+  val: unknown,
+  bundle: unknown | null,
+  field: string | null,
+  ctx: string,
+  err: ErrFn
+): boolean {
+  if (typeof val !== "string" || !val.startsWith("#/")) {
+    err(field, `${ctx} must be a "#/..." pointer or null`);
+    return false;
+  }
+  if (bundle !== null) {
+    const res = resolveJsonPointer(bundle, val);
+    if (!res.found) {
+      err(field, `${ctx} "${val}" does not resolve in the target bundle`);
+      return false;
+    }
+    if (derefNode(bundle, res.value) === true) {
+      err(field, `${ctx} "${val}" resolves to \`true\` (excluded from the bundle snapshot)`);
+      return false;
+    }
+  }
+  return true;
+}
+
+/**
+ * Validate the optional `composite:` block — an ordered list of Carta transaction
+ * steps a single OCF transaction folds into (all emitted, unlike variants which
+ * are mutually exclusive). Returns the ordered step ids (used to key and validate
+ * per-step field target maps). Each step:
+ *   - step:   a unique non-empty id;
+ *   - target: the Carta $def the step lands on — a "#/..." pointer, or a per-family
+ *             { label: pointer|null } map when the $def diverges by family;
+ *   - const:  (optional) fixed field values the step always carries (the Carta
+ *             reason enums), as { field: value } — applied to every family — or
+ *             per-family { label: { field: value } }. Each field must resolve on
+ *             the step's $def and, if enum-typed, `value` must be a member.
+ */
+function validateCompositeBlock(
+  composite: unknown,
+  variantLabels: string[],
+  bundle: unknown | null,
+  err: ErrFn
+): string[] {
+  if (!Array.isArray(composite)) {
+    err(null, "composite: must be an ordered list of { step, target } steps");
+    return [];
+  }
+  if (composite.length === 0) {
+    err(null, "composite: must declare at least one step");
+    return [];
+  }
+  const stepIds: string[] = [];
+  composite.forEach((raw, i) => {
+    if (!isPlainObject(raw)) {
+      err(null, `composite[${i}] must be a map with a step: and target:`);
+      return;
+    }
+    const step = raw.step;
+    if (typeof step !== "string" || step.length === 0) {
+      err(null, `composite[${i}] requires a non-empty string "step"`);
+      return;
+    }
+    if (stepIds.includes(step)) err(null, `composite step id "${step}" is declared more than once`);
+    stepIds.push(step);
+
+    // target: a scalar $def pointer (family-agnostic) or a per-family map. Record
+    // the resolved $def per family so const: can be resolved against it.
+    const target = raw.target;
+    const familyDef: Record<string, string | null> = {};
+    if (typeof target === "string") {
+      const ok = pointerResolves(target, bundle, null, `composite step "${step}" target`, err);
+      for (const label of variantLabels) familyDef[label] = ok ? target : null;
+    } else if (isPlainObject(target)) {
+      for (const key of Object.keys(target)) {
+        if (!variantLabels.includes(key)) {
+          err(
+            null,
+            `composite step "${step}" target key "${key}" is not a variant (have: ${variantLabels.join(
+              ", "
+            )})`
+          );
+        }
+      }
+      for (const label of variantLabels) {
+        const v = label in target ? target[label] : null;
+        familyDef[label] =
+          v === null
+            ? null
+            : pointerResolves(
+                v,
+                bundle,
+                null,
+                `composite step "${step}" target for variant "${label}"`,
+                err
+              )
+            ? (v as string)
+            : null;
+      }
+    } else {
+      err(null, `composite step "${step}" requires a target ("#/..." pointer or a per-family map)`);
+    }
+
+    if (raw.const !== undefined) {
+      validateConstFills(
+        `composite step "${step}"`,
+        raw.const,
+        variantLabels,
+        familyDef,
+        bundle,
+        err
+      );
+    }
+  });
+  return stepIds;
+}
+
+/**
+ * Validate a `const:` block's fixed values against a per-family target `$def`. Used
+ * for composite STEP const (reason codes on the cancel/issue transactions) and for
+ * FIELD const (the precededBy reason on the lineage objects). `where` labels the
+ * source in errors (e.g. `composite step "cancel"` / `field "resulting_security_ids"`);
+ * `familyDef` maps each family to the `#/$defs/<Root>` the const's props sit on.
+ */
+function validateConstFills(
+  where: string,
+  constVal: unknown,
+  variantLabels: string[],
+  familyDef: Record<string, string | null>,
+  bundle: unknown | null,
+  err: ErrFn
+): void {
+  if (!isPlainObject(constVal)) {
+    err(null, `${where} const: must be a map of field → value`);
+    return;
+  }
+  // Per-family { label: { field: value } } when any key is a variant label;
+  // otherwise a flat { field: value } that applies to every family.
+  const perFamily = variantLabels.some((l) => l in constVal);
+  const byFamily: Record<string, unknown> = perFamily
+    ? constVal
+    : Object.fromEntries(variantLabels.map((l) => [l, constVal]));
+  for (const [label, consts] of Object.entries(byFamily)) {
+    if (!variantLabels.includes(label)) {
+      err(null, `${where} const key "${label}" is not a variant`);
+      continue;
+    }
+    if (!isPlainObject(consts)) {
+      err(null, `${where} const for variant "${label}" must be a map of field → value`);
+      continue;
+    }
+    const def = familyDef[label];
+    if (!def || bundle === null) continue;
+    for (const [prop, value] of Object.entries(consts)) {
+      const ptr = `${def}/properties/${prop}`;
+      const res = resolveJsonPointer(bundle, ptr);
+      if (!res.found) {
+        err(null, `${where} const.${prop} has no property "${prop}" on ${def}`);
+        continue;
+      }
+      const enumVals = targetEnumValuesAt(bundle, derefNode(bundle, res.value));
+      if (enumVals !== null && (typeof value !== "string" || !enumVals.includes(value))) {
+        err(
+          null,
+          `${where} const.${prop} = "${String(value)}" is not a member of the target enum at ${ptr}`
+        );
+      }
+    }
+  }
+}
+
+/**
  * Validate per-variant target maps on `shared:` entries. A shared field whose
  * Carta home differs by variant carries `target: { <variantLabel>: pointer|null }`
  * instead of a single pointer — so RSU/SAR fields name their own objects instead
@@ -590,6 +870,7 @@ const PER_VARIANT_TARGET_KINDS = new Set(["rename", "computed", "combine"]);
 function validateSharedTargetMaps(
   shared: Record<string, unknown>,
   variantLabels: string[],
+  stepIds: string[],
   bundle: unknown | null,
   err: ErrFn
 ): { mapped: Set<string>; projected: Record<string, Record<string, unknown>> } {
@@ -614,7 +895,53 @@ function validateSharedTargetMaps(
       continue;
     }
 
-    // Keys must be exactly the variant set: every variant present, none unknown.
+    // A per-STEP target map (composite): keys are step ids, each value a scalar
+    // pointer (family-agnostic) or a per-family { label: pointer|null } map. Validate
+    // each declared step, then project each family to its single landing pointer.
+    if (isStepKeyedTarget(map, stepIds)) {
+      for (const [stepKey, sv] of Object.entries(map)) {
+        if (sv === null) continue;
+        if (typeof sv === "string") {
+          pointerResolves(sv, bundle, field, `step "${stepKey}" target`, err);
+        } else if (isPlainObject(sv)) {
+          for (const key of Object.keys(sv)) {
+            if (!variantLabels.includes(key)) {
+              err(
+                field,
+                `step "${stepKey}" target key "${key}" is not a variant (have: ${variantLabels.join(
+                  ", "
+                )})`
+              );
+            }
+          }
+          for (const label of variantLabels) {
+            const v = label in sv ? sv[label] : null;
+            if (v === null) continue;
+            pointerResolves(
+              v,
+              bundle,
+              field,
+              `step "${stepKey}" target for variant "${label}"`,
+              err
+            );
+          }
+        } else {
+          err(
+            field,
+            `step "${stepKey}" target must be null, a "#/..." pointer, or a per-family map`
+          );
+        }
+      }
+      for (const label of variantLabels) {
+        const ptr = reduceStepTarget(map, label, stepIds);
+        projected[label]![field] =
+          ptr === null ? unmappableProjection() : { ...entry, target: ptr };
+      }
+      continue;
+    }
+
+    // Otherwise a per-VARIANT (family) target map. Keys must be exactly the variant
+    // set: every variant present, none unknown.
     for (const key of Object.keys(map)) {
       if (!variantLabels.includes(key)) {
         err(field, `target map key "${key}" is not a variant (have: ${variantLabels.join(", ")})`);
@@ -631,31 +958,28 @@ function validateSharedTargetMaps(
         projected[label]![field] = unmappableProjection();
         continue;
       }
-      if (typeof val !== "string" || !val.startsWith("#/")) {
-        err(field, `target for variant "${label}" must be a "#/..." pointer or null`);
-        projected[label]![field] = unmappableProjection();
-        continue;
+      projected[label]![field] = pointerResolves(
+        val,
+        bundle,
+        field,
+        `target for variant "${label}"`,
+        err
+      )
+        ? { ...entry, target: val }
+        : unmappableProjection();
+    }
+
+    // Field-level `const:` — fixed values populated on sibling slots of this field's
+    // target object (the precededBy `reason` on the lineage objects). Validated against
+    // each family's target `$def` root.
+    if (entry.const !== undefined) {
+      const familyDef: Record<string, string | null> = {};
+      for (const label of variantLabels) {
+        const val = label in map ? map[label] : null;
+        const m = typeof val === "string" ? /^(#\/\$defs\/[^/]+)/.exec(val) : null;
+        familyDef[label] = m ? (m[1] as string) : null;
       }
-      if (bundle !== null) {
-        const res = resolveJsonPointer(bundle, val);
-        if (!res.found) {
-          err(
-            field,
-            `target for variant "${label}" "${val}" does not resolve in the target bundle`
-          );
-          projected[label]![field] = unmappableProjection();
-          continue;
-        }
-        if (derefNode(bundle, res.value) === true) {
-          err(
-            field,
-            `target for variant "${label}" "${val}" resolves to \`true\` (excluded from the bundle snapshot)`
-          );
-          projected[label]![field] = unmappableProjection();
-          continue;
-        }
-      }
-      projected[label]![field] = { ...entry, target: val };
+      validateConstFills(`field "${field}"`, entry.const, variantLabels, familyDef, bundle, err);
     }
   }
   return { mapped, projected };

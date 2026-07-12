@@ -27,7 +27,12 @@ interface Item {
   children: string[];
 }
 
-function renderItem(name: string, entry: unknown, routeTargets?: Record<string, string[]>): Item {
+function renderItem(
+  name: string,
+  entry: unknown,
+  routeTargets?: Record<string, string[]>,
+  stepIds: string[] = []
+): Item {
   if (!isPlainObject(entry)) {
     return { label: `${name} ⚠ malformed entry`, children: [] };
   }
@@ -39,16 +44,35 @@ function renderItem(name: string, entry: unknown, routeTargets?: Record<string, 
     case "rename":
     case "computed":
     case "combine":
-      // A per-variant target map (shared field with a divergent home): render each
-      // variant's own target (or ✗ where it has none) instead of one borrowed pointer.
-      item = isPlainObject(target)
-        ? {
+      if (isPlainObject(target)) {
+        const keys = Object.keys(target);
+        if (stepIds.length > 0 && keys.length > 0 && keys.every((k) => stepIds.includes(k))) {
+          // A per-STEP target map (composite): keys are step ids, each value a scalar
+          // pointer or a per-family map. Render `step · family → target`.
+          const children: string[] = [];
+          for (const [step, sv] of Object.entries(target)) {
+            if (sv === null) children.push(`${step} ✗ unmappable`);
+            else if (isPlainObject(sv))
+              for (const [fam, ptr] of Object.entries(sv))
+                children.push(
+                  ptr === null ? `${step} · ${fam} ✗` : `${step} · ${fam} → ${asStringOr(ptr, "?")}`
+                );
+            else children.push(`${step} → ${asStringOr(sv, "?")}`);
+          }
+          item = { label: `${name} (${kind} · per step)`, children };
+        } else {
+          // A per-variant target map (shared field with a divergent home): render each
+          // variant's own target (or ✗ where it has none) instead of one borrowed pointer.
+          item = {
             label: `${name} (${kind} · per variant)`,
             children: Object.entries(target).map(([variant, ptr]) =>
               ptr === null ? `${variant} ✗ unmappable` : `${variant} → ${asStringOr(ptr, "?")}`
             ),
-          }
-        : { label: `${name} → ${asStringOr(target, "?")} (${kind})`, children: [] };
+          };
+        }
+      } else {
+        item = { label: `${name} → ${asStringOr(target, "?")} (${kind})`, children: [] };
+      }
       break;
 
     case "split":
@@ -120,10 +144,14 @@ function renderTree(nodes: Tree[], prefix = ""): string[] {
   return out;
 }
 
-function fieldTrees(fields: unknown, routeTargets?: Record<string, string[]>): Tree[] {
+function fieldTrees(
+  fields: unknown,
+  routeTargets?: Record<string, string[]>,
+  stepIds: string[] = []
+): Tree[] {
   return isPlainObject(fields)
     ? Object.entries(fields).map(([name, entry]) =>
-        itemToTree(renderItem(name, entry, routeTargets))
+        itemToTree(renderItem(name, entry, routeTargets, stepIds))
       )
     : [];
 }
@@ -156,12 +184,39 @@ export function renderMappingReport(input: MappingReportInput): string {
       variantTargets[label] = pts.filter((p): p is string => typeof p === "string");
     }
 
+    // composite: a transaction folding into an ordered SET of Carta transactions
+    // (all emitted). Render the steps and the Carta object each lands on, and key
+    // the shared/variant per-step field maps off the step ids.
+    const composite = Array.isArray(input.mapping.composite) ? input.mapping.composite : [];
+    const stepIds = composite
+      .filter(isPlainObject)
+      .map((s) => s.step)
+      .filter((x): x is string => typeof x === "string");
+
     const roots: Tree[] = [{ label: routing, children: [] }];
+    if (composite.length > 0) {
+      roots.push({
+        label: `composite (${composite.length} step${
+          composite.length === 1 ? "" : "s"
+        }, all emitted)`,
+        children: composite.filter(isPlainObject).map((s) => {
+          const tgt = s.target;
+          const targetLines = isPlainObject(tgt)
+            ? Object.entries(tgt).map(([fam, ptr]) => `${fam} → ${asStringOr(ptr, "?")}`)
+            : [`→ ${asStringOr(tgt, "?")}`];
+          if (isPlainObject(s.const)) targetLines.push(`const: ${JSON.stringify(s.const)}`);
+          return {
+            label: asStringOr(s.step, "?"),
+            children: targetLines.map((l) => ({ label: l, children: [] })),
+          };
+        }),
+      });
+    }
     const shared = input.mapping.shared;
     if (isPlainObject(shared) && Object.keys(shared).length > 0) {
       roots.push({
         label: `shared (${Object.keys(shared).length})`,
-        children: fieldTrees(shared, variantTargets),
+        children: fieldTrees(shared, variantTargets, stepIds),
       });
     }
     for (const [label, rawV] of Object.entries(rawVariants)) {
@@ -171,7 +226,7 @@ export function renderMappingReport(input: MappingReportInput): string {
         : "";
       roots.push({
         label: `${label} (${asStringOr(coverageMap[label], "?")})${targets}`,
-        children: fieldTrees(v.fields, variantTargets),
+        children: fieldTrees(v.fields, variantTargets, stepIds),
       });
     }
     return [`${input.file}  ${status} polymorphic → ${target}`, ...renderTree(roots)].join("\n");

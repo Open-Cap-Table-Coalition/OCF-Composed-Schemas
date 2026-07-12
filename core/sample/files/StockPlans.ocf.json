@@ -1,0 +1,12 @@
+{
+  "file_type": "OCF_STOCK_PLANS_FILE",
+  "items": [
+    {
+      "object_type": "STOCK_PLAN",
+      "id": "plan-2024-eip",
+      "plan_name": "2024 Equity Incentive Plan",
+      "initial_shares_reserved": "2000000",
+      "stock_class_id": "sc-common"
+    }
+  ]
+}

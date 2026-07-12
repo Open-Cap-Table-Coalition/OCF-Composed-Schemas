@@ -13,9 +13,14 @@ decision procedure is target-agnostic.
 OCF schemas come in two shapes, and they are mapped differently:
 
 - **Objects and transactions** (`ocf_kind: object`) — e.g. `Issuer`, `StockClass`,
-  `StockIssuance`. These map **at the object level**: each property maps directly to
-  the corresponding field of the analogous target object (or is `unmappable`). The
-  three-bucket test below does **not** apply to them.
+  `StockIssuance`. These map **at the object level**: by default each property maps
+  directly to the corresponding field of the analogous target object (or is
+  `unmappable`). A *transaction* need not be a flat 1:1 object map, though: it may
+  fan out **polymorphically** by a discriminator into per-instrument target families
+  (mutually exclusive `variants:`), or fold as a **composite** into an ordered set of
+  target transactions (all emitted). Either way the routing stays at the object level,
+  so the three-bucket test below still does **not** apply to objects/transactions
+  regardless of shape (see [`polymorphic-transaction-routing.md`](./polymorphic-transaction-routing.md)).
 - **Types** (`ocf_kind: type`) — e.g. `Email`, `Monetary`, `Address`, the
   `conversion_mechanisms/*`. A reusable OCF type can be nested inside many different
   objects, so "what does it map to?" is not always well-posed. Use the three-bucket
@@ -96,3 +101,11 @@ Once a field is `unmappable`, pick the most accurate reason
 - OCF scaffolding (`id`, `object_type`, `comments`) is always `ocf-internal`.
 - A target that exists but resolves to `true` in the pinned snapshot is
   `excluded-from-snapshot`, not `no-equivalent`.
+
+## See also
+
+- [`polymorphic-transaction-routing.md`](./polymorphic-transaction-routing.md) —
+  `discriminator:` / `route_by_security:` / `composite:` routing for transactions.
+- [`ocf-core-goal.md`](./ocf-core-goal.md) and [`ocf-core-spec.md`](./ocf-core-spec.md) —
+  how these mapping decisions (and `unmappable` / loss verdicts) feed OCF Core (strict vs
+  rich) membership.

@@ -1,0 +1,20 @@
+{
+  "file_type": "OCF_STAKEHOLDERS_FILE",
+  "items": [
+    {
+      "object_type": "STAKEHOLDER",
+      "id": "sh-jane",
+      "issuer_assigned_id": "E-001",
+      "stakeholder_type": "INDIVIDUAL",
+      "current_relationship": "FOUNDER",
+      "current_relationships": ["FOUNDER", "BOARD_MEMBER"]
+    },
+    {
+      "object_type": "STAKEHOLDER",
+      "id": "sh-raj",
+      "issuer_assigned_id": "E-002",
+      "stakeholder_type": "INDIVIDUAL",
+      "current_relationship": "EMPLOYEE"
+    }
+  ]
+}

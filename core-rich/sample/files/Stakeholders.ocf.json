@@ -1,0 +1,50 @@
+{
+  "file_type": "OCF_STAKEHOLDERS_FILE",
+  "items": [
+    {
+      "object_type": "STAKEHOLDER",
+      "id": "sh-jane",
+      "issuer_assigned_id": "E-001",
+      "stakeholder_type": "INDIVIDUAL",
+      "current_relationship": "FOUNDER",
+      "current_relationships": ["FOUNDER", "BOARD_MEMBER"],
+      "name": {
+        "legal_name": "Jane Q. Founder",
+        "first_name": "Jane",
+        "last_name": "Founder"
+      },
+      "addresses": [
+        {
+          "address_type": "CONTACT",
+          "street_suite": "1 Market St, Suite 400",
+          "city": "San Francisco",
+          "country_subdivision": "CA",
+          "country": "US",
+          "postal_code": "94105"
+        }
+      ],
+      "contact_info": {
+        "emails": [{ "email_type": "PERSONAL", "email_address": "jane@example.com" }],
+        "phone_numbers": [{ "phone_type": "MOBILE", "phone_number": "+1 415 555 0100" }]
+      }
+    },
+    {
+      "object_type": "STAKEHOLDER",
+      "id": "sh-raj",
+      "issuer_assigned_id": "E-002",
+      "stakeholder_type": "INDIVIDUAL",
+      "current_relationship": "EMPLOYEE",
+      "name": {
+        "legal_name": "Raj Patel"
+      },
+      "addresses": [
+        {
+          "address_type": "CONTACT",
+          "city": "Austin",
+          "country_subdivision": "TX",
+          "country": "US"
+        }
+      ]
+    }
+  ]
+}

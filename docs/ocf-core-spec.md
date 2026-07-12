@@ -11,6 +11,13 @@ wins and this doc is wrong.
 > datum with nowhere to land. The fold itself is separate, already-owned machinery; Core's job is to
 > *guarantee it can run*. This spec computes which OCF fields/events satisfy that guarantee.
 
+> **Two profiles (§9).** The recap above defines the **`strict`** profile — the lossless intersection,
+> emitted to `core/`. Everything in §§1–8 is about it and it is the default everywhere. A second
+> **`rich`** profile (emitted to `core-rich/`) is the *same derivation read more permissively*: it also
+> admits the lossy-home fields strict drops (a `name`, an `address`), kept in **OCF's own shape**, at
+> the cost of the round-trip guarantee. It is a strict superset. See **§9** for the full mechanics;
+> §§1–8 describe the shared machinery both profiles run.
+
 ---
 
 ## 1. Derive, don't declare
@@ -49,7 +56,9 @@ A/B/C from the goal doc; restated operationally:
 - **`core`** — the field's data **lands in the Carta snapshot** via a clear, deterministic, **total**
   rule, with **no existence-loss**. Value-coarsening (precision clamp, enum→bucket) is fine; the datum
   is still there. "Lands" includes landing on a *different* Carta object via a **lossless reverse
-  edge** (ruling B), not only on the field's own counterpart.
+  edge** (ruling B), not only on the field's own counterpart — but **only when that reverse edge is
+  provably lossless**; the classifier does not assume it, and today holds every such lineage field
+  `out` (see the Note).
 - **`out`** — no Carta destination, or the rule is **partial** (undefined on some legal OCF inputs —
   ruling C), **heuristic** (ruling A), or **existence-losing** (drops elements/entities/relationships
   — R2).
@@ -85,10 +94,14 @@ classify(entry, src, tgt):           # src/tgt = source & target nodes, resolved
 
 **Note on `computed` / `combine` / `split` (where rulings A and B split).** The `kind` alone doesn't
 decide these — what decides is whether the datum *provably lands* in the snapshot with no
-existence-loss. **Ruling B:** a field whose target is a **lossless reverse edge** on another Carta
-object (e.g. transfer/cancellation lineage written to `precededBy.securities` on the resulting
-security) **is `core`, and that is a schema-level verdict** (`basis: schema`, per goal R3) — no human
-sign-off needed, because the mapping's resolved target shows the datum has a home. **Ruling A:** a
+existence-loss. **Ruling B:** the goal-doc rule credits a datum that lands on a *different* Carta
+object via a **lossless reverse edge** (transfer/cancellation lineage on the resulting security's
+`precededBy.securities`, not on the tx). The classifier does **not** realize this automatically:
+`computed`/`combine`/`split` all default to **`out`** (`heuristic`), and a lineage field whose target
+is an **array** only earns the diagnostic *"possible reverse-edge (ruling B) — target is an array;
+confirm lossless lineage"* while staying `out`. So today there is **no** reverse-edge `core` row —
+ruling B is a flagged candidate, not a verdict; the field is promoted to `core` only if the mapping is
+sharpened to establish the landing is genuinely lossless. **Ruling A:** a
 `computed` free-text→enum classification (heuristic, drops the prose) is **`out`** — it neither lands
 totally nor losslessly. Everything else `computed`/`combine`/`split` whose landing a static read can't
 establish is `out` by default; `basis: confirmed` (§6) is for *empirically hardening* a `core` verdict
@@ -149,22 +162,40 @@ place.
 
 ## 3. Entity admissibility and closure (R4)
 
-A field-level pass isn't enough; the fold must be **total over a whole document**. Two entity-level
-conditions, both required:
+A field-level pass isn't enough; the fold must be **total over a whole document**. The spec names two
+conditions; **measured against the real bundle they resolve into two operational gates**
+(`scripts/lib/core-admissibility.ts`):
 
-- **Fold-required fields all land.** The fields a valid Carta snapshot *needs* for this entity (its
-  fold-driven required set — **not** OCF's `required_fields`) must all be `core`. Note `id` /
-  `object_type` are OCF bookkeeping (`reason: ocf-internal`) — not economic payload, though the fold
-  may use them as keys.
-- **Referential closure.** Every id the entity references must resolve to another **Core** entity (in
-  its Core projection). An issuance that references a `StockClass`/`Stakeholder` with no Core
-  projection cannot be guaranteed to fold — the reference dangles.
+- **Non-degeneracy — "the effect lands" (this is the fold-required condition, made operational).** The
+  original phrasing was "the fields a valid Carta snapshot *needs* must all be `core`." **Empirical
+  finding: every Carta target object declares `required: []`** — Carta requires nothing at the schema
+  level, so a fold-required check against the bundle is *vacuous* and can never gate. What a meaningful
+  snapshot actually needs is captured by **non-degeneracy**: the entity must land **≥1 payload field**
+  — a `core` field that is not bookkeeping (`id`/`object_type`/`comments`/`date`), not the self-created
+  security key, and not a graph reference. An entity that lands only a date, a key, or references has
+  no Core projection at all — exactly the case the goal doc calls "Carta has no transaction to reflect
+  this event." (The "useful-snapshot minimum" beyond this — e.g. a `Stakeholder`'s `legal_name` — is a
+  quality judgement, surfaced in the gap report, not a hard gate; cf. §7's "id alone closes the FK.")
+- **Referential closure.** Every id the entity carries **into Core** (a `core` FK field) must resolve
+  to another **Core-admissible** entity. An FK that is `out` imposes no obligation — Core doesn't carry
+  it. Computed as a greatest fixpoint (assume every green entity admissible, remove any whose `core` FK
+  dangles). References resolve through a **curated reference graph** — `core/reference-graph.yml`, the
+  second thin curated input alongside the allow-list (§5) — because *which* OCF object each `*_id`
+  points to is **not** encoded in the schemas (an id is just a string). `security_id` is special:
+  *created* by an issuance (no obligation), a *reference* to that security elsewhere.
 
 An entity meeting both is **Core-admissible**; otherwise it is **blocked** (and the blocker is named:
-a missing fold-required field, or a non-Core reference). Events are **first-class** — a Core-admissible
-transaction stays an event in Core; whether the fold lands it as a Carta transaction or collapses it
-into snapshot state is a translation-time concern, not a demotion. There is no separate
+`no-payload`, or a `dangling-reference` to a non-Core/absent referent). Events are **first-class** — a
+Core-admissible transaction stays an event in Core; whether the fold lands it as a Carta transaction or
+collapses it into snapshot state is a translation-time concern, not a demotion. There is no separate
 "reconstructable" tier.
+
+> **Note on the current corpus.** Closure never actually fires today — once
+> `StockClass`/`Stakeholder`/`StockPlan`/`VestingTerms` went green, every reference resolves. What
+> bounds Core is non-degeneracy: the retractions/acceptances and the lineage-only transfers whose only
+> payload was an `array → scalar` lineage field (held `out`) land nothing, so they are
+> `no-payload`-blocked — except where a `composite:` fold hands the event real payload (§4.9;
+> `StockTransfer`).
 
 ---
 
@@ -175,20 +206,37 @@ emits, all **generated, never hand-edited**:
 
 - **Membership ledger** — one row per `(entity, variant, field)`: `class` (core/out), `target`, source
   & target type names, and for `out` rows the reason (`no-destination` / `existence-loss` / `partial` /
-  `heuristic`), for `core` rows the loss kind (`direct` / `widening` / `value-coarsening` /
-  `reverse-edge`). Plus the per-entity admissibility verdict and any closure blocker. This holds the
-  fold-relevant truth a JSON Schema can't.
-- **Core schema** — an OCF-dialect JSON Schema, one `$def` per Core-admissible `(entity, variant)`,
-  pruned to its `core` fields, `required[]` = the fold-required set. Scalar leaves are inlined with
-  **assertable OCF-grammar `pattern`s**: `Numeric`/`Percentage` already ship patterns; for `Date` the
-  emitter **synthesizes** `^\d{4}-\d{2}-\d{2}$`, because `types/Date.schema.json` only declares
-  `format: date`, which is annotation-only under draft-07 and would not reject a time-of-day. External
-  `$ref`s are rewritten local. An instance valid against this schema is, by construction, a Core
-  instance whose values are in OCF grammar — i.e. guaranteed-foldable on values.
+  `heuristic`), for `core` rows the loss kind (`direct` / `widening` / `value-coarsening`). Plus the
+  per-entity admissibility verdict and any closure blocker, and — for composite entities (§4.9) — a
+  **Composite folds** section naming the Carta step objects each event lands on and the fixed `const:`
+  values each step supplies. This holds the fold-relevant truth a JSON Schema can't.
+- **Core schema package** — packaged like OCF proper (`core/`): a manifest plus per-category `*File`
+  schemas, **reusing OCF `file_type` consts** so a Core package is also a shape-valid OCF package.
+  `files/TransactionsFile.schema.json` holds every admissible **event** (`items.oneOf`); one
+  `files/<Category>File.schema.json` per admissible **object**; `OCFCoreManifestFile.schema.json`
+  carries the issuer inline + a `*_files` pointer collection per present category. **Entities are OCF
+  entities — variants are collapsed**: a Carta-fold split like `StockIssuance` Default/Rsa is one OCF
+  `StockIssuance` (R0), with fields = the union of what is `core` in any admissible variant, each
+  optional. **Identity spine:** because Core ⊆ OCF, every entity also carries OCF's universal keys —
+  `id` and `object_type` (a `const`, the transaction-union discriminator) — even though they are
+  economically `out` (no Carta payload home). They are keys, not payload (the §3 non-degeneracy gate
+  ignores them); without them the all-optional event union is ambiguous and referential closure (R4)
+  can't resolve. Scalar leaves are inlined with **assertable OCF-grammar `pattern`s**: `Numeric`/`Percentage`
+  already ship patterns; for `Date` the emitter **synthesizes** `^\d{4}-\d{2}-\d{2}$`, because
+  `types/Date.schema.json` only declares `format: date`, annotation-only under draft-07. Every value is
+  inlined — each file is self-contained, no `$ref`. An instance valid against the package is, by
+  construction, in OCF grammar — guaranteed-foldable on values.
 - **Gap report (R5)** — two lists: (a) OCF richness with no Carta home (fold-required fields that are
   `out` with `no-destination`/`existence-loss`), and (b) generally-applicable Carta concepts OCF
   lacks. These are the OCF↔Carta gaps to discuss; they are never smuggled into Core.
 - **Human rollup** (markdown) — per-entity core/out field lists and admissibility, for review.
+- **Analysis docs (non-gated, `docs/*.md`)** — the same `core:build` run also regenerates the
+  discussion artifacts the coverage reports render: [`core-bidirectional-flow.md`](./core-bidirectional-flow.md)
+  (the OCF ⇄ Core ⇄ Carta "interop hub"), [`core-lossy-inventory.md`](./core-lossy-inventory.md), and
+  [`core-unmapped-inventory.md`](./core-unmapped-inventory.md). Unlike the artifacts above these are
+  **not drift-gated** — analysis inputs, not contracts — but refreshing them on every build keeps them
+  from silently rotting. (Each can also be regenerated on its own via `core:bidi` / `core:lossy` /
+  `core:unmapped`.)
 
 ### CI gates — the trust model already in this repo
 
@@ -208,18 +256,24 @@ CI rebuilds the draft in memory and fails unless both hold:
 
 ---
 
-## 5. Two layers: the drafted subset and the curated allow-list
+## 5. Two layers: the drafted subset and the curated inputs
 
 A *derived* draft must not be mistaken for a *ratified* definition, but the human layer is kept
-deliberately **thin** so field shapes stay derived:
+deliberately **thin** — exactly **two small curated files**, neither of which lists a field shape:
 
-- **Allow-list (curated, versioned) — not a second schema.** Small, hand-edited: (1) the set of
-  **ratified `(entity, variant)` names** admitted to Core; (2) optional **`basis: confirmed`**
-  markers per `(entity, variant, field)` that *empirically harden* a `core` verdict against the live
-  importer (§6) — hardening, not membership; (3) any documented **OCF↔Carta gaps** being tracked. It
-  does **not** re-list field sets or types — the generator owns those and the drift gate pins them. The
-  human ratifies *which entities are in*; they don't re-draw the spine. This is the tagged release
-  artifact.
+- **Allow-list (`core/allow-list.yml`, curated, versioned) — not a second schema.** Small, hand-edited:
+  (1) the set of **ratified `(entity, variant)` names** admitted to Core; (2) optional
+  **`basis: confirmed`** markers per `(entity, variant, field)` that *empirically harden* a `core`
+  verdict against the live importer (§6) — hardening, not membership; (3) any documented **OCF↔Carta
+  gaps** being tracked. It does **not** re-list field sets or types — the generator owns those and the
+  drift gate pins them. The human ratifies *which entities are in*; they don't re-draw the spine.
+- **Reference graph (`core/reference-graph.yml`, curated) — closure metadata, not shapes.** Which OCF
+  object each `*_id` points to, which id-shaped fields are labels not FKs, which fields reference a
+  *security* (`security_references:`, resolved like `security_id` — used only by rich's lineage members,
+  §9), and which `core` fields are bookkeeping rather than payload. This is knowledge the schemas don't
+  encode (an id is just a string); it drives §3 closure and the non-degeneracy gate. Like the allow-list
+  it names *relationships*, never field types — those stay derived. It is shared by both profiles; each
+  profile has its own `allow-list.yml`.
 - **Generated (derived, unversioned)** — the ledger + Core schema + gap report + rollup of §4,
   everything drafted so far from green mappings. Converges on the ratified set; no independent version.
 
@@ -231,12 +285,10 @@ no annotation step. If the draft and allow-list disagree, CI fails.
 
 ## 6. Honesty boundary — schema-derived vs importer-confirmed
 
-Every class in §2 is **schema-derived** — including a reverse-edge `core` (ruling B): the verdict
-states what the two JSON Schemas *permit* a fold to do, not what a live Carta importer *does*. The
-ledger records a two-value **`basis`**:
+Every class in §2 is **schema-derived**: the verdict states what the two JSON Schemas *permit* a fold
+to do, not what a live Carta importer *does*. The ledger records a two-value **`basis`**:
 
-- **`schema`** (default) — decided by the type/enum/cardinality read alone. This includes reverse-edge
-  `core` rows: the resolved target shows the datum has a lossless home, no human needed.
+- **`schema`** (default) — decided by the type/enum/cardinality read alone.
 - **`confirmed`** — a human verified the behavior against a live importer and recorded it in the
   allow-list. This *hardens* an existing `core` verdict; it is never required for membership and never
   assigned automatically.
@@ -251,40 +303,41 @@ schema-permits / folds-in-production line each claim sits on.
 
 ## 7. Current state — first cut against the corpus
 
-Applying the rules to the corpus today (a snapshot; re-derived on every build, not part of the spec):
+Applying the rules to the corpus today (a snapshot; the live truth is the generated
+`core/core-ledger.md` / `core-rich/core-ledger.md`, re-derived on every build — this section is not
+part of the spec):
 
-- **The intended spine is the four issuances** — `StockIssuance`, `EquityCompensationIssuance`,
-  `WarrantIssuance`, `ConvertibleIssuance` — with a clean value layer (`Monetary`→Carta `Money`,
-  `Date`, `Numeric`, `CurrencyCode`) and cliff vesting mechanics; cancellation lineage rides in as a
-  reverse-edge `core` (ruling B). But **today none of them are Core-admissible: they are `blocked` on
-  closure** (§3) — every issuance references `StockClass`/`Stakeholder`, whose mappings aren't green,
-  so the references have no Core projection to resolve to. Most *other* transactions (transfers,
-  retractions, acceptances, conversions) are blocked for a deeper reason — Carta has no transaction to
-  reflect them, or they fan out `array→scalar`.
-- **That closure block is an *artifact*, not a real gap — and a focused analysis says it clears.** The
-  `StockClass`/`Stakeholder` references score 0-core today only because **their mappings are still
-  draft skeletons** (the open draft PRs #112/#113, all `kind: TODO`), not because Carta lacks the
-  concept — Carta carries both (`#/$defs/ShareClass`, `#/$defs/Stakeholder`). Once a small **minimal
-  Core projection** of each lands green, the spine becomes admissible (R4):
-  - `StockClass → ShareClass`: `{ id, name, class_type, default_id_prefix, seniority }` (plus optional
-    `par_value`→`parValue`, `initial_shares_authorized`→`authorizedShareCount`). Preferred-class
-    economics like the participation cap live on the **nested** `preferredShareClassDetails` /
-    `ShareClassRightsAndPreferences`, not on `ShareClass` directly, and OCF `price_per_share` has no
-    `ShareClass` home at all.
-  - `Stakeholder → Stakeholder`: `{ id, name.legal_name }` (Carta `Stakeholder` has no required
-    fields, so `id` alone closes the FK; `legal_name` is the minimum for a *useful* snapshot).
-  - Note `WarrantIssuance`/`ConvertibleIssuance` don't reference `StockClass` at all — only
-    `StockIssuance` and `EquityCompensationIssuance` do.
-  The remaining `StockClass`/`Stakeholder` fields are R5 gaps (reported, not blocking) — the one
-  uncomfortable case is **`StockClass.votes_per_share`**: OCF-*required* yet homeless in Carta. It is
-  not fold-required, so it stays out of the Core projection and is logged as an R5 gap; a folded doc
-  silently loses voting rights.
-- **Vesting under R6 lands as quantum + cliff, not cadence or milestones.** `VestingScheduleCliff` and
-  the segment quantum (length, unit, percentage, order) fold cleanly; but `VestingScheduleSegment.period
-  → vestingMethod` is a **partial lookup** (every-5-days, every-4-months have no Carta target), which
-  by ruling C is `out` and cascades up to block the time-vesting spine. The milestone axis
-  (`VestingEventCondition`, `TX_VESTING_EVENT`) is unmapped entirely. The "closer to Carta" hope held
-  only for the grid quantum.
+- **The spine is admissible.** All four issuances now fold: `StockIssuance` (Default + Rsa),
+  `EquityCompensationIssuance` (Option/Rsu/Sar), `WarrantIssuance`, and `ConvertibleIssuance` are all
+  Core-admissible over a clean value layer (`Monetary`→Carta `Money`, `Date`, `Numeric`,
+  `CurrencyCode`). This reverses the earlier straw-man, where the spine was `blocked` on closure: the
+  block cleared the moment `StockClass` and `Stakeholder` went green (PRs #112/#113, now **merged**),
+  joined by `StockPlan` and `VestingTerms`. With every referenced object green, **§3 closure never
+  fires today** — what bounds Core is now **non-degeneracy** (no-payload), not closure.
+- **The referenced objects carry a minimal Core projection** (their remaining fields are R5 gaps, not
+  blockers). `StockClass → ShareClass` lands several core fields (`class_type`, `name`, `seniority`,
+  `par_value`, `default_id_prefix`, `initial_shares_authorized`, …); preferred-class economics like the
+  participation cap live on the **nested** `ShareClassRightsAndPreferences`, not on `ShareClass`
+  directly. `Stakeholder → Stakeholder` lands `id` + `name.legal_name` (Carta `Stakeholder` requires
+  nothing, so `id` alone closes the FK; `legal_name` is the minimum for a *useful* snapshot). The one
+  uncomfortable R5 gap is **`StockClass.votes_per_share`** — OCF-*required* yet homeless in Carta; not
+  fold-required, so it drops out of the projection and a folded doc silently loses voting rights.
+- **The downstream verbs are all green now, but green ≠ admissible.** Every `route_by_security:` verb
+  (`EquityCompensation{Exercise,Cancellation,Release,Retraction,Acceptance,Transfer,Repricing}` and the
+  convertible/warrant/stock cancellations) is a complete mapping; whether it enters Core is decided by
+  §3, not by mapping status. Those that land a real payload are in (e.g. `ConvertibleCancellation`,
+  `ConvertibleConversion`); those whose only fields are lineage references, or that Carta can't reflect
+  at all, stay `no-payload`-blocked (the retractions, the acceptances, and the lineage-only transfers).
+- **Transfers enter via `composite:` (§4.9).** A stock transfer has no single Carta transaction, so it
+  folds into an ordered **cancel + reissue** pair of certificate events; `quantity`/`date` land on
+  those step transactions as real payload, so **`StockTransfer` (Default + Rsa) is now admissible in
+  both profiles**. Its lineage-only siblings — `StockConversion`, `StockConsolidation`,
+  `StockReissuance`, `StockRepurchase` — share the shape but have no composite mapping yet, so they stay
+  `no-payload`-blocked; a composite fold would admit them without touching the non-degeneracy gate.
+- **Vesting under R6 lands via `VestingTerms`, not the event axis.** `VestingTerms` is admissible; the
+  standalone vesting *transactions* (`VestingEvent`, `VestingAcceleration`) land no payload Carta can
+  reflect and are `no-payload`-blocked, and the milestone/event-condition axis is unmapped. The
+  "closer to Carta" hope held for the declarative template, not the event stream.
 
 ---
 
@@ -309,3 +362,70 @@ Applying the rules to the corpus today (a snapshot; re-derived on every build, n
 Which specific entities and fields land in Core under the current Carta bundle is the **output** of
 this machinery, not part of the spec — re-derived whenever a mapping or the bundle changes, and living
 in the generated artifacts and the allow-list, never in this document.
+
+---
+
+## 9. Two profiles — `strict` (shared floor) and `rich` (relaxed-OCF)
+
+Everything above computes one thing: the **lossless intersection** — fields whose fold to Carta keeps
+existence and cardinality. That is the **`strict`** profile (`core/`). But the intersection is
+austere: a `Stakeholder` with no `name`, no `address`, no `email`, because each of those only has a
+*narrowing* Carta home. A second **`rich`** profile keeps them.
+
+**One derivation, two readings — not two pipelines.** Both profiles run the identical corpus load,
+classifier (§2), admissibility gates (§3), and emitter (§4). They differ in a single predicate —
+which loss classes still count a field as a **member** (`isMember`, `scripts/lib/core-pipeline.ts`):
+
+- **`strict`** — members are exactly the `core`-class fields. `memberReasons = ∅`. This reproduces
+  §§1–8 verbatim; `core/` must stay **byte-identical** to what it was before profiles existed (a test
+  and the drift gate both pin this).
+- **`rich`** — members are `core` **plus the lossy-home classes** `existence-loss` / `heuristic` /
+  `partial` (bucket A of the lossy-home inventory, `npm run core:lossy`). A rich member is fed to §3
+  exactly like a `core` field and rendered by the same emitter.
+
+**Rich keeps OCF's shape; the loss moves to a different edge.** The emitter's `renderNode` already
+renders from the **OCF source node**, inlining its `$ref`s — so admitting `Stakeholder.name` yields
+OCF's structured `Name` (`{legal_name, first_name?, last_name?}`), not Carta's flat `fullName`; and
+`addresses` stays an array of full `Address`, not a country string. `required` is already relaxed
+(`[]`) on every entity. So rich does not *remove* the loss strict avoided — it **relocates** it:
+
+- `strict`: the lossy edge is **OCF→Core** (richness shed on the way in); Core→Carta and Core→OCF are
+  both clean.
+- `rich`: Core is rich, so the lossy edge becomes **Core→target** (a rich `Address` narrows to Carta's
+  `country`) and possibly **Core→OCF** (a target-*sourced* rich doc may under-fill an OCF `required`).
+
+`rich` therefore **gives up strict's "everything in Core is Carta-expressible" guarantee** in exchange
+for a useful, populated Core. Both artifacts ship; neither replaces the other.
+
+**Admissibility under rich — same gates, two consequences.** §3 is unchanged; it just sees more `core`
+fields:
+
+1. **Rich re-admits an entity only when a lossy-home field gives it *payload*** — a non-reference,
+   non-bookkeeping member. Today that adds exactly `Document` (via `path`/`uri`) and
+   `StockClassConversionRatioAdjustment` (via `new_ratio_conversion_mechanism`); rich is otherwise the
+   same entity set as strict, enriched with fields (`Stakeholder` gains `name`/`addresses`/`contact_info`,
+   `StockClass` gains `conversion_rights`/`seniority`, …). Rich is always a **strict superset**.
+2. **Reference-only lossy-home fields resolve but are not payload.** The reverse-edge lineage links
+   (`resulting_security_ids`, `balance_security_id`, `security_ids`, …) are `heuristic` members in rich
+   and reference securities. So the reference graph (§5) gains a `security_references:` list (and
+   `stock_class_ids → StockClass`) — **inert for strict**, where those fields are `out` and §3 never
+   consults them — without which a rich member would dangle as an unknown FK and wrongly drop its
+   entity. Because these are references (not payload), a transaction whose *only* lossy-home fields are
+   lineage links lands nothing on its own and fails non-degeneracy. The `composite:` construct (§4.9)
+   is the escape hatch: folding the event into an ordered pair of Carta step transactions gives the
+   payload (`quantity`/`date`) a real home — which is exactly how **`StockTransfer`** is now admissible
+   in **both** profiles. Its lineage-only siblings (`StockConversion`/`StockConsolidation`/
+   `StockReissuance`/`StockRepurchase`) share the shape but have no composite mapping yet, so they stay
+   **out** — a composite fold admits them via real payload, without relaxing the non-degeneracy gate.
+
+**The upstream-OCF report (`core-rich/core-upstream.md`, rich only).** The actionable byproduct: every
+lossy-home field rich carries, with the narrowing target home and the loss kind, OCF-*required* fields
+flagged. Each row is where Core→target is knowingly lossy, and a candidate for an **upstream OCF
+change** — e.g. relax `Address.required` so a Carta-sourced (country-only) address validates back as
+OCF. Rich-Core does **not** wait on those changes; the report is its output, not its precondition.
+
+**Build & gates run per profile.** `npm run core:build` emits both (`core/`, `core-rich/`), each with
+its package + `core-ledger.md` + `core-gaps.md` (+ rich's `core-upstream.md`) and its own thin
+`allow-list.yml`. `npm run core:check` runs the §4 drift + subset gates for **each** profile;
+`npm run core:validate-sample` validates each profile's `sample/` against its own schemas. The
+invariant that keeps this safe: the `strict` reading is the default and must never change.

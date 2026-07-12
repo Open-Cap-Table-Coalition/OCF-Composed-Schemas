@@ -1,7 +1,7 @@
 # Mapping validation
 
-`npm run mapping:validate` machine-checks every `.mapping.md` under `objects/`, `types/`, and
-`canonical/` against its sibling composed `.schema.json` and the pinned target bundle in
+`npm run mapping:validate` machine-checks every `.mapping.md` under `objects/` and `types/`
+against its sibling composed `.schema.json` and the pinned target bundle in
 `target-schema/`. CI runs it on every PR alongside typecheck, lint, and tests. The goal: the
 "doc-first, parseable later" mapping format stays parseable in practice — target pointers resolve,
 coverage counters never lie, and enum remaps are checked value-by-value.
@@ -14,7 +14,9 @@ coverage counters never lie, and enum remaps are checked value-by-value.
   registry, targetBundle) → ValidationError[]`.
 - `scripts/validate-mappings.ts` is the CLI walker (`--filter <glob>`, `--verbose`); errors are
   grouped per file and exit code is non-zero on any error. `--verbose` prints a per-file mapping
-  tree (field → target, split fan-outs, enum value remaps, unmappable reasons, TODO counts).
+  tree (field → target, split fan-outs, enum value remaps, unmappable reasons, TODO counts, and —
+  when present — a `composite (N steps, all emitted)` node listing each step's Carta target(s) and
+  any fixed `const:` fills).
 
 ## Rules
 
@@ -120,6 +122,53 @@ variants' `when:` sets **partition** the routed enum — pairwise disjoint, and 
 each `primary_targets` pointer resolves (and is not the `true` sentinel); each variant's
 `shared:` ∪ `fields:` map is validated and covers every source property against its own
 `coverage[<Label>]` entry. `--verbose` prints the routing and each variant's per-field routes.
+
+## Composite steps (one OCF verb → an ordered set of Carta transactions)
+
+Some OCF transactions have **no single Carta target** because Carta records ledger *state*, not the
+event — a stock transfer is not a transfer transaction but a **pair** of certificate events (cancel
+the source, issue the transferee's). A `composite:` block models that fold: an **ordered list of
+steps, ALL emitted** (additive), orthogonal to `variants:`, which are mutually exclusive (pick one).
+It is only valid **alongside** a `route_by_security:` or `discriminator:` + `variants:` block — the
+polymorphic block supplies the family axis its per-step target maps key into. The full design is in
+[`polymorphic-transaction-routing.md`](./polymorphic-transaction-routing.md) §4.9.
+
+Each step carries a `step:` id, a per-family `target:` map (the Carta `$def` diverges by family),
+and an optional per-family `const:` map of fixed Carta values the step always carries (the
+`*_TRANSFERRED` reason enums):
+
+```yaml
+route_by_security: { via: security_id, resolve: issuance_type, ... }   # family axis (required)
+
+composite:                                     # ordered steps, ALL emitted
+  - step: cancel
+    target:
+      Default: "#/$defs/CertificateCancellationTransaction"
+      Rsa:     "#/$defs/RsaCancellationTransaction"
+    const: { Default: { reason: CERTIFICATE_CANCELLATION_REASON_TRANSFERRED } }
+  - step: issue
+    target:
+      Default: "#/$defs/CertificateIssuanceTransaction"
+      Rsa:     "#/$defs/RsaIssuanceTransaction"
+    const: { Default: { issuanceReason: CERTIFICATE_ISSUANCE_REASON_TRANSFERRED } }
+```
+
+**Payload fields land per-step, then per-family.** A `shared:` target map may be keyed by **step id**
+instead of variant label, reusing the per-variant `{ key: pointer }` map shape (the "Per-variant
+target maps" above, §4.8) — a step's value may itself be a per-family `{ label: pointer }` map.
+Step-id and variant-label key spaces are **disjoint**, so a map is read as per-step when its keys
+are step ids and per-variant otherwise (no extra syntax).
+
+**Checks (`validateCompositeBlock`, in addition to the per-field rules above):** the steps are a
+non-empty ordered list; step ids are unique; each step `target:` resolves per family (a resolving
+`#/...` pointer, not the `true` sentinel); a `const:` field must exist on that step's `$def` and,
+if the target is enum-typed, the value must be a member of that enum; `const:` may be per-family —
+needed where an enum lacks a `*_TRANSFERRED` member (e.g. `RsaCancellationReason`), so those steps
+omit it; and a `composite:` block requires an accompanying polymorphic block (a bare composite is an
+error).
+
+This is what lets `StockTransfer` — which otherwise carries only lineage references (no payload, so
+held out of Core) — land `quantity`/`date` on its step transactions and become Core-admissible.
 
 ## Adding a target standard
 

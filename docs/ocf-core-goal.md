@@ -13,9 +13,19 @@ special-casing.
 - **Event-driven.** Core preserves OCF's transaction stream as first-class. Whether Carta ultimately
   stores an event as a transaction or folds it into state is a *translation-time* concern, not a Core
   one.
-- **Bounded by Carta's representable universe.** Core contains only what Carta can hold or
-  deterministically derive. The bound is one-directional: Core must always go *to* Carta; we never
-  require recovering Core *from* Carta.
+- **Bounded by Carta's representable universe (strict profile).** *Strict* Core contains only what
+  Carta can hold or deterministically derive — everything in it is Carta-expressible. That bound is
+  one-directional: strict Core must always fold *to* Carta; we never *require* recovering Core *from*
+  Carta.
+- **Two profiles over one derivation.** Core is machine-*derived* from the existing mapping corpus
+  (see [`ocf-core-spec.md`](./ocf-core-spec.md) §1, "derive, don't declare"), read at two
+  strictnesses by a single membership predicate. **Strict** (`core/`) is the lossless intersection
+  above. **Rich** (`core-rich/`) is a strict superset that *also* keeps **lossy-home** fields — ones
+  that do have a Carta target but narrow on the way out (a structured `Address` where Carta holds
+  only a country) — in OCF's own shape. Rich thereby **relocates** the loss onto the Core→Carta fold
+  and knowingly gives up strict's Carta-expressibility guarantee, in exchange for a populated hub
+  both formats can meet on. Rich is the "interop hub" the coverage reports (`core:bidi`, `core:lossy`,
+  `core:unmapped`) analyze; it is a discussion artifact, not a second contract.
 
 ## The defining invariant
 
@@ -62,7 +72,11 @@ The standard, applied uniformly and dialed in against the real fold:
 
 - **Not vendor-neutral interop** across many systems — Carta is the target; other targets are future
   work.
-- **Not a `Carta → Core` round-trip** — convertibility is one-way *down*.
+- **Not a `Carta → Core` round-trip** — convertibility is one-way *down*. The bidirectional "interop
+  hub" report (`core:bidi`) is a **non-gated coverage measurement**, not a counter-example: it counts
+  whether a forward mapping edge *could* fill a Core slot from a Carta document; it never inverts or
+  executes a mapping, so it imposes no Carta→Core requirement. (Rich Core can be *populated* from
+  Carta best-effort, but that is never a lossless obligation.)
 - **The fold mechanism is separate, already-owned machinery** — Core's job is only to *guarantee it
   can run*.
 

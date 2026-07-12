@@ -1,0 +1,103 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://opencaptablecoalition.com/ocf-core/v0/files/StockClassesFile.schema.json",
+  "title": "OCF Core — StockClassesFile",
+  "description": "Generated. Core-admissible StockClass; values inlined into OCF grammar.",
+  "type": "object",
+  "properties": {
+    "file_type": {
+      "const": "OCF_STOCK_CLASSES_FILE"
+    },
+    "items": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "title": "StockClass",
+        "properties": {
+          "class_type": {
+            "type": "string",
+            "enum": [
+              "COMMON",
+              "PREFERRED"
+            ],
+            "description": "The type of this stock class (e.g. Preferred or Common)"
+          },
+          "default_id_prefix": {
+            "type": "string",
+            "description": "Default prefix for certificate numbers in certificated shares (e.g. CS- in CS-1). If certificate IDs have a dash, the prefix should end i…"
+          },
+          "id": {
+            "type": "string",
+            "description": "Identifier for the object"
+          },
+          "initial_shares_authorized": {
+            "type": "string",
+            "description": "The initial number of shares authorized for this stock class"
+          },
+          "liquidation_preference_multiple": {
+            "type": "string",
+            "pattern": "^[+-]?[0-9]+(\\.[0-9]{1,10})?$",
+            "description": "The liquidation preference per share for this stock class"
+          },
+          "name": {
+            "type": "string",
+            "description": "Name for the stock type (e.g. Series A Preferred or Class A Common)"
+          },
+          "object_type": {
+            "const": "STOCK_CLASS"
+          },
+          "par_value": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "amount": {
+                "type": "string",
+                "pattern": "^[+-]?[0-9]+(\\.[0-9]{1,10})?$"
+              },
+              "currency": {
+                "type": "string",
+                "pattern": "^[A-Z]{3}$"
+              }
+            },
+            "required": [
+              "amount",
+              "currency"
+            ],
+            "description": "Per-share par value of this stock class"
+          },
+          "participation_cap_multiple": {
+            "type": "string",
+            "pattern": "^[+-]?[0-9]+(\\.[0-9]{1,10})?$",
+            "description": "The participation cap multiple per share for this stock class"
+          },
+          "price_per_share": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "amount": {
+                "type": "string",
+                "pattern": "^[+-]?[0-9]+(\\.[0-9]{1,10})?$"
+              },
+              "currency": {
+                "type": "string",
+                "pattern": "^[A-Z]{3}$"
+              }
+            },
+            "required": [
+              "amount",
+              "currency"
+            ],
+            "description": "Per-share price this stock class was issued for"
+          }
+        },
+        "required": [],
+        "additionalProperties": false
+      }
+    }
+  },
+  "required": [
+    "file_type",
+    "items"
+  ],
+  "additionalProperties": false
+}
