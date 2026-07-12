@@ -6,8 +6,8 @@ example objects.
 
 | File | What it is |
 | --- | --- |
-| `ocf-core-explainer.mp4` | 1920×1080, h264, 30 fps, 139 s, ~4.3 MB (primary) |
-| `ocf-core-explainer.gif` | 900×506, 12 fps, ~7.8 MB (for embeds/chat) |
+| `ocf-core-explainer.mp4` | 1920×1080, h264, 30 fps, 139 s, ~4.7 MB (primary) |
+| `ocf-core-explainer.gif` | 900×506, 12 fps, ~6.4 MB (for embeds/chat) |
 | `poster.png` | still thumbnail (the recap scene) |
 | `gen.py` | the SVG frame generator (see *Rebuilding* below) |
 
@@ -42,6 +42,11 @@ Each pick is grounded in the real derived ledger (`core/core-ledger.md`), not in
 Design language matches the repo's own diagrams: **green = OCF · blue = Carta · gold = Core ·
 red/dashed = lost.** Complex objects are shown as a focused subset, with peripheral detail
 deliberately blurred (still visible, not the focus).
+
+**Brand.** Styled to the Open Cap Table Coalition identity: the OCTC **indigo** (`#2f2ce3`) with
+white type, a recreated **aperture logo mark** (title/close bookends + a subtle corner watermark
+on content scenes), and spaced-uppercase brand type. Content scenes sit on a dark-indigo tint of
+the brand so the multi-colour field coding keeps its contrast.
 
 ## Rebuilding
 

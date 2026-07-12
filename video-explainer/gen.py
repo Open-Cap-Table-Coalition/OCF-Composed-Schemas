@@ -14,18 +14,21 @@ import sys, os, math
 W, H = 1920, 1080
 FPS = 15
 
-# ---- palette ---------------------------------------------------------------
-BG        = "#0b1017"
-PANEL     = "#161b22"
-BORDER    = "#2b3440"
-WHITE     = "#e9eef4"
-MUTE      = "#8b949e"
-FAINT     = "#5c6773"
-OCF       = "#34a853"; OCF_FILL = "#12301c"; OCF_TXT = "#7fd39b"
-CARTA     = "#3b82f6"; CARTA_FILL = "#10233f"; CARTA_TXT = "#8fb8f5"
-CORE      = "#f2b705"; CORE_FILL = "#332905"; CORE_TXT = "#f7cf5a"
-LOST      = "#ef5350"; LOST_FILL = "#331414"
-AMBER     = "#f0a020"
+# ---- palette (aligned to the Open Cap Table Coalition brand) ---------------
+BRAND     = "#2f2ce3"   # OCTC brand indigo (hero backgrounds, watermark)
+BRAND_DK  = "#1b1aa6"   # darker brand indigo for gradients
+BG        = "#0c0d26"   # dark indigo content background (brand-tied)
+BG2       = "#060716"   # vignette outer
+PANEL     = "#181b39"   # card panel (indigo-tinted)
+BORDER    = "#31366a"
+WHITE     = "#eef1fb"
+MUTE      = "#99a1c6"
+FAINT     = "#6a7099"
+OCF       = "#34c46f"; OCF_FILL = "#0f3020"; OCF_TXT = "#82dca4"
+CARTA     = "#4d8bff"; CARTA_FILL = "#122a52"; CARTA_TXT = "#9cc0ff"
+CORE      = "#ffc21f"; CORE_FILL = "#3a2e06"; CORE_TXT = "#ffd764"
+LOST      = "#ff6b6b"; LOST_FILL = "#3a1622"
+AMBER     = "#ffb02e"
 
 FONT = "Helvetica Neue, Helvetica, Arial, sans-serif"
 MONO = "Menlo, monospace"
@@ -110,6 +113,28 @@ def cross(cx, cy, r, color=LOST, opacity=1.0):
             f'<path d="M {cx-o:.1f} {cy-o:.1f} L {cx+o:.1f} {cy+o:.1f} M {cx+o:.1f} {cy-o:.1f} L {cx-o:.1f} {cy+o:.1f}" '
             f'stroke="#0b1017" stroke-width="{max(3,r*0.22):.1f}" stroke-linecap="round" opacity="{opacity:.3f}"/>')
 
+def octc_mark(cx, cy, R, color=WHITE, opacity=1.0):
+    """The Open Cap Table Coalition aperture mark: a solid inner disc, a thin ring,
+    and two broken (dashed) concentric arcs — recreated as line art."""
+    if opacity <= 0.001: return ""
+    sw = max(2.0, R * 0.055)
+    circ = lambda r: 2 * math.pi * r
+    r_disc, r_ring, r_o1, r_o2 = R*0.34, R*0.55, R*0.76, R*0.95
+    c1, c2 = circ(r_o1), circ(r_o2)
+    out = [circle(cx, cy, r_disc, color, opacity)]  # inner disc
+    out.append(f'<circle cx="{cx:.1f}" cy="{cy:.1f}" r="{r_ring:.1f}" fill="none" '
+               f'stroke="{color}" stroke-width="{sw:.1f}" opacity="{opacity:.3f}"/>')
+    # outer broken rings: big dashes + gaps, rotated so the gaps sit asymmetrically
+    out.append(f'<circle cx="{cx:.1f}" cy="{cy:.1f}" r="{r_o1:.1f}" fill="none" '
+               f'stroke="{color}" stroke-width="{sw:.1f}" stroke-linecap="round" '
+               f'stroke-dasharray="{c1*0.30:.1f} {c1*0.103:.1f}" '
+               f'transform="rotate(-32 {cx:.1f} {cy:.1f})" opacity="{opacity:.3f}"/>')
+    out.append(f'<circle cx="{cx:.1f}" cy="{cy:.1f}" r="{r_o2:.1f}" fill="none" '
+               f'stroke="{color}" stroke-width="{sw:.1f}" stroke-linecap="round" '
+               f'stroke-dasharray="{c2*0.22:.1f} {c2*0.28:.1f}" '
+               f'transform="rotate(120 {cx:.1f} {cy:.1f})" opacity="{opacity:.3f}"/>')
+    return "".join(out)
+
 def warn(cx, cy, r, color=AMBER, opacity=1.0):
     if opacity <= 0.001: return ""
     p = f'{cx:.1f},{cy-r:.1f} {cx-r*0.92:.1f},{cy+r*0.7:.1f} {cx+r*0.92:.1f},{cy+r*0.7:.1f}'
@@ -162,10 +187,14 @@ def card(x, y, w, title, subtitle, rows, accent=OCF, accent_fill=OCF_FILL,
     return "".join(out), h
 
 # ---- scene chrome ----------------------------------------------------------
-def background(vignette=True):
-    out = [f'<rect width="{W}" height="{H}" fill="{BG}"/>']
-    if vignette:
-        out.append(f'<rect width="{W}" height="{H}" fill="url(#vig)"/>')
+def background(brand=False, watermark=True):
+    if brand:
+        return (f'<rect width="{W}" height="{H}" fill="{BRAND}"/>'
+                f'<rect width="{W}" height="{H}" fill="url(#brandvig)"/>')
+    out = [f'<rect width="{W}" height="{H}" fill="{BG}"/>',
+           f'<rect width="{W}" height="{H}" fill="url(#vig)"/>']
+    if watermark:
+        out.append(octc_mark(1816, 98, 40, WHITE, 0.09))  # subtle brand watermark, top-right
     return "".join(out)
 
 def heading(t, title, sub=None, start=0.0):
@@ -180,12 +209,12 @@ def caption(t, lines, start=0.0):
     o = appear(t, start, 0.5)
     if o <= 0.001: return ""
     bw = 1500; bx = (W - bw) / 2; by = 946; bh = 100
-    out = [rrect(bx, by, bw, bh, 22, fill="#0e141b", stroke=BORDER, sw=1.5, opacity=o*0.96)]
+    out = [rrect(bx, by, bw, bh, 22, fill="#111433", stroke=BORDER, sw=1.5, opacity=o*0.96)]
     out.append(rrect(bx, by, 8, bh, 4, fill=CORE, opacity=o))
     if isinstance(lines, str): lines = wrap(lines, 78)
     ty = by + bh/2 - (len(lines)-1)*20 + 10
     for i, ln in enumerate(lines):
-        out.append(text(bx + 44, ty + i*40, ln, 27, fill="#c9d3de", opacity=o))
+        out.append(text(bx + 44, ty + i*40, ln, 27, fill="#ccd2f2", opacity=o))
     return "".join(out)
 
 def scene_opacity(t, dur, fin=0.45, fout=0.4):
@@ -196,25 +225,17 @@ def scene_opacity(t, dur, fin=0.45, fout=0.4):
 # ============================================================================
 def s_title(t, dur):
     o = scene_opacity(t, dur)
-    out = [background()]
+    out = [background(brand=True)]
     cx = W/2
-    # legend dots rising
-    o1 = appear(t, 0.2, 0.6)
-    out.append(text(cx, 400, "OCF Core", 150, fill=WHITE, weight="bold", anchor="middle", opacity=appear(t,0.0,0.7)))
-    # underline sweep
-    sw = ease_out((t-0.4)/0.8);
-    out.append(line(cx-360*sw, 448, cx+360*sw, 448, CORE, 6, appear(t,0.4,0.3)))
-    out.append(multiline(cx, 540, wrap("How a rich cap-table standard becomes a clean, always-convertible core", 52),
-                         34, 48, fill=MUTE, anchor="middle", opacity=appear(t,0.5,0.7)))
-    # palette legend
-    ly = 720; items = [("OCF", OCF), ("Carta", CARTA), ("Core", CORE)]
-    lo = appear(t, 1.0, 0.7)
-    gap = 300; startx = cx - gap
-    for i,(lab,co) in enumerate(items):
-        gx = startx + i*gap
-        out.append(circle(gx-70, ly-10, 13, co, lo))
-        out.append(text(gx-45, ly, lab, 34, fill=co, weight="bold", opacity=lo))
-    out.append(text(cx, 860, "a plain-English tour", 26, fill=FAINT, anchor="middle", opacity=appear(t,1.4,0.6), italic=True, spacing="3"))
+    out.append(octc_mark(cx, 300, 118, WHITE, appear(t, 0.0, 0.7)))
+    out.append(text(cx, 540, "OCF CORE", 128, fill=WHITE, weight="bold", anchor="middle",
+                    opacity=appear(t,0.3,0.7), spacing="10"))
+    sw = ease_out((t-0.7)/0.8)
+    out.append(line(cx-300*sw, 588, cx+300*sw, 588, "#ffffff", 4, appear(t,0.7,0.3)))
+    out.append(multiline(cx, 660, wrap("How a rich cap-table standard becomes a clean, always-convertible core", 52),
+                         33, 46, fill="#d7dcf6", anchor="middle", opacity=appear(t,0.9,0.7)))
+    out.append(text(cx, 810, "A PLAIN-ENGLISH TOUR", 24, fill="#c3c8ee", anchor="middle",
+                    opacity=appear(t,1.5,0.6), spacing="6"))
     return f'<g opacity="{o:.3f}">' + "".join(out) + '</g>'
 
 def s_captable(t, dur):
@@ -486,16 +507,17 @@ def s_recap(t, dur):
     return f'<g opacity="{o:.3f}">'+"".join(out)+'</g>'
 
 def s_close(t, dur):
-    o=scene_opacity(t,dur); out=[background()]
+    o=scene_opacity(t,dur); out=[background(brand=True)]
     cx=W/2
-    out.append(text(cx, 430, "That's OCF Core.", 96, fill=WHITE, weight="bold", anchor="middle", opacity=appear(t,0.1,0.7)))
-    out.append(line(cx-300, 480, cx+300, 480, CORE, 5, appear(t,0.5,0.4)))
-    out.append(multiline(cx, 570, wrap("The reliable, always-convertible heart of OCF — derived from the mappings, not declared by hand.", 56),
-                         34, 50, fill=MUTE, anchor="middle", opacity=appear(t,0.7,0.7)))
-    for i,(lab,co) in enumerate([("OCF",OCF),("Core",CORE),("Carta",CARTA)]):
-        lo=appear(t,1.3+i*0.1,0.6); gx=cx-330+i*330
-        out.append(circle(gx-90,740,12,co,lo)); out.append(text(gx-65,750,lab,32,fill=co,weight="bold",opacity=lo))
-        if i<2: out.append(text(gx+120,750,"→",34,fill=FAINT,anchor="middle",opacity=lo))
+    out.append(octc_mark(cx, 250, 84, WHITE, appear(t,0.0,0.7)))
+    out.append(text(cx, 470, "That's OCF Core.", 92, fill=WHITE, weight="bold", anchor="middle", opacity=appear(t,0.3,0.7)))
+    out.append(line(cx-280, 518, cx+280, 518, "#ffffff", 4, appear(t,0.6,0.4)))
+    out.append(multiline(cx, 596, wrap("The reliable, always-convertible heart of OCF — derived from the mappings, not declared by hand.", 56),
+                         33, 48, fill="#d7dcf6", anchor="middle", opacity=appear(t,0.8,0.7)))
+    # OCF -> Core -> Carta, clean white spaced lockup
+    fo=appear(t,1.4,0.6)
+    out.append(text(cx, 770, "OCF        →        CORE        →        CARTA", 34, fill="#eef1fb",
+                    weight="bold", anchor="middle", opacity=fo, spacing="2"))
     return f'<g opacity="{o:.3f}">'+"".join(out)+'</g>'
 
 # ---- timeline --------------------------------------------------------------
@@ -518,8 +540,12 @@ SCENES = [
 DEFS = f'''<defs>
   <filter id="blur" x="-20%" y="-20%" width="140%" height="140%"><feGaussianBlur stdDeviation="5"/></filter>
   <radialGradient id="vig" cx="50%" cy="42%" r="75%">
-    <stop offset="55%" stop-color="#0b1017" stop-opacity="0"/>
-    <stop offset="100%" stop-color="#05070a" stop-opacity="0.9"/>
+    <stop offset="52%" stop-color="{BG}" stop-opacity="0"/>
+    <stop offset="100%" stop-color="{BG2}" stop-opacity="0.92"/>
+  </radialGradient>
+  <radialGradient id="brandvig" cx="50%" cy="44%" r="80%">
+    <stop offset="0%" stop-color="{BRAND}" stop-opacity="0"/>
+    <stop offset="100%" stop-color="{BRAND_DK}" stop-opacity="0.85"/>
   </radialGradient>
 </defs>'''
 
