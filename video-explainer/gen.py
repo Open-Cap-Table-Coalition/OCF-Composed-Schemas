@@ -153,6 +153,50 @@ def badge(cx, y, label, color, glyph="check", opacity=1.0, w=560):
     return (rrect(x, y, w, 68, 34, fill="#11161d", stroke=color, sw=2.5, opacity=opacity) +
             g + text(gi + 40, y + 46, label, 30, fill=color, weight="bold", opacity=opacity))
 
+# ---- concept icons (for the "why now" flow) --------------------------------
+def _arrowhead(x, y, ang, size, color, op):
+    p2 = (x - size*math.cos(ang-0.42), y - size*math.sin(ang-0.42))
+    p3 = (x - size*math.cos(ang+0.42), y - size*math.sin(ang+0.42))
+    return f'<polygon points="{x:.1f},{y:.1f} {p2[0]:.1f},{p2[1]:.1f} {p3[0]:.1f},{p3[1]:.1f}" fill="{color}" opacity="{op:.3f}"/>'
+
+def _checkmark(cx, cy, r, color, op):
+    return (f'<path d="M {cx-r*0.5:.1f} {cy+r*0.02:.1f} L {cx-r*0.08:.1f} {cy+r*0.42:.1f} '
+            f'L {cx+r*0.58:.1f} {cy-r*0.4:.1f}" stroke="{color}" stroke-width="{max(3,r*0.16):.1f}" '
+            f'fill="none" stroke-linecap="round" stroke-linejoin="round" opacity="{op:.3f}"/>')
+
+def icon_loop(cx, cy, r, color, op=1.0):
+    """A refresh / cycle glyph — two chasing arrows. Reads as 'agentic loop'."""
+    if op <= 0.001: return ""
+    sw = max(3.5, r*0.16); out = []
+    for a, b in [(-165, -25), (15, 155)]:
+        t0 = math.radians(a); t1 = math.radians(b)
+        x0 = cx+r*math.cos(t0); y0 = cy+r*math.sin(t0)
+        x1 = cx+r*math.cos(t1); y1 = cy+r*math.sin(t1)
+        out.append(f'<path d="M {x0:.1f} {y0:.1f} A {r:.1f} {r:.1f} 0 0 1 {x1:.1f} {y1:.1f}" '
+                   f'fill="none" stroke="{color}" stroke-width="{sw:.1f}" stroke-linecap="round" opacity="{op:.3f}"/>')
+        out.append(_arrowhead(x1, y1, t1+math.pi/2, sw*2.8, color, op))
+    return "".join(out)
+
+def icon_shield(cx, cy, r, color, op=1.0):
+    """A shield with a check — 'verifiable integrity / a trusted oracle'."""
+    if op <= 0.001: return ""
+    w = r*0.92; top = cy-r
+    d = (f'M {cx:.1f} {top:.1f} L {cx+w:.1f} {top+r*0.34:.1f} L {cx+w:.1f} {cy+r*0.12:.1f} '
+         f'Q {cx+w:.1f} {cy+r*0.72:.1f} {cx:.1f} {cy+r:.1f} '
+         f'Q {cx-w:.1f} {cy+r*0.72:.1f} {cx-w:.1f} {cy+r*0.12:.1f} '
+         f'L {cx-w:.1f} {top+r*0.34:.1f} Z')
+    return (f'<path d="{d}" fill="none" stroke="{color}" stroke-width="{max(3.5,r*0.12):.1f}" '
+            f'stroke-linejoin="round" opacity="{op:.3f}"/>' + _checkmark(cx, cy-r*0.02, r*0.5, color, op))
+
+def icon_spark(cx, cy, r, color, op=1.0):
+    """A 4-point sparkle (+ a small companion) — the AI/'agentic future'."""
+    if op <= 0.001: return ""
+    k = r*0.30
+    pts = [(cx,cy-r),(cx+k,cy-k),(cx+r,cy),(cx+k,cy+k),(cx,cy+r),(cx-k,cy+k),(cx-r,cy),(cx-k,cy-k)]
+    p = " ".join(f"{x:.1f},{y:.1f}" for x, y in pts)
+    return (f'<polygon points="{p}" fill="{color}" opacity="{op:.3f}"/>'
+            + circle(cx+r*0.98, cy-r*0.86, r*0.17, color, op))
+
 # ---- higher-level: a data card ---------------------------------------------
 def card(x, y, w, title, subtitle, rows, accent=OCF, accent_fill=OCF_FILL,
          opacity=1.0, row_reveal=None, t=0.0, row_h=52, head_h=96, blur_rows=None):
@@ -294,27 +338,29 @@ def s_ocf_standard(t, dur):
 
 def s_why(t, dur):
     o=scene_opacity(t,dur); out=[background()]
-    out.append(heading(t,"Why now","the case the board is acting on"))
-    x=320; y0=292; lh=150; bw=1280; bh=126
-    pts=[
-        (CARTA,"1","Agentic workflows raise the bar.",
-         ["AI agents now run cap-table loops — and need a source of truth",
-          "they can trust exactly, every time: a deterministic oracle."]),
-        (OCF,"2","OCF already delivers that.",
-         ["The Open Cap Format and its validation tools store and check",
-          "core cap-table integrity — predictably and machine-checkably."]),
-        (CORE,"3","Aligning OCF with Carta unlocks it.",
-         ["Close the gaps between them and agents can safely move and",
-          "reconcile equity across systems — the agentic future."]),
+    out.append(heading(t,"Why now","why trustworthy cap-table data matters more than ever"))
+    cy=478; r=98
+    nodes=[
+        (380,  CARTA, "loop",   "Agentic loops",       "AI runs the cap table"),
+        (960,  OCF,   "shield", "OCF",                 "verifiable integrity"),
+        (1540, CORE,  "spark",  "The agentic future",  "safe across systems"),
     ]
-    for i,(co,n,main,sub) in enumerate(pts):
-        ro=appear(t,0.6+i*0.4,0.5); ry=y0+i*lh
-        out.append(rrect(x,ry,bw,bh,18, fill="#12152e", stroke=BORDER, sw=1.5, opacity=ro))
-        out.append(circle(x+58,ry+bh/2,30,co,ro))
-        out.append(text(x+58,ry+bh/2+12,n,36,fill=BG,weight="bold",anchor="middle",opacity=ro))
-        out.append(text(x+116,ry+46,main,31,fill=WHITE,weight="bold",opacity=ro))
-        out.append(multiline(x+116,ry+80,sub,22,30,fill=MUTE,opacity=ro))
-    out.append(caption(t,"Agentic workflows have only heightened the need for the deterministic oracle OCF can provide.",start=2.5))
+    starts=[0.4, 1.3, 2.2]
+    for i,(cx,co,icon,title,sub) in enumerate(nodes):
+        ro=appear(t,starts[i],0.5)
+        out.append(circle(cx,cy,r,"#12152e",ro,stroke=co,sw=3.5))
+        if icon=="loop":     out.append(icon_loop(cx,cy,r*0.52,co,ro))
+        elif icon=="shield": out.append(icon_shield(cx,cy-2,r*0.56,co,ro))
+        else:                out.append(icon_spark(cx-4,cy,r*0.52,co,ro))
+        out.append(text(cx,cy+r+54,title,30,fill=co,weight="bold",anchor="middle",opacity=ro))
+        out.append(text(cx,cy+r+92,sub,23,fill=MUTE,anchor="middle",opacity=ro))
+    labels=["needs a deterministic oracle","aligned with Carta"]
+    for i in range(2):
+        ro=appear(t,0.9+i*0.9,0.5)
+        x0=nodes[i][0]+r+14; x1=nodes[i+1][0]-r-14
+        out.append(arrow(x0,cy,x1,cy,CORE,3.5,ro))
+        out.append(text((x0+x1)/2,cy-24,labels[i],23,fill=CORE_TXT,weight="bold",anchor="middle",opacity=ro))
+    out.append(caption(t,"Agentic workflows have only heightened the need for a deterministic oracle — which OCF, aligned with Carta, provides.",start=2.7))
     return f'<g opacity="{o:.3f}">'+"".join(out)+'</g>'
 
 def s_analysis(t, dur):
