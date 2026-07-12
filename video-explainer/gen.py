@@ -292,26 +292,57 @@ def s_ocf_standard(t, dur):
     out.append(caption(t, "The Open Cap Format (OCF) v1.0 — a shared, event-driven format for cap-table data.", start=2.5))
     return f'<g opacity="{o:.3f}">'+"".join(out)+'</g>'
 
+def s_why(t, dur):
+    o=scene_opacity(t,dur); out=[background()]
+    out.append(heading(t,"Why now","the case the board is acting on"))
+    x=320; y0=292; lh=150; bw=1280; bh=126
+    pts=[
+        (CARTA,"1","Agentic workflows raise the bar.",
+         ["AI agents now run cap-table loops — and need a source of truth",
+          "they can trust exactly, every time: a deterministic oracle."]),
+        (OCF,"2","OCF already delivers that.",
+         ["The Open Cap Format and its validation tools store and check",
+          "core cap-table integrity — predictably and machine-checkably."]),
+        (CORE,"3","Aligning OCF with Carta unlocks it.",
+         ["Close the gaps between them and agents can safely move and",
+          "reconcile equity across systems — the agentic future."]),
+    ]
+    for i,(co,n,main,sub) in enumerate(pts):
+        ro=appear(t,0.6+i*0.4,0.5); ry=y0+i*lh
+        out.append(rrect(x,ry,bw,bh,18, fill="#12152e", stroke=BORDER, sw=1.5, opacity=ro))
+        out.append(circle(x+58,ry+bh/2,30,co,ro))
+        out.append(text(x+58,ry+bh/2+12,n,36,fill=BG,weight="bold",anchor="middle",opacity=ro))
+        out.append(text(x+116,ry+46,main,31,fill=WHITE,weight="bold",opacity=ro))
+        out.append(multiline(x+116,ry+80,sub,22,30,fill=MUTE,opacity=ro))
+    out.append(caption(t,"Agentic workflows have only heightened the need for the deterministic oracle OCF can provide.",start=2.5))
+    return f'<g opacity="{o:.3f}">'+"".join(out)+'</g>'
+
 def s_analysis(t, dur):
     o=scene_opacity(t,dur); out=[background()]
-    out.append(heading(t,"Why this analysis"))
-    bw=400; bh=150; y=330; ox=470; cx2=1050
-    oo=appear(t,0.5,0.5); co=appear(t,0.7,0.5)
+    out.append(heading(t,"So we propose OCF Core","map the gaps, then close them into one convertible core"))
+    bw=380; bh=150; y=326; ox=270; kx=770; cx2=1270
+    oo=appear(t,0.5,0.5); co=appear(t,0.6,0.5); ko=appear(t,0.9,0.5)
     out.append(rrect(ox,y,bw,bh,18, fill=PANEL, stroke=OCF, sw=2.5, opacity=oo))
-    out.append(text(ox+bw/2,y+72,"OCF",46,fill=OCF,weight="bold",anchor="middle",opacity=oo))
-    out.append(text(ox+bw/2,y+114,"the open standard",22,fill=MUTE,anchor="middle",opacity=oo))
+    out.append(text(ox+bw/2,y+70,"OCF",42,fill=OCF,weight="bold",anchor="middle",opacity=oo))
+    out.append(text(ox+bw/2,y+112,"the full standard",22,fill=MUTE,anchor="middle",opacity=oo))
     out.append(rrect(cx2,y,bw,bh,18, fill=PANEL, stroke=CARTA, sw=2.5, opacity=co))
-    out.append(text(cx2+bw/2,y+72,"Carta",46,fill=CARTA,weight="bold",anchor="middle",opacity=co))
-    out.append(text(cx2+bw/2,y+114,"a leading platform",22,fill=MUTE,anchor="middle",opacity=co))
-    ao=appear(t,1.1,0.5)
-    out.append(arrow(ox+bw+20, y+60, cx2-20, y+60, CORE, 3.5, ao))
-    out.append(arrow(cx2-20, y+96, ox+bw+20, y+96, CORE, 3.5, ao))
-    out.append(text(960, y-22, "migration pathway", 24, fill=CORE_TXT, anchor="middle", weight="bold", opacity=appear(t,1.3,0.5)))
-    go=appear(t,1.9,0.6)
-    out.append(warn(ox+bw/2, y+bh+72, 22, AMBER, go)); out.append(text(ox+bw/2, y+bh+142, "gaps in OCF v1", 26, fill=AMBER, anchor="middle", weight="bold", opacity=go))
-    out.append(warn(cx2+bw/2, y+bh+72, 22, AMBER, go)); out.append(text(cx2+bw/2, y+bh+142, "gaps in Carta", 26, fill=AMBER, anchor="middle", weight="bold", opacity=go))
-    out.append(text(W/2, 800, "Commissioned by the board: map the pathway between them, and find what each can't yet hold.", 28, fill=WHITE, anchor="middle", opacity=appear(t,2.3,0.6)))
-    out.append(caption(t, "The rest of this tour shows how we did it — and what we found.", start=2.7))
+    out.append(text(cx2+bw/2,y+70,"Carta",42,fill=CARTA,weight="bold",anchor="middle",opacity=co))
+    out.append(text(cx2+bw/2,y+112,"a leading platform",22,fill=MUTE,anchor="middle",opacity=co))
+    # OCF Core — the emphasized bridge in the middle
+    out.append(rrect(kx,y-18,bw,bh+36,20, fill="#1c1706", stroke=CORE, sw=3.5, opacity=ko))
+    out.append(text(kx+bw/2,y+66,"OCF Core",40,fill=CORE_TXT,weight="bold",anchor="middle",opacity=ko))
+    out.append(text(kx+bw/2,y+108,"strict, verifiable subset",22,fill=CORE_TXT,anchor="middle",opacity=ko))
+    a1=appear(t,1.3,0.5); a2=appear(t,1.6,0.5)
+    out.append(arrow(ox+bw+8, y+bh/2, kx-8, y+bh/2, OCF, 3.5, a1))
+    out.append(text((ox+bw+kx)/2, y+bh/2-22, "subset of", 21, fill=OCF_TXT, anchor="middle", opacity=a1))
+    out.append(arrow(kx+bw+8, y+bh/2-11, cx2-8, y+bh/2-11, CORE, 3.5, a2))
+    out.append(arrow(cx2-8, y+bh/2+21, kx+bw+8, y+bh/2+21, CORE, 3.5, a2))
+    out.append(text((kx+bw+cx2)/2, y+bh/2-34, "to & from", 21, fill=CORE_TXT, weight="bold", anchor="middle", opacity=a2))
+    out.append(text(W/2, 620, "Transforms to and from Carta — with a migration path for teams already on OCF v1.", 30,
+                    fill=WHITE, weight="bold", anchor="middle", opacity=appear(t,2.1,0.6)))
+    out.append(text(W/2, 668, "The mapping work finds the gaps in OCF v1 and Carta; OCF Core closes them.", 26,
+                    fill=MUTE, anchor="middle", opacity=appear(t,2.4,0.6)))
+    out.append(caption(t, "Hence this effort: map the gaps and propose OCF Core — convertible to/from Carta, a migration path from OCF v1.", start=2.7))
     return f'<g opacity="{o:.3f}">'+"".join(out)+'</g>'
 
 def s_captable(t, dur):
@@ -632,7 +663,8 @@ SCENES = [
     ("coalition",   s_coalition,   11.0),
     ("problem",     s_problem,     10.0),
     ("ocfstd",      s_ocf_standard,12.0),
-    ("analysis",    s_analysis,    11.0),
+    ("why",         s_why,         13.0),
+    ("analysis",    s_analysis,    12.0),
     ("captable",    s_captable,    9.0),
     ("ocf",         s_ocf,         10.0),
     ("carta",       s_carta,       9.0),
