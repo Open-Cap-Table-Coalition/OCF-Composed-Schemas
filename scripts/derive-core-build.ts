@@ -10,9 +10,9 @@
  *   <profile.outDir>/core-upstream.md — rich only: upstream-OCF change candidates
  * Two profiles ship: `strict` → core/ (lossless intersection) and `rich` →
  * core-rich/ (relaxed-OCF union). `--base` prefixes both dirs (default: repo root).
- * It ALSO regenerates the non-drift-gated analysis docs (docs/core-bidirectional-flow,
- * -lossy-inventory, -unmapped-inventory) so one `core:build` refreshes every generated
- * artifact — a stale analysis doc can't slip past `core:check` (see main()).
+ * It ALSO regenerates the analysis docs (docs/core-bidirectional-flow, -lossy-inventory,
+ * -unmapped-inventory) so one `core:build` refreshes every generated artifact. These are
+ * drift-gated by `core:check` (gate 3), same as the package and reports.
  *
  *   npm run core:build                    # emit core/ + core-rich/, print summary
  *   npm run core:build -- --base /tmp/x   # emit /tmp/x/core + /tmp/x/core-rich
@@ -70,11 +70,10 @@ async function main(argv: { base: string; sample: string }): Promise<number> {
     await emitProfile(repoRoot, argv.base, profile, argv.sample);
   }
 
-  // Analysis docs (docs/*.md) — NOT drift-gated, but regenerated here so ONE
-  // `core:build` refreshes EVERY generated artifact. A stale analysis doc can't
-  // slip through: any pipeline change that stales one also stales a drift-gated
-  // report, which `core:check` catches and forces a rebuild.
-  console.log("\nAnalysis docs (docs/, not drift-gated) — regenerating:");
+  // Analysis docs (docs/*.md) — regenerated here so ONE `core:build` refreshes EVERY
+  // generated artifact. Drift-gated directly by `core:check` (gate 3), so a stale
+  // analysis doc can't slip through even on a generator-only change.
+  console.log("\nAnalysis docs (docs/) — regenerating:");
   await writeBidiDoc(argv.base);
   await writeLossyInventory(argv.base);
   await writeUnmappedInventory(argv.base);
