@@ -9,7 +9,7 @@ inventory (`core-lossy-inventory.md`), which covers properties that DO land, onl
 OCF bookkeeping (`id`/`object_type`/`comments`) is excluded. `OCF-req` marks fields OCF
 itself requires; an unmapped field on an **in-Core** object is the sharper loss.
 
-## Magnitude — unmapped properties per OCF object (259 across 47 objects; 165 OCF-required)
+## Magnitude — unmapped properties per OCF object (249 across 47 objects; 155 OCF-required)
 
 Each OCF object → the void, edge labelled with how many of its properties are dropped.
 Green = the object is in strict Core (we carry it but lose these fields); dashed grey = the
@@ -59,26 +59,26 @@ flowchart LR
   o0 -->|1| void
   o1 -->|5| void
   o2 -->|5| void
-  o3 -->|3| void
-  o4 -->|3| void
-  o5 -->|3| void
+  o3 -->|2| void
+  o4 -->|2| void
+  o5 -->|2| void
   o6 -->|2| void
   o7 -->|2| void
-  o8 -->|4| void
-  o9 -->|10| void
-  o10 -->|14| void
+  o8 -->|3| void
+  o9 -->|9| void
+  o10 -->|13| void
   o11 -->|2| void
   o12 -->|2| void
   o13 -->|2| void
   o14 -->|9| void
   o15 -->|2| void
   o16 -->|1| void
-  o17 -->|2| void
-  o18 -->|2| void
+  o17 -->|1| void
+  o18 -->|1| void
   o19 -->|3| void
   o20 -->|3| void
-  o21 -->|8| void
-  o22 -->|6| void
+  o21 -->|7| void
+  o22 -->|5| void
   o23 -->|3| void
   o24 -->|2| void
   o25 -->|2| void
@@ -253,12 +253,11 @@ flowchart LR
 | date | **yes** | Date on which the transaction occurred |
 | security_id | **yes** | Identifier for the security (stock, plan security, warrant, or convertible) by which it can be referenced by other transaction objects. N… |
 
-### EquityCompensationCancellation — in Core (admissible) (3 unmapped)
+### EquityCompensationCancellation — in Core (admissible) (2 unmapped)
 
 | property | OCF-req | what it is (OCF) |
 | --- | :---: | --- |
 | balance_security_id |  | Identifier for the security that holds the remainder balance (for partial cancellations) |
-| reason_text | **yes** | Reason for the cancellation |
 | security_id | **yes** | Identifier for the security (stock, plan security, warrant, or convertible) by which it can be referenced by other transaction objects. N… |
 
 ### EquityCompensationExercise — in Core (admissible) (5 unmapped)
@@ -271,7 +270,7 @@ flowchart LR
 | resulting_security_ids | **yes** | Identifier for the security (or securities) that resulted from the exercise |
 | security_id | **yes** | Identifier for the security (stock, plan security, warrant, or convertible) by which it can be referenced by other transaction objects. N… |
 
-### EquityCompensationIssuance — in Core (admissible) (16 unmapped)
+### EquityCompensationIssuance — in Core (admissible) (15 unmapped)
 
 | property | OCF-req | what it is (OCF) |
 | --- | :---: | --- |
@@ -285,7 +284,6 @@ flowchart LR
 | expiration_date | **yes** | Expiration date of the security, or null if it does not expire. |
 | option_grant_type |  | If the security is an option, what kind. Retained from v1 for compatibility; in the new model this has been incorporated into Compensatio… |
 | security_id | **yes** | Identifier for the security created by this issuance. Other transactions (vesting event, exercise, cancellation, etc.) reference this id. |
-| security_law_exemptions | **yes** | Security law exemptions (and applicable jurisdictions) for this security. |
 | stakeholder_id | **yes** | Identifier of the stakeholder holding legal title to the security. |
 | stockholder_approval_date |  | Date of stockholder approval for the security, when applicable. |
 | termination_exercise_windows | **yes** | Exercise periods applicable after a termination, by reason. |
@@ -390,11 +388,10 @@ flowchart LR
 | date | **yes** | Date on which the transaction occurred |
 | security_id | **yes** | Identifier for the security (stock, plan security, warrant, or convertible) by which it can be referenced by other transaction objects. N… |
 
-### StockCancellation — in Core (admissible) (2 unmapped)
+### StockCancellation — in Core (admissible) (1 unmapped)
 
 | property | OCF-req | what it is (OCF) |
 | --- | :---: | --- |
-| reason_text | **yes** | Reason for the cancellation |
 | security_id | **yes** | Identifier for the security (stock, plan security, warrant, or convertible) by which it can be referenced by other transaction objects. N… |
 
 ### StockClass — in Core (admissible) (3 unmapped)
@@ -442,14 +439,13 @@ flowchart LR
 | quantity_converted | **yes** | Quantity of non-monetary security units converted |
 | security_id | **yes** | Identifier for the security (stock, plan security, warrant, or convertible) by which it can be referenced by other transaction objects. N… |
 
-### StockIssuance — in Core (admissible) (8 unmapped)
+### StockIssuance — in Core (admissible) (7 unmapped)
 
 | property | OCF-req | what it is (OCF) |
 | --- | :---: | --- |
 | board_approval_date |  | Date of board approval for the security |
 | consideration_text |  | Unstructured text description of consideration provided in exchange for security issuance |
 | issuance_type |  | Optional field to flag certain special types of issuances (like RSAs) |
-| security_law_exemptions | **yes** | List of security law exemptions (and applicable jurisdictions) for this security |
 | share_numbers_issued |  | Range(s) of the specific share numbers included in this issuance. This is different from a certificate number you might include in the `c… |
 | stock_legend_ids | **yes** | List of stock legend ids that apply to this stock |
 | stockholder_approval_date |  | Date on which the stockholders approved the security |

@@ -200,6 +200,10 @@
                 "type": "string",
                 "pattern": "^[+-]?[0-9]+(\\.[0-9]{1,10})?$",
                 "description": "Quantity of non-monetary security units cancelled"
+              },
+              "reason_text": {
+                "type": "string",
+                "description": "Reason for the cancellation"
               }
             },
             "required": [],
@@ -348,6 +352,26 @@
               "security_id": {
                 "type": "string",
                 "description": "Identifier for the security created by this issuance. Other transactions (vesting event, exercise, cancellation, etc.) reference this id."
+              },
+              "security_law_exemptions": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "description": {
+                      "type": "string"
+                    },
+                    "jurisdiction": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "description",
+                    "jurisdiction"
+                  ]
+                },
+                "description": "Security law exemptions (and applicable jurisdictions) for this security."
               },
               "stakeholder_id": {
                 "type": "string",
@@ -610,6 +634,10 @@
                 "type": "string",
                 "pattern": "^[+-]?[0-9]+(\\.[0-9]{1,10})?$",
                 "description": "Quantity of non-monetary security units cancelled"
+              },
+              "reason_text": {
+                "type": "string",
+                "description": "Reason for the cancellation"
               }
             },
             "required": [],
@@ -770,6 +798,26 @@
               "security_id": {
                 "type": "string",
                 "description": "Identifier for the security (stock, plan security, warrant, or convertible) by which it can be referenced by other transaction objects. N…"
+              },
+              "security_law_exemptions": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "description": {
+                      "type": "string"
+                    },
+                    "jurisdiction": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "description",
+                    "jurisdiction"
+                  ]
+                },
+                "description": "List of security law exemptions (and applicable jurisdictions) for this security"
               },
               "share_price": {
                 "type": "object",
