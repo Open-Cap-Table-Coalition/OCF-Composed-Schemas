@@ -19,7 +19,7 @@ import path from "node:path";
 import { writeFile } from "node:fs/promises";
 import { pathToFileURL } from "node:url";
 
-import { deriveCore } from "./lib/core-pipeline.js";
+import { deriveCore, isMember, RICH_PROFILE } from "./lib/core-pipeline.js";
 import { BOOKKEEPING } from "./lib/report-helpers.js";
 import { FlowRow, groupByEntity, groupByVariant, mermaidVoid } from "./lib/report-flow.js";
 
@@ -53,7 +53,27 @@ export async function writeUnmappedInventory(base: string = process.cwd()): Prom
   }
   const descOf = new Map(rows.map((r) => [`${r.entity} ${r.field}`, r.description]));
 
-  await writeFile(path.join(base, OUT_FILE), render(rows, descOf), "utf8");
+  // Variant scope: a field can be no-destination in one flavor and land in another.
+  // `partialKeys` are the (entity,field) that are dropped in ≥1 variant AND a (rich)
+  // member in ≥1 other — the entity-grouped tables collapse variants, so these read as
+  // object-level drops without the mark. `distinctCount` = distinct (entity,field) the
+  // tables enumerate, vs `rows.length` = the per-(entity,variant,field) diagram total.
+  const memberKeys = new Set<string>();
+  const noHomeKeys = new Set<string>();
+  for (const r of d.rows) {
+    if (BOOKKEEPING.has(r.field)) continue;
+    const key = `${r.entity}|${r.field}`;
+    if (isMember(r.verdict, RICH_PROFILE)) memberKeys.add(key);
+    else if (r.verdict.reason === "no-destination") noHomeKeys.add(key);
+  }
+  const partialKeys = new Set([...noHomeKeys].filter((k) => memberKeys.has(k)));
+  const distinctCount = noHomeKeys.size;
+
+  await writeFile(
+    path.join(base, OUT_FILE),
+    render(rows, descOf, partialKeys, distinctCount),
+    "utf8"
+  );
 
   const groups = groupByEntity(rows);
   const req = rows.filter((r) => r.ocfRequired).length;
@@ -71,7 +91,12 @@ export async function writeUnmappedInventory(base: string = process.cwd()): Prom
   return 0;
 }
 
-function render(rows: Row[], descOf: Map<string, string>): string {
+function render(
+  rows: Row[],
+  descOf: Map<string, string>,
+  partialKeys: Set<string>,
+  distinctCount: number
+): string {
   const groups = groupByEntity(rows);
   const flavorGroups = groupByVariant(rows); // diagrams split polymorphic flavors apart
   const inCore = flavorGroups.filter((g) => g.admissible);
@@ -90,7 +115,14 @@ function render(rows: Row[], descOf: Map<string, string>): string {
     "OCF bookkeeping (`id`/`object_type`/`comments`) is excluded. `OCF-req` marks fields OCF",
     "itself requires; an unmapped field on an **in-Core** object is the sharper loss.",
     "",
-    `## Magnitude — unmapped properties per OCF object (${rows.length} across ${groups.length} objects; ${reqCount} OCF-required)`,
+    "**Variant scope.** For a polymorphic object the drop is per-flavor: a property is listed if",
+    "it is unmappable in **at least one** variant. Ones marked `†` also **land in another variant**",
+    "of the same object (e.g. `EquityCompensationIssuance.board_approval_date` maps for Option/Rsu,",
+    'drops only for Sar), so "no Carta home" is a per-flavor statement here, not object-level. The',
+    "magnitude diagrams split flavors apart; `core-bidirectional-flow.md` gives the distinct-field,",
+    'best-landing view (its lower "left behind" count).',
+    "",
+    `## Magnitude — unmapped properties per OCF object (${distinctCount} distinct across ${groups.length} objects; ${rows.length} per-flavor rows, ${reqCount} OCF-required)`,
     "",
     "Each OCF object → the void, edge labelled with how many of its properties are dropped.",
     "Green = the object is in strict Core (we carry it but lose these fields); dashed grey = the",
@@ -106,6 +138,8 @@ function render(rows: Row[], descOf: Map<string, string>): string {
     "",
     "## By OCF object — the dropped properties",
     "",
+    "`†` = also maps in another variant of this object (dropped only in some flavors).",
+    "",
   ];
 
   for (const g of groups) {
@@ -117,7 +151,8 @@ function render(rows: Row[], descOf: Map<string, string>): string {
     lines.push("", "| property | OCF-req | what it is (OCF) |", "| --- | :---: | --- |");
     for (const f of g.fields) {
       const desc = descOf.get(`${g.entity} ${f.field}`) ?? "";
-      lines.push(`| ${f.field} | ${f.ocfRequired ? "**yes**" : ""} | ${desc} |`);
+      const mark = partialKeys.has(`${g.entity}|${f.field}`) ? " †" : "";
+      lines.push(`| ${f.field}${mark} | ${f.ocfRequired ? "**yes**" : ""} | ${desc} |`);
     }
     lines.push("");
   }

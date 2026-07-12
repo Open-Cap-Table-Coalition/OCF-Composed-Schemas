@@ -689,6 +689,14 @@ Each field HAS a Carta home but the fold loses fidelity: `existence-loss` = the 
 collapses (object/array → scalar); `heuristic` = a non-1:1 transform (combine/split/computed).
 A field mapping the same way across variants is shown once, the variants listed.
 
+**Reverse-edge caveat (`…PrecededBy.securities`).** Rows where `resulting_security_ids` /
+`resulting_security_id` / `balance_security_id` flow to `CertificatePrecededBy.securities` or
+`RestrictedStockAwardPrecededBy.securities` are keyed on the *successor* security they name,
+but the value the importer writes into `securities` is the *predecessor* — the source
+`security_id` (itself listed no-home in §C). These are `computed` reverse-edge lineage writes,
+flagged ruling-B in the ledger ("confirm lossless lineage"); only `StockConsolidation.security_ids`
+is a direct predecessor→`securities` landing.
+
 ### ConvertibleCancellation — in Core (admissible)
 
 | field | OCF-req | variant(s) | flows to (Carta) | loss |

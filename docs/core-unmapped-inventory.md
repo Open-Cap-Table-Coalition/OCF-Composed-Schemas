@@ -9,7 +9,14 @@ inventory (`core-lossy-inventory.md`), which covers properties that DO land, onl
 OCF bookkeeping (`id`/`object_type`/`comments`) is excluded. `OCF-req` marks fields OCF
 itself requires; an unmapped field on an **in-Core** object is the sharper loss.
 
-## Magnitude — unmapped properties per OCF object (249 across 47 objects; 155 OCF-required)
+**Variant scope.** For a polymorphic object the drop is per-flavor: a property is listed if
+it is unmappable in **at least one** variant. Ones marked `†` also **land in another variant**
+of the same object (e.g. `EquityCompensationIssuance.board_approval_date` maps for Option/Rsu,
+drops only for Sar), so "no Carta home" is a per-flavor statement here, not object-level. The
+magnitude diagrams split flavors apart; `core-bidirectional-flow.md` gives the distinct-field,
+best-landing view (its lower "left behind" count).
+
+## Magnitude — unmapped properties per OCF object (172 distinct across 47 objects; 249 per-flavor rows, 155 OCF-required)
 
 Each OCF object → the void, edge labelled with how many of its properties are dropped.
 Green = the object is in strict Core (we carry it but lose these fields); dashed grey = the
@@ -187,6 +194,8 @@ flowchart LR
 
 ## By OCF object — the dropped properties
 
+`†` = also maps in another variant of this object (dropped only in some flavors).
+
 ### ConvertibleAcceptance — not yet admissible (2 unmapped)
 
 | property | OCF-req | what it is (OCF) |
@@ -250,7 +259,7 @@ flowchart LR
 
 | property | OCF-req | what it is (OCF) |
 | --- | :---: | --- |
-| date | **yes** | Date on which the transaction occurred |
+| date † | **yes** | Date on which the transaction occurred |
 | security_id | **yes** | Identifier for the security (stock, plan security, warrant, or convertible) by which it can be referenced by other transaction objects. N… |
 
 ### EquityCompensationCancellation — in Core (admissible) (2 unmapped)
@@ -265,49 +274,49 @@ flowchart LR
 | property | OCF-req | what it is (OCF) |
 | --- | :---: | --- |
 | consideration_text |  | Unstructured text description of consideration provided in exchange for security exercise |
-| date | **yes** | Date on which the transaction occurred |
-| quantity | **yes** | Quantity of shares exercised |
-| resulting_security_ids | **yes** | Identifier for the security (or securities) that resulted from the exercise |
+| date † | **yes** | Date on which the transaction occurred |
+| quantity † | **yes** | Quantity of shares exercised |
+| resulting_security_ids † | **yes** | Identifier for the security (or securities) that resulted from the exercise |
 | security_id | **yes** | Identifier for the security (stock, plan security, warrant, or convertible) by which it can be referenced by other transaction objects. N… |
 
 ### EquityCompensationIssuance — in Core (admissible) (15 unmapped)
 
 | property | OCF-req | what it is (OCF) |
 | --- | :---: | --- |
-| base_price |  | Required for stock appreciation right compensation types (CSAR, SSAR). The base price used to calculate appreciation. |
-| board_approval_date |  | Date of board approval for the security, when applicable. |
-| compensation_type | **yes** | The kind of equity compensation. Determines which type-specific fields are required. |
+| base_price † |  | Required for stock appreciation right compensation types (CSAR, SSAR). The base price used to calculate appreciation. |
+| board_approval_date † |  | Date of board approval for the security, when applicable. |
+| compensation_type † | **yes** | The kind of equity compensation. Determines which type-specific fields are required. |
 | consideration_text |  | Unstructured text description of consideration provided in exchange for the issuance. |
-| custom_id | **yes** | Human-readable identifier for the security (e.g. 'CN-1'). |
-| early_exercisable |  | If true, the security is exercisable prior to completion of vesting; the schedule then governs a right-of-repurchase lapse rather than th… |
-| exercise_price |  | Required for option compensation types. The price per share at which the option can be exercised. |
-| expiration_date | **yes** | Expiration date of the security, or null if it does not expire. |
-| option_grant_type |  | If the security is an option, what kind. Retained from v1 for compatibility; in the new model this has been incorporated into Compensatio… |
-| security_id | **yes** | Identifier for the security created by this issuance. Other transactions (vesting event, exercise, cancellation, etc.) reference this id. |
-| stakeholder_id | **yes** | Identifier of the stakeholder holding legal title to the security. |
+| custom_id † | **yes** | Human-readable identifier for the security (e.g. 'CN-1'). |
+| early_exercisable † |  | If true, the security is exercisable prior to completion of vesting; the schedule then governs a right-of-repurchase lapse rather than th… |
+| exercise_price † |  | Required for option compensation types. The price per share at which the option can be exercised. |
+| expiration_date † | **yes** | Expiration date of the security, or null if it does not expire. |
+| option_grant_type † |  | If the security is an option, what kind. Retained from v1 for compatibility; in the new model this has been incorporated into Compensatio… |
+| security_id † | **yes** | Identifier for the security created by this issuance. Other transactions (vesting event, exercise, cancellation, etc.) reference this id. |
+| stakeholder_id † | **yes** | Identifier of the stakeholder holding legal title to the security. |
 | stockholder_approval_date |  | Date of stockholder approval for the security, when applicable. |
-| termination_exercise_windows | **yes** | Exercise periods applicable after a termination, by reason. |
-| vesting_start_date |  | The per-grant vesting commencement date — the anchor every statement of the referenced template grids from. Required whenever `vesting_te… |
-| vestings |  | Optional materialized projection of exact vesting dates and amounts. A grant may be described by the declarative template (`vesting_templ… |
+| termination_exercise_windows † | **yes** | Exercise periods applicable after a termination, by reason. |
+| vesting_start_date † |  | The per-grant vesting commencement date — the anchor every statement of the referenced template grids from. Required whenever `vesting_te… |
+| vestings † |  | Optional materialized projection of exact vesting dates and amounts. A grant may be described by the declarative template (`vesting_templ… |
 
 ### EquityCompensationRelease — in Core (admissible) (7 unmapped)
 
 | property | OCF-req | what it is (OCF) |
 | --- | :---: | --- |
 | consideration_text |  | Unstructured text description of consideration provided in exchange for security release |
-| date | **yes** | Date on which the transaction occurred |
-| quantity | **yes** | Quantity of shares released |
-| release_price | **yes** | The release price used to determine the value of the security at the time of release |
-| resulting_security_ids | **yes** | Identifier of the new security (or securities) issuance resulting from a release transaction |
+| date † | **yes** | Date on which the transaction occurred |
+| quantity † | **yes** | Quantity of shares released |
+| release_price † | **yes** | The release price used to determine the value of the security at the time of release |
+| resulting_security_ids † | **yes** | Identifier of the new security (or securities) issuance resulting from a release transaction |
 | security_id | **yes** | Identifier for the security (stock, plan security, warrant, or convertible) by which it can be referenced by other transaction objects. N… |
-| settlement_date | **yes** | The settlement date for the shares released, typically after the release transaction date |
+| settlement_date † | **yes** | The settlement date for the shares released, typically after the release transaction date |
 
 ### EquityCompensationRepricing — in Core (admissible) (3 unmapped)
 
 | property | OCF-req | what it is (OCF) |
 | --- | :---: | --- |
 | date | **yes** | Date on which the transaction occurred |
-| new_exercise_price | **yes** | What is the exercise price of the option after the repricing? |
+| new_exercise_price † | **yes** | What is the exercise price of the option after the repricing? |
 | security_id | **yes** | Identifier for the security (stock, plan security, warrant, or convertible) by which it can be referenced by other transaction objects. N… |
 
 ### EquityCompensationRetraction — not yet admissible (3 unmapped)
@@ -385,7 +394,7 @@ flowchart LR
 
 | property | OCF-req | what it is (OCF) |
 | --- | :---: | --- |
-| date | **yes** | Date on which the transaction occurred |
+| date † | **yes** | Date on which the transaction occurred |
 | security_id | **yes** | Identifier for the security (stock, plan security, warrant, or convertible) by which it can be referenced by other transaction objects. N… |
 
 ### StockCancellation — in Core (admissible) (1 unmapped)
@@ -443,13 +452,13 @@ flowchart LR
 
 | property | OCF-req | what it is (OCF) |
 | --- | :---: | --- |
-| board_approval_date |  | Date of board approval for the security |
+| board_approval_date † |  | Date of board approval for the security |
 | consideration_text |  | Unstructured text description of consideration provided in exchange for security issuance |
 | issuance_type |  | Optional field to flag certain special types of issuances (like RSAs) |
 | share_numbers_issued |  | Range(s) of the specific share numbers included in this issuance. This is different from a certificate number you might include in the `c… |
 | stock_legend_ids | **yes** | List of stock legend ids that apply to this stock |
 | stockholder_approval_date |  | Date on which the stockholders approved the security |
-| vestings |  | List of exact vesting dates and amounts for this security. When `vestings` array is present then `vesting_terms_id` may be ignored. |
+| vestings † |  | List of exact vesting dates and amounts for this security. When `vestings` array is present then `vesting_terms_id` may be ignored. |
 
 ### StockLegendTemplate — not yet admissible (2 unmapped)
 
