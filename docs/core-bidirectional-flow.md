@@ -24,7 +24,10 @@ flowchart LR
   left behind only if it has **no Carta home** (`no-destination`).
 - **Carta → Core**: a Carta field flows in if some mapping targets it (a Carta doc can fill
   that Core slot); left behind = a Carta field no mapping targets. Plus **41**
-  object-typed Carta `$defs` are targeted nowhere at all (whole concepts OCF lacks — gap report b).
+  object-typed Carta `$defs` get no field-level mapping — of these, **9** are `$ref`-reachable from a targeted parent (OCF data flows in
+  via the parent, e.g. the `…VestingEvent` / `…PrecededBy` element types), leaving **32** untouched: mostly concepts OCF lacks (rollup
+  summaries, phantom/PIU families) plus a few shared value-types (`Date`, `Jurisdiction`).
+  See gap report b.
 
 ## Hub flow — per related group (what flows in vs is lost, both sides)
 
@@ -1333,6 +1336,12 @@ are DISTINCT fields per object (variants collapsed; a field that lands in any va
 
 Only Carta objects a green mapping writes into. `filled` = a Core slot a Carta doc can
 populate; `left behind` = Carta capability Core (being OCF-shaped) doesn't represent.
+
+Caveat: `left behind` is slot-level. Carta denormalizes issuance-time attributes across a
+security object and its issuance transaction (`OptionGrant`↔`OptionIssuanceTransaction`,
+`Certificate`↔`CertificateIssuanceTransaction`, the RSA/RSU pairs); a mapping fills one twin,
+so the other reads `left behind` even though the same OCF value already populates its sibling.
+Those duplicated slots inflate the count — they are not capability Core lacks.
 
 | Carta object | fills | left behind | left-behind fields |
 | --- | ---: | ---: | --- |

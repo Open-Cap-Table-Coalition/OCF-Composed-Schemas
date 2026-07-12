@@ -94,18 +94,26 @@ export async function writeBidiDoc(base: string = process.cwd()): Promise<number
     empty: string[];
   }
   const carta = new Map<string, CartaObj>();
-  let untargetedObjectCount = 0;
+  const untargetedNames: string[] = [];
   for (const [name, def] of Object.entries(cartaDefs)) {
     if (!isObjectType(def)) continue;
     const props = Object.keys((def as { properties: Record<string, unknown> }).properties);
     const filled = props.filter((p) => targetedSlots.has(`#/$defs/${name}/properties/${p}`));
     const empty = props.filter((p) => !targetedSlots.has(`#/$defs/${name}/properties/${p}`));
     if (filled.length === 0 && !targetedRoots.has(name)) {
-      untargetedObjectCount += 1; // Carta object OCF never touches — see gap report (b)
+      untargetedNames.push(name); // no field-level mapping targets it — see gap report (b)
       continue;
     }
     carta.set(name, { filled, empty });
   }
+  // Some untargeted $defs are $ref-reachable from a TARGETED parent, so OCF data still
+  // flows into them via that parent (e.g. the `…VestingEvent` / `…PrecededBy` element
+  // types) — those are NOT "whole concepts OCF lacks". Split the count so the prose
+  // doesn't overstate the OCF-less set.
+  const untargetedObjectCount = untargetedNames.length;
+  const untargetedReachable = untargetedNames.filter((n) =>
+    d.corpus.transitivelyCoveredDefs.has(n)
+  ).length;
 
   // Member (flow-in) fields with their Carta targets, plus the per-object loss
   // lists, for the grouped hub diagrams.
@@ -156,7 +164,16 @@ export async function writeBidiDoc(base: string = process.cwd()): Promise<number
 
   await writeFile(
     path.join(base, OUT_FILE),
-    render(ocf, carta, untargetedObjectCount, memberGroups, ocfLost, cartaUnfilled, constFills),
+    render(
+      ocf,
+      carta,
+      untargetedObjectCount,
+      untargetedReachable,
+      memberGroups,
+      ocfLost,
+      cartaUnfilled,
+      constFills
+    ),
     "utf8"
   );
 
@@ -184,6 +201,7 @@ function render(
   >,
   carta: Map<string, { filled: string[]; empty: string[] }>,
   untargetedObjects: number,
+  untargetedReachable: number,
   memberGroups: EntityGroup[],
   ocfLost: Map<string, string[]>,
   cartaUnfilled: Map<string, string[]>,
@@ -222,7 +240,12 @@ function render(
     "  left behind only if it has **no Carta home** (`no-destination`).",
     "- **Carta → Core**: a Carta field flows in if some mapping targets it (a Carta doc can fill",
     `  that Core slot); left behind = a Carta field no mapping targets. Plus **${untargetedObjects}**`,
-    "  object-typed Carta `$defs` are targeted nowhere at all (whole concepts OCF lacks — gap report b).",
+    "  object-typed Carta `$defs` get no field-level mapping — of these, " +
+      `**${untargetedReachable}** are \`$ref\`-reachable from a targeted parent (OCF data flows in`,
+    "  via the parent, e.g. the `…VestingEvent` / `…PrecededBy` element types), leaving " +
+      `**${untargetedObjects - untargetedReachable}** untouched: mostly concepts OCF lacks (rollup`,
+    "  summaries, phantom/PIU families) plus a few shared value-types (`Date`, `Jurisdiction`).",
+    "  See gap report b.",
     "",
     "## Hub flow — per related group (what flows in vs is lost, both sides)",
     "",
@@ -262,6 +285,12 @@ function render(
     "",
     "Only Carta objects a green mapping writes into. `filled` = a Core slot a Carta doc can",
     "populate; `left behind` = Carta capability Core (being OCF-shaped) doesn't represent.",
+    "",
+    "Caveat: `left behind` is slot-level. Carta denormalizes issuance-time attributes across a",
+    "security object and its issuance transaction (`OptionGrant`↔`OptionIssuanceTransaction`,",
+    "`Certificate`↔`CertificateIssuanceTransaction`, the RSA/RSU pairs); a mapping fills one twin,",
+    "so the other reads `left behind` even though the same OCF value already populates its sibling.",
+    "Those duplicated slots inflate the count — they are not capability Core lacks.",
     "",
     "| Carta object | fills | left behind | left-behind fields |",
     "| --- | ---: | ---: | --- |"
