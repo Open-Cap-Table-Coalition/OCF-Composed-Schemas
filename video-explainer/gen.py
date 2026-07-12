@@ -313,20 +313,32 @@ def s_title(t, dur):
     return f'<g opacity="{o:.3f}">' + "".join(out) + '</g>'
 
 def s_coalition(t, dur):
-    o=scene_opacity(t,dur); out=[background()]
-    out.append(heading(t,"The Open Cap Table Coalition","an industry coalition for open equity data"))
-    cats=[("Cap-table platforms",CARTA),("Transfer agents & banks",CORE),("Law firms",OCF),("Registries & markets","#8f8bff")]
-    cw=400; gap=24; total=4*cw+3*gap; sx=(W-total)/2; y=330
-    for i,(lab,co) in enumerate(cats):
-        ro=appear(t,0.5+i*0.16,0.5); x=sx+i*(cw+gap)
-        out.append(rrect(x,y,cw,96,16, fill=PANEL, stroke=co, sw=2, opacity=ro))
-        out.append(circle(x+34,y+48,8,co,ro))
-        out.append(text(x+56,y+57,lab,24,fill=WHITE,opacity=ro))
-    mo=appear(t,1.4,0.6)
-    out.append(text(W/2, 528, "FOUNDING MEMBERS INCLUDE", 22, fill=FAINT, anchor="middle", opacity=mo, spacing="4"))
+    o=scene_opacity(t,dur); out=[background(brand=True)]
+    cx=960
+    out.append(text(cx,150,"The Open Cap Table Coalition",58,fill=WHITE,weight="bold",anchor="middle",opacity=appear(t,0.0,0.6)))
+    out.append(text(cx,208,"substantially all of the private-company equity industry, at one table",29,
+                    fill="#d7dcf6",anchor="middle",opacity=appear(t,0.2,0.6)))
+    hub=(cx,512); R=90; hw=180
+    nodes=[(600,378,"Cap-table software"),(600,646,"Transfer agents & banks"),
+           (1320,378,"Law firms"),(1320,646,"Registries & markets")]
+    # spokes (drawn first, behind the hub)
+    for i,(nx,ny,lab) in enumerate(nodes):
+        ro=appear(t,1.0+i*0.16,0.5)
+        ex=nx+(hw if nx<cx else -hw); ey=ny
+        dx=ex-hub[0]; dy=ey-hub[1]; L=(dx*dx+dy*dy)**0.5; ux,uy=dx/L,dy/L
+        out.append(line(hub[0]+ux*(R+14),hub[1]+uy*(R+14),ex,ey,"#ffffff",2,ro*0.5))
+    # central aperture mark = the hub
+    out.append(octc_mark(hub[0],hub[1],R,WHITE,appear(t,0.5,0.7)))
+    # category nodes
+    for i,(nx,ny,lab) in enumerate(nodes):
+        ro=appear(t,1.1+i*0.16,0.5)
+        out.append(rrect(nx-hw,ny-38,hw*2,76,20,fill="#413fe0",stroke="#ffffff",sw=2,opacity=ro))
+        out.append(text(nx,ny+9,lab,25,fill=WHITE,weight="bold",anchor="middle",opacity=ro))
+    # founding members
+    mo=appear(t,2.0,0.6)
+    out.append(text(cx,842,"FOUNDING MEMBERS INCLUDE",22,fill="#bcc0f2",anchor="middle",opacity=mo,spacing="4"))
     members="Carta · Cooley · Fenwick · Goodwin · Gunderson Dettmer · Latham & Watkins · Morgan Stanley · Orrick · Wilson Sonsini"
-    out.append(multiline(W/2, 580, wrap(members, 62), 27, 44, fill="#c3c9ec", anchor="middle", opacity=mo))
-    out.append(caption(t, "Substantially all of the private-company equity industry — software, banks and law firms — at one table.", start=1.9))
+    out.append(multiline(cx,888,wrap(members,74),25,40,fill="#e9ebfb",anchor="middle",opacity=mo))
     return f'<g opacity="{o:.3f}">'+"".join(out)+'</g>'
 
 def s_problem(t, dur):

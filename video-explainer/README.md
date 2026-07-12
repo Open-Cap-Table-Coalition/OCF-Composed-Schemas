@@ -6,8 +6,8 @@ example objects.
 
 | File | What it is |
 | --- | --- |
-| `ocf-core-explainer.mp4` | 1920×1080, h264, 30 fps, 237 s, ~7.6 MB (primary) |
-| `ocf-core-explainer.gif` | 900×506, 12 fps, ~11 MB (for embeds/chat) |
+| `ocf-core-explainer.mp4` | 1920×1080, h264, 30 fps, 237 s, ~7.8 MB (primary) |
+| `ocf-core-explainer.gif` | 900×506, 12 fps, ~10 MB (for embeds/chat) |
 | `poster.png` | still thumbnail (the recap scene) |
 | `gen.py` | the SVG frame generator (see *Rebuilding* below) |
 
