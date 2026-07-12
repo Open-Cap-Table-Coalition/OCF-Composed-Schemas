@@ -197,6 +197,36 @@ def icon_spark(cx, cy, r, color, op=1.0):
     return (f'<polygon points="{p}" fill="{color}" opacity="{op:.3f}"/>'
             + circle(cx+r*0.98, cy-r*0.86, r*0.17, color, op))
 
+def icon_diff(cx, cy, r, op=1.0):
+    """Three stacked lines (added / removed / context) — a change / diff."""
+    if op <= 0.001: return ""
+    lw = r*0.30
+    return (rrect(cx-r*0.7, cy-r*0.62, r*1.45, lw, lw/2, fill=OCF, opacity=op)
+          + rrect(cx-r*0.7, cy-r*0.15, r*1.02, lw, lw/2, fill=LOST, opacity=op)
+          + rrect(cx-r*0.7, cy+r*0.32, r*1.28, lw, lw/2, fill="#7f88b0", opacity=op))
+
+def icon_bubble(cx, cy, r, color, op=1.0):
+    """A speech bubble with a check — review & approve."""
+    if op <= 0.001: return ""
+    bw = r*1.8; bh = r*1.3; bx = cx-bw/2; by = cy-bh/2-r*0.12
+    out = [rrect(bx, by, bw, bh, r*0.32, fill="none", stroke=color, sw=max(3,r*0.13), opacity=op)]
+    out.append(f'<polygon points="{cx-r*0.42:.1f},{by+bh-2:.1f} {cx-r*0.02:.1f},{by+bh-2:.1f} '
+               f'{cx-r*0.55:.1f},{by+bh+r*0.42:.1f}" fill="{color}" opacity="{op:.3f}"/>')
+    out.append(_checkmark(cx, by+bh/2, r*0.5, color, op))
+    return "".join(out)
+
+def icon_commits(cx, cy, r, color, op=1.0):
+    """A little git graph — commit dots with a branch. Versioned history."""
+    if op <= 0.001: return ""
+    sw = max(3, r*0.12); mx = cx-r*0.45
+    out = [line(mx, cy-r*0.72, mx, cy+r*0.72, color, sw, op)]
+    for dy in (-r*0.62, 0, r*0.62):
+        out.append(circle(mx, cy+dy, r*0.2, color, op))
+    out.append(f'<path d="M {mx:.1f} {cy:.1f} Q {cx+r*0.15:.1f} {cy:.1f} {cx+r*0.55:.1f} {cy-r*0.5:.1f}" '
+               f'fill="none" stroke="{color}" stroke-width="{sw:.1f}" opacity="{op:.3f}"/>')
+    out.append(circle(cx+r*0.6, cy-r*0.58, r*0.2, color, op))
+    return "".join(out)
+
 # ---- higher-level: a data card ---------------------------------------------
 def card(x, y, w, title, subtitle, rows, accent=OCF, accent_fill=OCF_FILL,
          opacity=1.0, row_reveal=None, t=0.0, row_h=52, head_h=96, blur_rows=None):
@@ -532,6 +562,79 @@ def _example_frame(t, dur, n, title, sub):
     out.append(text(160, 226, sub, 28, fill=MUTE, opacity=appear(t,0.2,0.5)))
     return out
 
+def s_mapfiles(t, dur):
+    o=scene_opacity(t,dur); out=[background()]
+    out.append(heading(t,"How we write it down","one small, declarative file per object — not code"))
+    fx=150; fy=300; fw=850
+    lines=[("name","rename","fullName",OCF),
+           ("class_type","enum-remap","shareClass",CARTA),
+           ("par_value","rename","parValue",OCF),
+           ("votes_per_share","unmappable","—",LOST)]
+    fh=112+len(lines)*66+58
+    fo=appear(t,0.4,0.5)
+    out.append(rrect(fx,fy,fw,fh,16, fill=PANEL, stroke=BORDER, sw=2, opacity=fo))
+    out.append(rrect(fx,fy,fw,60,16, fill="#1e2246", opacity=fo))
+    out.append(rrect(fx,fy+44,fw,16,0, fill="#1e2246", opacity=fo))
+    out.append(circle(fx+30,fy+30,8,CORE,fo))
+    out.append(text(fx+52,fy+40,"StockClass.mapping.md",26,fill=WHITE,weight="bold",family=MONO,opacity=fo))
+    for i,(field,kind,tgt,co) in enumerate(lines):
+        ro=appear(t,0.8+i*0.18,0.45); ly=fy+92+i*66
+        out.append(text(fx+34,ly+34,field,25,fill="#cdd3f0",family=MONO,opacity=ro))
+        pw=len(kind)*13+54; px=fx+330
+        out.append(rrect(px,ly+8,pw,44,22, fill="none", stroke=co, sw=2, opacity=ro))
+        out.append(circle(px+22,ly+30,6,co,ro))
+        out.append(text(px+38,ly+38,kind,22,fill=co,opacity=ro))
+        out.append(text(px+pw+28,ly+34,"→ "+tgt,24,fill=MUTE,family=MONO,opacity=ro))
+    bo=appear(t,1.7,0.5)
+    out.append(f'<g filter="url(#blur)" opacity="{bo*0.6:.3f}">'
+               + text(fx+34,fy+fh-26,"…13 fields in all — each one accounted for",22,fill=MUTE,family=MONO)+'</g>')
+    # right — the two power constructs, as mini-diagrams
+    rx=1090
+    out.append(text(rx, 322, "FOR THE HARD CASES", 22, fill=FAINT, weight="bold", opacity=appear(t,1.9,0.5), spacing="3"))
+    py=408; po=appear(t,2.1,0.5)
+    out.append(circle(rx+30,py,16,OCF,po))
+    for dy in (-46,0,46):
+        out.append(line(rx+46,py, rx+178,py+dy, CARTA, 2.5, po))
+        out.append(circle(rx+196,py+dy,13,CARTA,po))
+    out.append(text(rx+250,py-6,"polymorphism",27,fill=WHITE,weight="bold",opacity=po))
+    out.append(text(rx+250,py+28,"one object → several Carta families",22,fill=MUTE,opacity=po))
+    cyy=572; c2=appear(t,2.4,0.5)
+    out.append(circle(rx+30,cyy,16,OCF,c2))
+    for dy in (-28,28):
+        out.append(arrow(rx+46,cyy, rx+176,cyy+dy, CARTA, 2.5, c2))
+        out.append(circle(rx+196,cyy+dy,13,CARTA,c2))
+    out.append(text(rx+250,cyy-6,"composite",27,fill=WHITE,weight="bold",opacity=c2))
+    out.append(text(rx+250,cyy+28,"one event → an ordered set of records",22,fill=MUTE,opacity=c2))
+    out.append(caption(t,"Every field's fate is written down — a handful of declarative rules, one small file per object.",start=2.7))
+    return f'<g opacity="{o:.3f}">'+"".join(out)+'</g>'
+
+def s_process(t, dur):
+    o=scene_opacity(t,dur); out=[background()]
+    out.append(heading(t,"Versionable. Reviewable. Verified.","handled like the legal documents they encode"))
+    cy=474; r=86
+    nodes=[
+        (300,  CARTA,     "diff",    "Propose",  "a mapping as a change"),
+        (720,  "#8f8bff", "bubble",  "Review",   "people read & approve"),
+        (1140, OCF,       "shield",  "Validate", "CI enforces the rules"),
+        (1560, CORE,      "commits", "Version",  "tracked in git history"),
+    ]
+    starts=[0.4,0.95,1.5,2.05]
+    for i,(cx,co,icon,title,sub) in enumerate(nodes):
+        ro=appear(t,starts[i],0.5)
+        out.append(circle(cx,cy,r,"#12152e",ro,stroke=co,sw=3.5))
+        if icon=="diff":     out.append(icon_diff(cx,cy,r*0.5,ro))
+        elif icon=="bubble": out.append(icon_bubble(cx,cy,r*0.5,co,ro))
+        elif icon=="shield": out.append(icon_shield(cx,cy-2,r*0.56,co,ro))
+        else:                out.append(icon_commits(cx,cy,r*0.62,co,ro))
+        out.append(text(cx,cy+r+52,title,29,fill=co,weight="bold",anchor="middle",opacity=ro))
+        out.append(text(cx,cy+r+88,sub,22,fill=MUTE,anchor="middle",opacity=ro))
+    for i in range(3):
+        ro=appear(t,0.75+i*0.55,0.5)
+        x0=nodes[i][0]+r+12; x1=nodes[i+1][0]-r-12
+        out.append(arrow(x0,cy,x1,cy,FAINT,3,ro))
+    out.append(caption(t,"Each mapping is proposed, reviewed like a legal document, machine-checked, then versioned — a full audit trail.",start=2.6))
+    return f'<g opacity="{o:.3f}">'+"".join(out)+'</g>'
+
 def s_stockclass(t, dur):
     o=scene_opacity(t,dur)
     out=_example_frame(t,dur,1,"A share class","StockClass · e.g. “Common Stock” — the backbone of a cap table")
@@ -717,6 +820,8 @@ SCENES = [
     ("architecture",s_architecture,13.0),
     ("core",        s_core,        12.0),
     ("rule",        s_rule,        11.0),
+    ("mapfiles",    s_mapfiles,    13.0),
+    ("process",     s_process,     12.0),
     ("stockclass",  s_stockclass,  13.0),
     ("transfer",    s_transfer,    14.0),
     ("stakeholder", s_stakeholder, 14.0),

@@ -6,8 +6,8 @@ example objects.
 
 | File | What it is |
 | --- | --- |
-| `ocf-core-explainer.mp4` | 1920×1080, h264, 30 fps, 212 s, ~6.9 MB (primary) |
-| `ocf-core-explainer.gif` | 900×506, 12 fps, ~9.7 MB (for embeds/chat) |
+| `ocf-core-explainer.mp4` | 1920×1080, h264, 30 fps, 237 s, ~7.6 MB (primary) |
+| `ocf-core-explainer.gif` | 900×506, 12 fps, ~11 MB (for embeds/chat) |
 | `poster.png` | still thumbnail (the recap scene) |
 | `gen.py` | the SVG frame generator (see *Rebuilding* below) |
 
@@ -37,7 +37,11 @@ Then the **explainer**:
    **derived**, field by field, not hand-declared.
 6. **The rule** — keep a fact if Carta can hold it; losing a little *precision* is OK, losing a
    whole *thing* is not; an object joins Core only if at least one real fact lands.
-7. **Worked examples** (below): four objects that show how OCF folds into Carta, then a fifth
+7. **How we write it down** — one small, declarative `.mapping.md` file per object (`rename`,
+   `enum-remap`, `unmappable`, and for the hard cases **polymorphism** and **composite**),
+   handled like the legal docs they encode: **proposed → reviewed → validated (CI) → versioned**
+   in git. A transparent, auditable approach to mapping between the standards.
+8. **Worked examples** (below): four objects that show how OCF folds into Carta, then a fifth
    showing the reverse gap — followed by a recap.
 
 ## The example objects
@@ -71,7 +75,7 @@ the brand so the multi-colour field coding keeps its contrast.
 Requires `rsvg-convert` (librsvg), `ffmpeg`, and `python3` — no browser needed.
 
 ```sh
-# 1. generate the SVG frame sequence (20 fps → 4240 frames)
+# 1. generate the SVG frame sequence (20 fps → 4740 frames)
 python3 gen.py all frames --fps 20
 
 # 2. render every frame to PNG (parallel)
