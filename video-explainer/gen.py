@@ -579,7 +579,7 @@ def s_recap(t, dur):
         out.append(text(x+cw/2,y+312,note,22,fill=MUTE,anchor="middle",opacity=ro))
     out.append(text(W/2, 790, "Every OCF object gets this test — automatically, field by field.", 32,
                     fill=WHITE, anchor="middle", weight="bold", opacity=appear(t,1.9,0.6)))
-    out.append(caption(t, "That's one direction — how OCF folds into Carta. The analysis runs the other way, too.", start=2.2))
+    out.append(caption(t, "That's the analysis the board asked for: how cap tables move between OCF and Carta — and the gaps in each.", start=2.2))
     return f'<g opacity="{o:.3f}">'+"".join(out)+'</g>'
 
 def s_ocfgap(t, dur):
@@ -643,8 +643,8 @@ SCENES = [
     ("transfer",    s_transfer,    14.0),
     ("stakeholder", s_stakeholder, 14.0),
     ("acceptance",  s_acceptance,  12.0),
-    ("recap",       s_recap,       10.0),
     ("ocfgap",      s_ocfgap,      15.0),
+    ("recap",       s_recap,       10.0),
     ("close",       s_close,       7.0),
 ]
 

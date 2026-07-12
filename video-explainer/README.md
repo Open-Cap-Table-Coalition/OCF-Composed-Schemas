@@ -34,8 +34,8 @@ Then the **explainer**:
    **derived**, field by field, not hand-declared.
 6. **The rule** — keep a fact if Carta can hold it; losing a little *precision* is OK, losing a
    whole *thing* is not; an object joins Core only if at least one real fact lands.
-7. **Worked examples** (below): four objects that show how OCF folds into Carta, a recap, then a
-   fifth showing the reverse gap.
+7. **Worked examples** (below): four objects that show how OCF folds into Carta, then a fifth
+   showing the reverse gap — followed by a recap.
 
 ## The example objects
 
