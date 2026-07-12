@@ -1,13 +1,13 @@
 # OCF Core — explainer video
 
-A ~2-minute, plain-English motion explainer that walks a **non-technical** viewer from
-"what is a cap table?" to "what is OCF Core, and how did we build it?" — through four real
+A ~3-minute, plain-English motion explainer that walks a **non-technical** viewer from
+"what is a cap table?" to "what is OCF Core, and how did we build it?" — through real
 example objects.
 
 | File | What it is |
 | --- | --- |
-| `ocf-core-explainer.mp4` | 1920×1080, h264, 30 fps, 183 s, ~5.8 MB (primary) |
-| `ocf-core-explainer.gif` | 900×506, 12 fps, ~8.5 MB (for embeds/chat) |
+| `ocf-core-explainer.mp4` | 1920×1080, h264, 30 fps, 198 s, ~6.3 MB (primary) |
+| `ocf-core-explainer.gif` | 900×506, 12 fps, ~9.1 MB (for embeds/chat) |
 | `poster.png` | still thumbnail (the recap scene) |
 | `gen.py` | the SVG frame generator (see *Rebuilding* below) |
 
@@ -34,9 +34,10 @@ Then the **explainer**:
    **derived**, field by field, not hand-declared.
 6. **The rule** — keep a fact if Carta can hold it; losing a little *precision* is OK, losing a
    whole *thing* is not; an object joins Core only if at least one real fact lands.
-7. **Four worked examples** (below), then a recap of the whole spectrum.
+7. **Worked examples** (below): four objects that show how OCF folds into Carta, a recap, then a
+   fifth showing the reverse gap.
 
-## The four example objects
+## The example objects
 
 Each pick is grounded in the real derived ledger (`core/core-ledger.md`), not invented:
 
@@ -46,6 +47,12 @@ Each pick is grounded in the real derived ledger (`core/core-ledger.md`), not in
 | **Composite** | `StockTransfer` | Carta has no "transfer", so one OCF event folds into a **cancel + issue** pair; `quantity`/`date` land on both steps. `admissible ✓` in both stock families. |
 | **Lossy** | `Stakeholder` | `admissible ✓` but only **3 payload land**. A *person* whose address list (`array→scalar`), structured name (`structure→scalar`), tax IDs and contact info are lost on the way out. |
 | **Totally out** | `StockAcceptance` | `✗ no-payload` — recording that a shareholder *accepted* their shares isn't data Carta stores, so nothing lands and it stays out of Core. |
+
+**Then the gap runs both ways.** A fifth example — *"Where Carta knows more"* (an option
+exercise) — shows the reverse: Carta records the **cash paid and taxes withheld**, and models
+equity types like **phantom stock / profits interests**, which **OCF v1 has no field for**. That's
+a *gap in OCF*, fulfilling the other half of the board mandate. (Grounded in `core/core-gaps.md` §b3,
+"true gaps — OCF lacks the concept.")
 
 Design language matches the repo's own diagrams: **green = OCF · blue = Carta · gold = Core ·
 red/dashed = lost.** Complex objects are shown as a focused subset, with peripheral detail
@@ -61,7 +68,7 @@ the brand so the multi-colour field coding keeps its contrast.
 Requires `rsvg-convert` (librsvg), `ffmpeg`, and `python3` — no browser needed.
 
 ```sh
-# 1. generate the SVG frame sequence (20 fps → 3660 frames)
+# 1. generate the SVG frame sequence (20 fps → 3960 frames)
 python3 gen.py all frames --fps 20
 
 # 2. render every frame to PNG (parallel)

@@ -579,7 +579,37 @@ def s_recap(t, dur):
         out.append(text(x+cw/2,y+312,note,22,fill=MUTE,anchor="middle",opacity=ro))
     out.append(text(W/2, 790, "Every OCF object gets this test — automatically, field by field.", 32,
                     fill=WHITE, anchor="middle", weight="bold", opacity=appear(t,1.9,0.6)))
-    out.append(caption(t, "The same rule, applied to everything, is what defines OCF Core.", start=2.2))
+    out.append(caption(t, "That's one direction — how OCF folds into Carta. The analysis runs the other way, too.", start=2.2))
+    return f'<g opacity="{o:.3f}">'+"".join(out)+'</g>'
+
+def s_ocfgap(t, dur):
+    o=scene_opacity(t,dur); out=[background()]
+    out.append(text(160,120,"THE GAP RUNS BOTH WAYS",26,fill=CORE,weight="bold",opacity=appear(t,0,0.4),spacing="4"))
+    out.append(text(160,178,"Where Carta knows more",54,fill=WHITE,weight="bold",opacity=appear(t,0.1,0.5)))
+    out.append(text(160,226,"An option exercise — Carta records detail OCF v1 doesn't",28,fill=MUTE,opacity=appear(t,0.2,0.5)))
+    lx=170; rx=1130; cy=340
+    lc,lh=card(lx,cy,560,"EquityCompExercise","OCF · THE EVENT",
+               [("shares exercised","in"),("exercise date","in"),("which security","plain")],
+               accent=OCF,accent_fill=OCF_FILL,opacity=appear(t,0.4,0.5),row_reveal=(0.7,0.14),t=t)
+    out.append(lc)
+    rc,rh=card(rx,cy,620,"Option exercise","CARTA · SAME EVENT, MORE DETAIL",
+               [("shares exercised","carta"),("exercise date","carta"),
+                ("cash paid to exercise","warn"),("taxes withheld","warn"),("tax detail, line by line","warn")],
+               accent=CARTA,accent_fill=CARTA_FILL,opacity=appear(t,0.9,0.5),row_reveal=(1.2,0.13),t=t)
+    out.append(rc)
+    for i in range(2):  # the two shared rows flow OCF -> Carta (aligned)
+        ao=appear(t,1.7+i*0.12,0.4); yy=cy+96+12+i*52+26
+        out.append(arrow(lx+560, yy, rx, yy, OCF, 3, ao*0.9))
+    # amber callout: the extra Carta rows have no OCF source
+    go=appear(t,2.5,0.6)
+    out.append(rrect(rx+40, cy+rh+18, 540, 60, 14, fill="#211703", stroke=AMBER, sw=2, opacity=go))
+    out.append(warn(rx+74, cy+rh+48, 18, AMBER, go))
+    out.append(text(rx+108, cy+rh+57, "OCF v1 has no field for these", 25, fill=AMBER, opacity=go))
+    so=appear(t,2.9,0.6)
+    out.append(multiline(lx+4, cy+lh+58, wrap("Carta also models equity types OCF v1 lacks — like phantom stock and profits interests.",44),
+                         24,36,fill=MUTE,opacity=so))
+    out.append(badge(W/2, 852, "A gap in OCF v1 — flagged to close", AMBER, "warn", appear(t,3.2,0.6), w=620))
+    out.append(caption(t,"Sometimes Carta captures useful detail OCF doesn't — the cash and taxes on an exercise. Those become gaps for OCF to close.",start=3.4))
     return f'<g opacity="{o:.3f}">'+"".join(out)+'</g>'
 
 def s_close(t, dur):
@@ -614,6 +644,7 @@ SCENES = [
     ("stakeholder", s_stakeholder, 14.0),
     ("acceptance",  s_acceptance,  12.0),
     ("recap",       s_recap,       10.0),
+    ("ocfgap",      s_ocfgap,      15.0),
     ("close",       s_close,       7.0),
 ]
 
