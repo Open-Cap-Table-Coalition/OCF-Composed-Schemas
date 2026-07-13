@@ -127,7 +127,11 @@ shared:
   comments:            { kind: unmappable, target: null, reason: no-equivalent }
   object_type:         { kind: unmappable, target: null, reason: ocf-internal }
   security_id:         { kind: unmappable, target: null, reason: ocf-internal }
-  reason_text:         { kind: unmappable, target: null, reason: no-equivalent }
+  reason_text:
+    kind: computed                 # free text classified into the family's cancellation reason enum
+    target:
+      Rsa:     "#/$defs/RsaCancellationTransaction/properties/reason"
+      Default: "#/$defs/CertificateCancellationTransaction/properties/reason"
   balance_security_id:
     kind: computed                 # lineage: the partial-cancel remainder security precededBy
     target:
@@ -178,10 +182,13 @@ coverage:
   map. **Granularity to flag:** OCF `date` is a calendar date and Carta
   `effectiveDatetime` is a full datetime, so an importer must widen the OCF date
   (the reverse is lossy).
-- **`reason_text` has no home.** Carta's cancellation `reason` is an enum
-  (`CertificateCancellationReason` / the RSA equivalent); OCF `reason_text` is free
-  text — the type-mapping policy treats free-text → enum as unmappable, not a rename
-  (there is no OCF enum to remap member-for-member).
+- **`reason_text` lands lossily (kind `computed`).** Carta's cancellation `reason` is
+  an enum (`CertificateCancellationReason` / the RSA equivalent) and OCF `reason_text`
+  is free text, so this is not a member-for-member `enum-remap`: an importer must
+  classify the free text into the family's enum, keeping the bucket and dropping the
+  prose. It lands on the resolved family's cancellation tx `reason` via a per-variant
+  target map, mirroring `date`/`quantity` — and matching the `ConvertibleCancellation`
+  / `WarrantCancellation` siblings, which map the identical field the same way.
 - **`security_id`** is the join key (`route_by_security.via`); it routes the family,
   it is not itself a stored Carta field.
 - **`balance_security_id` round-trips as lineage (kind `computed`).** The remainder

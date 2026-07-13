@@ -1,0 +1,188 @@
+import {
+  computeAdmissibility,
+  referentOf,
+  ClassifiedRow,
+  Admissibility,
+  ReferenceGraph,
+} from "../scripts/lib/core-admissibility.js";
+
+// Fixture graph mirroring the relevant entries of core/reference-graph.yml.
+const GRAPH: ReferenceGraph = {
+  references: {
+    stock_class_id: "StockClass",
+    stakeholder_id: "Stakeholder",
+    stock_plan_id: "StockPlan",
+    vesting_terms_id: "VestingTerms",
+    vesting_template_id: "VestingTerms",
+  },
+  securityReferences: new Set(["resulting_security_ids", "balance_security_id"]),
+  nonReferences: new Set(["custom_id", "issuer_assigned_id"]),
+  nonPayload: new Set(["id", "object_type", "comments", "date", "security_id", "custom_id"]),
+};
+
+const core = (entity: string, variant: string, field: string): ClassifiedRow => ({
+  entity,
+  variant,
+  field,
+  klass: "core",
+});
+const out = (entity: string, variant: string, field: string): ClassifiedRow => ({
+  entity,
+  variant,
+  field,
+  klass: "out",
+});
+
+function index(adm: Admissibility[]): Map<string, Admissibility> {
+  return new Map(adm.map((a) => [`${a.entity} ${a.variant}`, a]));
+}
+
+const run = (rows: ClassifiedRow[]): Admissibility[] => computeAdmissibility(rows, GRAPH);
+
+describe("referentOf", () => {
+  it("maps known FK fields to their referent entity", () => {
+    expect(referentOf("X", "stakeholder_id", GRAPH)).toEqual({
+      kind: "entity",
+      entity: "Stakeholder",
+    });
+    expect(referentOf("X", "stock_class_id", GRAPH)).toEqual({
+      kind: "entity",
+      entity: "StockClass",
+    });
+    expect(referentOf("X", "vesting_template_id", GRAPH)).toEqual({
+      kind: "entity",
+      entity: "VestingTerms",
+    });
+  });
+  it("treats security_id as created on an issuance, a reference elsewhere", () => {
+    expect(referentOf("StockIssuance", "security_id", GRAPH)).toEqual({ kind: "none" });
+    expect(referentOf("StockTransfer", "security_id", GRAPH)).toEqual({ kind: "security" });
+  });
+  it("treats labels as non-references", () => {
+    expect(referentOf("X", "custom_id", GRAPH)).toEqual({ kind: "none" });
+    expect(referentOf("X", "issuer_assigned_id", GRAPH)).toEqual({ kind: "none" });
+  });
+  it("flags an unknown id-shaped field as unresolved", () => {
+    expect(referentOf("X", "mystery_id", GRAPH)).toEqual({ kind: "unresolved" });
+  });
+});
+
+describe("computeAdmissibility — non-degeneracy (payload) gate", () => {
+  it("blocks an entity that lands only a date / key / reference", () => {
+    const adm = index(run([core("A", "—", "date")]));
+    const a = adm.get("A —")!;
+    expect(a.admissible).toBe(false);
+    expect(a.blockers.map((b) => b.why)).toContain("no-payload");
+    expect(a.payloadFieldCount).toBe(0);
+  });
+  it("admits an entity with at least one payload field", () => {
+    const adm = index(run([core("A", "—", "quantity"), out("A", "—", "comments")]));
+    expect(adm.get("A —")!.admissible).toBe(true);
+  });
+  it("a reference-only entity is degenerate (references are not payload)", () => {
+    // stakeholder_id would also be a closure obligation, but the no-payload gate
+    // fires regardless; assert the entity is blocked.
+    const adm = index(run([core("A", "—", "stakeholder_id")]));
+    expect(adm.get("A —")!.admissible).toBe(false);
+  });
+});
+
+describe("computeAdmissibility — alias wrappers", () => {
+  // A wrapper declares only `object_type` (an `out` field), so on its own rows it
+  // is always no-payload; the alias map makes it mirror the base instead.
+  const wrapperRows = (wrapper: string): ClassifiedRow[] => [out(wrapper, "—", "object_type")];
+
+  it("an alias of an admissible base is admissible, flagged alias-of, never no-payload", () => {
+    const rows = [
+      core("EquityCompensationIssuance", "Option", "quantity"), // base has payload
+      ...wrapperRows("PlanSecurityIssuance"),
+    ];
+    const aliases = new Map([["PlanSecurityIssuance", "EquityCompensationIssuance"]]);
+    const a = index(computeAdmissibility(rows, GRAPH, aliases)).get("PlanSecurityIssuance —")!;
+    expect(a.admissible).toBe(true);
+    expect(a.aliasOf).toBe("EquityCompensationIssuance");
+    expect(a.blockers).toEqual([
+      { field: "—", referent: "EquityCompensationIssuance", why: "alias" },
+    ]);
+    expect(a.blockers.some((b) => b.why === "no-payload")).toBe(false);
+  });
+
+  it("an alias of a degenerate base is inadmissible but still reads alias-of, not no-payload", () => {
+    const rows = [
+      out("EquityCompensationAcceptance", "—", "object_type"), // base lands no payload
+      ...wrapperRows("PlanSecurityAcceptance"),
+    ];
+    const aliases = new Map([["PlanSecurityAcceptance", "EquityCompensationAcceptance"]]);
+    const a = index(computeAdmissibility(rows, GRAPH, aliases)).get("PlanSecurityAcceptance —")!;
+    expect(a.admissible).toBe(false);
+    expect(a.aliasOf).toBe("EquityCompensationAcceptance");
+    expect(a.blockers.map((b) => b.why)).toEqual(["alias"]);
+  });
+
+  it("without an alias map, a wrapper degrades to the ordinary no-payload verdict", () => {
+    const a = index(run(wrapperRows("PlanSecurityIssuance"))).get("PlanSecurityIssuance —")!;
+    expect(a.admissible).toBe(false);
+    expect(a.aliasOf).toBeUndefined();
+    expect(a.blockers.map((b) => b.why)).toContain("no-payload");
+  });
+});
+
+describe("computeAdmissibility — referential closure", () => {
+  it("admits when a core FK resolves to an admissible referent", () => {
+    const adm = index(
+      run([
+        core("Iss", "—", "quantity"),
+        core("Iss", "—", "stock_class_id"),
+        core("StockClass", "—", "name"),
+      ])
+    );
+    expect(adm.get("Iss —")!.admissible).toBe(true);
+    expect(adm.get("StockClass —")!.admissible).toBe(true);
+  });
+
+  it("blocks when a core FK referent is absent (dangling)", () => {
+    const adm = index(run([core("Iss", "—", "quantity"), core("Iss", "—", "stock_class_id")]));
+    const a = adm.get("Iss —")!;
+    expect(a.admissible).toBe(false);
+    expect(a.blockers).toContainEqual({
+      field: "stock_class_id",
+      referent: "StockClass",
+      why: "dangling-reference",
+    });
+  });
+
+  it("an `out` FK imposes no closure obligation", () => {
+    const adm = index(run([core("Iss", "—", "quantity"), out("Iss", "—", "stock_class_id")]));
+    expect(adm.get("Iss —")!.admissible).toBe(true);
+  });
+
+  it("propagates: a referent that is itself degenerate dangles its referrer (fixpoint)", () => {
+    const adm = index(
+      run([
+        core("Iss", "—", "quantity"),
+        core("Iss", "—", "stock_class_id"),
+        core("StockClass", "—", "id"), // id is bookkeeping → StockClass has no payload
+      ])
+    );
+    expect(adm.get("StockClass —")!.admissible).toBe(false); // no-payload
+    const iss = adm.get("Iss —")!;
+    expect(iss.admissible).toBe(false); // its FK now dangles
+    expect(iss.blockers.some((b) => b.referent === "StockClass")).toBe(true);
+  });
+
+  it("a security_id on a transaction needs some admissible issuance", () => {
+    const danglingTransfer = index(
+      run([core("FooTransfer", "—", "quantity"), core("FooTransfer", "—", "security_id")])
+    );
+    expect(danglingTransfer.get("FooTransfer —")!.admissible).toBe(false);
+
+    const withIssuance = index(
+      run([
+        core("FooTransfer", "—", "quantity"),
+        core("FooTransfer", "—", "security_id"),
+        core("BarIssuance", "—", "quantity"),
+      ])
+    );
+    expect(withIssuance.get("FooTransfer —")!.admissible).toBe(true);
+  });
+});

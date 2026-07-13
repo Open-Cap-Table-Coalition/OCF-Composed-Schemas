@@ -129,7 +129,12 @@ shared:
   object_type:         { kind: unmappable, target: null, reason: ocf-internal }
   security_id:         { kind: unmappable, target: null, reason: ocf-internal }
   balance_security_id: { kind: unmappable, target: null, reason: no-equivalent }
-  reason_text:         { kind: unmappable, target: null, reason: no-equivalent }
+  reason_text:
+    kind: computed                 # free text classified into the family's cancellation reason enum
+    target:
+      Option: "#/$defs/OptionCancellationTransaction/properties/reason"
+      Rsu:    "#/$defs/RsuCancellationTransaction/properties/reason"
+      Sar:    "#/$defs/SarCancellationTransaction/properties/reason"
   date:
     kind: rename
     target:
@@ -180,10 +185,13 @@ coverage:
 - **`date` / `quantity`** are the only mappable fields; each lands on the resolved
   family's cancellation tx (`effectiveDatetime` / `quantity`) via a per-variant
   target map.
-- **`reason_text` has no home.** Carta's cancellation `reason` is an enum
-  (`OptionCancellationReason` / `RsuCancellationReason` / `SarCancellationReason`);
-  OCF `reason_text` is free text — the type-mapping policy treats free-text → enum as
-  unmappable, not a rename.
+- **`reason_text` lands lossily (kind `computed`).** Carta's cancellation `reason` is
+  an enum (`OptionCancellationReason` / `RsuCancellationReason` / `SarCancellationReason`)
+  and OCF `reason_text` is free text, so this is not a member-for-member `enum-remap`:
+  an importer classifies the free text into the resolved family's enum, keeping the
+  bucket and dropping the prose. It lands on the family's cancellation tx `reason` via
+  a per-variant target map, mirroring `date`/`quantity` — and matching the
+  `ConvertibleCancellation` / `WarrantCancellation` siblings.
 - **`security_id`** is the join key (`route_by_security.via`); it routes the family,
   it is not itself a stored Carta field. **`balance_security_id`** (partial-cancel
   remainder) has no Carta equivalent on any cancellation tx.

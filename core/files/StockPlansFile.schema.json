@@ -1,0 +1,48 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://opencaptablecoalition.com/ocf-core/v0/files/StockPlansFile.schema.json",
+  "title": "OCF Core — StockPlansFile",
+  "description": "Generated. Core-admissible StockPlan; values inlined into OCF grammar.",
+  "type": "object",
+  "properties": {
+    "file_type": {
+      "const": "OCF_STOCK_PLANS_FILE"
+    },
+    "items": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "title": "StockPlan",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Identifier for the object"
+          },
+          "initial_shares_reserved": {
+            "type": "string",
+            "pattern": "^[+-]?[0-9]+(\\.[0-9]{1,10})?$",
+            "description": "The initial number of shares reserved in the pool for this stock plan by the Board or equivalent body."
+          },
+          "object_type": {
+            "const": "STOCK_PLAN"
+          },
+          "plan_name": {
+            "type": "string",
+            "description": "Name for the stock plan"
+          },
+          "stock_class_id": {
+            "type": "string",
+            "description": "[DEPRECATED in favor of stock_class_ids] Identifier of the StockClass object this plan is composed of."
+          }
+        },
+        "required": [],
+        "additionalProperties": false
+      }
+    }
+  },
+  "required": [
+    "file_type",
+    "items"
+  ],
+  "additionalProperties": false
+}

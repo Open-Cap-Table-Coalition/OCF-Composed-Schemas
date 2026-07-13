@@ -1,0 +1,183 @@
+#!/usr/bin/env node
+/**
+ * OCF Core — UNMAPPED-property inventory (a discussion artifact — NOT gated).
+ *
+ * The complement of the lossy-home inventory: OCF properties with NO Carta home at
+ * all (`kind: unmappable` → classifier `no-destination`). These don't flow anywhere;
+ * they are simply dropped on the fold to Carta. One `deriveCore` call, re-cut — no
+ * re-load, no re-classify. Grouped by OCF object; OCF-*required* casualties flagged;
+ * the object's §3 admissibility shown (an unmapped field on an in-Core object is the
+ * sharper loss — we carry the object but drop the field).
+ *
+ * OCF bookkeeping (id/object_type/comments) is excluded — it is internal scaffolding,
+ * never unmapped "data". Contrast: the lossy inventory (npm run core:lossy) covers
+ * properties that DO have a (lossy) Carta home.
+ *
+ *   npm run core:unmapped        # write docs/core-unmapped-inventory.md + print summary
+ */
+import path from "node:path";
+import { writeFile } from "node:fs/promises";
+import { pathToFileURL } from "node:url";
+
+import { deriveCore, Derived, isMember, RICH_PROFILE } from "./lib/core-pipeline.js";
+import { BOOKKEEPING } from "./lib/report-helpers.js";
+import { FlowRow, groupByEntity, groupByVariant, mermaidVoid } from "./lib/report-flow.js";
+
+const OUT_FILE = "docs/core-unmapped-inventory.md";
+const VOID = "⌀ not mapped (no Carta home)";
+
+interface Row extends FlowRow {
+  description: string;
+}
+
+/** The no-home rows + variant-scope facts for a derivation (shared by write + check). */
+function collectUnmapped(d: Derived): {
+  rows: Row[];
+  descOf: Map<string, string>;
+  partialKeys: Set<string>;
+  distinctCount: number;
+} {
+  const admBy = new Map(d.admissibility.map((a) => [`${a.entity} ${a.variant}`, a]));
+  const reqBy = new Map(d.corpus.objects.map((o) => [o.entity, new Set(o.requiredFields)]));
+
+  const rows: Row[] = [];
+  for (const r of d.rows) {
+    if (r.verdict.class !== "out" || r.verdict.reason !== "no-destination") continue;
+    if (BOOKKEEPING.has(r.field)) continue;
+    rows.push({
+      entity: r.entity,
+      variant: r.variant,
+      field: r.field,
+      reason: "no-destination",
+      detail: r.verdict.detail ?? "",
+      target: "—",
+      ocfRequired: reqBy.get(r.entity)?.has(r.field) ?? false,
+      admissible: admBy.get(`${r.entity} ${r.variant}`)?.admissible ?? false,
+      description: r.description ?? "",
+    });
+  }
+  const descOf = new Map(rows.map((r) => [`${r.entity} ${r.field}`, r.description]));
+
+  // Variant scope: a field can be no-destination in one flavor and land in another.
+  // `partialKeys` are the (entity,field) that are dropped in ≥1 variant AND a (rich)
+  // member in ≥1 other — the entity-grouped tables collapse variants, so these read as
+  // object-level drops without the mark. `distinctCount` = distinct (entity,field) the
+  // tables enumerate, vs `rows.length` = the per-(entity,variant,field) diagram total.
+  const memberKeys = new Set<string>();
+  const noHomeKeys = new Set<string>();
+  for (const r of d.rows) {
+    if (BOOKKEEPING.has(r.field)) continue;
+    const key = `${r.entity}|${r.field}`;
+    if (isMember(r.verdict, RICH_PROFILE)) memberKeys.add(key);
+    else if (r.verdict.reason === "no-destination") noHomeKeys.add(key);
+  }
+  const partialKeys = new Set([...noHomeKeys].filter((k) => memberKeys.has(k)));
+  const distinctCount = noHomeKeys.size;
+  return { rows, descOf, partialKeys, distinctCount };
+}
+
+/** Pure render of docs/core-unmapped-inventory.md from a derivation — shared by build + check. */
+export function renderUnmappedInventory(d: Derived): string {
+  const { rows, descOf, partialKeys, distinctCount } = collectUnmapped(d);
+  return render(rows, descOf, partialKeys, distinctCount);
+}
+
+export async function writeUnmappedInventory(base: string = process.cwd()): Promise<number> {
+  const d = await deriveCore(process.cwd());
+  await writeFile(path.join(base, OUT_FILE), renderUnmappedInventory(d), "utf8");
+
+  const { rows } = collectUnmapped(d);
+  const groups = groupByEntity(rows);
+  const req = rows.filter((r) => r.ocfRequired).length;
+  const onAdmissible = groups.filter((g) => g.admissible).length;
+  console.log("OCF Core — unmapped-property inventory");
+  console.log("=".repeat(60));
+  console.log(
+    `Unmapped OCF properties (no Carta home): ${rows.length} rows across ${groups.length} objects`
+  );
+  console.log(`   · ${req} are OCF-REQUIRED`);
+  console.log(
+    `   · ${onAdmissible} of those objects are in Core (we carry the object, drop the field)`
+  );
+  console.log(`\nWritten to ${OUT_FILE}`);
+  return 0;
+}
+
+function render(
+  rows: Row[],
+  descOf: Map<string, string>,
+  partialKeys: Set<string>,
+  distinctCount: number
+): string {
+  const groups = groupByEntity(rows);
+  const flavorGroups = groupByVariant(rows); // diagrams split polymorphic flavors apart
+  const inCore = flavorGroups.filter((g) => g.admissible);
+  const notYet = flavorGroups.filter((g) => !g.admissible);
+  const reqCount = rows.filter((r) => r.ocfRequired).length;
+
+  const lines: string[] = [
+    "# OCF Core — unmapped-property inventory (generated, discussion artifact)",
+    "",
+    "GENERATED by `npm run core:unmapped` from the same derived ledger as the build.",
+    "NOT drift-gated — an analysis input, not a contract.",
+    "",
+    "OCF properties with **no Carta home at all** (`kind: unmappable`) — they don't flow",
+    "anywhere; the fold to Carta simply drops them. This is the complement of the lossy-home",
+    "inventory (`core-lossy-inventory.md`), which covers properties that DO land, only lossily.",
+    "OCF bookkeeping (`id`/`object_type`/`comments`) is excluded. `OCF-req` marks fields OCF",
+    "itself requires; an unmapped field on an **in-Core** object is the sharper loss.",
+    "",
+    "**Variant scope.** For a polymorphic object the drop is per-flavor: a property is listed if",
+    "it is unmappable in **at least one** variant. Ones marked `†` also **land in another variant**",
+    "of the same object (e.g. `EquityCompensationIssuance.board_approval_date` maps for Option/Rsu,",
+    'drops only for Sar), so "no Carta home" is a per-flavor statement here, not object-level. The',
+    "magnitude diagrams split flavors apart; `core-bidirectional-flow.md` gives the distinct-field,",
+    'best-landing view (its lower "left behind" count).',
+    "",
+    `## Magnitude — unmapped properties per OCF object (${distinctCount} distinct across ${groups.length} objects; ${rows.length} per-flavor rows, ${reqCount} OCF-required)`,
+    "",
+    "Each OCF object → the void, edge labelled with how many of its properties are dropped.",
+    "Green = the object is in strict Core (we carry it but lose these fields); dashed grey = the",
+    "object isn't admissible anyway. Property names are in the tables below.",
+    "",
+    "**In-Core objects (we carry the object, drop these fields)**",
+    "",
+    ...(inCore.length ? mermaidVoid(inCore, VOID) : ["(none)"]),
+    "",
+    "**Not-yet-admissible objects**",
+    "",
+    ...(notYet.length ? mermaidVoid(notYet, VOID) : ["(none)"]),
+    "",
+    "## By OCF object — the dropped properties",
+    "",
+    "`†` = also maps in another variant of this object (dropped only in some flavors).",
+    "",
+  ];
+
+  for (const g of groups) {
+    lines.push(
+      `### ${g.entity} — ${g.admissible ? "in Core (admissible)" : "not yet admissible"} (${
+        g.fields.length
+      } unmapped)`
+    );
+    lines.push("", "| property | OCF-req | what it is (OCF) |", "| --- | :---: | --- |");
+    for (const f of g.fields) {
+      const desc = descOf.get(`${g.entity} ${f.field}`) ?? "";
+      const mark = partialKeys.has(`${g.entity}|${f.field}`) ? " †" : "";
+      lines.push(`| ${f.field}${mark} | ${f.ocfRequired ? "**yes**" : ""} | ${desc} |`);
+    }
+    lines.push("");
+  }
+  return lines.join("\n") + "\n";
+}
+
+// Run as a CLI only when invoked directly (not when imported by core:build).
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
+  writeUnmappedInventory().then(
+    (code) => process.exit(code),
+    (err) => {
+      console.error(err);
+      process.exit(1);
+    }
+  );
+}

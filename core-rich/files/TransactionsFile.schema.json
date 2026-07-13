@@ -1,0 +1,1097 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://opencaptablecoalition.com/ocf-core/v0/files/TransactionsFile.schema.json",
+  "title": "OCF Core — TransactionsFile",
+  "description": "Generated. Core-admissible transaction events; values inlined into OCF grammar.",
+  "type": "object",
+  "properties": {
+    "file_type": {
+      "const": "OCF_TRANSACTIONS_FILE"
+    },
+    "items": {
+      "type": "array",
+      "items": {
+        "oneOf": [
+          {
+            "type": "object",
+            "title": "ConvertibleCancellation",
+            "properties": {
+              "amount": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "amount": {
+                    "type": "string",
+                    "pattern": "^[+-]?[0-9]+(\\.[0-9]{1,10})?$"
+                  },
+                  "currency": {
+                    "type": "string",
+                    "pattern": "^[A-Z]{3}$"
+                  }
+                },
+                "required": [
+                  "amount",
+                  "currency"
+                ],
+                "description": "Amount of monetary value cancelled"
+              },
+              "date": {
+                "type": "string",
+                "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+                "description": "Date on which the transaction occurred"
+              },
+              "id": {
+                "type": "string",
+                "description": "Identifier for the object"
+              },
+              "object_type": {
+                "const": "TX_CONVERTIBLE_CANCELLATION"
+              },
+              "reason_text": {
+                "type": "string",
+                "description": "Reason for the cancellation"
+              },
+              "security_id": {
+                "type": "string",
+                "description": "Identifier for the security (stock, plan security, warrant, or convertible) by which it can be referenced by other transaction objects. N…"
+              }
+            },
+            "required": [],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "title": "ConvertibleConversion",
+            "properties": {
+              "date": {
+                "type": "string",
+                "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+                "description": "Date on which the transaction occurred"
+              },
+              "id": {
+                "type": "string",
+                "description": "Identifier for the object"
+              },
+              "object_type": {
+                "const": "TX_CONVERTIBLE_CONVERSION"
+              },
+              "quantity_converted": {
+                "type": "string",
+                "pattern": "^[+-]?[0-9]+(\\.[0-9]{1,10})?$",
+                "description": "Quantity of security units converted"
+              },
+              "security_id": {
+                "type": "string",
+                "description": "Identifier for the security (stock, plan security, warrant, or convertible) by which it can be referenced by other transaction objects. N…"
+              }
+            },
+            "required": [],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "title": "ConvertibleIssuance",
+            "properties": {
+              "conversion_triggers": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "In event the convertible can convert due to trigger events (e.g. Maturity, Next Qualified Financing, Change of Control, at Election of Ho…"
+              },
+              "convertible_type": {
+                "type": "string",
+                "enum": [
+                  "NOTE",
+                  "SAFE",
+                  "CONVERTIBLE_SECURITY"
+                ],
+                "description": "What kind of convertible instrument is this (of the supported, enumerated types)"
+              },
+              "custom_id": {
+                "type": "string",
+                "description": "A custom ID for this security (e.g. CN-1.)"
+              },
+              "date": {
+                "type": "string",
+                "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+                "description": "Date on which the transaction occurred"
+              },
+              "id": {
+                "type": "string",
+                "description": "Identifier for the object"
+              },
+              "investment_amount": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "amount": {
+                    "type": "string",
+                    "pattern": "^[+-]?[0-9]+(\\.[0-9]{1,10})?$"
+                  },
+                  "currency": {
+                    "type": "string",
+                    "pattern": "^[A-Z]{3}$"
+                  }
+                },
+                "required": [
+                  "amount",
+                  "currency"
+                ],
+                "description": "Amount invested and outstanding on date of issuance of this convertible"
+              },
+              "object_type": {
+                "const": "TX_CONVERTIBLE_ISSUANCE"
+              },
+              "security_id": {
+                "type": "string",
+                "description": "Identifier for the security (stock, plan security, warrant, or convertible) by which it can be referenced by other transaction objects. N…"
+              },
+              "security_law_exemptions": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "description": {
+                      "type": "string"
+                    },
+                    "jurisdiction": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "description",
+                    "jurisdiction"
+                  ]
+                },
+                "description": "List of security law exemptions (and applicable jurisdictions) for this security"
+              },
+              "stakeholder_id": {
+                "type": "string",
+                "description": "Identifier for the stakeholder that holds legal title to this security"
+              }
+            },
+            "required": [],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "title": "EquityCompensationCancellation",
+            "properties": {
+              "date": {
+                "type": "string",
+                "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+                "description": "Date on which the transaction occurred"
+              },
+              "id": {
+                "type": "string",
+                "description": "Identifier for the object"
+              },
+              "object_type": {
+                "type": "string",
+                "enum": [
+                  "TX_PLAN_SECURITY_CANCELLATION",
+                  "TX_EQUITY_COMPENSATION_CANCELLATION"
+                ],
+                "description": "This is done to avoid a breaking change as we work towards a bigger restructure of the equity types in v2.0.0. `TX_PLAN_SECURITY_CANCELLA…"
+              },
+              "quantity": {
+                "type": "string",
+                "pattern": "^[+-]?[0-9]+(\\.[0-9]{1,10})?$",
+                "description": "Quantity of non-monetary security units cancelled"
+              },
+              "reason_text": {
+                "type": "string",
+                "description": "Reason for the cancellation"
+              }
+            },
+            "required": [],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "title": "EquityCompensationExercise",
+            "properties": {
+              "date": {
+                "type": "string",
+                "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+                "description": "Date on which the transaction occurred"
+              },
+              "id": {
+                "type": "string",
+                "description": "Identifier for the object"
+              },
+              "object_type": {
+                "type": "string",
+                "enum": [
+                  "TX_PLAN_SECURITY_EXERCISE",
+                  "TX_EQUITY_COMPENSATION_EXERCISE"
+                ],
+                "description": "This is done to avoid a breaking change as we work towards a bigger restructure of the equity types in v2.0.0. `TX_PLAN_SECURITY_EXERCISE…"
+              },
+              "quantity": {
+                "type": "string",
+                "pattern": "^[+-]?[0-9]+(\\.[0-9]{1,10})?$",
+                "description": "Quantity of shares exercised"
+              },
+              "resulting_security_ids": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "Identifier for the security (or securities) that resulted from the exercise"
+              }
+            },
+            "required": [],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "title": "EquityCompensationIssuance",
+            "properties": {
+              "base_price": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "amount": {
+                    "type": "string",
+                    "pattern": "^[+-]?[0-9]+(\\.[0-9]{1,10})?$"
+                  },
+                  "currency": {
+                    "type": "string",
+                    "pattern": "^[A-Z]{3}$"
+                  }
+                },
+                "required": [
+                  "amount",
+                  "currency"
+                ],
+                "description": "Required for stock appreciation right compensation types (CSAR, SSAR). The base price used to calculate appreciation."
+              },
+              "board_approval_date": {
+                "type": "string",
+                "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+                "description": "Date of board approval for the security, when applicable."
+              },
+              "compensation_type": {
+                "type": "string",
+                "enum": [
+                  "OPTION_NSO",
+                  "OPTION_ISO",
+                  "OPTION",
+                  "RSU",
+                  "CSAR",
+                  "SSAR"
+                ],
+                "description": "The kind of equity compensation. Determines which type-specific fields are required."
+              },
+              "custom_id": {
+                "type": "string",
+                "description": "Human-readable identifier for the security (e.g. 'CN-1')."
+              },
+              "date": {
+                "type": "string",
+                "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+                "description": "Date on which the issuance transaction occurred. Distinct from the vesting commencement date, which is carried separately as `vesting_sta…"
+              },
+              "early_exercisable": {
+                "type": "boolean",
+                "description": "If true, the security is exercisable prior to completion of vesting; the schedule then governs a right-of-repurchase lapse rather than th…"
+              },
+              "exercise_price": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "amount": {
+                    "type": "string",
+                    "pattern": "^[+-]?[0-9]+(\\.[0-9]{1,10})?$"
+                  },
+                  "currency": {
+                    "type": "string",
+                    "pattern": "^[A-Z]{3}$"
+                  }
+                },
+                "required": [
+                  "amount",
+                  "currency"
+                ],
+                "description": "Required for option compensation types. The price per share at which the option can be exercised."
+              },
+              "expiration_date": {
+                "type": "string",
+                "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+                "description": "Expiration date of the security, or null if it does not expire."
+              },
+              "id": {
+                "type": "string",
+                "description": "Identifier for this transaction."
+              },
+              "object_type": {
+                "type": "string",
+                "enum": [
+                  "TX_PLAN_SECURITY_ISSUANCE",
+                  "TX_EQUITY_COMPENSATION_ISSUANCE"
+                ],
+                "description": "This is done to avoid a breaking change as we work towards a bigger restructure of the equity types in v2.0.0. `TX_PLAN_SECURITY_ISSUANCE…"
+              },
+              "option_grant_type": {
+                "type": "string",
+                "enum": [
+                  "NSO",
+                  "ISO",
+                  "INTL"
+                ],
+                "description": "If the security is an option, what kind. Retained from v1 for compatibility; in the new model this has been incorporated into Compensatio…"
+              },
+              "quantity": {
+                "type": "string",
+                "pattern": "^[+-]?[0-9]+(\\.[0-9]{1,10})?$",
+                "description": "Number of shares subject to this security."
+              },
+              "security_id": {
+                "type": "string",
+                "description": "Identifier for the security created by this issuance. Other transactions (vesting event, exercise, cancellation, etc.) reference this id."
+              },
+              "security_law_exemptions": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "description": {
+                      "type": "string"
+                    },
+                    "jurisdiction": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "description",
+                    "jurisdiction"
+                  ]
+                },
+                "description": "Security law exemptions (and applicable jurisdictions) for this security."
+              },
+              "stakeholder_id": {
+                "type": "string",
+                "description": "Identifier of the stakeholder holding legal title to the security."
+              },
+              "stock_class_id": {
+                "type": "string",
+                "description": "The stock class the security exercises/settles into. Important for plan-less options and plans that support multiple share classes."
+              },
+              "stock_plan_id": {
+                "type": "string",
+                "description": "If the security was issued from a stock plan, the plan's id. Plan-less options are valid and omit this field."
+              },
+              "termination_exercise_windows": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "period": {
+                      "type": "integer"
+                    },
+                    "period_type": {
+                      "type": "string",
+                      "enum": [
+                        "DAYS",
+                        "MONTHS",
+                        "YEARS"
+                      ]
+                    },
+                    "reason": {
+                      "type": "string",
+                      "enum": [
+                        "VOLUNTARY_OTHER",
+                        "VOLUNTARY_GOOD_CAUSE",
+                        "VOLUNTARY_RETIREMENT",
+                        "INVOLUNTARY_OTHER",
+                        "INVOLUNTARY_DEATH",
+                        "INVOLUNTARY_DISABILITY",
+                        "INVOLUNTARY_WITH_CAUSE"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "reason",
+                    "period",
+                    "period_type"
+                  ]
+                },
+                "description": "Exercise periods applicable after a termination, by reason."
+              },
+              "vesting_start_date": {
+                "type": "string",
+                "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+                "description": "The per-grant vesting commencement date — the anchor every statement of the referenced template grids from. Required whenever `vesting_te…"
+              },
+              "vesting_template_id": {
+                "type": "string",
+                "description": "Identifier of the v2 vesting template the security is subject to. If neither `vesting_template_id` nor `vestings` is present, the securit…"
+              },
+              "vestings": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "amount": {
+                      "type": "string",
+                      "pattern": "^[+-]?[0-9]+(\\.[0-9]{1,10})?$"
+                    },
+                    "date": {
+                      "type": "string",
+                      "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+                    }
+                  },
+                  "required": [
+                    "date",
+                    "amount"
+                  ]
+                },
+                "description": "Optional materialized projection of exact vesting dates and amounts. A grant may be described by the declarative template (`vesting_templ…"
+              }
+            },
+            "required": [],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "title": "EquityCompensationRelease",
+            "properties": {
+              "date": {
+                "type": "string",
+                "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+                "description": "Date on which the transaction occurred"
+              },
+              "id": {
+                "type": "string",
+                "description": "Identifier for the object"
+              },
+              "object_type": {
+                "type": "string",
+                "enum": [
+                  "TX_PLAN_SECURITY_RELEASE",
+                  "TX_EQUITY_COMPENSATION_RELEASE"
+                ],
+                "description": "This is done to avoid a breaking change as we work towards a bigger restructure of the equity types in v2.0.0. `TX_PLAN_SECURITY_RELEASE`…"
+              },
+              "quantity": {
+                "type": "string",
+                "pattern": "^[+-]?[0-9]+(\\.[0-9]{1,10})?$",
+                "description": "Quantity of shares released"
+              },
+              "release_price": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "amount": {
+                    "type": "string",
+                    "pattern": "^[+-]?[0-9]+(\\.[0-9]{1,10})?$"
+                  },
+                  "currency": {
+                    "type": "string",
+                    "pattern": "^[A-Z]{3}$"
+                  }
+                },
+                "required": [
+                  "amount",
+                  "currency"
+                ],
+                "description": "The release price used to determine the value of the security at the time of release"
+              },
+              "resulting_security_ids": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "Identifier of the new security (or securities) issuance resulting from a release transaction"
+              },
+              "settlement_date": {
+                "type": "string",
+                "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+                "description": "The settlement date for the shares released, typically after the release transaction date"
+              }
+            },
+            "required": [],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "title": "EquityCompensationRepricing",
+            "properties": {
+              "id": {
+                "type": "string",
+                "description": "Identifier for the object"
+              },
+              "new_exercise_price": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "amount": {
+                    "type": "string",
+                    "pattern": "^[+-]?[0-9]+(\\.[0-9]{1,10})?$"
+                  },
+                  "currency": {
+                    "type": "string",
+                    "pattern": "^[A-Z]{3}$"
+                  }
+                },
+                "required": [
+                  "amount",
+                  "currency"
+                ],
+                "description": "What is the exercise price of the option after the repricing?"
+              },
+              "object_type": {
+                "const": "TX_EQUITY_COMPENSATION_REPRICING"
+              }
+            },
+            "required": [],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "title": "StakeholderRelationshipChangeEvent",
+            "properties": {
+              "id": {
+                "type": "string",
+                "description": "Identifier for the object"
+              },
+              "object_type": {
+                "const": "CE_STAKEHOLDER_RELATIONSHIP"
+              },
+              "relationship_ended": {
+                "type": "string",
+                "enum": [
+                  "ADVISOR",
+                  "BOARD_MEMBER",
+                  "CONSULTANT",
+                  "EMPLOYEE",
+                  "EX_ADVISOR",
+                  "EX_CONSULTANT",
+                  "EX_EMPLOYEE",
+                  "EXECUTIVE",
+                  "FOUNDER",
+                  "INVESTOR",
+                  "NON_US_EMPLOYEE",
+                  "OFFICER",
+                  "OTHER"
+                ],
+                "description": "Denoting the ending of this relationship on the change date"
+              },
+              "relationship_started": {
+                "type": "string",
+                "enum": [
+                  "ADVISOR",
+                  "BOARD_MEMBER",
+                  "CONSULTANT",
+                  "EMPLOYEE",
+                  "EX_ADVISOR",
+                  "EX_CONSULTANT",
+                  "EX_EMPLOYEE",
+                  "EXECUTIVE",
+                  "FOUNDER",
+                  "INVESTOR",
+                  "NON_US_EMPLOYEE",
+                  "OFFICER",
+                  "OTHER"
+                ],
+                "description": "Denoting the beginning of this relationship on the change date"
+              },
+              "stakeholder_id": {
+                "type": "string",
+                "description": "Identifier of the Stakeholder object, a subject of this change event \"transaction\""
+              }
+            },
+            "required": [],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "title": "StockCancellation",
+            "properties": {
+              "balance_security_id": {
+                "type": "string",
+                "description": "Identifier for the security that holds the remainder balance (for partial cancellations)"
+              },
+              "date": {
+                "type": "string",
+                "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+                "description": "Date on which the transaction occurred"
+              },
+              "id": {
+                "type": "string",
+                "description": "Identifier for the object"
+              },
+              "object_type": {
+                "const": "TX_STOCK_CANCELLATION"
+              },
+              "quantity": {
+                "type": "string",
+                "pattern": "^[+-]?[0-9]+(\\.[0-9]{1,10})?$",
+                "description": "Quantity of non-monetary security units cancelled"
+              },
+              "reason_text": {
+                "type": "string",
+                "description": "Reason for the cancellation"
+              }
+            },
+            "required": [],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "title": "StockClassAuthorizedSharesAdjustment",
+            "properties": {
+              "id": {
+                "type": "string",
+                "description": "Identifier for the object"
+              },
+              "new_shares_authorized": {
+                "type": "string",
+                "pattern": "^[+-]?[0-9]+(\\.[0-9]{1,10})?$",
+                "description": "The new number of shares authorized for this stock class as of the event of this transaction"
+              },
+              "object_type": {
+                "const": "TX_STOCK_CLASS_AUTHORIZED_SHARES_ADJUSTMENT"
+              },
+              "stock_class_id": {
+                "type": "string",
+                "description": "Identifier of the StockClass object, a subject of this transaction"
+              }
+            },
+            "required": [],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "title": "StockClassConversionRatioAdjustment",
+            "properties": {
+              "id": {
+                "type": "string",
+                "description": "Identifier for the object"
+              },
+              "new_ratio_conversion_mechanism": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "conversion_price": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "properties": {
+                      "amount": {
+                        "type": "string",
+                        "pattern": "^[+-]?[0-9]+(\\.[0-9]{1,10})?$"
+                      },
+                      "currency": {
+                        "type": "string",
+                        "pattern": "^[A-Z]{3}$"
+                      }
+                    },
+                    "required": [
+                      "amount",
+                      "currency"
+                    ]
+                  },
+                  "ratio": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "properties": {
+                      "denominator": {
+                        "type": "string",
+                        "pattern": "^[+-]?[0-9]+(\\.[0-9]{1,10})?$"
+                      },
+                      "numerator": {
+                        "type": "string",
+                        "pattern": "^[+-]?[0-9]+(\\.[0-9]{1,10})?$"
+                      }
+                    },
+                    "required": [
+                      "numerator",
+                      "denominator"
+                    ]
+                  },
+                  "rounding_type": {
+                    "type": "string",
+                    "enum": [
+                      "CEILING",
+                      "FLOOR",
+                      "NORMAL"
+                    ]
+                  },
+                  "type": {
+                    "const": "RATIO_CONVERSION"
+                  }
+                },
+                "required": [
+                  "ratio",
+                  "conversion_price",
+                  "rounding_type",
+                  "type"
+                ],
+                "description": "New conversion ratio mechanism describing new conversion price and conversion ratio in effect following a repricing - based on original i…"
+              },
+              "object_type": {
+                "const": "TX_STOCK_CLASS_CONVERSION_RATIO_ADJUSTMENT"
+              },
+              "stock_class_id": {
+                "type": "string",
+                "description": "Identifier of the StockClass object, a subject of this transaction"
+              }
+            },
+            "required": [],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "title": "StockIssuance",
+            "properties": {
+              "board_approval_date": {
+                "type": "string",
+                "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+                "description": "Date of board approval for the security"
+              },
+              "cost_basis": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "amount": {
+                    "type": "string",
+                    "pattern": "^[+-]?[0-9]+(\\.[0-9]{1,10})?$"
+                  },
+                  "currency": {
+                    "type": "string",
+                    "pattern": "^[A-Z]{3}$"
+                  }
+                },
+                "required": [
+                  "amount",
+                  "currency"
+                ],
+                "description": "The cost basis for this particular stock"
+              },
+              "custom_id": {
+                "type": "string",
+                "description": "A custom ID for this security (e.g. CN-1.)"
+              },
+              "date": {
+                "type": "string",
+                "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+                "description": "Date on which the transaction occurred"
+              },
+              "id": {
+                "type": "string",
+                "description": "Identifier for the object"
+              },
+              "object_type": {
+                "const": "TX_STOCK_ISSUANCE"
+              },
+              "quantity": {
+                "type": "string",
+                "pattern": "^[+-]?[0-9]+(\\.[0-9]{1,10})?$",
+                "description": "Number of shares issued to the stakeholder"
+              },
+              "security_id": {
+                "type": "string",
+                "description": "Identifier for the security (stock, plan security, warrant, or convertible) by which it can be referenced by other transaction objects. N…"
+              },
+              "security_law_exemptions": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "description": {
+                      "type": "string"
+                    },
+                    "jurisdiction": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "description",
+                    "jurisdiction"
+                  ]
+                },
+                "description": "List of security law exemptions (and applicable jurisdictions) for this security"
+              },
+              "share_price": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "amount": {
+                    "type": "string",
+                    "pattern": "^[+-]?[0-9]+(\\.[0-9]{1,10})?$"
+                  },
+                  "currency": {
+                    "type": "string",
+                    "pattern": "^[A-Z]{3}$"
+                  }
+                },
+                "required": [
+                  "amount",
+                  "currency"
+                ],
+                "description": "The price per share paid for the stock by the holder"
+              },
+              "stakeholder_id": {
+                "type": "string",
+                "description": "Identifier for the stakeholder that holds legal title to this security"
+              },
+              "stock_class_id": {
+                "type": "string",
+                "description": "Identifier of the stock class for this stock issuance"
+              },
+              "stock_plan_id": {
+                "type": "string",
+                "description": "Identifier of StockPlan the Stock was issued from (in the case of RSAs or Stock issued from a plan)."
+              },
+              "vesting_terms_id": {
+                "type": "string",
+                "description": "Identifier of the VestingTerms to which this security is subject. If neither `vesting_terms_id` or `vestings` are present then the securi…"
+              },
+              "vestings": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "amount": {
+                      "type": "string",
+                      "pattern": "^[+-]?[0-9]+(\\.[0-9]{1,10})?$"
+                    },
+                    "date": {
+                      "type": "string",
+                      "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+                    }
+                  },
+                  "required": [
+                    "date",
+                    "amount"
+                  ]
+                },
+                "description": "List of exact vesting dates and amounts for this security. When `vestings` array is present then `vesting_terms_id` may be ignored."
+              }
+            },
+            "required": [],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "title": "StockTransfer",
+            "properties": {
+              "balance_security_id": {
+                "type": "string",
+                "description": "Identifier for the security that holds the remainder balance (for partial transfers)"
+              },
+              "date": {
+                "type": "string",
+                "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+                "description": "Date on which the transaction occurred"
+              },
+              "id": {
+                "type": "string",
+                "description": "Identifier for the object"
+              },
+              "object_type": {
+                "const": "TX_STOCK_TRANSFER"
+              },
+              "quantity": {
+                "type": "string",
+                "pattern": "^[+-]?[0-9]+(\\.[0-9]{1,10})?$",
+                "description": "Quantity of non-monetary security units transferred"
+              },
+              "resulting_security_ids": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "Array of identifiers for new security (or securities) created as a result of the transaction"
+              }
+            },
+            "required": [],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "title": "WarrantCancellation",
+            "properties": {
+              "date": {
+                "type": "string",
+                "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+                "description": "Date on which the transaction occurred"
+              },
+              "id": {
+                "type": "string",
+                "description": "Identifier for the object"
+              },
+              "object_type": {
+                "const": "TX_WARRANT_CANCELLATION"
+              },
+              "quantity": {
+                "type": "string",
+                "pattern": "^[+-]?[0-9]+(\\.[0-9]{1,10})?$",
+                "description": "Quantity of non-monetary security units cancelled"
+              },
+              "reason_text": {
+                "type": "string",
+                "description": "Reason for the cancellation"
+              }
+            },
+            "required": [],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "title": "WarrantIssuance",
+            "properties": {
+              "custom_id": {
+                "type": "string",
+                "description": "A custom ID for this security (e.g. CN-1.)"
+              },
+              "date": {
+                "type": "string",
+                "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+                "description": "Date on which the transaction occurred"
+              },
+              "exercise_price": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "amount": {
+                    "type": "string",
+                    "pattern": "^[+-]?[0-9]+(\\.[0-9]{1,10})?$"
+                  },
+                  "currency": {
+                    "type": "string",
+                    "pattern": "^[A-Z]{3}$"
+                  }
+                },
+                "required": [
+                  "amount",
+                  "currency"
+                ],
+                "description": "The exercise price of the warrant"
+              },
+              "id": {
+                "type": "string",
+                "description": "Identifier for the object"
+              },
+              "object_type": {
+                "const": "TX_WARRANT_ISSUANCE"
+              },
+              "purchase_price": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "amount": {
+                    "type": "string",
+                    "pattern": "^[+-]?[0-9]+(\\.[0-9]{1,10})?$"
+                  },
+                  "currency": {
+                    "type": "string",
+                    "pattern": "^[A-Z]{3}$"
+                  }
+                },
+                "required": [
+                  "amount",
+                  "currency"
+                ],
+                "description": "Actual purchase price of the warrant (sum up purported value of all consideration, including in-kind)"
+              },
+              "quantity": {
+                "type": "string",
+                "pattern": "^[+-]?[0-9]+(\\.[0-9]{1,10})?$",
+                "description": "Quantity of shares the warrant is exercisable for"
+              },
+              "security_id": {
+                "type": "string",
+                "description": "Identifier for the security (stock, plan security, warrant, or convertible) by which it can be referenced by other transaction objects. N…"
+              },
+              "security_law_exemptions": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "description": {
+                      "type": "string"
+                    },
+                    "jurisdiction": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "description",
+                    "jurisdiction"
+                  ]
+                },
+                "description": "List of security law exemptions (and applicable jurisdictions) for this security"
+              },
+              "stakeholder_id": {
+                "type": "string",
+                "description": "Identifier for the stakeholder that holds legal title to this security"
+              },
+              "vesting_terms_id": {
+                "type": "string",
+                "description": "Identifier of the VestingTerms to which this security is subject. If neither `vesting_terms_id` or `vestings` are present then the securi…"
+              },
+              "warrant_expiration_date": {
+                "type": "string",
+                "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+                "description": "What is expiration date of the warrant (if applicable)"
+              }
+            },
+            "required": [],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "title": "WarrantTransfer",
+            "properties": {
+              "date": {
+                "type": "string",
+                "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+                "description": "Date on which the transaction occurred"
+              },
+              "id": {
+                "type": "string",
+                "description": "Identifier for the object"
+              },
+              "object_type": {
+                "const": "TX_WARRANT_TRANSFER"
+              },
+              "quantity": {
+                "type": "string",
+                "pattern": "^[+-]?[0-9]+(\\.[0-9]{1,10})?$",
+                "description": "Quantity of non-monetary security units transferred"
+              },
+              "resulting_security_ids": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "Array of identifiers for new security (or securities) created as a result of the transaction"
+              },
+              "security_id": {
+                "type": "string",
+                "description": "Identifier for the security (stock, plan security, warrant, or convertible) by which it can be referenced by other transaction objects. N…"
+              }
+            },
+            "required": [],
+            "additionalProperties": false
+          }
+        ]
+      }
+    }
+  },
+  "required": [
+    "file_type",
+    "items"
+  ],
+  "additionalProperties": false
+}

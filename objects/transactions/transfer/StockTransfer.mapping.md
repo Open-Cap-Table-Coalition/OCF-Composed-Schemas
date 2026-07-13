@@ -113,15 +113,19 @@ Source: [`StockTransfer.schema.json`](./StockTransfer.schema.json)
 
 ```yaml
 # kind vocabulary: rename | split | combine | enum-remap | computed | unmappable | TODO
-# routing: route_by_security (downstream join). A StockTransfer carries only
-# security_id and NO discriminator, so the stock family (RSA vs founders/plain
-# stock) is undecidable from the record alone: it is resolved by joining
-# security_id back to the StockIssuance and reading that issuance's
-# issuance_type. Carta has no stock transfer transaction at all, so the transfer
-# *event* is unmappable in both families; but the transferred-in / remainder
-# securities are stock securities that carry precededBy, so the transfer
-# *lineage* round-trips losslessly (see Notes). See
-# docs/polymorphic-transaction-routing.md §2.2/§4.3.
+# routing: route_by_security (downstream join) resolves the stock FAMILY. A
+# StockTransfer carries only security_id and NO discriminator, so the family (RSA
+# vs founders/plain stock) is undecidable from the record alone: it is resolved by
+# joining security_id back to the StockIssuance and reading that issuance's
+# issuance_type.
+# composite: Carta has no stock transfer transaction, so one OCF StockTransfer
+# folds into an ORDERED PAIR of Carta transactions (all emitted): cancel the source
+# certificate (reason TRANSFERRED) + issue the transferee's certificate
+# (issuanceReason TRANSFERRED) — Carta's blessed representation of a transfer. The
+# transfer EVENT payload (quantity/date) that previously had no home now lands on
+# those step transactions, so StockTransfer becomes Core-admissible. Family and
+# step are orthogonal axes: the step targets diverge by family (Certificate* vs
+# Rsa*). See docs/polymorphic-transaction-routing.md §2.2/§4.3/§4.9.
 status: complete
 
 route_by_security:
@@ -131,18 +135,46 @@ route_by_security:
   source_mapping: ../issuance/StockIssuance.mapping.md
   exhaustive: true
 
-# shared: every source property. Carta has no stock transfer transaction, so the
-# transfer *event* fields (date/quantity/consideration_text/...) are unmappable in
-# both families. The lineage fields (resulting_security_ids, balance_security_id)
-# do have a home: the transferred-in / remainder securities are stock securities
-# (Certificate / RestrictedStockAward) that carry precededBy.securities, so they
-# carry a per-variant target map (the precededBy $def diverges by family —
-# RestrictedStockAwardPrecededBy for Rsa, CertificatePrecededBy for Default).
+# composite: the two Carta transactions a stock transfer folds into, in order.
+# Steps are additive (both emitted). Each step's target is per-family (the source
+# and resulting securities are Certificates for plain/founders stock,
+# RestrictedStockAwards for RSAs). const captures the fixed Carta reason codes —
+# only the Certificate family has a *_TRANSFERRED reason enum member (RSA's
+# cancellation/issuance reasons have no transferred value), so const omits Rsa.
+composite:
+  - step: cancel
+    target:
+      Default: "#/$defs/CertificateCancellationTransaction"
+      Rsa:     "#/$defs/RsaCancellationTransaction"
+    const:
+      Default: { reason: CERTIFICATE_CANCELLATION_REASON_TRANSFERRED }
+  - step: issue
+    target:
+      Default: "#/$defs/CertificateIssuanceTransaction"
+      Rsa:     "#/$defs/RsaIssuanceTransaction"
+    const:
+      Default: { issuanceReason: CERTIFICATE_ISSUANCE_REASON_TRANSFERRED }
+
+# shared: every source property. The transfer *event* payload now lands on the
+# composite steps via per-step, per-family target maps: quantity onto both the
+# cancel and issue quantities, date onto the step datetimes. The lineage fields
+# keep their per-family security-object precededBy targets (the transferred-in /
+# remainder securities carry the reverse edges — the precededBy $def diverges by
+# family: RestrictedStockAwardPrecededBy for Rsa, CertificatePrecededBy for
+# Default). The remaining fields have no Carta home.
 shared:
   id:                     { kind: unmappable, target: null, reason: ocf-internal }
   comments:               { kind: unmappable, target: null, reason: ocf-internal }
   object_type:            { kind: unmappable, target: null, reason: no-equivalent }
-  date:                   { kind: unmappable, target: null, reason: no-equivalent }
+  date:
+    kind: rename                   # transfer date → the step transaction datetimes
+    target:
+      cancel:
+        Default: "#/$defs/CertificateCancellationTransaction/properties/effectiveDatetime"
+        Rsa:     "#/$defs/RsaCancellationTransaction/properties/effectiveDatetime"
+      issue:
+        Default: "#/$defs/CertificateIssuanceTransaction/properties/issueDatetime"
+        Rsa:     "#/$defs/RsaIssuanceTransaction/properties/issueDatetime"
   security_id:            { kind: unmappable, target: null, reason: ocf-internal }
   consideration_text:     { kind: unmappable, target: null, reason: no-equivalent }
   balance_security_id:
@@ -150,12 +182,26 @@ shared:
     target:
       Rsa:     "#/$defs/RestrictedStockAwardPrecededBy/properties/securities"
       Default: "#/$defs/CertificatePrecededBy/properties/securities"
+    const:                         # the remainder is reissued from the source — a known reason
+      Rsa:     { reason: RESTRICTED_STOCK_AWARD_PRECEDED_BY_REASON_BALANCE_REISSUED }
+      Default: { reason: CERTIFICATE_PRECEDED_BY_REASON_BALANCE_REISSUED }
   resulting_security_ids:
     kind: computed                 # lineage: the transferred-in security precededBy
     target:
       Rsa:     "#/$defs/RestrictedStockAwardPrecededBy/properties/securities"
       Default: "#/$defs/CertificatePrecededBy/properties/securities"
-  quantity:               { kind: unmappable, target: null, reason: no-equivalent }
+    const:                         # the transferred-in security was preceded by a transfer
+      Rsa:     { reason: RESTRICTED_STOCK_AWARD_PRECEDED_BY_REASON_TRANSFERRED }
+      Default: { reason: CERTIFICATE_PRECEDED_BY_REASON_TRANSFERRED }
+  quantity:
+    kind: rename                   # ← the payload that was being dropped; now lands
+    target:
+      cancel:
+        Default: "#/$defs/CertificateCancellationTransaction/properties/quantity"
+        Rsa:     "#/$defs/RsaCancellationTransaction/properties/quantity"
+      issue:
+        Default: "#/$defs/CertificateIssuanceTransaction/properties/quantity"
+        Rsa:     "#/$defs/RsaIssuanceTransaction/properties/quantity"
 
 variants:
 
@@ -176,85 +222,74 @@ coverage:
 
 ## Notes / open questions
 
-- **Join-dependent (downstream); the transfer *event* is unmappable, the lineage is not.**
-  A `StockTransfer` carries no discriminator — only `security_id` — so the stock family it
-  belongs to (`RSA` vs `FOUNDERS_STOCK`/plain stock) is fixed at issuance, not on the
-  transfer record. An importer must resolve `issuance_type` by joining `security_id` back
-  to the `StockIssuance` (the two-pass requirement, §2.2). The resolution does matter for
-  the lineage fields: it selects which precededBy `$def` the resulting/balance securities
-  carry. Both families still route to `primary_targets: null` because Carta has no stock
-  transfer transaction in either case, so the transfer event itself is unrepresentable —
-  but the security lineage (`resulting_security_ids`, `balance_security_id`) round-trips
-  losslessly onto those securities' `precededBy.securities` (see below).
-- **Carta has no stock/certificate transfer transaction.** Carta's stock-security
-  transaction surface is the `Certificate*Transaction` family —
-  `CertificateIssuanceTransaction` (issuance) and `CertificateCancellationTransaction`
-  (cancellation) — with no `CertificateTransferTransaction`. The pinned bundle
-  (`target-schema/Carta.schema.json`) contains exactly one `*TransferTransaction`,
-  `#/$defs/WarrantTransferTransaction`, and it is **warrant-specific** (the destination
-  for `WarrantTransfer` / `TX_WARRANT_TRANSFER`); re-pointing a stock transfer onto it
-  would mis-type the security. So no *event*-level field of `TX_STOCK_TRANSFER`
-  (`date`, `quantity`, `consideration_text`, `object_type`) has a Carta home — only the
-  lineage fields land, via the resulting/balance securities' `precededBy` (next bullet).
-- **How Carta represents a stock transfer (object-level recreation).** Carta records the
-  resulting **ledger state**, not OCF's per-event log. A secondary sale surfaces as two
-  certificate events: the source certificate is cancelled with
-  `CertificateCancellationTransaction.reason = CERTIFICATE_CANCELLATION_REASON_TRANSFERRED`,
-  and the resulting securities are re-issued as `CertificateIssuanceTransaction`s with
-  `issuanceReason = CERTIFICATE_ISSUANCE_REASON_TRANSFERRED`. OCF's single `StockTransfer`
-  has no 1:1 target in that pair, and per the "never invent a representative target" rule
-  the data is reconstructed at import time rather than via a field-level mapping.
+- **Carta represents a stock transfer as cancel + issue (the `composite:` fold).**
+  Carta records ledger *state*, not OCF's per-event log, and has no
+  `CertificateTransferTransaction` (the only `*TransferTransaction` in the pinned bundle is
+  the warrant-specific `#/$defs/WarrantTransferTransaction`). Its blessed representation of
+  a secondary sale is two certificate events: the source certificate is cancelled
+  (`CertificateCancellationTransaction.reason = CERTIFICATE_CANCELLATION_REASON_TRANSFERRED`)
+  and the transferee's certificate is issued (`CertificateIssuanceTransaction.issuanceReason
+  = CERTIFICATE_ISSUANCE_REASON_TRANSFERRED`). One OCF `StockTransfer` therefore folds into
+  an ordered *pair* of Carta transactions — modelled here with `composite:` (steps `cancel`,
+  `issue`, both emitted). See docs/polymorphic-transaction-routing.md §4.9.
+- **The transfer event payload now lands — StockTransfer enters Core.** `quantity` lands on
+  both step transactions' `quantity`, and `date` lands on the step datetimes
+  (`effectiveDatetime` on cancel, `issueDatetime` on issue), via per-step target maps.
+  Because `quantity` is a real payload landing (not just lineage), the §3 non-degeneracy
+  gate is satisfied and StockTransfer becomes Core-admissible — previously it landed only
+  lineage references and was held out with `no-payload`.
+- **Family and step are orthogonal axes.** `route_by_security` resolves the stock *family*
+  (RSA vs founders/plain stock — mutually exclusive), while `composite` decomposes the
+  *event* into ordered steps (both emitted). The step targets diverge by family: the
+  Certificate family uses `Certificate{Cancellation,Issuance}Transaction`, the RSA family
+  `Rsa{Cancellation,Issuance}Transaction`. Each step's `target` and each payload field's
+  `target` is a `{ step: { family: pointer } }` map; the Core converter reduces the step
+  dimension to one landing pointer per family (the issue step wins).
+- **RSA asymmetry: `const` omits the RSA family.** `RsaCancellationReason` has no
+  `*_TRANSFERRED` member and `RsaIssuanceTransaction` has no `issuanceReason`, so the RSA
+  steps cannot carry the fixed transferred reason codes the Certificate steps do — `const`
+  is Certificate-only. RSA transfers still land `quantity`/`date` on the RSA step
+  transactions (so they graduate too), and their lineage still routes through the security
+  object's `precededBy` (below).
+- **Join-dependent (downstream).** A `StockTransfer` carries no discriminator — only
+  `security_id` — so its family is fixed at issuance, not on the transfer record. An
+  importer resolves `issuance_type` by joining `security_id` back to the `StockIssuance`
+  (the two-pass requirement, §2.2), which selects both the step transaction family and the
+  precededBy `$def` the resulting/balance securities carry.
 - **The security lineage round-trips losslessly (kind `computed`).** OCF records the
-  transferred-in (`resulting_security_ids`) and remainder (`balance_security_id`)
-  securities as fields *on the transaction*; Carta records the same information as reverse
-  lineage edges *on the resulting/balance security*. The transferred-in and remainder
-  securities here are always stock securities — `Certificate` (plain/founders stock) or
-  `RestrictedStockAward` (RSAs) — and both carry `precededBy -> { reason, securities:
-  [PrecededBySecurity] }`. So the importer derives the placement: it writes the source
-  security's id into each resulting/balance security's `precededBy.securities`, and the
-  OCF *array* becomes a set of reverse lineage edges with no loss. This is `computed`
-  (importer-derived placement onto records the transfer *references*), per-variant
-  because the `$def` diverges by family (`RestrictedStockAwardPrecededBy` for `Rsa`,
-  `CertificatePrecededBy` for `Default`). Only the transfer *event* is unrepresentable
-  in Carta — the security lineage is not.
+  transferred-in (`resulting_security_ids`) and remainder (`balance_security_id`) securities
+  as fields *on the transaction*; Carta records the same as reverse lineage edges *on the
+  resulting/balance security* (`precededBy.securities`). These are always stock securities —
+  `Certificate` (plain/founders) or `RestrictedStockAward` (RSAs) — so the importer writes
+  the source security's id into each resulting/balance security's `precededBy.securities`,
+  per-family (`CertificatePrecededBy` for `Default`, `RestrictedStockAwardPrecededBy` for
+  `Rsa`).
 - Per-field justification:
-    - `object_type` (const `TX_STOCK_TRANSFER`): the discriminator for the stock-transfer
-      concept itself. With no Carta stock transfer transaction there is no target enum to
-      remap onto — `no-equivalent`. (Contrast `id`/`comments`/`security_id`, which are
-      scaffolding/join machinery and therefore `ocf-internal`.)
-    - `date`: OCF stores a calendar DATE. Carta's transaction timestamps are
-      `Iso8601CompleteCalendarDateTime` and live only on transactions Carta actually has;
-      with no stock transfer transaction there is no datetime field to carry it —
-      `no-equivalent`.
-    - `security_id`: the join key (`route_by_security.via`). It routes the family by
-      resolving `issuance_type` on the joined `StockIssuance`; it is not itself a stored
-      Carta field on a transfer — `ocf-internal`.
-    - `resulting_security_ids` (array, `minItems: 1`): identifiers of the new securities
-      created by the transfer (the transferred-in shares). These resulting securities are
-      stock securities (`Certificate` for plain/founders stock, `RestrictedStockAward` for
-      RSAs), and each carries `precededBy.securities` — a `PrecededBySecurity` array of
-      reverse lineage edges. The OCF *array* therefore round-trips **losslessly**:
-      the importer writes the transferred security's id into every resulting security's
-      `precededBy.securities`. `computed`, per-variant
-      (`RestrictedStockAwardPrecededBy` for `Rsa`, `CertificatePrecededBy` for `Default`).
-      (Carta's tx-level `WarrantTransferTransaction.resultingSecurityId` is single-valued
-      and warrant-only, so it is not the target here.)
-    - `quantity` (`types/Numeric.schema.json`): share units transferred. Carta has
-      quantity fields on the transactions it supports (issuance/cancellation), but none on
-      a stock transfer transaction. `no-equivalent`.
-    - `balance_security_id`: remainder security for a *partial* transfer. Like the
-      resulting securities, the remainder is a freshly-issued stock security
-      (`Certificate` / `RestrictedStockAward`) that carries `precededBy.securities`, so its
-      origin lineage round-trips losslessly: the importer writes the source security's id
-      into the remainder security's `precededBy.securities`. `computed`, per-variant
-      (`RestrictedStockAwardPrecededBy` for `Rsa`, `CertificatePrecededBy` for `Default`).
+    - `quantity` (`types/Numeric.schema.json`): share units transferred. Lands on the cancel
+      and issue step transactions' `quantity` (`Decimal`). The real payload that admits
+      StockTransfer to Core.
+    - `date`: transfer date. Lands on the cancel step's `effectiveDatetime` and the issue
+      step's `issueDatetime` (a DATE→DATETIME widening). Not a payload for the §3 gate (dates
+      are bookkeeping), but a faithful landing.
+    - `resulting_security_ids` (array, `minItems: 1`), `balance_security_id`: transferred-in
+      / remainder securities. `computed`, per-family reverse lineage onto the
+      resulting/balance security's `precededBy.securities` (see above). (Carta's tx-level
+      `WarrantTransferTransaction.resultingSecurityId` is single-valued and warrant-only, so
+      it is not the target here.)
+    - `security_id`: the join key (`route_by_security.via`) that routes the family; it is not
+      itself a stored Carta field on the transfer event — `ocf-internal`. (The transferred-in
+      lineage is captured by `resulting_security_ids` above.)
+    - `object_type` (const `TX_STOCK_TRANSFER`): the OCF discriminator for the transfer
+      concept; the composite steps are distinct Carta transactions with no single reason enum
+      to remap onto — `no-equivalent`.
     - `consideration_text`: free-text consideration for the secondary sale. Carta has no
-      consideration/price slot on any transfer pathway (`acquisitionCost` models cost basis
-      on issuance, not free-text consideration). `no-equivalent`.
+      consideration/price slot on the transfer pathway (`acquisitionCost` models cost basis on
+      issuance, not free-text consideration) — `no-equivalent`.
     - `id`, `comments`: OCF object scaffolding (Carta assigns identifiers server-side;
-      `comments` has no Carta slot). Both `ocf-internal`.
-- Consistency: the sibling transfer transactions share this "Carta has no single transfer
-  transaction" shape. `WarrantTransfer` (`TX_WARRANT_TRANSFER`) is the **one exception** —
-  it has a dedicated `#/$defs/WarrantTransferTransaction` and is *not* all-unmappable.
-  `ConvertibleTransfer`, `EquityCompensationTransfer`, and `PlanSecurityTransfer` resemble
-  `StockTransfer` (each recreated via its security family's cancel + reissue events).
+      `comments` has no Carta slot) — `ocf-internal`.
+- Consistency: the sibling transfer transactions share the "Carta has no single transfer
+  transaction" shape and are candidates for the same `composite:` fold
+  (`ConvertibleTransfer`, `EquityCompensationTransfer`, `PlanSecurityTransfer` are each
+  recreated via their security family's cancel + reissue events). `WarrantTransfer`
+  (`TX_WARRANT_TRANSFER`) is the one exception — it has a dedicated
+  `#/$defs/WarrantTransferTransaction`.

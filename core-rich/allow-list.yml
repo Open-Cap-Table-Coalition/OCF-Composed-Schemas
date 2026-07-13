@@ -1,0 +1,33 @@
+# OCF Core (rich) — ratification allow-list (curated).
+#
+# The rich profile is the relaxed-OCF union: strict PLUS lossy-home fields
+# (existence-loss / heuristic). It admits every strict entity plus any entity that
+# gains a non-reference payload field from a lossy-home mapping. Same gate as
+# core/allow-list.yml: core:check fails if the rich draft includes an entity not
+# listed here. See docs/ocf-core-spec.md.
+
+ratified:
+  - ConvertibleCancellation
+  - ConvertibleConversion
+  - ConvertibleIssuance
+  - Document
+  - EquityCompensationCancellation
+  - EquityCompensationExercise
+  - EquityCompensationIssuance
+  - EquityCompensationRelease
+  - EquityCompensationRepricing
+  - Issuer
+  - Stakeholder
+  - StakeholderRelationshipChangeEvent
+  - StockCancellation
+  - StockClass
+  - StockClassAuthorizedSharesAdjustment
+  - StockClassConversionRatioAdjustment
+  - StockIssuance
+  - StockPlan
+  - StockTransfer
+  - Valuation
+  - VestingTerms
+  - WarrantCancellation
+  - WarrantIssuance
+  - WarrantTransfer
