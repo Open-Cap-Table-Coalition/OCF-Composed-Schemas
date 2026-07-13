@@ -59,8 +59,11 @@ def wrap(s, n):
     return out
 
 # ---- svg primitives --------------------------------------------------------
+TEXT_ON = True  # set False to render text-less "plates" (backgrounds for the editable PPTX)
+
 def text(x, y, s, size=32, fill=WHITE, weight="normal", anchor="start",
          opacity=1.0, family=FONT, spacing=None, italic=False):
+    if not TEXT_ON: return ""
     if opacity <= 0.001: return ""
     ls = f' letter-spacing="{spacing}"' if spacing else ""
     st = ' font-style="italic"' if italic else ""
@@ -875,6 +878,115 @@ def s_ocfgap(t, dur):
     out.append(caption(t,"Sometimes Carta captures useful detail OCF doesn't — the cash and taxes on an exercise. Those become gaps for OCF to close.",start=3.4))
     return f'<g opacity="{o:.3f}">'+"".join(out)+'</g>'
 
+def s_strict_rich(t, dur):
+    o=scene_opacity(t,dur); out=[background()]
+    out.append(heading(t,"Core vs. Core loss","strict keeps only what lands cleanly; rich also keeps what lands lossily"))
+    cxc,cyc=610,524
+    oa=appear(t,0.5,0.6)
+    out.append(f'<circle cx="{cxc}" cy="{cyc}" r="250" fill="{LOST}" opacity="{oa*0.10:.3f}" stroke="{LOST}" stroke-width="2"/>')
+    ra=appear(t,0.9,0.6)
+    out.append(f'<circle cx="{cxc}" cy="{cyc}" r="176" fill="{CORE}" opacity="{ra*0.16:.3f}" stroke="{CORE}" stroke-width="2.5"/>')
+    sa=appear(t,1.3,0.6)
+    out.append(f'<circle cx="{cxc}" cy="{cyc}" r="104" fill="{OCF}" opacity="{sa*0.30:.3f}" stroke="{OCF}" stroke-width="3"/>')
+    out.append(text(cxc,cyc-4,"STRICT",34,fill=OCF_TXT,weight="bold",anchor="middle",opacity=sa))
+    out.append(text(cxc,cyc+32,"Core",24,fill=OCF_TXT,anchor="middle",opacity=sa))
+    out.append(text(cxc,cyc-140,"RICH adds lossy-home",21,fill=CORE_TXT,anchor="middle",opacity=ra))
+    out.append(text(cxc,cyc-216,"no Carta home",21,fill=LOST,anchor="middle",opacity=oa))
+    kx=1030; ky=336
+    keys=[(OCF,"Strict Core","lands cleanly in Carta — lossless",1.5),
+          (CORE,"Rich Core","also keeps fields that land, but lossily",1.8),
+          (LOST,"No home","Carta can't hold it at all — a gap",2.1)]
+    for i,(co,h,sub,st) in enumerate(keys):
+        ro=appear(t,st,0.5); yy=ky+i*116
+        out.append(circle(kx+14,yy,11,co,ro))
+        out.append(text(kx+40,yy+9,h,30,fill=WHITE,weight="bold",opacity=ro))
+        out.append(text(kx+40,yy+46,sub,24,fill=MUTE,opacity=ro))
+    out.append(text(kx,ky+3*116+2,"strict ⊂ rich ⊂ OCF",24,fill=FAINT,weight="bold",opacity=appear(t,2.5,0.5)))
+    out.append(caption(t,"Value-loss is fine — coarsen a number or an enum. Dropping a whole thing (a list, a relationship) is not.",start=2.7))
+    return f'<g opacity="{o:.3f}">'+"".join(out)+'</g>'
+
+def s_loss_counted(t, dur):
+    o=scene_opacity(t,dur); out=[background()]
+    out.append(heading(t,"The loss, counted","generated straight from the mappings — recomputed on every build"))
+    cw=680; gap=80; y=322; ch=336
+    lx=W/2-cw-gap/2; rx=W/2+gap/2
+    lo=appear(t,0.5,0.5)
+    out.append(rrect(lx,y,cw,ch,22,fill="#211703",stroke=AMBER,sw=2.5,opacity=lo))
+    out.append(text(lx+40,y+62,"LOSSY HOME",24,fill=AMBER,weight="bold",opacity=lo,spacing="2"))
+    out.append(text(lx+40,y+182,"49",118,fill=AMBER,weight="bold",opacity=appear(t,0.7,0.6)))
+    out.append(text(lx+236,y+150,"field-mappings",34,fill=WHITE,opacity=appear(t,0.9,0.5)))
+    out.append(text(lx+236,y+196,"22 objects · 34 required",25,fill=MUTE,opacity=appear(t,0.9,0.5)))
+    out.append(text(lx+40,y+262,"a Carta home that narrows on the way out",25,fill="#dcdff2",opacity=appear(t,1.1,0.5)))
+    out.append(text(lx+40,y+300,"(list→one, combine, split) — rich-Core candidates",23,fill=MUTE,opacity=appear(t,1.1,0.5)))
+    ro=appear(t,1.4,0.5)
+    out.append(rrect(rx,y,cw,ch,22,fill="#2a0f16",stroke=LOST,sw=2.5,opacity=ro))
+    out.append(text(rx+40,y+62,"NO CARTA HOME",24,fill=LOST,weight="bold",opacity=ro,spacing="2"))
+    out.append(text(rx+40,y+182,"249",118,fill=LOST,weight="bold",opacity=appear(t,1.6,0.6)))
+    out.append(text(rx+286,y+150,"dropped fields",34,fill=WHITE,opacity=appear(t,1.8,0.5)))
+    out.append(text(rx+286,y+196,"47 objects · 155 required",25,fill=MUTE,opacity=appear(t,1.8,0.5)))
+    out.append(text(rx+40,y+262,"Carta has nowhere to put them —",25,fill="#f0dada",opacity=appear(t,2.0,0.5)))
+    out.append(text(rx+40,y+300,"dropped on the fold, and logged as gaps",23,fill=MUTE,opacity=appear(t,2.0,0.5)))
+    out.append(text(W/2,724,"Two generated inventories — lossy-home & unmapped — never hand-maintained, always current.",26,
+                    fill=WHITE,anchor="middle",opacity=appear(t,2.4,0.6)))
+    out.append(caption(t,"So Core is precise about its own losses: what narrows, what's dropped, and how much of it OCF requires.",start=2.7))
+    return f'<g opacity="{o:.3f}">'+"".join(out)+'</g>'
+
+def s_inout(t, dur):
+    o=scene_opacity(t,dur); out=[background()]
+    out.append(heading(t,"What's in Core today — and what's not","in when it lands a real fact Carta can hold; out when it wouldn't"))
+    IN=[("Foundational","Issuer · Stakeholder · Valuation"),
+        ("Structure","StockClass · StockPlan"),
+        ("Issuances","Stock · Convertible · Warrant · EqComp"),
+        ("Cancellations","Stock · Convertible · Warrant · EqComp"),
+        ("Transfers","Stock · Warrant"),
+        ("Conversions","ConvertibleConversion · EqComp Exercise"),
+        ("EquityComp","Release · Repricing"),
+        ("Adjust / events","StockClass shares · Stakeholder rel.")]
+    OUT=[("Acceptances","Stock · Convertible · Warrant · EqComp"),
+         ("Retractions","Stock · Convertible · Warrant · EqComp"),
+         ("Transfers","Convertible · EquityComp"),
+         ("Stock moves","Conversion · Consolidation · Reissuance · Repurchase"),
+         ("Splits & pools","ClassSplit · PoolAdjust · ReturnToPool"),
+         ("Vesting","VestingEvent · VestingAcceleration"),
+         ("Adjustments","IssuerShares · ConversionRatio"),
+         ("Events / misc","StatusChange · WarrantExercise · Financing · Document")]
+    def panel(px,header,co,groups,dash,st):
+        h=96+len(groups)*48+22
+        out.append(rrect(px,286,800,h,18,fill=PANEL,stroke=co,sw=2.5,opacity=appear(t,st,0.5),dash=dash))
+        out.append(text(px+30,286+50,header,25,fill=co,weight="bold",opacity=appear(t,st,0.5),spacing="1"))
+        for i,(lab,mem) in enumerate(groups):
+            ro=appear(t,st+0.3+i*0.08,0.4); ly=286+100+i*48
+            out.append(text(px+30,ly,lab,20,fill=co,weight="bold",opacity=ro))
+            out.append(text(px+218,ly,mem,20,fill="#d7dbef",opacity=ro))
+    panel(140,"IN CORE · 21 objects",OCF,IN,None,0.4)
+    panel(980,"NOT YET IN CORE · 26 objects","#9aa2c8",OUT,"6 5",0.7)
+    out.append(caption(t,"In = it lands at least one real fact Carta stores. Out (for now) = only ids, dates, or nothing Carta holds.",start=2.5))
+    return f'<g opacity="{o:.3f}">'+"".join(out)+'</g>'
+
+def s_lossy_examples(t, dur):
+    o=scene_opacity(t,dur); out=[background()]
+    out.append(heading(t,"Lossy vs. lossless — and why","of the fields that land: 49 narrow (lossy) · the rest keep their value"))
+    LOSSLESS=[("par_value → parValue","the exact number, kept"),
+              ("StockClass.name → name","plain text, unchanged"),
+              ("quantity → quantity","a number, safely widened"),
+              ("class_type → shareClass type","enum → a bucket covering every value")]
+    LOSSY=[("addresses → address","a list of addresses → just one"),
+           ("contact_info → email","many contact methods → one"),
+           ("stock_class_ids → shareClassId","many share classes → one"),
+           ("conversion_rights → ratio + price","a rights structure, flattened")]
+    def panel(px,header,co,fill,items,note,st):
+        out.append(rrect(px,286,800,486,18,fill=fill,stroke=co,sw=2.5,opacity=appear(t,st,0.5)))
+        out.append(text(px+34,286+52,header,26,fill=co,weight="bold",opacity=appear(t,st,0.5),spacing="1"))
+        for i,(f,why) in enumerate(items):
+            ro=appear(t,st+0.3+i*0.14,0.45); ly=286+114+i*84
+            out.append(text(px+34,ly,f,24,fill=WHITE,family=MONO,opacity=ro))
+            out.append(text(px+34,ly+34,why,21,fill=MUTE,opacity=ro))
+        out.append(text(px+34,286+486-28,note,21,fill=co,italic=True,opacity=appear(t,st+1.2,0.5)))
+    panel(140,"LOSSLESS · lands whole",OCF,"#0f2a1c",LOSSLESS,"the value survives — nothing dropped",0.5)
+    panel(980,"LOSSY · narrows on the way out",AMBER,"#241a05",LOSSY,"a list / structure / relationship collapses",1.3)
+    out.append(caption(t,"Lossless lands in strict Core. Lossy is why rich Core exists. No home at all is a gap.",start=2.6))
+    return f'<g opacity="{o:.3f}">'+"".join(out)+'</g>'
+
 def s_close(t, dur):
     o=scene_opacity(t,dur); out=[background(brand=True)]
     cx=W/2
@@ -913,6 +1025,10 @@ SCENES = [
     ("acceptance",  s_acceptance,  12.0),
     ("ocfgap",      s_ocfgap,      15.0),
     ("recap",       s_recap,       10.0),
+    ("strictrich",  s_strict_rich, 14.0),
+    ("inout",       s_inout,       13.0),
+    ("losscounted", s_loss_counted,12.0),
+    ("lossyex",     s_lossy_examples,14.0),
     ("close",       s_close,       7.0),
 ]
 
@@ -943,7 +1059,10 @@ def main():
         return
     outdir = sys.argv[2]
     os.makedirs(outdir, exist_ok=True)
-    if mode == "stills":
+    if mode in ("stills", "plates"):
+        global TEXT_ON
+        if mode == "plates":
+            TEXT_ON = False  # keep every shape/icon/gradient, drop the text
         for nm, fn, dur in SCENES:
             svg = doc(fn(dur * 0.72, dur))  # representative: near-end, fully revealed
             open(os.path.join(outdir, f"{nm}.svg"), "w").write(svg)

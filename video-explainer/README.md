@@ -6,13 +6,23 @@ example objects.
 
 | File | What it is |
 | --- | --- |
-| `ocf-core-explainer.mp4` | 1920×1080, h264, 30 fps, 266 s, ~8.7 MB (primary) |
-| `ocf-core-explainer.gif` | 900×506, 12 fps, ~12 MB (for embeds/chat) |
+| `ocf-core-explainer.mp4` | 1920×1080, h264, 30 fps, 319 s, ~11 MB (primary) |
+| `ocf-core-explainer.gif` | 900×506, 12 fps, ~14 MB (for embeds/chat) |
+| `ocf-core-explainer.pptx` | **27-slide deck (image)** — one slide per scene, 16:9, each the final frame as a full-bleed image. Pixel-perfect styling; text **not** editable |
+| `ocf-core-explainer-editable.pptx` | **27-slide deck (editable)** — same styling, but every word is a native, **editable** text box over a text-less styled plate (429 text boxes) |
 | `poster.png` | still thumbnail (the recap scene) |
 | `gen.py` | the SVG frame generator (see *Rebuilding* below) |
+| `build_pptx.py` | builds the image deck from rendered slide PNGs |
+| `build_pptx_editable.py` | builds the editable deck (plate PNGs + parsed text) |
 
-> This folder is **untracked** in git. It's yours to keep, `.gitignore`, or commit — the
-> binaries are large for a schema repo, so it's left out of the tree by default.
+> **In git vs. generated.** Only the *source* is committed — `gen.py`, `build_pptx*.py`, and the
+> docs. The **media and decks** (`*.mp4`, `*.gif`, `*.pptx`, `poster.png`) are **generated and
+> git-ignored**: they're large and fully reproducible, so run the steps in *Rebuilding* to produce
+> them locally.
+
+**Want to change it?** → [`AUTHORING.md`](AUTHORING.md) (edit the video / add slides) and
+[`AUTHORING-PPTX.md`](AUTHORING-PPTX.md) (edit the decks; how to make them fully editable). The
+source of truth for everything is `gen.py`.
 
 ## What it teaches (in order)
 
@@ -47,6 +57,14 @@ Then the **explainer**:
    in git. A transparent, auditable approach to mapping between the standards.
 8. **Worked examples** (below): four objects that show how OCF folds into Carta, then a fifth
    showing the reverse gap — followed by a recap.
+9. **Core vs. Core loss** — a four-scene analytical block:
+   - **strict** Core (only what lands cleanly) vs **rich** Core (also keeps lossy-home fields);
+   - a **specific in/out inventory** — the **21** objects in Core vs the **26** not-yet (grouped by
+     family: issuances/cancellations in, most acceptances/retractions/transfers out);
+   - the loss **counted** — **49** field-mappings that land lossily vs **249** dropped with no home;
+   - **lossy vs. lossless examples, with the why** — `par_value`/`quantity`/`class_type` land whole;
+     `addresses`→one, `contact_info`→one email, `conversion_rights`→ratio+price collapse.
+   *(All from `core/core-ledger.md`, `docs/core-lossy-inventory.md`, `docs/core-unmapped-inventory.md`.)*
 
 ## The example objects
 
@@ -79,7 +97,7 @@ the brand so the multi-colour field coding keeps its contrast.
 Requires `rsvg-convert` (librsvg), `ffmpeg`, and `python3` — no browser needed.
 
 ```sh
-# 1. generate the SVG frame sequence (20 fps → 5320 frames)
+# 1. generate the SVG frame sequence (20 fps → 6380 frames)
 python3 gen.py all frames --fps 20
 
 # 2. render every frame to PNG (parallel)
@@ -99,6 +117,37 @@ ffmpeg -y -threads 1 -filter_complex_threads 1 -i ocf-core-explainer.mp4 -i pale
 
 Other `gen.py` modes: `python3 gen.py manifest` (scene timings) and
 `python3 gen.py stills OUTDIR` (one representative frame per scene, for quick review).
+
+### PowerPoint deck
+
+One slide per scene, each the scene's final (fully-revealed) frame as a full-bleed 16:9 image —
+so styling is preserved exactly and animation is dropped. Needs `python-pptx` (`pip install
+python-pptx`).
+
+```sh
+# 1. render each scene's final frame at high res, in scene order
+python3 gen.py stills stills
+i=1; for nm in $(python3 gen.py manifest | awk '$1!="TOTAL"{print $1}'); do
+  rsvg-convert -w 2560 -h 1440 "stills/$nm.svg" -o "slides/$(printf %02d $i)_$nm.png"; i=$((i+1)); done
+
+# 2. assemble the image deck
+python3 build_pptx.py   # reads slides/*.png → ocf-core-explainer.pptx
+```
+
+**Editable deck.** Same look, but every word is a native, editable text box laid over a *text-less*
+styled plate (so the shapes/icons/gradients stay exact and the text is editable):
+
+```sh
+python3 gen.py plates plates          # scenes with text suppressed (shapes/icons only)
+i=1; for nm in $(python3 gen.py manifest | awk '$1!="TOTAL"{print $1}'); do
+  rsvg-convert -w 2560 -h 1440 "plates/$nm.svg" -o "plate_png/$(printf %02d $i)_$nm.png"; i=$((i+1)); done
+python3 gen.py stills stills          # with-text SVGs (text coords are parsed from these)
+python3 build_pptx_editable.py        # → ocf-core-explainer-editable.pptx
+```
+
+Text is placed from the exact SVG coordinates (so the image deck / stills are the reference look).
+Vertical placement was not visually verified (no LibreOffice on the build box); if text sits a
+touch high/low in PowerPoint, tune the single `0.34` baseline offset in `build_pptx_editable.py`.
 
 The narration is on-screen captions only (silent) so it works identically as mp4 or gif. To edit
 copy, timing, or scene order, everything lives in the `SCENES` list and per-scene functions in
