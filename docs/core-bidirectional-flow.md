@@ -13,11 +13,13 @@ flowchart LR
   classDef core fill:#fff4d6,stroke:#f9a825,color:#5c4400;
   classDef in fill:#e6f4ea,stroke:#34a853,color:#0b3d20;
   classDef out fill:#fce8e6,stroke:#d93025,color:#5c0d06;
+  classDef defer fill:#fff8e1,stroke:#f9a825,color:#5c4400,stroke-dasharray:4 3;
   OCF["OCF"]:::in -->|"99 clean + 33 lossy"| CORE
   OCF -.->|"146 left behind"| ocfvoid["⌀ dropped (no Carta home)"]:::out
   CORE["OCF Core (rich)"]:::core
   Carta["Carta"]:::in -->|"183 fields"| CORE
-  Carta -.->|"185 left behind"| cartavoid["⌀ Core can't hold"]:::out
+  Carta -.->|"4 deferred"| deferbox["⏳ deferred (OCF has it, extraction TODO)"]:::defer
+  Carta -.->|"181 left behind"| cartavoid["⌀ Core can't hold"]:::out
 ```
 
 - **OCF → Core**: a property flows in if it is a Core member (mapped, even lossily); it is
@@ -297,7 +299,7 @@ flowchart LR
   o0 -->|"stakeholder_id → stakeholderId"| t2
   o0 -.->|"board_approval_date, consideration_text, pro_rata, seniority, stockholder_approval_date"| ocflost
   t0 -.->|"countryOfResidency, stateOfResidency"| cartalost
-  t1 -.->|"maturityDatetime, noteBlockId, precededBySecurityId, interestRate, interestAccrualPeriod, interestCompoundingPeriod +1 more"| cartalost
+  t1 -.->|"maturityDatetime, noteBlockId, precededBySecurityId"| cartalost
   t2 -.->|"id, issuerId, issueDatetime, conversionDatetime, canceledDatetime, cashPaid +5 more"| cartalost
   t3 -.->|"id, name, prefix, status"| cartalost
 ```
@@ -1343,51 +1345,54 @@ security object and its issuance transaction (`OptionGrant`↔`OptionIssuanceTra
 so the other reads `left behind` even though the same OCF value already populates its sibling.
 Those duplicated slots inflate the count — they are not capability Core lacks.
 
-| Carta object | fills | left behind | left-behind fields |
-| --- | ---: | ---: | --- |
-| OptionGrant | 11 | 24 | id, shareClassId, vestingScheduleTemplateId, issuerId, equityIncentivePlanName, issueDate, canceledDate, grantExpirationDate, lastExercisableDate, disqualificationDate, isoNsoSplit, quantity, outstandingQuantity, vestedQuantity, exercisedQuantity, exercises, terminationDate, vestingSchedule, canceledQuantity, forfeitedQuantity, expiredQuantity, returnedToPoolQuantity, returnedToTreasuryQuantity, lastModifiedDatetime |
-| RestrictedStockUnit | 7 | 21 | id, shareClassId, vestingScheduleTemplateId, issuerId, equityIncentivePlanName, issueDate, quantity, vestedQuantity, releasedQuantity, releasePricePerShare, netSettledQuantity, canceledDate, terminationDate, settlements, vestingSchedule, canceledQuantity, forfeitedQuantity, expiredQuantity, returnedToPoolQuantity, returnedToTreasuryQuantity, lastModifiedDatetime |
-| RestrictedStockAward | 8 | 17 | id, vestingScheduleTemplateId, issuerId, equityIncentivePlanName, shareClassName, issueDate, vestingStartDate, canceledDate, terminationDate, quantity, vestedQuantity, vestingSchedule, canceledQuantity, returnedToPoolQuantity, returnedToTreasuryQuantity, lastModifiedDatetime, precededBy |
-| Certificate | 5 | 12 | id, vestingScheduleTemplateId, issuerId, shareClassName, issueDate, quantity, canceledDate, canceledQuantity, returnedToPoolQuantity, returnedToTreasuryQuantity, lastModifiedDatetime, precededBy |
-| ConvertibleNote | 10 | 11 | id, issuerId, issueDatetime, conversionDatetime, canceledDatetime, cashPaid, maturityDatetime, interest, noteBlock, changeInControlPercent, conversionTrigger |
-| OptionGrantVestingEvent | 2 | 8 | id, isoQuantity, nsoQuantity, performanceCondition, vested, maxQuantity, targetQuantity, vestedQuantity |
-| ConvertibleIssuanceTransaction | 5 | 7 | maturityDatetime, noteBlockId, precededBySecurityId, interestRate, interestAccrualPeriod, interestCompoundingPeriod, dayCountBasis |
-| OptionExerciseTransaction | 2 | 6 | id, exerciseMethod, recordType, resultingSecurityId, resultingSecurityType, resultingSecurityLabel |
-| RestrictedStockUnitSettlement | 2 | 6 | releaseQuantity, saleQuantity, withholdingQuantity, netSettlementQuantity, certificateId, certificateLabel |
-| SarExerciseTransaction | 2 | 6 | withheldQuantity, settledQuantity, resultingSecurityId, resultingSecurityType, resultingSecurityLabel, cashAcquired |
-| OptionPoolSummary | 3 | 5 | optionPoolId, fullyDilutedShares, outstandingEquityAwardDerivatives, outstandingCommittedRestrictedStockAwards, terminatedDatetime |
-| RsuSettlementTransaction | 2 | 5 | id, withheldQuantity, resultingSecurityId, resultingSecurityType, resultingSecurityLabel |
-| VestingScheduleTemplate | 2 | 5 | issuerId, name, description, vestingScheduleType, uuid |
-| WarrantExerciseTransaction | 2 | 5 | quantity, withheldQuantity, settledQuantity, resultingSecurityType, resultingSecurityLabel |
-| ConvertibleTransactionItem | 1 | 4 | stakeholderId, securityLabel, issuance, cancellations |
-| NoteBlock | 1 | 4 | id, name, prefix, status |
-| WarrantTransactionItem | 3 | 4 | issuance, exercises, transfers, cancellations |
-| ShareClass | 7 | 3 | issuerId, pariPassu, preferredShareClassDetails |
-| VestingPeriod | 9 | 3 | vestingOccurs, immediatePercentage, milestoneName |
-| CertificateCancellationTransaction | 3 | 2 | terminationDatetime, forfeitureDatetime |
-| CertificateIssuanceTransaction | 6 | 2 | shareClassId, precededBySecurityId |
-| Compliance | 1 | 2 | countryOfResidency, stateOfResidency |
-| Document | 1 | 2 | name, url |
-| Issuer | 2 | 2 | id, website |
-| OptionCancellationTransaction | 3 | 2 | terminationDatetime, forfeitureDatetime |
-| PointOfContact | 2 | 2 | issuerId, type |
-| RsaCancellationTransaction | 3 | 2 | terminationDatetime, forfeitureDatetime |
-| RsuCancellationTransaction | 3 | 2 | terminationDatetime, forfeitureDatetime |
-| SarCancellationTransaction | 3 | 2 | terminationDatetime, forfeitureDatetime |
-| ShareClassValuation | 2 | 2 | shareClassName, common |
-| Stakeholder | 7 | 2 | issuerId, group |
-| OptionIssuanceTransaction | 7 | 1 | stockOptionType |
-| RsaIssuanceTransaction | 5 | 1 | shareClassId |
-| ShareClassRightsAndPreferences | 5 | 1 | participating |
-| WarrantIssuanceTransaction | 6 | 1 | shareClassId |
-| WarrantTransferTransaction | 3 | 1 | resultingSecurityLabel |
-| CertificatePrecededBy | 2 | 0 | — |
-| ConvertibleCancellationTransaction | 3 | 0 | — |
-| ExercisePeriods | 12 | 0 | — |
-| Money | 2 | 0 | — |
-| RestrictedStockAwardPrecededBy | 2 | 0 | — |
-| RsuIssuanceTransaction | 5 | 0 | — |
-| SarIssuanceTransaction | 7 | 0 | — |
-| StakeholderAddress | 1 | 0 | — |
-| WarrantCancellationTransaction | 3 | 0 | — |
+`deferred` = a slot a field's `defer:` placeholder claims: OCF *has* the data, the nested
+extraction just isn't built yet (see the ledger's Deferred mappings). Not counted as left behind.
+
+| Carta object | fills | deferred | left behind | left-behind fields |
+| --- | ---: | ---: | ---: | --- |
+| OptionGrant | 11 | 0 | 24 | id, shareClassId, vestingScheduleTemplateId, issuerId, equityIncentivePlanName, issueDate, canceledDate, grantExpirationDate, lastExercisableDate, disqualificationDate, isoNsoSplit, quantity, outstandingQuantity, vestedQuantity, exercisedQuantity, exercises, terminationDate, vestingSchedule, canceledQuantity, forfeitedQuantity, expiredQuantity, returnedToPoolQuantity, returnedToTreasuryQuantity, lastModifiedDatetime |
+| RestrictedStockUnit | 7 | 0 | 21 | id, shareClassId, vestingScheduleTemplateId, issuerId, equityIncentivePlanName, issueDate, quantity, vestedQuantity, releasedQuantity, releasePricePerShare, netSettledQuantity, canceledDate, terminationDate, settlements, vestingSchedule, canceledQuantity, forfeitedQuantity, expiredQuantity, returnedToPoolQuantity, returnedToTreasuryQuantity, lastModifiedDatetime |
+| RestrictedStockAward | 8 | 0 | 17 | id, vestingScheduleTemplateId, issuerId, equityIncentivePlanName, shareClassName, issueDate, vestingStartDate, canceledDate, terminationDate, quantity, vestedQuantity, vestingSchedule, canceledQuantity, returnedToPoolQuantity, returnedToTreasuryQuantity, lastModifiedDatetime, precededBy |
+| Certificate | 5 | 0 | 12 | id, vestingScheduleTemplateId, issuerId, shareClassName, issueDate, quantity, canceledDate, canceledQuantity, returnedToPoolQuantity, returnedToTreasuryQuantity, lastModifiedDatetime, precededBy |
+| ConvertibleNote | 10 | 0 | 11 | id, issuerId, issueDatetime, conversionDatetime, canceledDatetime, cashPaid, maturityDatetime, interest, noteBlock, changeInControlPercent, conversionTrigger |
+| OptionGrantVestingEvent | 2 | 0 | 8 | id, isoQuantity, nsoQuantity, performanceCondition, vested, maxQuantity, targetQuantity, vestedQuantity |
+| OptionExerciseTransaction | 2 | 0 | 6 | id, exerciseMethod, recordType, resultingSecurityId, resultingSecurityType, resultingSecurityLabel |
+| RestrictedStockUnitSettlement | 2 | 0 | 6 | releaseQuantity, saleQuantity, withholdingQuantity, netSettlementQuantity, certificateId, certificateLabel |
+| SarExerciseTransaction | 2 | 0 | 6 | withheldQuantity, settledQuantity, resultingSecurityId, resultingSecurityType, resultingSecurityLabel, cashAcquired |
+| OptionPoolSummary | 3 | 0 | 5 | optionPoolId, fullyDilutedShares, outstandingEquityAwardDerivatives, outstandingCommittedRestrictedStockAwards, terminatedDatetime |
+| RsuSettlementTransaction | 2 | 0 | 5 | id, withheldQuantity, resultingSecurityId, resultingSecurityType, resultingSecurityLabel |
+| VestingScheduleTemplate | 2 | 0 | 5 | issuerId, name, description, vestingScheduleType, uuid |
+| WarrantExerciseTransaction | 2 | 0 | 5 | quantity, withheldQuantity, settledQuantity, resultingSecurityType, resultingSecurityLabel |
+| ConvertibleTransactionItem | 1 | 0 | 4 | stakeholderId, securityLabel, issuance, cancellations |
+| NoteBlock | 1 | 0 | 4 | id, name, prefix, status |
+| WarrantTransactionItem | 3 | 0 | 4 | issuance, exercises, transfers, cancellations |
+| ConvertibleIssuanceTransaction | 5 | 4 | 3 | maturityDatetime, noteBlockId, precededBySecurityId |
+| ShareClass | 7 | 0 | 3 | issuerId, pariPassu, preferredShareClassDetails |
+| VestingPeriod | 9 | 0 | 3 | vestingOccurs, immediatePercentage, milestoneName |
+| CertificateCancellationTransaction | 3 | 0 | 2 | terminationDatetime, forfeitureDatetime |
+| CertificateIssuanceTransaction | 6 | 0 | 2 | shareClassId, precededBySecurityId |
+| Compliance | 1 | 0 | 2 | countryOfResidency, stateOfResidency |
+| Document | 1 | 0 | 2 | name, url |
+| Issuer | 2 | 0 | 2 | id, website |
+| OptionCancellationTransaction | 3 | 0 | 2 | terminationDatetime, forfeitureDatetime |
+| PointOfContact | 2 | 0 | 2 | issuerId, type |
+| RsaCancellationTransaction | 3 | 0 | 2 | terminationDatetime, forfeitureDatetime |
+| RsuCancellationTransaction | 3 | 0 | 2 | terminationDatetime, forfeitureDatetime |
+| SarCancellationTransaction | 3 | 0 | 2 | terminationDatetime, forfeitureDatetime |
+| ShareClassValuation | 2 | 0 | 2 | shareClassName, common |
+| Stakeholder | 7 | 0 | 2 | issuerId, group |
+| OptionIssuanceTransaction | 7 | 0 | 1 | stockOptionType |
+| RsaIssuanceTransaction | 5 | 0 | 1 | shareClassId |
+| ShareClassRightsAndPreferences | 5 | 0 | 1 | participating |
+| WarrantIssuanceTransaction | 6 | 0 | 1 | shareClassId |
+| WarrantTransferTransaction | 3 | 0 | 1 | resultingSecurityLabel |
+| CertificatePrecededBy | 2 | 0 | 0 | — |
+| ConvertibleCancellationTransaction | 3 | 0 | 0 | — |
+| ExercisePeriods | 12 | 0 | 0 | — |
+| Money | 2 | 0 | 0 | — |
+| RestrictedStockAwardPrecededBy | 2 | 0 | 0 | — |
+| RsuIssuanceTransaction | 5 | 0 | 0 | — |
+| SarIssuanceTransaction | 7 | 0 | 0 | — |
+| StakeholderAddress | 1 | 0 | 0 | — |
+| WarrantCancellationTransaction | 3 | 0 | 0 | — |
 
