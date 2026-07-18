@@ -1051,6 +1051,27 @@ function validateEntryShape(
   if (entry.routed_to !== undefined && !isPlainObject(entry.routed_to)) {
     err(name, "routed_to: must be a map of discriminator value → variant label");
   }
+
+  // defer: a placeholder recording that a complex field carries MORE mappable
+  // content (nested sub-fields) not yet extracted — a tracked future-investigation
+  // TODO, additive to the field's own mapping. `note` describes it; optional
+  // `targets` name the Carta slots OCF could fill once built, so reports show them
+  // as "deferred (OCF has it)" rather than "no OCF source". Target pointers are
+  // resolved in validateEntryTargets (which has the bundle).
+  if (entry.defer !== undefined) {
+    const d = entry.defer;
+    if (!isPlainObject(d)) {
+      err(name, "defer: must be a map with note: and optional targets:");
+    } else {
+      if (typeof d.note !== "string") err(name, "defer.note: must be a string");
+      if (
+        d.targets !== undefined &&
+        (!Array.isArray(d.targets) || !d.targets.every((t) => typeof t === "string"))
+      ) {
+        err(name, "defer.targets: must be an array of Carta target pointers");
+      }
+    }
+  }
 }
 
 function validateValuesBlock(
@@ -1134,6 +1155,20 @@ function validateEntryTargets(
       continue;
     }
     lastResolved = node;
+  }
+
+  // defer.targets: the Carta slots a future nested-extraction would fill. Validate
+  // they resolve, so the placeholder can't name a slot that doesn't exist.
+  const defer = entry.defer;
+  if (isPlainObject(defer) && Array.isArray(defer.targets)) {
+    for (const ptr of defer.targets) {
+      if (typeof ptr !== "string") continue;
+      if (!ptr.startsWith("#/")) {
+        err(name, `defer target "${ptr}" must be a "#/..." JSON pointer into the target bundle`);
+      } else if (!resolveJsonPointer(bundle, ptr).found) {
+        err(name, `defer target "${ptr}" does not resolve in the target bundle`);
+      }
+    }
   }
 
   if (kind === "enum-remap" && lastResolved !== undefined) {

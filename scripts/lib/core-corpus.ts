@@ -155,6 +155,15 @@ export interface CompositeStep {
   fills: Record<string, CompositeConstFill[]>;
 }
 
+/** A `defer:` placeholder on a field: a tracked future-investigation TODO for
+ *  nested content the mapping doesn't extract yet, plus the Carta slots it could fill. */
+export interface DeferralNote {
+  field: string;
+  note: string;
+  /** Carta pointers the deferred extraction would eventually fill (may be empty). */
+  targets: string[];
+}
+
 export interface GreenObject {
   /** Canonical entity name (the mapping filename, camelCase). */
   entity: string;
@@ -187,6 +196,12 @@ export interface GreenObject {
    * `EquityCompensationIssuance`). Its economic mapping lives in the base.
    */
   aliasOf?: string;
+  /**
+   * `defer:` placeholders on this object's fields — complex fields whose nested
+   * content is mappable but not yet extracted (e.g. `conversion_triggers` also
+   * carries note interest terms). A tracked backlog, surfaced in the ledger.
+   */
+  deferrals: DeferralNote[];
 }
 
 export interface Corpus {
@@ -199,6 +214,9 @@ export interface Corpus {
   /** FULL Carta pointers (`#/$defs/Root/properties/x`) targeted by any green mapping —
    *  property-level, for the bidirectional-coverage report (which Carta slots receive OCF data). */
   targetedPointers: Set<string>;
+  /** Carta pointers named by a field's `defer:` placeholder — slots OCF *could* fill via
+   *  not-yet-built nested extraction. Reports show these as "deferred", not "no OCF source". */
+  deferredTargets: Set<string>;
   /**
    * Carta `$defs` reachable by `$ref` from any `targetedDefs` entry (transitive
    * structural coverage). A green mapping writes to a parent object, and that
@@ -361,6 +379,28 @@ function compositeSteps(mapping: Record<string, unknown>): CompositeStep[] | und
     });
   }
   return steps.length > 0 ? steps : undefined;
+}
+
+/** The `defer:` placeholders on a mapping's fields (fields + shared + variant fields), deduped by field. */
+function objectDeferrals(mapping: Record<string, unknown>): DeferralNote[] {
+  const out = new Map<string, DeferralNote>();
+  const scan = (fields: unknown) => {
+    if (!isPlainObject(fields)) return;
+    for (const [field, entry] of Object.entries(fields)) {
+      if (out.has(field) || !isPlainObject(entry) || !isPlainObject(entry.defer)) continue;
+      const d = entry.defer;
+      const targets = Array.isArray(d.targets)
+        ? d.targets.filter((t): t is string => typeof t === "string")
+        : [];
+      out.set(field, { field, note: typeof d.note === "string" ? d.note : "", targets });
+    }
+  };
+  scan(mapping.fields);
+  scan(mapping.shared);
+  if (isPlainObject(mapping.variants)) {
+    for (const v of Object.values(mapping.variants)) if (isPlainObject(v)) scan(v.fields);
+  }
+  return [...out.values()].sort((a, b) => a.field.localeCompare(b.field));
 }
 
 /**
@@ -632,16 +672,21 @@ export async function loadGreenCorpus(repoRoot: string): Promise<Corpus> {
       composite: compositeSteps(mapping),
       constFills: objectConstFills(mapping),
       aliasOf: detectAlias(sourceSchema, objectEntityNames),
+      deferrals: objectDeferrals(mapping),
     });
   }
 
   const transitivelyCoveredDefs = closeOverRefs(bundle, targetedDefs);
+  const deferredTargets = new Set<string>();
+  for (const o of objects)
+    for (const d of o.deferrals) for (const t of d.targets) deferredTargets.add(t);
 
   return {
     registry,
     bundle,
     typeLib,
     objects,
+    deferredTargets,
     targetedDefs,
     targetedPointers,
     transitivelyCoveredDefs,

@@ -93,6 +93,36 @@ export function renderLedger(d: Derived): string {
     }
   }
 
+  // Deferred mappings (future investigation): fields carrying a `defer:` placeholder —
+  // a complex object whose nested content IS mappable but isn't extracted yet. A tracked
+  // backlog so the gap is explicit, not silent.
+  const deferred = d.corpus.objects.filter((o) => o.deferrals.length > 0);
+  if (deferred.length > 0) {
+    lines.push(
+      "",
+      "## Deferred mappings (future investigation)",
+      "",
+      "Fields left partially mapped BY DESIGN for now: a complex object carries nested content",
+      "that IS mappable but needs extraction we haven't built. `would fill` names the Carta slots",
+      'a future nested extraction could populate — those read as "deferred", not "no OCF source",',
+      "in the coverage report.",
+      "",
+      "| entity | field | would fill (Carta) | note |",
+      "| --- | --- | --- | --- |"
+    );
+    for (const o of deferred) {
+      for (const dn of o.deferrals) {
+        const fills =
+          dn.targets
+            .map((t) => `\`${t.replace(/^#\/\$defs\//, "").replace("/properties/", ".")}\``)
+            .join(", ") || "—";
+        lines.push(
+          `| ${o.entity} | ${dn.field} | ${fills} | ${dn.note.replace(/\s+/g, " ").trim()} |`
+        );
+      }
+    }
+  }
+
   lines.push(
     "",
     "## Fields (§2)",

@@ -234,6 +234,19 @@ fields:
       - "#/$defs/ConvertibleIssuanceTransaction/properties/conversionTrigger"
       - "#/$defs/ConvertibleIssuanceTransaction/properties/discountPercentage"
       - "#/$defs/ConvertibleIssuanceTransaction/properties/valuationCap"
+    defer:
+      note: >-
+        A note-type trigger's conversion_mechanism (NoteConversionMechanism) also carries
+        interest terms — interest_rates[].rate, interest_accrual_period, compounding_type,
+        day_count_convention — that map ~1:1 to Carta's interest fields. Extracting them needs
+        nested-path support (conversion_triggers[].conversion_right.conversion_mechanism.*) plus
+        an array/union collapse (which trigger, which rate); compounding is a combine of
+        compounding_type + accrual_period. Deferred until the derived-path mechanism exists.
+      targets:
+        - "#/$defs/ConvertibleIssuanceTransaction/properties/interestRate"
+        - "#/$defs/ConvertibleIssuanceTransaction/properties/interestAccrualPeriod"
+        - "#/$defs/ConvertibleIssuanceTransaction/properties/interestCompoundingPeriod"
+        - "#/$defs/ConvertibleIssuanceTransaction/properties/dayCountBasis"
   pro_rata:
     kind: unmappable
     target: null

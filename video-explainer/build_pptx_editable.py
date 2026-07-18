@@ -17,8 +17,14 @@ CW, CH = 1920, 1080
 EMU = 6350                       # EMU per canvas px  (12192000 / 1920)
 PX2PT = 0.5                      # canvas px -> points (6350 / 12700)
 
+# deck selection (defaults = original explainer deck); override via env for a sibling deck.
+GEN = os.environ.get("DECK_GEN", "gen.py")
+STILLS = os.environ.get("DECK_STILLS", "stills")
+PLATES = os.environ.get("DECK_PLATES", "plate_png")
+OUT = os.environ.get("DECK_OUT", "ocf-core-explainer")
+
 def scene_order():
-    out = subprocess.check_output(["python3", "gen.py", "manifest"], text=True)
+    out = subprocess.check_output(["python3", GEN, "manifest"], text=True)
     return [ln.split()[0] for ln in out.splitlines() if ln.split() and ln.split()[0] != "TOTAL"]
 
 def hexcolor(fill):
@@ -93,8 +99,8 @@ def main():
     order = scene_order()
     total = 0
     for i, nm in enumerate(order, 1):
-        plate = f"plate_png/{i:02d}_{nm}.png"
-        still = f"stills/{nm}.svg"
+        plate = f"{PLATES}/{i:02d}_{nm}.png"
+        still = f"{STILLS}/{nm}.svg"
         slide = prs.slides.add_slide(blank)
         slide.shapes.add_picture(plate, 0, 0, width=prs.slide_width, height=prs.slide_height)
         acc = []
@@ -102,9 +108,10 @@ def main():
         for el, gop in acc:
             add_text(slide, el, gop)
         total += len(acc)
-        print(f"slide {i:02d} {nm:14s} {len(acc)} text boxes")
-    prs.save("ocf-core-explainer-editable.pptx")
-    print(f"\nwrote ocf-core-explainer-editable.pptx — {len(order)} slides, {total} editable text boxes")
+        print(f"slide {i:02d} {nm:20s} {len(acc)} text boxes")
+    outfile = f"{OUT}-editable.pptx"
+    prs.save(outfile)
+    print(f"\nwrote {outfile} — {len(order)} slides, {total} editable text boxes")
 
 if __name__ == "__main__":
     main()

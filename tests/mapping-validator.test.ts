@@ -252,6 +252,36 @@ describe("validateMapping — entry shapes", () => {
     expect(errs.some((m) => m.includes("target: null"))).toBe(true);
   });
 
+  it("accepts a defer placeholder with a note and resolvable targets", () => {
+    expect(
+      messages(
+        withField({
+          kind: "rename",
+          target: "#/$defs/Thing/properties/name",
+          defer: {
+            note: "nested content is mappable but not extracted yet",
+            targets: ["#/$defs/Thing/properties/color"],
+          },
+        })
+      )
+    ).toEqual([]);
+  });
+
+  it("rejects a defer that is not a map, a non-string note, or an unresolvable target", () => {
+    const base = { kind: "rename", target: "#/$defs/Thing/properties/name" };
+    expect(messages(withField({ ...base, defer: "nope" })).some((m) => m.includes("defer:"))).toBe(
+      true
+    );
+    expect(
+      messages(withField({ ...base, defer: { note: 5 } })).some((m) => m.includes("defer.note"))
+    ).toBe(true);
+    expect(
+      messages(
+        withField({ ...base, defer: { note: "x", targets: ["#/$defs/Nope/properties/y"] } })
+      ).some((m) => m.includes("defer target"))
+    ).toBe(true);
+  });
+
   it("rejects reason on non-unmappable entries", () => {
     const errs = messages(
       withField({

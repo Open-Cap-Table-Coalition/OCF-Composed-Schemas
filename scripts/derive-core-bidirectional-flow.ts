@@ -87,9 +87,17 @@ export function renderBidiDoc(d: Derived): string {
       if (root) targetedRoots.add(root[1] as string);
     }
   }
+  // Slots a `defer:` placeholder claims — OCF *has* the data, extraction is just not
+  // built yet. These read as "deferred", not "no OCF source" (empty).
+  const deferredSlots = new Set<string>();
+  for (const ptr of d.corpus.deferredTargets) {
+    const slot = /^(#\/\$defs\/[^/]+\/properties\/[^/]+)/.exec(ptr);
+    if (slot) deferredSlots.add(slot[1] as string);
+  }
   const cartaDefs = (d.corpus.bundle as { $defs?: Record<string, unknown> }).$defs ?? {};
   interface CartaObj {
     filled: string[];
+    deferred: string[];
     empty: string[];
   }
   const carta = new Map<string, CartaObj>();
@@ -97,13 +105,15 @@ export function renderBidiDoc(d: Derived): string {
   for (const [name, def] of Object.entries(cartaDefs)) {
     if (!isObjectType(def)) continue;
     const props = Object.keys((def as { properties: Record<string, unknown> }).properties);
-    const filled = props.filter((p) => targetedSlots.has(`#/$defs/${name}/properties/${p}`));
-    const empty = props.filter((p) => !targetedSlots.has(`#/$defs/${name}/properties/${p}`));
-    if (filled.length === 0 && !targetedRoots.has(name)) {
+    const slot = (p: string) => `#/$defs/${name}/properties/${p}`;
+    const filled = props.filter((p) => targetedSlots.has(slot(p)));
+    const deferred = props.filter((p) => !targetedSlots.has(slot(p)) && deferredSlots.has(slot(p)));
+    const empty = props.filter((p) => !targetedSlots.has(slot(p)) && !deferredSlots.has(slot(p)));
+    if (filled.length === 0 && deferred.length === 0 && !targetedRoots.has(name)) {
       untargetedNames.push(name); // no field-level mapping targets it — see gap report (b)
       continue;
     }
-    carta.set(name, { filled, empty });
+    carta.set(name, { filled, deferred, empty });
   }
   // Some untargeted $defs are $ref-reachable from a TARGETED parent, so OCF data still
   // flows into them via that parent (e.g. the `…VestingEvent` / `…PrecededBy` element
@@ -188,7 +198,7 @@ function render(
     string,
     { clean: Set<string>; lossy: Set<string>; dropped: Set<string>; admissible: boolean }
   >,
-  carta: Map<string, { filled: string[]; empty: string[] }>,
+  carta: Map<string, { filled: string[]; deferred: string[]; empty: string[] }>,
   untargetedObjects: number,
   untargetedReachable: number,
   memberGroups: EntityGroup[],
@@ -200,6 +210,7 @@ function render(
   const ocfLossy = sum([...ocf.values()].map((o) => o.lossy.size));
   const ocfDropped = sum([...ocf.values()].map((o) => o.dropped.size));
   const cartaFilled = sum([...carta.values()].map((c) => c.filled.length));
+  const cartaDeferred = sum([...carta.values()].map((c) => c.deferred.length));
   const cartaEmpty = sum([...carta.values()].map((c) => c.empty.length));
 
   const lines: string[] = [
@@ -218,10 +229,16 @@ function render(
     "  classDef core fill:#fff4d6,stroke:#f9a825,color:#5c4400;",
     "  classDef in fill:#e6f4ea,stroke:#34a853,color:#0b3d20;",
     "  classDef out fill:#fce8e6,stroke:#d93025,color:#5c0d06;",
+    "  classDef defer fill:#fff8e1,stroke:#f9a825,color:#5c4400,stroke-dasharray:4 3;",
     `  OCF["OCF"]:::in -->|"${ocfClean} clean + ${ocfLossy} lossy"| CORE`,
     `  OCF -.->|"${ocfDropped} left behind"| ocfvoid["⌀ dropped (no Carta home)"]:::out`,
     '  CORE["OCF Core (rich)"]:::core',
     `  Carta["Carta"]:::in -->|"${cartaFilled} fields"| CORE`,
+    ...(cartaDeferred
+      ? [
+          `  Carta -.->|"${cartaDeferred} deferred"| deferbox["⏳ deferred (OCF has it, extraction TODO)"]:::defer`,
+        ]
+      : []),
     `  Carta -.->|"${cartaEmpty} left behind"| cartavoid["⌀ Core can't hold"]:::out`,
     "```",
     "",
@@ -281,14 +298,22 @@ function render(
     "so the other reads `left behind` even though the same OCF value already populates its sibling.",
     "Those duplicated slots inflate the count — they are not capability Core lacks.",
     "",
-    "| Carta object | fills | left behind | left-behind fields |",
-    "| --- | ---: | ---: | --- |"
+    "`deferred` = a slot a field's `defer:` placeholder claims: OCF *has* the data, the nested",
+    "extraction just isn't built yet (see the ledger's Deferred mappings). Not counted as left behind.",
+    "",
+    "| Carta object | fills | deferred | left behind | left-behind fields |",
+    "| --- | ---: | ---: | ---: | --- |"
   );
   for (const [name, c] of [...carta.entries()].sort(
-    (a, b) => b[1].empty.length - a[1].empty.length || a[0].localeCompare(b[0])
+    (a, b) =>
+      b[1].empty.length - a[1].empty.length ||
+      b[1].deferred.length - a[1].deferred.length ||
+      a[0].localeCompare(b[0])
   )) {
     const left = c.empty.length ? c.empty.join(", ") : "—";
-    lines.push(`| ${name} | ${c.filled.length} | ${c.empty.length} | ${left} |`);
+    lines.push(
+      `| ${name} | ${c.filled.length} | ${c.deferred.length} | ${c.empty.length} | ${left} |`
+    );
   }
   lines.push("");
   return lines.join("\n") + "\n";
