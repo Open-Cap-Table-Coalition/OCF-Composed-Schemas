@@ -1001,6 +1001,158 @@ def s_close(t, dur):
                     weight="bold", anchor="middle", opacity=fo, spacing="2"))
     return f'<g opacity="{o:.3f}">'+"".join(out)+'</g>'
 
+# ============================================================================
+# OCF ARCHITECTURE — deep-dive (how OCF itself is constructed)
+# ============================================================================
+# ---- JSON-schema code-card helpers (illustrate concepts through real schema)
+def _codeline(x, y, raw, ro, size=22, hi=False, hicol=CORE_TXT):
+    if hi:
+        w = len(raw) * size * 0.6 + 24
+        return (rrect(x-10, y-size+3, w, size+12, 6, fill=hicol, opacity=ro*0.14)
+                + text(x, y, raw, size, fill=hicol, weight="bold", family=MONO, opacity=ro))
+    q1 = raw.find('"'); q2 = raw.find('"', q1+1) if q1 >= 0 else -1
+    if q1 >= 0 and q2 > 0 and raw[q2+1:q2+2] == ':':
+        head = raw[:q2+1]
+        return (text(x, y, head, size, fill="#9cc0ff", family=MONO, opacity=ro)
+                + text(x + len(head)*size*0.6, y, raw[q2+1:], size, fill="#c9d2f5", family=MONO, opacity=ro))
+    return text(x, y, raw, size, fill="#7f88b0", family=MONO, opacity=ro)
+
+def _codecard(x, y, w, h, title, lines, op, hi=None, hicol=CORE_TXT, size=22, lh=33):
+    out = [rrect(x, y, w, h, 16, fill="#0b0e26", stroke=BORDER, sw=2, opacity=op),
+           rrect(x, y, w, 52, 16, fill="#171b3a", opacity=op),
+           rrect(x, y+36, w, 16, 0, fill="#171b3a", opacity=op)]
+    for i, co in enumerate(["#ff6b6b", "#ffb02e", "#34c46f"]):
+        out.append(circle(x+28+i*26, y+26, 7, co, op))
+    out.append(text(x+116, y+34, title, 21, fill=MUTE, family=MONO, opacity=op))
+    for i, ln in enumerate(lines):
+        out.append(_codeline(x+30, y+88+i*lh, ln, op, size=size, hi=(i == hi), hicol=hicol))
+    return "".join(out)
+
+def s_arch_stack(t, dur):
+    o=scene_opacity(t,dur); out=[background()]
+    out.append(heading(t,"Event-driven — in the schema","a transactions file is an ordered, append-only array of typed events"))
+    lines=['{',
+           '  "title": "File - Transactions",',
+           '  "properties": {',
+           '    "items": {',
+           '      "type": "array",',
+           '      "items": { "oneOf": [ /* 35 transaction types */ ] }',
+           '    }',
+           '  }',
+           '}']
+    out.append(_codecard(130,272,1080,452,"TransactionsFile.schema.json",lines,appear(t,0.4,0.5),hi=5,hicol=OCF,size=22,lh=34))
+    rx=1268
+    out.append(text(rx,300,"EACH ITEM IS A TYPED EVENT",22,fill=OCF,weight="bold",opacity=appear(t,1.5,0.5),spacing="1"))
+    for i,c in enumerate(['"object_type": "TX_STOCK_ISSUANCE"','"object_type": "TX_STOCK_TRANSFER"',
+                          '"object_type": "TX_STOCK_CONVERSION"','"object_type": "TX_STOCK_CANCELLATION"']):
+        out.append(_codeline(rx,356+i*40,c,appear(t,1.6+i*0.1,0.5),size=20))
+    out.append(multiline(rx,566,wrap("No mutable state is stored — replay the array to compute the cap table at any date.",31),24,34,fill=MUTE,opacity=appear(t,2.2,0.5)))
+    out.append(caption(t,"OCF is event-driven at the schema level: a transactions file holds an array of 35 typed transaction shapes — the immutable, auditable event stack.",start=2.5))
+    return f'<g opacity="{o:.3f}">'+"".join(out)+'</g>'
+
+def s_arch_ids(t, dur):
+    o=scene_opacity(t,dur); out=[background()]
+    out.append(heading(t,"Threaded by security_id","terminal transactions consume a security and emit new ones"))
+    lines=['{',
+           '  "$id": ".../transfer/StockTransfer.schema.json",',
+           '  "properties": {',
+           '    "object_type": { "const": "TX_STOCK_TRANSFER" },',
+           '    "security_id":  { "type": "string" },',
+           '    "resulting_security_ids": {',
+           '      "type": "array", "items": { "type": "string" }',
+           '    },',
+           '    "balance_security_id": { "type": "string" }',
+           '  },',
+           '  "required": [ "security_id", "resulting_security_ids" ]',
+           '}']
+    out.append(_codecard(130,258,1080,560,"StockTransfer.schema.json",lines,appear(t,0.4,0.5),hi=4,hicol=CORE,size=20,lh=32))
+    rx=1268
+    out.append(text(rx,300,"THE ID FAMILY",22,fill=OCF,weight="bold",opacity=appear(t,1.5,0.5),spacing="2"))
+    for i,(k,d) in enumerate([("id","unique per object"),("security_id","the certificate thread"),
+                              ("custom_id","implementer's label"),("share_numbers_issued","when not fungible")]):
+        y=352+i*76; rr=appear(t,1.6+i*0.1,0.5)
+        out.append(text(rx,y,k,22,fill=CORE_TXT,weight="bold",family=MONO,opacity=rr))
+        out.append(text(rx,y+28,d,20,fill=MUTE,opacity=rr))
+    out.append(multiline(rx,692,wrap("security_id in → resulting_security_ids out: the whole stack is one linked chain.",31),22,32,fill=MUTE,opacity=appear(t,2.3,0.5)))
+    out.append(caption(t,"Every transaction references a security_id; terminal ones (transfer, conversion, exercise…) emit resulting_security_ids — the thread you traverse.",start=2.6))
+    return f'<g opacity="{o:.3f}">'+"".join(out)+'</g>'
+
+def s_arch_composition(t, dur):
+    o=scene_opacity(t,dur); out=[background()]
+    out.append(heading(t,"Built by composition — allOf","objects pull shared properties from primitives, then add their own"))
+    lines=['{',
+           '  "$id": ".../issuance/StockIssuance.schema.json",',
+           '  "allOf": [',
+           '    { "$ref": ".../primitives/objects/Object" },',
+           '    { "$ref": ".../transactions/Transaction" },',
+           '    { "$ref": ".../transactions/SecurityTransaction" },',
+           '    { "$ref": ".../transactions/issuance/Issuance" }',
+           '  ],',
+           '  "properties": { "object_type": { "const": "TX_STOCK_ISSUANCE" } },',
+           '  "additionalProperties": false',
+           '}']
+    out.append(_codecard(130,256,1080,566,"StockIssuance.schema.json",lines,appear(t,0.4,0.5),hi=2,hicol=OCF,size=20,lh=32))
+    rx=1268
+    out.append(text(rx,300,"EACH $ref ADDS",22,fill=OCF,weight="bold",opacity=appear(t,1.5,0.5),spacing="2"))
+    for i,(k,d) in enumerate([("Object","the required  id"),("Transaction","date, comments"),
+                              ("SecurityTransaction","security_id"),("Issuance","quantity, stakeholder_id")]):
+        y=352+i*76; rr=appear(t,1.6+i*0.1,0.5)
+        out.append(text(rx,y,k,21,fill=CORE_TXT,weight="bold",family=MONO,opacity=rr))
+        out.append(text(rx,y+28,d,20,fill=MUTE,opacity=rr))
+    out.append(multiline(rx,692,wrap("additionalProperties:false — final objects add nothing beyond the composed schema.",31),22,32,fill=MUTE,opacity=appear(t,2.3,0.5)))
+    out.append(caption(t,"StockIssuance = Object + Transaction + SecurityTransaction + Issuance via allOf — composition, not copy-paste — with a required id and no custom fields.",start=2.6))
+    return f'<g opacity="{o:.3f}">'+"".join(out)+'</g>'
+
+def s_arch_convert(t, dur):
+    o=scene_opacity(t,dur); out=[background()]
+    out.append(heading(t,"Expressive by composition","conversions & vesting are assembled from small referenced pieces"))
+    cr=['"ConvertibleConversionRight": {',
+        '  "properties": {',
+        '    "type": { "const": "..._CONVERSION_RIGHT" },',
+        '    "conversion_mechanism": {',
+        '      "$ref": ".../RatioConversionMechanism" },',
+        '    "converts_to_stock_class_id": { "type": "string" }',
+        '  }',
+        '}']
+    out.append(_codecard(96,300,832,452,"conversion_rights / ConvertibleConversionRight",cr,appear(t,0.4,0.5),hi=3,hicol=OCF,size=19,lh=31))
+    out.append(text(116,792,"right (WHAT) → mechanism (HOW);  trigger (WHEN) is separate",21,fill=OCF_TXT,family=MONO,opacity=appear(t,1.0,0.5)))
+    vs=['"VestingScheduleSegment": {',
+        '  "properties": {',
+        '    "occurrences": { "type": "integer" },',
+        '    "period":      { "type": "integer" },',
+        '    "period_type": { "$ref": ".../PeriodType" },',
+        '    "cliff":       { "$ref": ".../VestingScheduleCliff" }',
+        '  }',
+        '}']
+    out.append(_codecard(992,300,832,452,"vesting / VestingScheduleSegment",vs,appear(t,0.9,0.5),hi=5,hicol=CORE,size=19,lh=31))
+    out.append(text(1012,792,"segments + cliffs compose into a VestingStatement",21,fill=CORE_TXT,family=MONO,opacity=appear(t,1.5,0.5)))
+    out.append(caption(t,"3 conversion rights × 6 triggers × 8 mechanisms, plus vesting built from segments & cliffs — small $ref'd pieces mix to model attorney-drafted terms.",start=1.9))
+    return f'<g opacity="{o:.3f}">'+"".join(out)+'</g>'
+
+def s_arch_files(t, dur):
+    o=scene_opacity(t,dur); out=[background()]
+    out.append(heading(t,"One cap table — the manifest schema","a manifest references arrays of typed files"))
+    lines=['{',
+           '  "title": "File - OCF Manifest",',
+           '  "properties": {',
+           '    "issuer":              { "$ref": ".../Issuer" },',
+           '    "stakeholders_files":  { "type": "array" },',
+           '    "stock_classes_files": { "type": "array" },',
+           '    "transactions_files":  { "type": "array" },',
+           '    "valuations_files":    { "type": "array" },',
+           '    "vesting_terms_files": { "type": "array" }',
+           '  }',
+           '}']
+    out.append(_codecard(130,262,1080,540,"OCFManifestFile.schema.json",lines,appear(t,0.4,0.5),size=20,lh=33))
+    rx=1268
+    out.append(text(rx,300,"…+ 4 MORE FILE KINDS",22,fill=OCF,weight="bold",opacity=appear(t,1.5,0.5),spacing="1"))
+    for i,f in enumerate(["stock_plans_files","stock_legend_templates_files","financings_files","documents_files"]):
+        out.append(_codeline(rx,354+i*40,'"'+f+'":',appear(t,1.6+i*0.1,0.5),size=19))
+    out.append(rrect(rx,540,520,150,16,fill="#1c1706",stroke=CORE,sw=2,opacity=appear(t,2.2,0.5)))
+    out.append(multiline(rx+28,588,wrap("*.ocf.zip container · MD5 checksums · JSON Schema Draft 7",26),22,34,fill=CORE_TXT,opacity=appear(t,2.3,0.5)))
+    out.append(caption(t,"Ten typed file kinds make a complete cap table; the manifest references them all, and MD5 checksums keep the .ocf.zip bundle intact.",start=2.5))
+    return f'<g opacity="{o:.3f}">'+"".join(out)+'</g>'
+
 # ---- timeline --------------------------------------------------------------
 SCENES = [
     ("title",       s_title,       5.0),
@@ -1009,6 +1161,11 @@ SCENES = [
     ("ocfstd",      s_ocf_standard,12.0),
     ("eventswhy",   s_events_why,  13.0),
     ("ocfevents",   s_ocf_events,  13.0),
+    ("archstack",   s_arch_stack,   13.0),
+    ("archids",     s_arch_ids,     14.0),
+    ("archcompose", s_arch_composition, 13.0),
+    ("archconvert", s_arch_convert, 14.0),
+    ("archfiles",   s_arch_files,   12.0),
     ("why",         s_why,         13.0),
     ("analysis",    s_analysis,    12.0),
     ("captable",    s_captable,    9.0),
