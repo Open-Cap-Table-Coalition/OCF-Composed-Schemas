@@ -164,4 +164,4 @@ For the full contribution workflow, including how to add or refine a mapping, se
 
 The Carta target in this repository is pinned and versioned independently from upstream OCF. A mapping can therefore be correct for this repository's current target bundle while requiring review when either upstream OCF or Carta changes.
 
-This is a schema-and-contract repository. The mapping DSL is intentionally descriptive and validated, but it is not itself a runtime OCF-to-Carta converter. Runtime fold and enrichment implementations must provide their own behavioral and importer-confirmed conformance evidence.
+Think of this repository as the vocabulary and rulebook for a converter, not the converter itself. It provides the OCF schemas, the pinned Carta schema, and mapping files that say where each OCF field should go—or why it cannot go anywhere. It also generates the Core schemas and loss reports from those mappings. Separate application code must read an OCF package, apply those rules to produce Carta data, or add the missing context needed to produce full OCF again.
