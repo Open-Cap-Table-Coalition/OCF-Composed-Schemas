@@ -137,6 +137,33 @@ describe("classifyField — rename shape cascade", () => {
     expect(v).toMatchObject({ class: "out", reason: "partial" });
     expect(v.detail).toContain("multiple real branches");
   });
+  it("union-map reports the unmapped case members by source schema", () => {
+    const v = classifyField(
+      {
+        kind: "union-map",
+        cases: [
+          {
+            source_schema: "ocf://Enum2",
+            mapping: {
+              kind: "unmappable",
+              target: null,
+              reason: "no-equivalent",
+              values: { A: null, B: null },
+            },
+          },
+          {
+            source_schema: "ocf://Numeric",
+            mapping: { kind: "rename", target: "#/$defs/Scalar" },
+          },
+        ],
+      },
+      { oneOf: [{ $ref: "ocf://Enum2" }, { $ref: "ocf://Numeric" }] },
+      ctx()
+    );
+    expect(v).toMatchObject({ class: "out", reason: "partial" });
+    expect(v.detail).toContain("Enum2: unmapped members A, B");
+    expect(v.detail).toContain("Numeric: direct");
+  });
   it("assertion-only anyOf branches do not create a false value union", () => {
     const v = classifyField(
       { kind: "rename", target: "#/$defs/Choice" },

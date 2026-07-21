@@ -25,6 +25,16 @@ function asStringOr(value: unknown, fallback: string): string {
   return typeof value === "string" ? value : fallback;
 }
 
+function sourceSchemaLabel(value: unknown): string {
+  if (typeof value !== "string") return "?";
+  return (
+    value
+      .split("/")
+      .pop()
+      ?.replace(/\.schema\.json$/, "") ?? value
+  );
+}
+
 /** A rendered top-level field: a label line plus zero or more child lines. */
 interface Item {
   label: string;
@@ -81,6 +91,34 @@ function renderItem(
         item = { label: `${name} → ${asStringOr(target, "?")} (${kind}${policy})`, children: [] };
       }
       break;
+
+    case "union-map": {
+      const cases = Array.isArray(entry.cases) ? entry.cases : [];
+      item = {
+        label: `${name} (union-map)`,
+        children: cases.filter(isPlainObject).flatMap((rawCase) => {
+          const source = sourceSchemaLabel(rawCase.source_schema);
+          const mapping = isPlainObject(rawCase.mapping) ? rawCase.mapping : {};
+          const mappedTarget = asStringOr(mapping.target, "?");
+          const kind = asStringOr(mapping.kind, "?");
+          const headline =
+            mapping.kind === "unmappable"
+              ? `${source} ✗ unmappable${
+                  typeof mapping.reason === "string" ? `: ${mapping.reason}` : ""
+                }`
+              : `${source} → ${mappedTarget} (${kind})`;
+          const values = isPlainObject(mapping.values)
+            ? Object.entries(mapping.values).map(([key, value]) =>
+                value === null
+                  ? `${source}.${key} ✗ dropped`
+                  : `${source}.${key} → ${String(value)}`
+              )
+            : [];
+          return [headline, ...values];
+        }),
+      };
+      break;
+    }
 
     case "split":
       item = !Array.isArray(target)

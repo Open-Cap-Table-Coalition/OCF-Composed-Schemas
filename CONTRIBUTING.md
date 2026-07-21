@@ -145,15 +145,38 @@ fields:
   name:
     kind: rename
     target: "#/$defs/ShareClass/properties/name"
-
-  initial_shares_authorized:
-    kind: rename
-    target: "#/$defs/ShareClass/properties/authorizedShareCount"
 ```
 
 The name `rename` describes the shape of the relationship, not a promise that the two schemas have identical business semantics. For example, a numeric OCF type may land in a wider Carta decimal type. Document any narrowing or context requirement in a `note:` or the prose below the YAML block.
 
-### 3. `enum-remap`: map a closed source vocabulary
+### 3. `union-map`: map the alternatives of a source union
+
+Use `union-map` when one source property is a `oneOf`/`anyOf` and its alternatives have different
+mapping outcomes. Each case names the exact source `$ref` and carries its own ordinary mapping:
+
+```yaml
+fields:
+  initial_shares_authorized:
+    kind: union-map
+    cases:
+      - source_schema: ".../enums/AuthorizedShares.schema.json"
+        mapping:
+          kind: unmappable
+          target: null
+          reason: no-equivalent
+          values:
+            NOT APPLICABLE: null
+            UNLIMITED: null
+      - source_schema: ".../types/Numeric.schema.json"
+        mapping:
+          kind: rename
+          target: "#/$defs/ShareClass/properties/authorizedShareCount"
+```
+
+The case list must cover every source union alternative exactly once. This is preferable to a plain
+`rename` whenever one legal source alternative has no destination.
+
+### 4. `enum-remap`: map a closed source vocabulary
 
 Use `enum-remap` when the source property is enum-typed and every source enum member has a declared target result:
 
@@ -175,7 +198,7 @@ The validator checks that:
 
 Do not use `enum-remap` to classify arbitrary free text. A free-text-to-enum guess is a `computed` transformation and is not deterministic across the full OCF domain.
 
-### 4. `split`: one source property to several target leaves
+### 5. `split`: one source property to several target leaves
 
 Use `split` when the source fact populates multiple concrete target fields:
 
@@ -190,7 +213,7 @@ fields:
 
 The target must be an array with at least two pointers. Explain how structured source data is reduced into the target leaves. An OCF array that becomes one selected target value is existence-loss; it may be recorded in the mapping, but it should not be treated as strict Core-admissible without a separate, lossless landing rule.
 
-### 5. `combine`: several source properties share one target
+### 6. `combine`: several source properties share one target
 
 Use `combine` when distinct source properties feed one target slot:
 
@@ -207,7 +230,7 @@ fields:
 
 The YAML should be accompanied by prose explaining the selection rule and the source-side condition. In the example above, the source type determines whether `primary_contact` or `contact_info` is relevant, and Carta accepts one email string. If the rule picks one item from an arbitrary array, call out the existence loss.
 
-### 6. `computed`: a derived or context-dependent value
+### 7. `computed`: a derived or context-dependent value
 
 Use `computed` when the target value is derived rather than copied directly:
 
@@ -223,7 +246,7 @@ fields:
 
 Use `computed` honestly. Examples include cross-record ordering, external file upload IDs, free-text classification, and derivation from structured source data. A mapping can be technically valid while still being unsuitable for strict Core if the computation is heuristic, partial, or existence-losing.
 
-### 7. `unmappable`: no target, with a reason
+### 8. `unmappable`: no target, with a reason
 
 Use `unmappable` when the source property has no usable Carta destination:
 
@@ -246,7 +269,7 @@ Completed mappings must provide one of the validator's reasons:
 
 Do not omit a source property just because it cannot be mapped. The explicit `unmappable` row is what makes loss reviewable and keeps coverage honest.
 
-### 8. `TODO`: only while a mapping is incomplete
+### 9. `TODO`: only while a mapping is incomplete
 
 Use `TODO` in a `draft` or `partial` mapping when the relationship is not decided:
 

@@ -22,8 +22,9 @@ derived coverage stays reviewable, and enum remaps are checked value-by-value.
 
 **Structural (every file):** required frontmatter keys; `status` ∈ `draft | partial | complete |
 reviewed` and identical in frontmatter and mapping block; every `fields:` key is a real property
-of the source schema; `kind` ∈ `rename | select | split | combine | enum-remap | computed | unmappable |
-TODO` with the matching target shape (string; array of ≥2 strings for `split`; `null` for
+of the source schema; `kind` ∈ `rename | select | split | combine | enum-remap | union-map | computed | unmappable |
+TODO` with the matching target shape (string; array of ≥2 strings for `split`; a `cases:` list for
+`union-map`; `null` for
 `unmappable`; literal `TODO` for `TODO`). Coverage is derived from the source schema and effective
 mapping entries; it is not a mapping key and is never hand-maintained. Any entry may carry an
 optional free-text `note:` (a string), rendered under its field in `--verbose`. `rename` is
@@ -44,6 +45,11 @@ validator). A pointer resolving to literal `true` (the bundle's rewrite for excl
 an error — use `unmappable` + `reason: excluded-from-snapshot` instead. `enum-remap` entries need
 a `values:` map whose keys exactly equal the OCF enum values; when the target resolves to an enum,
 mapped values must be members of it (`null` = dropped value).
+
+`union-map` handles a source `oneOf`/`anyOf` whose alternatives have different mapping outcomes.
+Each `cases:` item names one exact source `$ref` in `source_schema:` and supplies a normal mapping
+entry under `mapping:`. The cases must cover every named source branch exactly once. This keeps a
+branch that has no Carta home explicit instead of allowing a plain `rename` to imply total coverage.
 
 **Status-conditional:** `draft`/`partial` files may contain `TODO`s; `complete`/`reviewed` files
 may not, must cover every property, and every `unmappable` entry must carry a `reason:`:

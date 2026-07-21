@@ -140,7 +140,7 @@ Source: [`StockClass.schema.json`](./StockClass.schema.json)
 ## Mapping
 
 ```yaml
-# kind vocabulary: rename | select | split | combine | enum-remap | computed | unmappable | TODO
+# kind vocabulary: rename | select | split | combine | enum-remap | union-map | computed | unmappable | TODO
 status: complete
 
 fields:
@@ -171,8 +171,20 @@ fields:
     kind: rename
     target: "#/$defs/ShareClass/properties/prefix"
   initial_shares_authorized:
-    kind: rename
-    target: "#/$defs/ShareClass/properties/authorizedShareCount"
+    kind: union-map
+    cases:
+      - source_schema: "https://raw.githubusercontent.com/Open-Cap-Table-Coalition/Open-Cap-Format-OCF/main/schema/enums/AuthorizedShares.schema.json"
+        mapping:
+          kind: unmappable
+          target: null
+          reason: no-equivalent
+          values:
+            NOT APPLICABLE: null
+            UNLIMITED: null
+      - source_schema: "https://raw.githubusercontent.com/Open-Cap-Table-Coalition/Open-Cap-Format-OCF/main/schema/types/Numeric.schema.json"
+        mapping:
+          kind: rename
+          target: "#/$defs/ShareClass/properties/authorizedShareCount"
   board_approval_date:
     kind: unmappable
     target: null
@@ -212,7 +224,7 @@ fields:
 
 - `class_type` → `type`: clean 1:1 enum-remap. Both sides use the same two values (`COMMON`, `PREFERRED`).
 - `default_id_prefix` → `prefix`: OCF allows a trailing dash (e.g. `CS-` when certificate IDs look like `CS-1`); Carta's `prefix` is constrained to numbers and letters only (e.g. `CS`). Any trailing dash should be stripped on transfer.
-- `initial_shares_authorized` → `authorizedShareCount`: OCF's `oneOf [AuthorizedShares enum, Numeric]` maps cleanly for the Numeric branch — Carta's field is `$ref: Decimal`. The sentinel enum values (`NOT APPLICABLE`, `UNLIMITED`) have no Carta target. As on `Issuer`, Carta's field carries no description and doesn't document temporal semantics, so we can't tell from the schema whether it reflects initial vs current authorization.
+- `initial_shares_authorized` → `authorizedShareCount`: represented as a `union-map`. The `Numeric` source-schema case maps to Carta's `$ref: Decimal`; the `AuthorizedShares` case explicitly records that `NOT APPLICABLE` and `UNLIMITED` have no Carta target. As on `Issuer`, Carta's field carries no description and doesn't document temporal semantics, so we can't tell from the schema whether it reflects initial vs current authorization.
 - `par_value` → `parValue`: clean rename, OCF `Monetary` → Carta `Money` (both carry an amount + currency).
 - `seniority` → `seniority`: `kind: computed` because the value is inverted and rebased. OCF: higher number means higher priority (and decimals are allowed for inserting between classes, see the OCF description). Carta: integer where `1` is highest priority and increasing means *lower* priority. Producing the Carta value requires sorting all of an issuer's stock classes by OCF `seniority` descending and assigning Carta seniority `1, 2, 3, ...` in that order — i.e., per-record context is insufficient. The transformation is well-defined but requires the full set of stock classes for the issuer.
 - `price_per_share` → `preferredShareClassDetails.rightsAndPreferences.originalIssuePrice`: only meaningful for preferred classes. Common stock classes typically don't carry this in OCF, and there is no Carta target on the `ShareClass` for a common's original price.

@@ -595,7 +595,7 @@ flowchart LR
 
 ### StockClass
 - board_approval_date: no-destination — kind unmappable
-- **initial_shares_authorized** (OCF-required): partial — source union has multiple real branches; direct rename is not total
+- **initial_shares_authorized** (OCF-required): partial — AuthorizedShares: unmapped members NOT APPLICABLE, UNLIMITED; Numeric: widening
 - stockholder_approval_date: no-destination — kind unmappable
 - **votes_per_share** (OCF-required): no-destination — kind unmappable
 
