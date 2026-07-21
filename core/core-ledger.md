@@ -60,7 +60,7 @@ mapping lives in `X`. The core/payload counts are the wrapper's own (only
 | StockAcceptance | Rsa | 1 | 0 | ✗ | no-payload |
 | StockCancellation | Default | 2 | 1 | ✓ | — |
 | StockCancellation | Rsa | 2 | 1 | ✓ | — |
-| StockClass | — | 8 | 8 | ✓ | — |
+| StockClass | — | 7 | 7 | ✓ | — |
 | StockClassAuthorizedSharesAdjustment | — | 2 | 1 | ✓ | — |
 | StockClassConversionRatioAdjustment | — | 1 | 0 | ✗ | no-payload |
 | StockClassSplit | — | 0 | 0 | ✗ | no-payload |
@@ -166,7 +166,7 @@ in the coverage report.
 | StockClass | — | name | core | direct |  |
 | StockClass | — | class_type | core | value-coarsening | enum→bucket |
 | StockClass | — | default_id_prefix | core | direct |  |
-| StockClass | — | initial_shares_authorized | core | direct |  |
+| StockClass | — | initial_shares_authorized | out | partial | source union has multiple real branches; direct rename is not total |
 | StockClass | — | board_approval_date | out | no-destination | kind unmappable |
 | StockClass | — | stockholder_approval_date | out | no-destination | kind unmappable |
 | StockClass | — | votes_per_share | out | no-destination | kind unmappable |

@@ -14,7 +14,7 @@ flowchart LR
   classDef in fill:#e6f4ea,stroke:#34a853,color:#0b3d20;
   classDef out fill:#fce8e6,stroke:#d93025,color:#5c0d06;
   classDef defer fill:#fff8e1,stroke:#f9a825,color:#5c4400,stroke-dasharray:4 3;
-  OCF["OCF"]:::in -->|"98 clean + 34 lossy"| CORE
+  OCF["OCF"]:::in -->|"97 clean + 35 lossy"| CORE
   OCF -.->|"146 left behind"| ocfvoid["⌀ dropped (no Carta home)"]:::out
   CORE["OCF Core (rich)"]:::core
   Carta["Carta"]:::in -->|"183 fields"| CORE
@@ -1291,11 +1291,11 @@ are DISTINCT fields per object (variants collapsed; a field that lands in any va
 | WarrantIssuance | ✓ | 9 | 1 | 6 |
 | ConvertibleTransfer | ✗ | 0 | 0 | 6 |
 | EquityCompensationTransfer | ✗ | 0 | 0 | 6 |
+| StockClass | ✓ | 7 | 3 | 3 |
 | StockIssuance | ✓ | 12 | 1 | 5 |
 | StockRepurchase | ✗ | 0 | 1 | 5 |
 | ConvertibleConversion | ✓ | 3 | 0 | 5 |
 | IssuerAuthorizedSharesAdjustment | ✗ | 0 | 0 | 5 |
-| StockClass | ✓ | 8 | 2 | 3 |
 | StockConversion | ✗ | 0 | 2 | 3 |
 | StockPlanPoolAdjustment | ✗ | 0 | 0 | 5 |
 | StockPlanReturnToPool | ✗ | 0 | 0 | 5 |
