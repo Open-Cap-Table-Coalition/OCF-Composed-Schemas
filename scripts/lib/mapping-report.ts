@@ -35,10 +35,16 @@ function sourceSchemaLabel(value: unknown): string {
   );
 }
 
+/** A node in a (possibly nested) ASCII tree. */
+interface Tree {
+  label: string;
+  children: Tree[];
+}
+
 /** A rendered top-level field: a label line plus zero or more child lines. */
 interface Item {
   label: string;
-  children: string[];
+  children: Array<string | Tree>;
 }
 
 function renderItem(
@@ -96,25 +102,31 @@ function renderItem(
       const cases = Array.isArray(entry.cases) ? entry.cases : [];
       item = {
         label: `${name} (union-map)`,
-        children: cases.filter(isPlainObject).flatMap((rawCase) => {
+        children: cases.filter(isPlainObject).map((rawCase) => {
           const source = sourceSchemaLabel(rawCase.source_schema);
           const mapping = isPlainObject(rawCase.mapping) ? rawCase.mapping : {};
-          const mappedTarget = asStringOr(mapping.target, "?");
-          const kind = asStringOr(mapping.kind, "?");
-          const headline =
-            mapping.kind === "unmappable"
-              ? `${source} ✗ unmappable${
-                  typeof mapping.reason === "string" ? `: ${mapping.reason}` : ""
-                }`
-              : `${source} → ${mappedTarget} (${kind})`;
-          const values = isPlainObject(mapping.values)
-            ? Object.entries(mapping.values).map(([key, value]) =>
-                value === null
-                  ? `${source}.${key} ✗ dropped`
-                  : `${source}.${key} → ${String(value)}`
-              )
-            : [];
-          return [headline, ...values];
+          const detail = renderItem("", mapping);
+          const values =
+            mapping.kind !== "enum-remap" && isPlainObject(mapping.values)
+              ? Object.entries(mapping.values).map(([key, value]) => ({
+                  label: value === null ? `${key} ✗ dropped` : `${key} → ${String(value)}`,
+                  children: [],
+                }))
+              : [];
+          return {
+            label: source,
+            children: [
+              {
+                label: detail.label.trimStart(),
+                children: [
+                  ...detail.children.map((child) =>
+                    typeof child === "string" ? { label: child, children: [] } : child
+                  ),
+                  ...values,
+                ],
+              },
+            ],
+          };
         }),
       };
       break;
@@ -167,15 +179,14 @@ function renderItem(
   return item;
 }
 
-/** A node in a (possibly nested) ASCII tree. */
-interface Tree {
-  label: string;
-  children: Tree[];
-}
-
 /** Lift a flat {label, children: string[]} Item into a Tree. */
 function itemToTree(item: Item): Tree {
-  return { label: item.label, children: item.children.map((c) => ({ label: c, children: [] })) };
+  return {
+    label: item.label,
+    children: item.children.map((child) =>
+      typeof child === "string" ? { label: child, children: [] } : child
+    ),
+  };
 }
 
 /** Recursively draw an ASCII tree from the given root nodes. */
@@ -314,21 +325,13 @@ export function renderMappingReport(input: MappingReportInput): string {
   }
 
   const lines = [header];
-  const topLevel: Array<Item | { label: string; children: string[] }> = [...items];
+  const topLevel: Item[] = [...items];
   if (todoCount > 0) {
     const noun = todoCount === 1 ? "field" : "fields";
     topLevel.push({ label: `${todoCount} ${noun} TODO`, children: [] });
   }
 
-  topLevel.forEach((item, i) => {
-    const isLastTop = i === topLevel.length - 1;
-    lines.push(`${isLastTop ? "└── " : "├── "}${item.label}`);
-    const childPrefix = isLastTop ? "    " : "│   ";
-    item.children.forEach((child, j) => {
-      const isLastChild = j === item.children.length - 1;
-      lines.push(`${childPrefix}${isLastChild ? "└── " : "├── "}${child}`);
-    });
-  });
+  lines.push(...renderTree(topLevel.map(itemToTree)));
 
   return lines.join("\n");
 }

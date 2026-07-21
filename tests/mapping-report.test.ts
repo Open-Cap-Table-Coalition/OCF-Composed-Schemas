@@ -235,10 +235,12 @@ describe("renderMappingReport", () => {
       [
         "objects/StockClass.mapping.md  complete 1/1 → Carta",
         "└── initial_shares_authorized (union-map)",
-        "    ├── AuthorizedShares ✗ unmappable: no-equivalent",
-        "    ├── AuthorizedShares.NOT APPLICABLE ✗ dropped",
-        "    ├── AuthorizedShares.UNLIMITED ✗ dropped",
-        "    └── Numeric → #/authorizedShareCount (rename)",
+        "    ├── AuthorizedShares",
+        "    │   └── ✗ unmappable: no-equivalent",
+        "    │       ├── NOT APPLICABLE ✗ dropped",
+        "    │       └── UNLIMITED ✗ dropped",
+        "    └── Numeric",
+        "        └── → #/authorizedShareCount (rename)",
       ].join("\n")
     );
   });
