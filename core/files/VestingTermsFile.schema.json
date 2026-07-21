@@ -32,7 +32,8 @@
                   "additionalProperties": false,
                   "properties": {
                     "event_id": {
-                      "type": "string"
+                      "type": "string",
+                      "minLength": 1
                     }
                   },
                   "required": [
@@ -40,7 +41,8 @@
                   ]
                 },
                 "order": {
-                  "type": "integer"
+                  "type": "integer",
+                  "minimum": 1
                 },
                 "percentage": {
                   "type": "string",
@@ -55,7 +57,8 @@
                       "additionalProperties": false,
                       "properties": {
                         "length": {
-                          "type": "integer"
+                          "type": "integer",
+                          "minimum": 0
                         },
                         "percentage": {
                           "type": "string",
@@ -77,10 +80,12 @@
                       ]
                     },
                     "occurrences": {
-                      "type": "integer"
+                      "type": "integer",
+                      "minimum": 1
                     },
                     "period": {
-                      "type": "integer"
+                      "type": "integer",
+                      "minimum": 0
                     },
                     "period_type": {
                       "type": "string",
@@ -101,8 +106,21 @@
               "required": [
                 "order",
                 "percentage"
+              ],
+              "anyOf": [
+                {
+                  "required": [
+                    "schedule"
+                  ]
+                },
+                {
+                  "required": [
+                    "event_condition"
+                  ]
+                }
               ]
             },
+            "minItems": 1,
             "description": "Ordered list of vesting statements. They chain implicitly by their `order` field rather than via explicit graph edges."
           }
         },

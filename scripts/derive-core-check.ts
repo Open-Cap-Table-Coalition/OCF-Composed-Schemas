@@ -26,6 +26,7 @@ import { parse as parseYaml } from "yaml";
 
 import { deriveCore, CoreProfile, PROFILES, RICH_PROFILE } from "./lib/core-pipeline.js";
 import { renderLedger, renderGapReport, renderUpstreamReport } from "./lib/core-reports.js";
+import { validateSchemaPackage } from "./lib/core-schema-validation.js";
 import { renderBidiDoc } from "./derive-core-bidirectional-flow.js";
 import { renderLossyInventory } from "./derive-core-lossy-inventory.js";
 import { renderUnmappedInventory } from "./derive-core-unmapped-inventory.js";
@@ -72,6 +73,10 @@ async function checkProfile(repoRoot: string, profile: CoreProfile): Promise<Pro
   const dirAbs = path.join(repoRoot, outDir);
   const allowList = path.join(outDir, "allow-list.yml");
   const failures: string[] = [];
+
+  for (const failure of validateSchemaPackage(derived.package)) {
+    failures.push(`[${profile.name}] SCHEMA: ${failure}`);
+  }
 
   // --- Gate 1: subset -------------------------------------------------------
   let ratified = new Set<string>();

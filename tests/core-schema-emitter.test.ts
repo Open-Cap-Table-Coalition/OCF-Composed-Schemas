@@ -1,6 +1,7 @@
 import { renderNode, emitCorePackage, CoreEntity } from "../scripts/lib/core-schema-emitter.js";
 import { OcfPackaging } from "../scripts/lib/core-corpus.js";
 import { RawSchema, Registry } from "../scripts/lib/registry.js";
+import { validateSchemaPackage } from "../scripts/lib/core-schema-validation.js";
 
 function makeRegistry(entries: RawSchema[]): Registry {
   const r: Registry = new Map();
@@ -73,6 +74,43 @@ describe("renderNode — inline OCF grammar", () => {
       type: "string",
       pattern: "^[0-9]+$",
     });
+  });
+  it("preserves real unions and their branch constraints", () => {
+    expect(
+      renderNode(
+        {
+          oneOf: [{ $ref: "ocf://Enum3" }, { $ref: "ocf://Numeric" }],
+        },
+        registry
+      )
+    ).toEqual({
+      oneOf: [
+        { type: "string", enum: ["A", "B", "C"] },
+        { type: "string", pattern: "^[0-9]+$" },
+      ],
+    });
+  });
+  it("preserves array/object assertions instead of widening them away", () => {
+    const node = renderNode(
+      {
+        type: "array",
+        minItems: 1,
+        items: {
+          type: "object",
+          properties: { order: { type: "integer", minimum: 1 } },
+          required: ["order"],
+          anyOf: [{ required: ["schedule"] }, { required: ["event_condition"] }],
+          additionalProperties: false,
+        },
+      },
+      registry
+    ) as any;
+    expect(node.minItems).toBe(1);
+    expect(node.items.properties.order).toEqual({ type: "integer", minimum: 1 });
+    expect(node.items.anyOf).toEqual([
+      { required: ["schedule"] },
+      { required: ["event_condition"] },
+    ]);
   });
 });
 
@@ -160,5 +198,9 @@ describe("emitCorePackage", () => {
 
   it("emits no $ref anywhere — every file is self-contained", () => {
     expect(JSON.stringify([...pkg.values()]).includes('"$ref"')).toBe(false);
+  });
+
+  it("emits schemas that compile as draft-07 JSON Schemas", () => {
+    expect(validateSchemaPackage(pkg)).toEqual([]);
   });
 });

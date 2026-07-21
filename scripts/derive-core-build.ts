@@ -25,12 +25,20 @@ import { hideBin } from "yargs/helpers";
 
 import { deriveCore, CoreProfile, PROFILES } from "./lib/core-pipeline.js";
 import { renderLedger, renderGapReport, renderUpstreamReport } from "./lib/core-reports.js";
+import { validateSchemaPackage } from "./lib/core-schema-validation.js";
 import { writeBidiDoc } from "./derive-core-bidirectional-flow.js";
 import { writeLossyInventory } from "./derive-core-lossy-inventory.js";
 import { writeUnmappedInventory } from "./derive-core-unmapped-inventory.js";
 
 async function emitProfile(repoRoot: string, base: string, profile: CoreProfile, sample: string) {
   const derived = await deriveCore(repoRoot, profile);
+  const schemaFailures = validateSchemaPackage(derived.package);
+  if (schemaFailures.length) {
+    throw new Error(
+      `[${profile.name}] generated Core schemas are invalid JSON Schemas:\n` +
+        schemaFailures.map((failure) => `  - ${failure}`).join("\n")
+    );
+  }
   const outDir = path.join(base, profile.outDir);
 
   // Write the OCF-style schema package (relative path → schema), plus reports.

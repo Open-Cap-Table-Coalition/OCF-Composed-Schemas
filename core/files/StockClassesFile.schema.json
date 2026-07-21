@@ -31,7 +31,19 @@
             "description": "Identifier for the object"
           },
           "initial_shares_authorized": {
-            "type": "string",
+            "oneOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "NOT APPLICABLE",
+                  "UNLIMITED"
+                ]
+              },
+              {
+                "type": "string",
+                "pattern": "^[+-]?[0-9]+(\\.[0-9]{1,10})?$"
+              }
+            ],
             "description": "The initial number of shares authorized for this stock class"
           },
           "liquidation_preference_multiple": {
@@ -56,7 +68,9 @@
               },
               "currency": {
                 "type": "string",
-                "pattern": "^[A-Z]{3}$"
+                "pattern": "^[A-Z]{3}$",
+                "minLength": 3,
+                "maxLength": 3
               }
             },
             "required": [
@@ -80,7 +94,9 @@
               },
               "currency": {
                 "type": "string",
-                "pattern": "^[A-Z]{3}$"
+                "pattern": "^[A-Z]{3}$",
+                "minLength": 3,
+                "maxLength": 3
               }
             },
             "required": [

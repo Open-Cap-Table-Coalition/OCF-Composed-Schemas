@@ -37,14 +37,23 @@ export function renderNode(
   if (!isPlainObject(n)) return {};
 
   if (n.type === "array") {
-    return { type: "array", items: renderNode(n.items, registry, depth + 1) };
+    return withUnion(
+      n,
+      copyAssertions(n, {
+        type: "array",
+        items: renderNode(n.items, registry, depth + 1),
+      }),
+      registry,
+      depth
+    );
   }
 
   // Preserve a const (e.g. object_type) — it discriminates the transaction union.
   if (n.const !== undefined) return { const: n.const };
 
   const enumVals = detectEnumValues(n, registry);
-  if (enumVals) return { type: "string", enum: enumVals };
+  if (enumVals)
+    return withUnion(n, copyAssertions(n, { type: "string", enum: enumVals }), registry, depth);
 
   // Composite type (object with its own properties): recurse, keep its required.
   // OCF scalar type files carry boilerplate `properties: {}`; require ≥1 property.
@@ -63,15 +72,89 @@ export function renderNode(
     const node: Record<string, unknown> = { type: "object", additionalProperties: false };
     node.properties = rendered;
     if (required.length) node.required = required;
-    return node;
+    return withUnion(n, copyAssertions(n, node), registry, depth);
   }
 
   if (typeof n.pattern === "string") {
-    return { type: typeof n.type === "string" ? n.type : "string", pattern: n.pattern };
+    return withUnion(
+      n,
+      copyAssertions(n, {
+        type: typeof n.type === "string" ? n.type : "string",
+        pattern: n.pattern,
+      }),
+      registry,
+      depth
+    );
   }
-  if (n.format === "date") return { type: "string", pattern: DATE_PATTERN };
-  if (n.format === "date-time") return { type: "string", format: "date-time" };
-  return { type: typeof n.type === "string" ? n.type : "string" };
+  if (n.format === "date")
+    return withUnion(
+      n,
+      copyAssertions(n, { type: "string", pattern: DATE_PATTERN }),
+      registry,
+      depth
+    );
+  if (n.format === "date-time")
+    return withUnion(
+      n,
+      copyAssertions(n, { type: "string", format: "date-time" }),
+      registry,
+      depth
+    );
+
+  // A union branch such as `{ required: ["schedule"] }` is a valid schema
+  // without a type. Do not invent `type: string` for assertion-only nodes.
+  if (typeof n.type !== "string") return withUnion(n, copyAssertions(n, {}), registry, depth);
+  return withUnion(n, copyAssertions(n, { type: n.type }), registry, depth);
+}
+
+/** Attach a non-null union after rendering the node's own object/array shape. */
+function withUnion(
+  source: Record<string, unknown>,
+  node: Record<string, unknown>,
+  registry: Registry,
+  depth: number
+): Record<string, unknown> {
+  for (const keyword of ["oneOf", "anyOf"] as const) {
+    if (Array.isArray(source[keyword])) {
+      node[keyword] = source[keyword].map((branch: unknown) =>
+        renderNode(branch, registry, depth + 1)
+      );
+      break;
+    }
+  }
+  return node;
+}
+
+/**
+ * Preserve draft-07 assertion keywords that constrain the source value domain.
+ * Structural keywords (`properties`, `items`, and unions) are rendered by
+ * renderNode itself so no source `$ref` can leak into the emitted package.
+ */
+function copyAssertions(
+  source: Record<string, unknown>,
+  node: Record<string, unknown>
+): Record<string, unknown> {
+  const keys = [
+    "minItems",
+    "maxItems",
+    "uniqueItems",
+    "minLength",
+    "maxLength",
+    "minimum",
+    "maximum",
+    "exclusiveMinimum",
+    "exclusiveMaximum",
+    "multipleOf",
+    "minProperties",
+    "maxProperties",
+  ] as const;
+  for (const key of keys) {
+    if (source[key] !== undefined) node[key] = source[key];
+  }
+  if (Array.isArray(source.required) && source.required.length > 0) {
+    node.required = [...new Set(source.required.filter((x): x is string => typeof x === "string"))];
+  }
+  return node;
 }
 
 export interface CoreField {

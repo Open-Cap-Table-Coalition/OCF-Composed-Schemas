@@ -29,7 +29,12 @@
       "conversion_rights": [
         {
           "type": "STOCK_CLASS_CONVERSION_RIGHT",
-          "conversion_mechanism": "RATIO_CONVERSION",
+          "conversion_mechanism": {
+            "type": "RATIO_CONVERSION",
+            "ratio": { "numerator": "1", "denominator": "1" },
+            "conversion_price": { "amount": "1.25", "currency": "USD" },
+            "rounding_type": "NORMAL"
+          },
           "converts_to_future_round": false,
           "converts_to_stock_class_id": "sc-common"
         }
