@@ -49,7 +49,6 @@ Source: [`PlanSecurityIssuance.schema.json`](./PlanSecurityIssuance.schema.json)
 ```yaml
 # kind vocabulary: rename | split | combine | enum-remap | computed | unmappable | TODO
 status: complete
-coverage: 1/1
 
 fields:
   object_type:

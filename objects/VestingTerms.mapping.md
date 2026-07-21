@@ -67,7 +67,6 @@ Source: [`VestingTerms.schema.json`](./VestingTerms.schema.json)
 # kind vocabulary: rename | split | combine | enum-remap | computed | unmappable | TODO
 # unmappable reason vocabulary: no-equivalent | excluded-from-snapshot | out-of-scope | ocf-internal
 status: complete
-coverage: 3/3
 
 fields:
   id:

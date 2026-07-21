@@ -52,7 +52,6 @@ Source: [`VestingEventCondition.schema.json`](./VestingEventCondition.schema.jso
 # kind vocabulary: rename | split | combine | enum-remap | computed | unmappable | TODO
 # unmappable reason vocabulary: no-equivalent | excluded-from-snapshot | out-of-scope | ocf-internal
 status: draft
-coverage: 0/1
 
 fields:
   event_id:
@@ -62,4 +61,4 @@ fields:
 
 ## Notes / open questions
 
-- 
+-

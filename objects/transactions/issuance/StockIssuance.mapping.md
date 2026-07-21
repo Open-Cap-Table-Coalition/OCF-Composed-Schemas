@@ -279,10 +279,7 @@ variants:
           without an events array.
       issuance_type:       { kind: unmappable, target: null, reason: no-equivalent }
 
-coverage:
-  Rsa: 21/21
-  Default: 21/21
-```
+ ```
 
 ## Notes / open questions
 

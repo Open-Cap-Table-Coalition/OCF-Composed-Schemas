@@ -58,7 +58,6 @@ export function renderMappingBlock(
 ): string {
   const propertyNames = Object.keys(properties);
   const lines: string[] = ["```yaml", KIND_VOCAB, REASON_VOCAB, "status: draft"];
-  lines.push(`coverage: 0/${propertyNames.length}`);
   lines.push("");
   lines.push("fields:");
 

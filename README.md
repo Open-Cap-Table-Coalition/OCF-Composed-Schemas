@@ -121,6 +121,8 @@ Normally, use `npm run core:build` to regenerate the complete Core package and a
 
 The current schema provenance and target assumptions are always the source of truth: see [`OCF_SOURCE.md`](./OCF_SOURCE.md), the mapping front matter, and [`target-schema/Carta.schema.json`](./target-schema/Carta.schema.json).
 
+For a corpus-wide view of mapping progress, see the generated [`docs/mapping-coverage.md`](./docs/mapping-coverage.md) heatmap. It is derived from the source schemas and mapping entries; contributors do not maintain coverage counters in individual mapping files.
+
 ## Repository map
 
 | Path | Purpose |
@@ -134,6 +136,7 @@ The current schema provenance and target assumptions are always the source of tr
 | [`core/`](./core/) | Generated strict Core package, ledger, gaps, and sample |
 | [`core-rich/`](./core-rich/) | Generated rich Core package, upstream candidates, gaps, and sample |
 | [`docs/`](./docs/) | Design notes, mapping rules, routing conventions, and generated inventories |
+| [`docs/mapping-coverage.md`](./docs/mapping-coverage.md) | Generated field-level mapping coverage heatmap |
 | [`scripts/`](./scripts/) | Mapping validators, Core derivation, report generation, and provenance checks |
 | [`tests/`](./tests/) | Unit, integration, CLI, mapping, and Core pipeline tests |
 | [`OCF_SOURCE.md`](./OCF_SOURCE.md) | Upstream schema version, pin, and content lock |
@@ -146,6 +149,7 @@ The repository expects Node.js `>=24.11.0` and npm `>=11.0.0 <12`.
 ```bash
 npm ci
 npm run mapping:validate
+npm run mapping:coverage:check
 npm run typecheck
 npm test
 ```

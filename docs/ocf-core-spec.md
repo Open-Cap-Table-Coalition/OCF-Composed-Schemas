@@ -242,9 +242,9 @@ emits, all **generated, never hand-edited**:
 
 CI rebuilds the draft in memory and fails unless both hold:
 
-1. **Drift** — committed artifacts equal a fresh recomputation. This reuses the repo's existing
-   pattern: the validator does **not** byte-diff `coverage`; it re-derives the `X/N` count and asserts
-   the committed value matches (`mapping-validator.ts`). The Core gate extends that — CI reclassifies
+1. **Drift** — committed artifacts equal a fresh recomputation. Mapping coverage is derived from
+   source schemas and entries; it is not stored in mapping YAML. CI checks the generated
+   [`mapping-coverage.md`](./mapping-coverage.md) heatmap for drift. The Core gate extends that — CI reclassifies
    the corpus and asserts the committed ledger and Core schema are **structurally equal** (same row
    set, same `$def`/field/`required` shape). Equality is structural after canonical parse; committed
    files are emitted with sorted keys/rows for a clean diff.

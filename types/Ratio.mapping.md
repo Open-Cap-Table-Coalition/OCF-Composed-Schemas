@@ -56,7 +56,6 @@ Source: [`Ratio.schema.json`](./Ratio.schema.json)
 ```yaml
 # kind vocabulary: rename | split | combine | enum-remap | computed | unmappable | TODO
 status: complete
-coverage: 2/2
 
 fields:
   numerator:
@@ -76,4 +75,4 @@ fields:
   - `types/conversion_mechanisms/RatioConversionMechanism.schema.json` (`ratio`) — a preferred→common ratio conversion. Mapped (object-level, `computed`) to `#/$defs/ShareClassRightsAndPreferences/properties/conversionRatio` (`Decimal`) as `numerator / denominator`. See `types/conversion_mechanisms/RatioConversionMechanism.mapping.md`. This is the *only* consumer with a Carta ratio home, and it owns that target — not this generic type.
   - `types/conversion_mechanisms/SAFEConversionMechanism.schema.json` and `types/conversion_mechanisms/NoteConversionMechanism.schema.json` reference `Ratio` inside their conversion-trigger / discount logic. Carta records convertible **terms** (`ConvertibleNote` / `ConvertibleIssuanceTransaction`: discount, valuation cap, interest, conversion-trigger amount) but has no ratio object or scalar for these mechanisms; the embedded ratio is dropped (the surrounding trigger state-machine is out of scope for Carta). See those mechanisms' own mapping files.
   - `objects/transactions/split/StockClassSplit.schema.json` (`split_ratio`) describes a stock-split factor (e.g. 2-for-1 → numerator 2, denominator 1). Carta has **no** split transaction or split-ratio field anywhere in the bundle, so this ratio has no home and is dropped at the object level. It is **not** the same concept as a stock-class conversion ratio and must not route to `conversionRatio`. See `objects/transactions/split/StockClassSplit.mapping.md`.
-- Consistency / no-loss note: `numerator` and `denominator` are both unmappable because Carta neither preserves the OCF two-part fraction nor exposes a unifying ratio type; where individual consumers do have a Carta scalar (only `RatioConversionMechanism`), the already-evaluated quotient is mapped in that object's own file, not here. Coverage stays `2/2` (both fields accounted for) and status `complete`.
+- Consistency / no-loss note: `numerator` and `denominator` are both unmappable because Carta neither preserves the OCF two-part fraction nor exposes a unifying ratio type; where individual consumers do have a Carta scalar (only `RatioConversionMechanism`), the already-evaluated quotient is mapped in that object's own file, not here. Both fields are explicitly accounted for and status is `complete`.

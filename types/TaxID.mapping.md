@@ -56,7 +56,6 @@ Source: [`TaxID.schema.json`](./TaxID.schema.json)
 ```yaml
 # kind vocabulary: rename | split | combine | enum-remap | computed | unmappable | TODO
 status: complete
-coverage: 2/2
 
 fields:
   tax_id:

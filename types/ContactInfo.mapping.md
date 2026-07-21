@@ -77,7 +77,6 @@ Source: [`ContactInfo.schema.json`](./ContactInfo.schema.json)
 ```yaml
 # kind vocabulary: rename | split | combine | enum-remap | computed | unmappable | TODO
 status: complete
-coverage: 3/3
 
 fields:
   name:

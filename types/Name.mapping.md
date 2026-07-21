@@ -58,7 +58,6 @@ Source: [`Name.schema.json`](./Name.schema.json)
 ```yaml
 # kind vocabulary: rename | split | combine | enum-remap | computed | unmappable | TODO
 status: complete
-coverage: 3/3
 
 fields:
   legal_name:

@@ -57,7 +57,6 @@ Source: [`ObjectReference.schema.json`](./ObjectReference.schema.json)
 # kind vocabulary: rename | split | combine | enum-remap | computed | unmappable | TODO
 # unmappable reason vocabulary: no-equivalent | excluded-from-snapshot | out-of-scope | ocf-internal
 status: complete
-coverage: 2/2
 
 fields:
   object_type:

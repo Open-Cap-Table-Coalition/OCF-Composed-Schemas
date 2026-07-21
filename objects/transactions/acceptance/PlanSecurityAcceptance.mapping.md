@@ -50,7 +50,6 @@ Source: [`PlanSecurityAcceptance.schema.json`](./PlanSecurityAcceptance.schema.j
 ```yaml
 # kind vocabulary: rename | split | combine | enum-remap | computed | unmappable | TODO
 status: complete
-coverage: "1/1"
 
 fields:
   object_type:

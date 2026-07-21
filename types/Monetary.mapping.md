@@ -56,7 +56,6 @@ Source: [`Monetary.schema.json`](./Monetary.schema.json)
 ```yaml
 # kind vocabulary: rename | split | combine | enum-remap | computed | unmappable | TODO
 status: complete
-coverage: 2/2
 
 fields:
   amount:
@@ -69,4 +68,4 @@ fields:
 
 ## Notes / open questions
 
-- 
+-

@@ -228,14 +228,10 @@ For `EquityCompensationIssuance` all six values route, so no unmappable variant 
 
 ### 4.5 Coverage and validation per variant
 
-Coverage generalizes from `X/N` to a per-variant map, while keeping a string form for simple files so the existing `/^(\d+)\/(\d+)$/` regex is untouched on the legacy path:
-
-```yaml
-coverage:
-  Option: 24/24
-  Rsu: 24/24
-  Sar: 24/24
-```
+Coverage is derived from the source schema and each variant's effective
+`shared:` ∪ `fields:` map. It is not a hand-maintained YAML value. The validator checks the field
+entries; `--verbose` reports the derived `X/N` values, and
+[`docs/mapping-coverage.md`](./mapping-coverage.md) provides the corpus-wide heatmap.
 
 | Check | Mechanism (existing → extended) |
 |---|---|
@@ -243,7 +239,7 @@ coverage:
 | Variants partition the enum | union of `when` lists == source enum set, pairwise disjoint; `exhaustive` ⇒ no missing value (mirrors the values-completeness loop, validator ll. 340–342) |
 | `primary_targets` resolve | `resolveJsonPointer` + `derefNode`; reject `true` exactly as `validateEntryTargets` does today |
 | Per-variant field targets | run `validateEntryShape` / `validateValuesBlock` / `validateEntryTargets` **once per variant's `fields:`** — zero new target logic |
-| Per-variant coverage | for `complete`/`reviewed`, every source property in `shared:` ∪ `variant.fields` for each variant; numerator == non-`TODO` count (reuses the strict loop, ll. 199–205, scoped per variant) |
+| Per-variant coverage | for `complete`/`reviewed`, every source property in `shared:` ∪ `variant.fields` for each variant; the derived numerator counts valid non-`TODO` entries |
 | Join declared **and routes counted** | if `route_by_security:` present: `via` ∈ source properties; `resolve`/`source_mapping` non-empty; and given `resolve_enum` (a registry `$id`) the variants partition that enum just like the issuance side |
 
 `--verbose` renders the routing line plus **each variant's per-field routes** as a nested tree
@@ -251,9 +247,9 @@ coverage:
 
 ### 4.6 Minimal parser + validator changes
 
-**Parser: zero structural change.** It already YAML-parses the one frontmatter block and the one `## Mapping` block. `discriminator`, `variants`, `route_by_security`, and a map-valued `coverage` all parse as ordinary YAML; the single-fence invariant holds because everything nests inside that fence.
+**Parser: zero structural change.** It already YAML-parses the one frontmatter block and the one `## Mapping` block. `discriminator`, `variants`, and `route_by_security` parse as ordinary YAML; the single-fence invariant holds because everything nests inside that fence.
 
-**Validator: additive dispatch.** Concretely: in `validateMapping`, after parsing, branch — `discriminator`/`route_by_security` absent → existing path untouched; else → new `validatePolymorphicMapping`. Refactor (not rewrite) the per-field loop (ll. 207–227) into `validateFieldMap(fields, properties, strict, ...)` returning `nonTodoCount`; the simple path calls it once, the polymorphic path once per variant. `validateEntryShape`/`validateValuesBlock`/`validateEntryTargets` are reused **unchanged**. Add `validateDiscriminator` (enum check + partition/exhaustiveness) and generalize the coverage check (ll. 229–248) to accept either a string `X/N` or a `label → X/N` map. No change to `KIND_VOCABULARY`, `REASON_VOCABULARY`, `resolveJsonPointer`, `derefNode`, or `targetEnumValuesAt`. Estimated surface: ~3 helpers, one extract-refactor, one coverage branch.
+**Validator: additive dispatch.** Concretely: in `validateMapping`, after parsing, branch — `discriminator`/`route_by_security` absent → existing path untouched; else → new `validatePolymorphicMapping`. The per-field rules run once for a simple mapping and once per variant for a polymorphic mapping. `validateEntryShape`/`validateValuesBlock`/`validateEntryTargets` remain the source of truth for entry validation. Coverage reporting is a separate derived artifact, so no mapping document needs a numerator or denominator.
 
 ### 4.7 Worked example — `EquityCompensationIssuance.mapping.md`
 
@@ -341,11 +337,6 @@ variants:
       early_exercisable:            { kind: unmappable, target: null, reason: no-equivalent }
       expiration_date:              { kind: rename, target: "#/$defs/SarIssuanceTransaction/properties/expirationDatetime" }
       termination_exercise_windows: { kind: unmappable, target: null, reason: no-equivalent }
-
-coverage:
-  Option: 24/24
-  Rsu: 24/24
-  Sar: 24/24
 
 # Notes
 # [1] shared: fields whose Carta home diverges use a per-variant target map (§4.8) — each variant

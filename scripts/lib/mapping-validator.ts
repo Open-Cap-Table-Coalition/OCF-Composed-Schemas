@@ -299,30 +299,10 @@ export function validateMapping(input: ValidateInput, opts: ValidateOptions): Va
   const fields = rawFields;
 
   const properties = (input.sourceSchema.properties ?? {}) as Record<string, unknown>;
-  const propertyNames = Object.keys(properties);
 
-  const nonTodoCount = validateFieldMap(fields, properties, strict, opts, input, err);
-
-  const coverage = input.mapping.coverage;
-  const match = typeof coverage === "string" ? /^(\d+)\/(\d+)$/.exec(coverage) : null;
-  if (!match) {
-    err(null, `coverage "${String(coverage)}" must look like "X/N"`);
-  } else {
-    const x = Number(match[1]);
-    const n = Number(match[2]);
-    if (n !== propertyNames.length) {
-      err(
-        null,
-        `coverage denominator ${n} does not match source schema property count ${propertyNames.length}`
-      );
-    }
-    if (x !== nonTodoCount) {
-      err(
-        null,
-        `coverage numerator ${x} does not match the count of non-TODO entries (${nonTodoCount})`
-      );
-    }
-  }
+  // Coverage is derived for reports and never read from the mapping YAML.
+  // Keeping it out of validation removes a duplicated, stale-prone input.
+  validateFieldMap(fields, properties, strict, opts, input, err);
 
   return errors;
 }
@@ -335,8 +315,7 @@ type ErrFn = (field: string | null, message: string) => void;
 
 /**
  * Validate one field map — the `fields:` of a simple mapping, or a variant's
- * effective `shared:` ∪ `fields:` map. Reports key/coverage/entry errors via
- * `err` and returns the count of non-TODO entries (the coverage numerator).
+ * effective `shared:` ∪ `fields:` map. Reports key and entry errors via `err`.
  */
 function validateFieldMap(
   fields: Record<string, unknown>,
@@ -345,7 +324,7 @@ function validateFieldMap(
   opts: ValidateOptions,
   input: ValidateInput,
   err: ErrFn
-): number {
+): void {
   const propertyNames = Object.keys(properties);
   for (const name of Object.keys(fields)) {
     if (!(name in properties)) err(name, "is not a property of the source schema");
@@ -358,7 +337,6 @@ function validateFieldMap(
     }
   }
 
-  let nonTodoCount = 0;
   for (const [name, rawEntry] of Object.entries(fields)) {
     if (!isPlainObject(rawEntry)) {
       err(name, "entry must be a map with at least kind: and target:");
@@ -370,8 +348,6 @@ function validateFieldMap(
       err(name, `kind "${String(kind)}" is not one of ${KIND_VOCABULARY.join(" | ")}`);
       continue;
     }
-    if (kind !== "TODO") nonTodoCount += 1;
-
     validateEntryShape(entry, name, kind, strict, opts, err);
     const sourceEnumValues = detectEnumValues(properties[name], input.registry);
     validateValuesBlock(entry, name, kind, strict, sourceEnumValues, err);
@@ -379,7 +355,6 @@ function validateFieldMap(
       validateEntryTargets(entry, name, kind, strict, sourceEnumValues, input.targetBundle, err);
     }
   }
-  return nonTodoCount;
 }
 
 /**
@@ -387,7 +362,7 @@ function validateFieldMap(
  * `route_by_security:` (downstream join routing) block plus a `variants:` map
  * whose `when:` value sets partition the routed enum. Each variant carries its
  * own `primary_targets:` (the Carta family roots) and a `shared:`-merged field
- * map, validated per variant against a per-variant `coverage:` map. The routed
+ * map, validated per variant. Derived coverage is reported separately. The routed
  * enum is the discriminator property's enum (issuance) or `resolve_enum`
  * (downstream); `exhaustive` requires every enum value to be claimed by a
  * variant (mappable or explicitly unroutable).
@@ -537,18 +512,7 @@ function validatePolymorphicMapping(
     );
   }
 
-  // 4. Per-variant: primary_targets resolve; shared∪fields validates; coverage matches.
-  const coverage = mapping.coverage;
-  if (!isPlainObject(coverage)) {
-    err(
-      null,
-      `a polymorphic mapping requires a per-variant coverage map (e.g. { Variant: "X/N" }), got ${JSON.stringify(
-        coverage
-      )}`
-    );
-  }
-  const coverageMap = (isPlainObject(coverage) ? coverage : {}) as Record<string, unknown>;
-
+  // 4. Per-variant: primary_targets resolve; shared∪fields validates.
   for (const [label, rawV] of Object.entries(variants)) {
     if (!isPlainObject(rawV)) continue;
     const v = rawV;
@@ -612,7 +576,7 @@ function validatePolymorphicMapping(
       ...vFields,
     };
     const variantErr: ErrFn = (field, message) => err(field ? `${label}.${field}` : null, message);
-    const nonTodo = validateFieldMap(effective, properties, strict, opts, input, variantErr);
+    validateFieldMap(effective, properties, strict, opts, input, variantErr);
 
     // Verify routed_to edges on this variant's fields: each maps a routed enum
     // value to a variant that actually claims it (a real, deterministic route).
@@ -635,41 +599,12 @@ function validatePolymorphicMapping(
         }
       }
     }
-
-    const cov = coverageMap[label];
-    const cm = typeof cov === "string" ? /^(\d+)\/(\d+)$/.exec(cov) : null;
-    if (cov === undefined) {
-      err(null, `coverage is missing an entry for variant "${label}"`);
-    } else if (!cm) {
-      err(null, `coverage for variant "${label}" "${String(cov)}" must look like "X/N"`);
-    } else {
-      const x = Number(cm[1]);
-      const n = Number(cm[2]);
-      if (n !== propertyNames.length) {
-        err(
-          null,
-          `coverage["${label}"] denominator ${n} does not match source schema property count ${propertyNames.length}`
-        );
-      }
-      if (x !== nonTodo) {
-        err(
-          null,
-          `coverage["${label}"] numerator ${x} does not match the count of non-TODO entries (${nonTodo})`
-        );
-      }
-    }
-  }
-
-  for (const label of Object.keys(coverageMap)) {
-    if (!(label in variants)) {
-      err(null, `coverage has an entry for "${label}" but there is no such variant`);
-    }
   }
 }
 
 /**
  * A per-variant `null`/absent target: the field has no Carta home in this
- * variant. Projected to an `unmappable` so coverage counts it (non-TODO) and the
+ * variant. Projected to an `unmappable` so derived coverage counts it (non-TODO) and the
  * per-field validator does not re-flag it. The reason is implicit — the target
  * object is simply absent from this variant's family — so it carries a blanket
  * `no-equivalent`, which never surfaces (the report renders it from the map).

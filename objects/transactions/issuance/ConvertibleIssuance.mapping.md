@@ -174,7 +174,6 @@ Source: [`ConvertibleIssuance.schema.json`](./ConvertibleIssuance.schema.json)
 ```yaml
 # kind vocabulary: rename | split | combine | enum-remap | computed | unmappable | TODO
 status: complete
-coverage: 16/16
 
 fields:
   id:

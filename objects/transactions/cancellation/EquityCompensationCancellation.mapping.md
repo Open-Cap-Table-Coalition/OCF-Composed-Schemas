@@ -168,11 +168,7 @@ variants:
       - "#/$defs/SarCancellationTransaction"
     fields: {}
 
-coverage:
-  Option: 8/8
-  Rsu: 8/8
-  Sar: 8/8
-```
+ ```
 
 ## Notes / open questions
 

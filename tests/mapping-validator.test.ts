@@ -401,19 +401,13 @@ describe("validateMapping — values blocks", () => {
 });
 
 describe("validateMapping — coverage and status strictness", () => {
-  it("rejects malformed coverage", () => {
-    const errs = messages(makeInput({ mapping: mapping({ coverage: "all" }) }));
-    expect(errs.some((m) => m.includes('"X/N"'))).toBe(true);
-  });
+  it("does not require or read a hand-maintained coverage value", () => {
+    const m = mapping();
+    delete m.coverage;
+    expect(messages(makeInput({ mapping: m }))).toEqual([]);
 
-  it("rejects a denominator that disagrees with the property count", () => {
-    const errs = messages(makeInput({ mapping: mapping({ coverage: "2/3" }) }));
-    expect(errs.some((m) => m.includes("denominator"))).toBe(true);
-  });
-
-  it("rejects a numerator that disagrees with the non-TODO count", () => {
-    const errs = messages(makeInput({ mapping: mapping({ coverage: "1/2" }) }));
-    expect(errs.some((m) => m.includes("numerator"))).toBe(true);
+    const stale = mapping({ coverage: "0/999" });
+    expect(messages(makeInput({ mapping: stale }))).toEqual([]);
   });
 
   it("accepts a draft skeleton with TODO kinds and TODO values", () => {
@@ -421,7 +415,6 @@ describe("validateMapping — coverage and status strictness", () => {
       frontmatter: frontmatter({ status: "draft", target_standard: "TBD", target_version: "TBD" }),
       mapping: {
         status: "draft",
-        coverage: "0/2",
         fields: {
           name: { kind: "TODO", target: "TODO" },
           color: { kind: "TODO", target: "TODO", values: { RED: "TODO", BLUE: "TODO" } },

@@ -122,7 +122,6 @@ Source: [`ConvertibleConversion.schema.json`](./ConvertibleConversion.schema.jso
 ```yaml
 # kind vocabulary: rename | split | combine | enum-remap | computed | unmappable | TODO
 status: complete
-coverage: 11/11
 
 fields:
   id:

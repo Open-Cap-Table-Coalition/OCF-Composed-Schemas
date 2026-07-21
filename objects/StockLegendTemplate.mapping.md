@@ -79,7 +79,6 @@ Source: [`StockLegendTemplate.schema.json`](./StockLegendTemplate.schema.json)
 ```yaml
 # kind vocabulary: rename | split | combine | enum-remap | computed | unmappable | TODO
 status: complete
-coverage: 5/5
 
 fields:
   id:

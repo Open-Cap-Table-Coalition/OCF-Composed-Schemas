@@ -78,7 +78,6 @@ Source: [`VestingStatement.schema.json`](./VestingStatement.schema.json)
 # kind vocabulary: rename | split | combine | enum-remap | computed | unmappable | TODO
 # unmappable reason vocabulary: no-equivalent | excluded-from-snapshot | out-of-scope | ocf-internal
 status: complete
-coverage: 4/4
 
 # Each VestingStatement projects to one Carta VestingPeriod
 # (#/$defs/VestingPeriod), an item of VestingScheduleTemplate.periods[].

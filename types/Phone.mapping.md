@@ -57,7 +57,6 @@ Source: [`Phone.schema.json`](./Phone.schema.json)
 ```yaml
 # kind vocabulary: rename | split | combine | enum-remap | computed | unmappable | TODO
 status: complete
-coverage: 2/2
 
 fields:
   phone_type:

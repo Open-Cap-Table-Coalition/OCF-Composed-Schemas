@@ -91,7 +91,6 @@ Source: [`StakeholderStatusChangeEvent.schema.json`](./StakeholderStatusChangeEv
 ```yaml
 # kind vocabulary: rename | split | combine | enum-remap | computed | unmappable | TODO
 status: complete
-coverage: 6/6
 
 fields:
   id:

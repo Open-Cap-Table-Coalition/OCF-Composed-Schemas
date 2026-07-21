@@ -62,7 +62,6 @@ Source: [`TerminationWindow.schema.json`](./TerminationWindow.schema.json)
 ```yaml
 # kind vocabulary: rename | split | combine | enum-remap | computed | unmappable | TODO
 status: complete
-coverage: 3/3
 
 fields:
   reason:
@@ -153,6 +152,6 @@ fields:
   generic voluntary bucket) cannot both be represented; the last write wins. OCF's array is
   strictly more expressive here, so a producer should de-duplicate windows by reason before
   emitting Carta.
-- **Coverage.** All three source properties have a home, so coverage is 3/3 with no
+- **Mapping completeness.** All three source properties have a home, with no
   unmappable entries; the only genuine loss is the `VOLUNTARY_GOOD_CAUSE` reason value, noted
   above as `null` in the `reason` values map.

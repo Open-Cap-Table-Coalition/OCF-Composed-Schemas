@@ -10,6 +10,8 @@
   "scripts": {
     "mapping:skeleton": "node --loader ts-node/esm --no-warnings ./scripts/generate-mapping-skeletons.ts",
     "mapping:validate": "node --loader ts-node/esm --no-warnings ./scripts/validate-mappings.ts",
+    "mapping:coverage": "node --loader ts-node/esm --no-warnings ./scripts/derive-mapping-coverage.ts",
+    "mapping:coverage:check": "node --loader ts-node/esm --no-warnings ./scripts/derive-mapping-coverage.ts --check",
     "core:report": "node --loader ts-node/esm --no-warnings ./scripts/derive-core-report.ts",
     "core:build": "node --loader ts-node/esm --no-warnings ./scripts/derive-core-build.ts",
     "core:check": "node --loader ts-node/esm --no-warnings ./scripts/derive-core-check.ts",

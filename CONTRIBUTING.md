@@ -89,7 +89,6 @@ last_generated: 2026-05-18
 
 ```yaml
 status: draft
-coverage: 0/4
 
 fields: {}
 ```
@@ -108,20 +107,18 @@ The front matter `status` and the mapping-block `status` must agree:
 | `complete` | Every source property has a non-TODO entry and every unmappable entry has a reason |
 | `reviewed` | Complete and explicitly reviewed; it follows the same no-TODO rules |
 
-`coverage` is a human-written assertion that the validator checks; it is not automatically filled in for you. Write `X/N`, where `N` is the number of source properties and `X` is the number of those properties with a non-`TODO` entry. The validator independently counts the source properties and mapping entries. If your number is wrong, `npm run mapping:validate` fails with an error—it does not silently correct the file.
+### Derived coverage
 
-For example, `coverage: 10/13` means “this source schema has 13 properties, and 10 have decided mappings; three are still `TODO`.” A completed mapping normally has `13/13` because it cannot contain TODOs. If you add, remove, or change a mapping entry, update the coverage value to match.
+Do not add a `coverage` key to a mapping. Coverage is calculated automatically from the sibling source schema and the mapping entries, so it cannot drift because someone forgot to update a counter. A valid mapping entry—including an explicit `unmappable` entry—counts as mapped; `TODO`, a missing field, or an invalid entry is shown separately.
 
-In a polymorphic mapping, use one `coverage` value per variant:
+Use `npm run mapping:validate -- --verbose` for a per-file view. The preferred review artifact is the generated [`docs/mapping-coverage.md`](./docs/mapping-coverage.md) heatmap:
 
-```yaml
-coverage:
-  Option: 8/8
-  Rsu: 8/8
-  Sar: 8/8
+```bash
+npm run mapping:coverage
+npm run mapping:coverage:check
 ```
 
-The number is intentionally duplicated in the document so a reviewer can see the mapping's completion status at a glance; the validator is the check that keeps that summary honest.
+For example, `10/13` in the heatmap means that the source schema has 13 properties and 10 have valid, decided mapping entries. You do not type or maintain that number; after changing a mapping, regenerate the heatmap and review the fields marked TODO, missing, or invalid.
 
 ## Mapping DSL walkthrough
 
@@ -302,10 +299,6 @@ variants:
       - "#/$defs/SarIssuanceTransaction"
     fields: {}
 
-coverage:
-  Option: 1/1
-  Rsu: 1/1
-  Sar: 1/1
 ```
 
 The validator checks that:

@@ -74,7 +74,6 @@ Source: [`RatioConversionMechanism.schema.json`](./RatioConversionMechanism.sche
 ```yaml
 # kind vocabulary: rename | split | combine | enum-remap | computed | unmappable | TODO
 status: complete
-coverage: 4/4
 
 fields:
   type:

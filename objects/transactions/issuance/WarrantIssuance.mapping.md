@@ -188,7 +188,6 @@ Source: [`WarrantIssuance.schema.json`](./WarrantIssuance.schema.json)
 ```yaml
 # kind vocabulary: rename | split | combine | enum-remap | computed | unmappable | TODO
 status: complete
-coverage: 19/19
 
 fields:
   id:

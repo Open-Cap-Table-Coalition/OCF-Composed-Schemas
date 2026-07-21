@@ -4,7 +4,7 @@
 against its sibling composed `.schema.json` and the pinned target bundle in
 `target-schema/`. CI runs it on every PR alongside typecheck, lint, and tests. The goal: the
 "doc-first, parseable later" mapping format stays parseable in practice — target pointers resolve,
-coverage counters never lie, and enum remaps are checked value-by-value.
+derived coverage stays reviewable, and enum remaps are checked value-by-value.
 
 ## How it works
 
@@ -24,9 +24,9 @@ coverage counters never lie, and enum remaps are checked value-by-value.
 reviewed` and identical in frontmatter and mapping block; every `fields:` key is a real property
 of the source schema; `kind` ∈ `rename | split | combine | enum-remap | computed | unmappable |
 TODO` with the matching target shape (string; array of ≥2 strings for `split`; `null` for
-`unmappable`; literal `TODO` for `TODO`); `coverage: X/N` where `N` = source property count and
-`X` = non-`TODO` entry count — the counter is machine-checked, never hand-trusted. Any entry may
-carry an optional free-text `note:` (a string), rendered under its field in `--verbose`. In a
+`unmappable`; literal `TODO` for `TODO`). Coverage is derived from the source schema and effective
+mapping entries; it is not a mapping key and is never hand-maintained. Any entry may carry an
+optional free-text `note:` (a string), rendered under its field in `--verbose`. In a
 polymorphic mapping (below), an entry may also carry a **`routed_to:`** map
 (`{ discriminator value → variant label }`) — a *verified round-trip edge*: a value `null`-ed in
 this variant because it belongs to another. The validator confirms each named variant actually
@@ -71,7 +71,6 @@ variants:
     when: [ENUM_VALUE, ...]             # the discriminator values this variant claims
     primary_targets: ["#/$defs/...", ...]  # the Carta family roots (or null for an unroutable variant)
     fields: { <field>: <entry> }        # same entry grammar as a simple mapping
-coverage: { <Label>: "X/N", ... }       # per-variant; N = source property count
 ```
 
 **Downstream** (`route_by_security:`) — the discriminator lives on the *joined issuance*, reached
@@ -120,8 +119,12 @@ field.
 variants' `when:` sets **partition** the routed enum — pairwise disjoint, and with
 `exhaustive: true` every enum value is claimed by some variant (handled or explicitly unroutable);
 each `primary_targets` pointer resolves (and is not the `true` sentinel); each variant's
-`shared:` ∪ `fields:` map is validated and covers every source property against its own
-`coverage[<Label>]` entry. `--verbose` prints the routing and each variant's per-field routes.
+`shared:` ∪ `fields:` map is validated and covers every source property. `--verbose` prints the
+routing and each variant's derived coverage and per-field routes.
+
+To review coverage across the whole mapping corpus, run `npm run mapping:coverage`. It writes the
+generated [`mapping-coverage.md`](./mapping-coverage.md) heatmap. CI runs
+`npm run mapping:coverage:check` so the committed artifact cannot go stale.
 
 ## Composite steps (one OCF verb → an ordered set of Carta transactions)
 

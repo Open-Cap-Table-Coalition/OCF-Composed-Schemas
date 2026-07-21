@@ -42,14 +42,13 @@ Source: [`Percentage.schema.json`](./Percentage.schema.json)
 ```yaml
 # kind vocabulary: rename | split | combine | enum-remap | computed | unmappable | TODO
 status: complete
-coverage: 0/0
 
 fields: {}
 ```
 
 ## Notes / open questions
 
-- **Zero-property scalar leaf type (no fields to map).** `Percentage` is a bare `string` constrained by a `pattern` (a fixed-point decimal in `[0.0, 1.0]`, e.g. `0.125` for 12.5%); its `properties` object is empty. Like `types/Md5.mapping.md`, there are no member fields, so `fields: {}` and `coverage: 0/0`. The type-level correspondence is documented here.
+- **Zero-property scalar leaf type (no fields to map).** `Percentage` is a bare `string` constrained by a `pattern` (a fixed-point decimal in `[0.0, 1.0]`, e.g. `0.125` for 12.5%); its `properties` object is empty. Like `types/Md5.mapping.md`, there are no member fields, so `fields: {}`. The type-level correspondence is documented here.
 - **Bucket 2 — inlined-per-object: Carta has no reusable `Percentage` (or `Rate`/`Ratio`) `$def`.** Carta does not model "percentage" as its own reusable type or structure. The concept *is* present in Carta, but only as bare scalar fields scattered across unrelated objects (e.g. `ConvertibleNote.interestRate`, `VestingPeriod.cliffPercentage`, `PerformanceCondition.payoutPercentage`), each of which `$ref`s the generic `#/$defs/Decimal` value-type (`{ "value": "<string decimal>" }`). `Decimal` is a generic number wrapper shared by monetary, count, and percentage fields alike — not a semantic percentage type — and there is no single unifying Carta `$def` for the concept. Per the 3-bucket policy this is therefore inlined-per-object: there is no well-posed type-level target, so this scalar leaf maps nothing directly and the value is always carried by the owning object's mapping. (Contrast `types/Monetary.mapping.md`, where a genuine reusable Carta `Money` `$def` exists, making that type a bucket-1 type-to-type rename.) Because `Percentage` is itself a zero-property scalar leaf, there are no member fields to individually mark `unmappable`; the type-level conclusion is documented here, exactly as for `types/Md5.mapping.md`.
 - **Where the percentage concept actually lands in Carta (resolved at the object / object-field level, not here):**
   - `#/$defs/ConvertibleNote/properties/interestRate` and `#/$defs/ConvertibleIssuanceTransaction/properties/interestRate` — convertible interest rates.
