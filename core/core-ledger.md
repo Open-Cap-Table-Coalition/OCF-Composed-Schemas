@@ -28,9 +28,9 @@ mapping lives in `X`. The core/payload counts are the wrapper's own (only
 | EquityCompensationExercise | Option | 2 | 1 | ✓ | — |
 | EquityCompensationExercise | Rsu | 0 | 0 | ✗ | no-payload |
 | EquityCompensationExercise | Sar | 2 | 1 | ✓ | — |
-| EquityCompensationIssuance | Option | 16 | 9 | ✓ | — |
-| EquityCompensationIssuance | Rsu | 11 | 4 | ✓ | — |
-| EquityCompensationIssuance | Sar | 7 | 3 | ✓ | — |
+| EquityCompensationIssuance | Option | 15 | 8 | ✗ | vesting_template_id→VestingTerms |
+| EquityCompensationIssuance | Rsu | 10 | 3 | ✗ | vesting_template_id→VestingTerms |
+| EquityCompensationIssuance | Sar | 7 | 3 | ✗ | vesting_template_id→VestingTerms |
 | EquityCompensationRelease | Option | 0 | 0 | ✗ | no-payload |
 | EquityCompensationRelease | Rsu | 4 | 3 | ✓ | — |
 | EquityCompensationRelease | Sar | 0 | 0 | ✗ | no-payload |
@@ -49,7 +49,7 @@ mapping lives in `X`. The core/payload counts are the wrapper's own (only
 | PlanSecurityAcceptance | — | 0 | 0 | ✗ | alias-of EquityCompensationAcceptance |
 | PlanSecurityCancellation | — | 0 | 0 | ✓ | alias-of EquityCompensationCancellation |
 | PlanSecurityExercise | — | 0 | 0 | ✓ | alias-of EquityCompensationExercise |
-| PlanSecurityIssuance | — | 0 | 0 | ✓ | alias-of EquityCompensationIssuance |
+| PlanSecurityIssuance | — | 0 | 0 | ✗ | alias-of EquityCompensationIssuance |
 | PlanSecurityRelease | — | 0 | 0 | ✓ | alias-of EquityCompensationRelease |
 | PlanSecurityRetraction | — | 0 | 0 | ✗ | alias-of EquityCompensationRetraction |
 | PlanSecurityTransfer | — | 0 | 0 | ✗ | alias-of EquityCompensationTransfer |
@@ -68,8 +68,8 @@ mapping lives in `X`. The core/payload counts are the wrapper's own (only
 | StockConsolidation | Rsa | 0 | 0 | ✗ | no-payload |
 | StockConversion | Default | 0 | 0 | ✗ | no-payload |
 | StockConversion | Rsa | 0 | 0 | ✗ | no-payload |
-| StockIssuance | Default | 10 | 3 | ✓ | — |
-| StockIssuance | Rsa | 12 | 5 | ✓ | — |
+| StockIssuance | Default | 10 | 3 | ✗ | vesting_terms_id→VestingTerms |
+| StockIssuance | Rsa | 11 | 4 | ✗ | vesting_terms_id→VestingTerms |
 | StockLegendTemplate | — | 0 | 0 | ✗ | no-payload |
 | StockPlan | — | 3 | 2 | ✓ | — |
 | StockPlanPoolAdjustment | — | 0 | 0 | ✗ | no-payload |
@@ -85,11 +85,11 @@ mapping lives in `X`. The core/payload counts are the wrapper's own (only
 | Valuation | — | 2 | 1 | ✓ | — |
 | VestingAcceleration | — | 0 | 0 | ✗ | no-payload |
 | VestingEvent | — | 0 | 0 | ✗ | no-payload |
-| VestingTerms | — | 2 | 1 | ✓ | — |
+| VestingTerms | — | 1 | 0 | ✗ | no-payload |
 | WarrantAcceptance | — | 0 | 0 | ✗ | no-payload |
 | WarrantCancellation | — | 2 | 1 | ✓ | — |
 | WarrantExercise | — | 2 | 0 | ✗ | no-payload |
-| WarrantIssuance | — | 9 | 4 | ✓ | — |
+| WarrantIssuance | — | 9 | 4 | ✗ | vesting_terms_id→VestingTerms |
 | WarrantRetraction | — | 0 | 0 | ✗ | no-payload |
 | WarrantTransfer | — | 3 | 1 | ✓ | — |
 
@@ -201,9 +201,9 @@ in the coverage report.
 | Valuation | — | effective_date | out | no-destination | kind unmappable |
 | Valuation | — | stock_class_id | core | direct |  |
 | Valuation | — | valuation_type | out | no-destination | kind unmappable |
-| VestingTerms | — | id | core | direct |  |
-| VestingTerms | — | object_type | out | no-destination | kind unmappable |
-| VestingTerms | — | statements | core | direct |  |
+| VestingTerms  | — | id | core | direct |  |
+| VestingTerms  | — | object_type | out | no-destination | kind unmappable |
+| VestingTerms  | — | statements | out | heuristic | items: VestingStatement drops schedule, event_condition, percentage (per type mapping) |
 | ConvertibleAcceptance  | — | id | out | no-destination | kind unmappable |
 | ConvertibleAcceptance  | — | comments | out | no-destination | kind unmappable |
 | ConvertibleAcceptance  | — | object_type | out | no-destination | kind unmappable |
@@ -430,140 +430,140 @@ in the coverage report.
 | ConvertibleIssuance | — | conversion_triggers | out | heuristic | kind split |
 | ConvertibleIssuance | — | pro_rata | out | no-destination | kind unmappable |
 | ConvertibleIssuance | — | seniority | out | no-destination | kind unmappable |
-| EquityCompensationIssuance | Option | id | out | no-destination | kind unmappable |
-| EquityCompensationIssuance | Option | comments | out | no-destination | kind unmappable |
-| EquityCompensationIssuance | Option | object_type | out | no-destination | kind unmappable |
-| EquityCompensationIssuance | Option | stockholder_approval_date | out | no-destination | kind unmappable |
-| EquityCompensationIssuance | Option | consideration_text | out | no-destination | kind unmappable |
-| EquityCompensationIssuance | Option | security_law_exemptions | out | heuristic | kind computed |
-| EquityCompensationIssuance | Option | date | core | widening |  |
-| EquityCompensationIssuance | Option | security_id | core | direct |  |
-| EquityCompensationIssuance | Option | custom_id | core | direct |  |
-| EquityCompensationIssuance | Option | stakeholder_id | core | direct |  |
-| EquityCompensationIssuance | Option | board_approval_date | core | widening |  |
-| EquityCompensationIssuance | Option | stock_plan_id | core | direct |  |
-| EquityCompensationIssuance | Option | stock_class_id | core | direct |  |
-| EquityCompensationIssuance | Option | quantity | core | widening |  |
-| EquityCompensationIssuance | Option | vesting_template_id | core | direct |  |
-| EquityCompensationIssuance | Option | vestings | core | direct |  |
-| EquityCompensationIssuance | Option | vesting_start_date | core | widening |  |
-| EquityCompensationIssuance | Option | compensation_type | core | value-coarsening | enum→bucket |
-| EquityCompensationIssuance | Option | option_grant_type | core | value-coarsening | enum→bucket |
-| EquityCompensationIssuance | Option | exercise_price | core | direct |  |
-| EquityCompensationIssuance | Option | base_price | out | no-destination | kind unmappable |
-| EquityCompensationIssuance | Option | early_exercisable | core | direct |  |
-| EquityCompensationIssuance | Option | expiration_date | core | widening |  |
-| EquityCompensationIssuance | Option | termination_exercise_windows | out | existence-loss | select (first_termination_window) |
-| EquityCompensationIssuance | Rsu | id | out | no-destination | kind unmappable |
-| EquityCompensationIssuance | Rsu | comments | out | no-destination | kind unmappable |
-| EquityCompensationIssuance | Rsu | object_type | out | no-destination | kind unmappable |
-| EquityCompensationIssuance | Rsu | stockholder_approval_date | out | no-destination | kind unmappable |
-| EquityCompensationIssuance | Rsu | consideration_text | out | no-destination | kind unmappable |
-| EquityCompensationIssuance | Rsu | security_law_exemptions | out | heuristic | kind computed |
-| EquityCompensationIssuance | Rsu | date | core | widening |  |
-| EquityCompensationIssuance | Rsu | security_id | core | direct |  |
-| EquityCompensationIssuance | Rsu | custom_id | core | direct |  |
-| EquityCompensationIssuance | Rsu | stakeholder_id | core | direct |  |
-| EquityCompensationIssuance | Rsu | board_approval_date | core | widening |  |
-| EquityCompensationIssuance | Rsu | stock_plan_id | core | direct |  |
-| EquityCompensationIssuance | Rsu | stock_class_id | core | direct |  |
-| EquityCompensationIssuance | Rsu | quantity | core | widening |  |
-| EquityCompensationIssuance | Rsu | vesting_template_id | core | direct |  |
-| EquityCompensationIssuance | Rsu | vestings | core | direct |  |
-| EquityCompensationIssuance | Rsu | vesting_start_date | core | widening |  |
-| EquityCompensationIssuance | Rsu | compensation_type | out | no-destination | kind unmappable |
-| EquityCompensationIssuance | Rsu | option_grant_type | out | no-destination | kind unmappable |
-| EquityCompensationIssuance | Rsu | exercise_price | out | no-destination | kind unmappable |
-| EquityCompensationIssuance | Rsu | base_price | out | no-destination | kind unmappable |
-| EquityCompensationIssuance | Rsu | early_exercisable | out | no-destination | kind unmappable |
-| EquityCompensationIssuance | Rsu | expiration_date | out | no-destination | kind unmappable |
-| EquityCompensationIssuance | Rsu | termination_exercise_windows | out | no-destination | kind unmappable |
-| EquityCompensationIssuance | Sar | id | out | no-destination | kind unmappable |
-| EquityCompensationIssuance | Sar | comments | out | no-destination | kind unmappable |
-| EquityCompensationIssuance | Sar | object_type | out | no-destination | kind unmappable |
-| EquityCompensationIssuance | Sar | stockholder_approval_date | out | no-destination | kind unmappable |
-| EquityCompensationIssuance | Sar | consideration_text | out | no-destination | kind unmappable |
-| EquityCompensationIssuance | Sar | security_law_exemptions | out | heuristic | kind computed |
-| EquityCompensationIssuance | Sar | date | core | widening |  |
-| EquityCompensationIssuance | Sar | security_id | out | no-destination | kind unmappable |
-| EquityCompensationIssuance | Sar | custom_id | out | no-destination | kind unmappable |
-| EquityCompensationIssuance | Sar | stakeholder_id | out | no-destination | kind unmappable |
-| EquityCompensationIssuance | Sar | board_approval_date | out | no-destination | kind unmappable |
-| EquityCompensationIssuance | Sar | stock_plan_id | core | direct |  |
-| EquityCompensationIssuance | Sar | stock_class_id | core | direct |  |
-| EquityCompensationIssuance | Sar | quantity | core | widening |  |
-| EquityCompensationIssuance | Sar | vesting_template_id | core | direct |  |
-| EquityCompensationIssuance | Sar | vestings | out | no-destination | kind unmappable |
-| EquityCompensationIssuance | Sar | vesting_start_date | out | no-destination | kind unmappable |
-| EquityCompensationIssuance | Sar | compensation_type | out | no-destination | kind unmappable |
-| EquityCompensationIssuance | Sar | option_grant_type | out | no-destination | kind unmappable |
-| EquityCompensationIssuance | Sar | exercise_price | out | no-destination | kind unmappable |
-| EquityCompensationIssuance | Sar | base_price | core | direct |  |
-| EquityCompensationIssuance | Sar | early_exercisable | out | no-destination | kind unmappable |
-| EquityCompensationIssuance | Sar | expiration_date | core | widening |  |
-| EquityCompensationIssuance | Sar | termination_exercise_windows | out | no-destination | kind unmappable |
-| PlanSecurityIssuance | — | object_type | out | no-destination | kind unmappable |
-| StockIssuance | Rsa | id | out | no-destination | kind unmappable |
-| StockIssuance | Rsa | comments | out | no-destination | kind unmappable |
-| StockIssuance | Rsa | object_type | out | no-destination | kind unmappable |
-| StockIssuance | Rsa | stockholder_approval_date | out | no-destination | kind unmappable |
-| StockIssuance | Rsa | consideration_text | out | no-destination | kind unmappable |
-| StockIssuance | Rsa | security_law_exemptions | out | heuristic | kind computed |
-| StockIssuance | Rsa | share_numbers_issued | out | no-destination | kind unmappable |
-| StockIssuance | Rsa | stock_legend_ids | out | no-destination | kind unmappable |
-| StockIssuance | Rsa | date | core | widening |  |
-| StockIssuance | Rsa | security_id | core | direct |  |
-| StockIssuance | Rsa | custom_id | core | direct |  |
-| StockIssuance | Rsa | stakeholder_id | core | direct |  |
-| StockIssuance | Rsa | stock_class_id | core | direct |  |
-| StockIssuance | Rsa | stock_plan_id | core | direct |  |
-| StockIssuance | Rsa | quantity | core | widening |  |
-| StockIssuance | Rsa | vesting_terms_id | core | direct |  |
-| StockIssuance | Rsa | board_approval_date | core | widening |  |
-| StockIssuance | Rsa | share_price | core | direct |  |
-| StockIssuance | Rsa | cost_basis | core | direct |  |
-| StockIssuance | Rsa | vestings | core | direct |  |
-| StockIssuance | Rsa | issuance_type | out | no-destination | kind unmappable |
-| StockIssuance | Default | id | out | no-destination | kind unmappable |
-| StockIssuance | Default | comments | out | no-destination | kind unmappable |
-| StockIssuance | Default | object_type | out | no-destination | kind unmappable |
-| StockIssuance | Default | stockholder_approval_date | out | no-destination | kind unmappable |
-| StockIssuance | Default | consideration_text | out | no-destination | kind unmappable |
-| StockIssuance | Default | security_law_exemptions | out | heuristic | kind computed |
-| StockIssuance | Default | share_numbers_issued | out | no-destination | kind unmappable |
-| StockIssuance | Default | stock_legend_ids | out | no-destination | kind unmappable |
-| StockIssuance | Default | date | core | widening |  |
-| StockIssuance | Default | security_id | core | direct |  |
-| StockIssuance | Default | custom_id | core | direct |  |
-| StockIssuance | Default | stakeholder_id | core | direct |  |
-| StockIssuance | Default | stock_class_id | core | direct |  |
-| StockIssuance | Default | stock_plan_id | core | direct |  |
-| StockIssuance | Default | quantity | core | widening |  |
-| StockIssuance | Default | vesting_terms_id | core | direct |  |
-| StockIssuance | Default | board_approval_date | out | no-destination | kind unmappable |
-| StockIssuance | Default | share_price | core | direct |  |
-| StockIssuance | Default | cost_basis | core | direct |  |
-| StockIssuance | Default | vestings | out | no-destination | kind unmappable |
-| StockIssuance | Default | issuance_type | out | no-destination | kind unmappable |
-| WarrantIssuance | — | id | out | no-destination | kind unmappable |
-| WarrantIssuance | — | comments | out | no-destination | kind unmappable |
-| WarrantIssuance | — | object_type | out | no-destination | kind unmappable |
-| WarrantIssuance | — | date | core | widening |  |
-| WarrantIssuance | — | security_id | core | direct |  |
-| WarrantIssuance | — | custom_id | core | direct |  |
-| WarrantIssuance | — | stakeholder_id | core | direct |  |
-| WarrantIssuance | — | board_approval_date | out | no-destination | kind unmappable |
-| WarrantIssuance | — | stockholder_approval_date | out | no-destination | kind unmappable |
-| WarrantIssuance | — | consideration_text | out | no-destination | kind unmappable |
-| WarrantIssuance | — | security_law_exemptions | out | heuristic | kind computed |
-| WarrantIssuance | — | quantity | core | widening |  |
-| WarrantIssuance | — | exercise_price | core | direct |  |
-| WarrantIssuance | — | purchase_price | core | direct |  |
-| WarrantIssuance | — | exercise_triggers | out | no-destination | kind unmappable |
-| WarrantIssuance | — | warrant_expiration_date | core | widening |  |
-| WarrantIssuance | — | vesting_terms_id | core | direct |  |
-| WarrantIssuance | — | vestings | out | no-destination | kind unmappable |
-| WarrantIssuance | — | quantity_source | out | no-destination | kind unmappable |
+| EquityCompensationIssuance  | Option | id | out | no-destination | kind unmappable |
+| EquityCompensationIssuance  | Option | comments | out | no-destination | kind unmappable |
+| EquityCompensationIssuance  | Option | object_type | out | no-destination | kind unmappable |
+| EquityCompensationIssuance  | Option | stockholder_approval_date | out | no-destination | kind unmappable |
+| EquityCompensationIssuance  | Option | consideration_text | out | no-destination | kind unmappable |
+| EquityCompensationIssuance  | Option | security_law_exemptions | out | heuristic | kind computed |
+| EquityCompensationIssuance  | Option | date | core | widening |  |
+| EquityCompensationIssuance  | Option | security_id | core | direct |  |
+| EquityCompensationIssuance  | Option | custom_id | core | direct |  |
+| EquityCompensationIssuance  | Option | stakeholder_id | core | direct |  |
+| EquityCompensationIssuance  | Option | board_approval_date | core | widening |  |
+| EquityCompensationIssuance  | Option | stock_plan_id | core | direct |  |
+| EquityCompensationIssuance  | Option | stock_class_id | core | direct |  |
+| EquityCompensationIssuance  | Option | quantity | core | widening |  |
+| EquityCompensationIssuance  | Option | vesting_template_id | core | direct |  |
+| EquityCompensationIssuance  | Option | vestings | out | heuristic | items: Vesting drops amount (per type mapping) |
+| EquityCompensationIssuance  | Option | vesting_start_date | core | widening |  |
+| EquityCompensationIssuance  | Option | compensation_type | core | value-coarsening | enum→bucket |
+| EquityCompensationIssuance  | Option | option_grant_type | core | value-coarsening | enum→bucket |
+| EquityCompensationIssuance  | Option | exercise_price | core | direct |  |
+| EquityCompensationIssuance  | Option | base_price | out | no-destination | kind unmappable |
+| EquityCompensationIssuance  | Option | early_exercisable | core | direct |  |
+| EquityCompensationIssuance  | Option | expiration_date | core | widening |  |
+| EquityCompensationIssuance  | Option | termination_exercise_windows | out | existence-loss | select (first_termination_window) |
+| EquityCompensationIssuance  | Rsu | id | out | no-destination | kind unmappable |
+| EquityCompensationIssuance  | Rsu | comments | out | no-destination | kind unmappable |
+| EquityCompensationIssuance  | Rsu | object_type | out | no-destination | kind unmappable |
+| EquityCompensationIssuance  | Rsu | stockholder_approval_date | out | no-destination | kind unmappable |
+| EquityCompensationIssuance  | Rsu | consideration_text | out | no-destination | kind unmappable |
+| EquityCompensationIssuance  | Rsu | security_law_exemptions | out | heuristic | kind computed |
+| EquityCompensationIssuance  | Rsu | date | core | widening |  |
+| EquityCompensationIssuance  | Rsu | security_id | core | direct |  |
+| EquityCompensationIssuance  | Rsu | custom_id | core | direct |  |
+| EquityCompensationIssuance  | Rsu | stakeholder_id | core | direct |  |
+| EquityCompensationIssuance  | Rsu | board_approval_date | core | widening |  |
+| EquityCompensationIssuance  | Rsu | stock_plan_id | core | direct |  |
+| EquityCompensationIssuance  | Rsu | stock_class_id | core | direct |  |
+| EquityCompensationIssuance  | Rsu | quantity | core | widening |  |
+| EquityCompensationIssuance  | Rsu | vesting_template_id | core | direct |  |
+| EquityCompensationIssuance  | Rsu | vestings | out | heuristic | items: Vesting drops amount (per type mapping) |
+| EquityCompensationIssuance  | Rsu | vesting_start_date | core | widening |  |
+| EquityCompensationIssuance  | Rsu | compensation_type | out | no-destination | kind unmappable |
+| EquityCompensationIssuance  | Rsu | option_grant_type | out | no-destination | kind unmappable |
+| EquityCompensationIssuance  | Rsu | exercise_price | out | no-destination | kind unmappable |
+| EquityCompensationIssuance  | Rsu | base_price | out | no-destination | kind unmappable |
+| EquityCompensationIssuance  | Rsu | early_exercisable | out | no-destination | kind unmappable |
+| EquityCompensationIssuance  | Rsu | expiration_date | out | no-destination | kind unmappable |
+| EquityCompensationIssuance  | Rsu | termination_exercise_windows | out | no-destination | kind unmappable |
+| EquityCompensationIssuance  | Sar | id | out | no-destination | kind unmappable |
+| EquityCompensationIssuance  | Sar | comments | out | no-destination | kind unmappable |
+| EquityCompensationIssuance  | Sar | object_type | out | no-destination | kind unmappable |
+| EquityCompensationIssuance  | Sar | stockholder_approval_date | out | no-destination | kind unmappable |
+| EquityCompensationIssuance  | Sar | consideration_text | out | no-destination | kind unmappable |
+| EquityCompensationIssuance  | Sar | security_law_exemptions | out | heuristic | kind computed |
+| EquityCompensationIssuance  | Sar | date | core | widening |  |
+| EquityCompensationIssuance  | Sar | security_id | out | no-destination | kind unmappable |
+| EquityCompensationIssuance  | Sar | custom_id | out | no-destination | kind unmappable |
+| EquityCompensationIssuance  | Sar | stakeholder_id | out | no-destination | kind unmappable |
+| EquityCompensationIssuance  | Sar | board_approval_date | out | no-destination | kind unmappable |
+| EquityCompensationIssuance  | Sar | stock_plan_id | core | direct |  |
+| EquityCompensationIssuance  | Sar | stock_class_id | core | direct |  |
+| EquityCompensationIssuance  | Sar | quantity | core | widening |  |
+| EquityCompensationIssuance  | Sar | vesting_template_id | core | direct |  |
+| EquityCompensationIssuance  | Sar | vestings | out | no-destination | kind unmappable |
+| EquityCompensationIssuance  | Sar | vesting_start_date | out | no-destination | kind unmappable |
+| EquityCompensationIssuance  | Sar | compensation_type | out | no-destination | kind unmappable |
+| EquityCompensationIssuance  | Sar | option_grant_type | out | no-destination | kind unmappable |
+| EquityCompensationIssuance  | Sar | exercise_price | out | no-destination | kind unmappable |
+| EquityCompensationIssuance  | Sar | base_price | core | direct |  |
+| EquityCompensationIssuance  | Sar | early_exercisable | out | no-destination | kind unmappable |
+| EquityCompensationIssuance  | Sar | expiration_date | core | widening |  |
+| EquityCompensationIssuance  | Sar | termination_exercise_windows | out | no-destination | kind unmappable |
+| PlanSecurityIssuance  | — | object_type | out | no-destination | kind unmappable |
+| StockIssuance  | Rsa | id | out | no-destination | kind unmappable |
+| StockIssuance  | Rsa | comments | out | no-destination | kind unmappable |
+| StockIssuance  | Rsa | object_type | out | no-destination | kind unmappable |
+| StockIssuance  | Rsa | stockholder_approval_date | out | no-destination | kind unmappable |
+| StockIssuance  | Rsa | consideration_text | out | no-destination | kind unmappable |
+| StockIssuance  | Rsa | security_law_exemptions | out | heuristic | kind computed |
+| StockIssuance  | Rsa | share_numbers_issued | out | no-destination | kind unmappable |
+| StockIssuance  | Rsa | stock_legend_ids | out | no-destination | kind unmappable |
+| StockIssuance  | Rsa | date | core | widening |  |
+| StockIssuance  | Rsa | security_id | core | direct |  |
+| StockIssuance  | Rsa | custom_id | core | direct |  |
+| StockIssuance  | Rsa | stakeholder_id | core | direct |  |
+| StockIssuance  | Rsa | stock_class_id | core | direct |  |
+| StockIssuance  | Rsa | stock_plan_id | core | direct |  |
+| StockIssuance  | Rsa | quantity | core | widening |  |
+| StockIssuance  | Rsa | vesting_terms_id | core | direct |  |
+| StockIssuance  | Rsa | board_approval_date | core | widening |  |
+| StockIssuance  | Rsa | share_price | core | direct |  |
+| StockIssuance  | Rsa | cost_basis | core | direct |  |
+| StockIssuance  | Rsa | vestings | out | heuristic | items: Vesting drops amount (per type mapping) |
+| StockIssuance  | Rsa | issuance_type | out | no-destination | kind unmappable |
+| StockIssuance  | Default | id | out | no-destination | kind unmappable |
+| StockIssuance  | Default | comments | out | no-destination | kind unmappable |
+| StockIssuance  | Default | object_type | out | no-destination | kind unmappable |
+| StockIssuance  | Default | stockholder_approval_date | out | no-destination | kind unmappable |
+| StockIssuance  | Default | consideration_text | out | no-destination | kind unmappable |
+| StockIssuance  | Default | security_law_exemptions | out | heuristic | kind computed |
+| StockIssuance  | Default | share_numbers_issued | out | no-destination | kind unmappable |
+| StockIssuance  | Default | stock_legend_ids | out | no-destination | kind unmappable |
+| StockIssuance  | Default | date | core | widening |  |
+| StockIssuance  | Default | security_id | core | direct |  |
+| StockIssuance  | Default | custom_id | core | direct |  |
+| StockIssuance  | Default | stakeholder_id | core | direct |  |
+| StockIssuance  | Default | stock_class_id | core | direct |  |
+| StockIssuance  | Default | stock_plan_id | core | direct |  |
+| StockIssuance  | Default | quantity | core | widening |  |
+| StockIssuance  | Default | vesting_terms_id | core | direct |  |
+| StockIssuance  | Default | board_approval_date | out | no-destination | kind unmappable |
+| StockIssuance  | Default | share_price | core | direct |  |
+| StockIssuance  | Default | cost_basis | core | direct |  |
+| StockIssuance  | Default | vestings | out | no-destination | kind unmappable |
+| StockIssuance  | Default | issuance_type | out | no-destination | kind unmappable |
+| WarrantIssuance  | — | id | out | no-destination | kind unmappable |
+| WarrantIssuance  | — | comments | out | no-destination | kind unmappable |
+| WarrantIssuance  | — | object_type | out | no-destination | kind unmappable |
+| WarrantIssuance  | — | date | core | widening |  |
+| WarrantIssuance  | — | security_id | core | direct |  |
+| WarrantIssuance  | — | custom_id | core | direct |  |
+| WarrantIssuance  | — | stakeholder_id | core | direct |  |
+| WarrantIssuance  | — | board_approval_date | out | no-destination | kind unmappable |
+| WarrantIssuance  | — | stockholder_approval_date | out | no-destination | kind unmappable |
+| WarrantIssuance  | — | consideration_text | out | no-destination | kind unmappable |
+| WarrantIssuance  | — | security_law_exemptions | out | heuristic | kind computed |
+| WarrantIssuance  | — | quantity | core | widening |  |
+| WarrantIssuance  | — | exercise_price | core | direct |  |
+| WarrantIssuance  | — | purchase_price | core | direct |  |
+| WarrantIssuance  | — | exercise_triggers | out | no-destination | kind unmappable |
+| WarrantIssuance  | — | warrant_expiration_date | core | widening |  |
+| WarrantIssuance  | — | vesting_terms_id | core | direct |  |
+| WarrantIssuance  | — | vestings | out | no-destination | kind unmappable |
+| WarrantIssuance  | — | quantity_source | out | no-destination | kind unmappable |
 | StockReissuance  | Rsa | id | out | no-destination | kind unmappable |
 | StockReissuance  | Rsa | comments | out | no-destination | kind unmappable |
 | StockReissuance  | Rsa | object_type | out | no-destination | kind unmappable |

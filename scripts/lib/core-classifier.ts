@@ -47,6 +47,8 @@ export interface Verdict {
 export interface TypeVerdict {
   lossless: boolean;
   lostProps: string[];
+  /** Why at least one nested property cannot be admitted to strict Core. */
+  reason?: OutReason;
 }
 
 export interface ClassifyCtx {
@@ -64,19 +66,39 @@ export interface ClassifyCtx {
 /** A composite type lands losslessly iff every sub-property has a resolving, non-unmappable target. */
 export function classifyType(fields: Record<string, unknown>, bundle: unknown): TypeVerdict {
   const lost: string[] = [];
+  let reason: OutReason | undefined;
   for (const [name, raw] of Object.entries(fields)) {
     if (!isPlainObject(raw)) continue;
     const kind = typeof raw.kind === "string" ? raw.kind : "";
     if (kind === "unmappable" || kind === "TODO") {
       lost.push(name);
+      reason ??= "no-destination";
+      continue;
+    }
+    // A type-library entry is consulted recursively when a containing field is
+    // renamed.  A nested transform may have a target, but it still cannot be
+    // proven to preserve the complete value of the nested object by itself.
+    if (kind === "select") {
+      lost.push(name);
+      reason ??= "existence-loss";
+      continue;
+    }
+    if (kind === "computed" || kind === "combine" || kind === "split") {
+      lost.push(name);
+      reason ??= "heuristic";
       continue;
     }
     const ptrs = targetPointers(raw.target);
     if (ptrs.length === 0 || ptrs.some((p) => !resolvesTarget(p, bundle).ok)) {
       lost.push(name);
+      reason ??= "no-destination";
     }
   }
-  return { lossless: lost.length === 0, lostProps: lost };
+  return {
+    lossless: lost.length === 0,
+    lostProps: lost,
+    ...(reason ? { reason } : {}),
+  };
 }
 
 function typeName(id: string): string {
@@ -213,7 +235,17 @@ function hasRealUnion(node: unknown): boolean {
   const union = node.oneOf ?? node.anyOf;
   if (!Array.isArray(union)) return false;
   const branches = union.filter(isPlainObject);
-  return branches.length === union.length && branches.filter((b) => b.type !== "null").length > 1;
+  if (branches.length !== union.length) return false;
+  const realBranches = branches.filter((b) => b.type !== "null" && !isAssertionOnlyUnionBranch(b));
+  return realBranches.length > 1;
+}
+
+/** `anyOf: [{required: [...]}, ...]` constrains the containing object; it is
+ * not a union of alternative value shapes and must not make a direct rename
+ * look partial. */
+function isAssertionOnlyUnionBranch(branch: Record<string, unknown>): boolean {
+  const keys = Object.keys(branch);
+  return keys.length > 0 && keys.every((key) => key === "required");
 }
 
 /** The three structural collapses, in cascade order. Returns the first that fires. */
@@ -233,6 +265,71 @@ function missingTargetProp(src: Shape, tgt: Shape): string | null {
   const tgtNames = new Set(Object.keys(tgtProps));
   for (const name of Object.keys(srcProps)) {
     if (!tgtNames.has(name)) return name;
+  }
+  return null;
+}
+
+/**
+ * Check the lossiness of a composite shape using the type library, if one is
+ * available.  This is deliberately separate from `collapse`: a composite can
+ * have a compatible target shape while one of its nested mapping entries is a
+ * computed/split/select or has no destination.
+ */
+function compositeLoss(
+  src: Shape,
+  tgt: Shape,
+  ctx: ClassifyCtx
+): { detail: string; reason: OutReason } | null {
+  if (!src.isMultiProp) return null;
+
+  const id = isPlainObject(src.node) && typeof src.node.$id === "string" ? src.node.$id : null;
+  const lib = id ? ctx.typeLib.get(id) : undefined;
+  if (lib) {
+    if (!lib.lossless) {
+      return {
+        reason: lib.reason ?? "existence-loss",
+        detail: `${typeName(id!)} drops ${lib.lostProps.join(", ")} (per type mapping)`,
+      };
+    }
+    return null;
+  }
+
+  const missing = missingTargetProp(src, tgt);
+  if (missing) {
+    return {
+      reason: "existence-loss",
+      detail: `source property "${missing}" has no target property`,
+    };
+  }
+  return null;
+}
+
+/** Recursively inspect an object and all array items for direct-rename loss. */
+function nestedShapeLoss(
+  src: Shape,
+  tgt: Shape,
+  ctx: ClassifyCtx,
+  path = ""
+): { detail: string; reason: OutReason } | null {
+  const qualify = (detail: string) => (path ? `${path}: ${detail}` : detail);
+
+  if (src.hasRealUnion) {
+    return {
+      reason: "partial",
+      detail: qualify("source union has multiple real branches; direct rename is not total"),
+    };
+  }
+
+  const top = collapse(src, tgt);
+  if (top) return { reason: top.reason, detail: qualify(top.detail) };
+
+  const composite = compositeLoss(src, tgt, ctx);
+  if (composite) return { reason: composite.reason, detail: qualify(composite.detail) };
+
+  if (src.isArray && tgt.isArray) {
+    const si = sourceShape(src.items, ctx.registry);
+    const ti = targetShape(tgt.items, ctx.bundle);
+    return nestedShapeLoss(si, ti, ctx, path ? `${path}.items` : "items");
   }
   return null;
 }
@@ -342,56 +439,12 @@ export function classifyField(
   const s = sourceShape(srcRaw, ctx.registry);
   const t = targetShape(tgtRaw, ctx.bundle);
 
-  // A direct rename cannot prove that multiple legal source branches all land
-  // in the same Carta slot. Nullable unions were already unwrapped; this is a
-  // genuine multi-branch domain and must be explicitly transformed before it
-  // can enter strict Core. StockClass.initial_shares_authorized is the current
-  // concrete example: Numeric has a Decimal home, but its two sentinel enum
-  // members do not.
-  if (s.hasRealUnion) {
-    return {
-      class: "out",
-      reason: "partial",
-      detail: "source union has multiple real branches; direct rename is not total",
-    };
-  }
-
-  const top = collapse(s, t);
-  if (top) return { class: "out", reason: top.reason, detail: top.detail };
-
-  if (s.isArray && t.isArray) {
-    const si = sourceShape(s.items, ctx.registry);
-    const ti = targetShape(t.items, ctx.bundle);
-    const nested = collapse(si, ti);
-    if (nested) return { class: "out", reason: nested.reason, detail: `items: ${nested.detail}` };
-  }
-
-  if (s.isMultiProp) {
-    // Prefer the type library: it knows OCF↔Carta sub-property correspondences
-    // (currency↔currencyCode) that a name match would miss. Target is already
-    // known multiProp here (a scalar target collapsed above), so a lossless
-    // composite type lands; a lossy one drops named sub-properties.
-    const id = isPlainObject(s.node) && typeof s.node.$id === "string" ? s.node.$id : null;
-    const lib = id ? ctx.typeLib.get(id) : undefined;
-    if (lib) {
-      if (!lib.lossless) {
-        return {
-          class: "out",
-          reason: "existence-loss",
-          detail: `${typeName(id!)} drops ${lib.lostProps.join(", ")} (per type mapping)`,
-        };
-      }
-    } else {
-      const missing = missingTargetProp(s, t);
-      if (missing) {
-        return {
-          class: "out",
-          reason: "existence-loss",
-          detail: `source property "${missing}" has no target property`,
-        };
-      }
-    }
-  }
+  // A direct rename must be total not only at its top-level shape but also at
+  // every nested object/array item. Nullable unions were already unwrapped;
+  // genuine multi-branch domains and nested computed/split/select mappings are
+  // therefore kept out of strict Core.
+  const nested = nestedShapeLoss(s, t, ctx);
+  if (nested) return { class: "out", reason: nested.reason, detail: nested.detail };
 
   // Lands. Distinguish a widening (scalar→differently-typed scalar) from a direct copy.
   const loss: CoreLoss =

@@ -38,6 +38,14 @@ const bundle = {
       type: "object",
       properties: { amount: { $ref: "#/$defs/Dec" }, currencyCode: { $ref: "#/$defs/Iso" } },
     },
+    ArrayMoney: {
+      type: "array",
+      items: { $ref: "#/$defs/Money" },
+    },
+    Choice: {
+      type: "object",
+      properties: { a: { type: "string" }, b: { type: "string" } },
+    },
     Dec: { type: "object", properties: { value: { type: "string" } } },
     Iso: { type: "object", properties: { value: { type: "string" } } },
     Excluded: true, // Carta's out-of-snapshot marker
@@ -129,6 +137,18 @@ describe("classifyField — rename shape cascade", () => {
     expect(v).toMatchObject({ class: "out", reason: "partial" });
     expect(v.detail).toContain("multiple real branches");
   });
+  it("assertion-only anyOf branches do not create a false value union", () => {
+    const v = classifyField(
+      { kind: "rename", target: "#/$defs/Choice" },
+      {
+        type: "object",
+        properties: { a: { type: "string" }, b: { type: "string" } },
+        anyOf: [{ required: ["a"] }, { required: ["b"] }],
+      },
+      ctx()
+    );
+    expect(v.class).toBe("core");
+  });
 });
 
 describe("classifyField — enum-remap totality (ruling C)", () => {
@@ -208,6 +228,20 @@ describe("classifyField — type library overrides name matching", () => {
     expect(v).toMatchObject({ class: "out", reason: "existence-loss" });
     expect(v.detail).toContain("currency");
   });
+
+  it("applies the type library recursively inside array items", () => {
+    const lib = new Map<string, TypeVerdict>([
+      ["ocf://Monetary", { lossless: false, lostProps: ["currency"], reason: "heuristic" }],
+    ]);
+    const v = classifyField(
+      { kind: "rename", target: "#/$defs/ArrayMoney" },
+      { type: "array", items: { $ref: "ocf://Monetary" } },
+      ctx(lib)
+    );
+    expect(v).toMatchObject({ class: "out", reason: "heuristic" });
+    expect(v.detail).toContain("items");
+    expect(v.detail).toContain("currency");
+  });
 });
 
 describe("classifyType", () => {
@@ -231,5 +265,22 @@ describe("classifyType", () => {
     );
     expect(v.lossless).toBe(false);
     expect(v.lostProps).toEqual(["numerator", "denominator"]);
+  });
+  it("computed and split sub-properties are not treated as lossless", () => {
+    const v = classifyType(
+      {
+        amount: { kind: "computed", target: "#/$defs/Scalar" },
+        schedule: {
+          kind: "split",
+          target: ["#/$defs/Scalar", "#/$defs/Scalar"],
+        },
+      },
+      bundle
+    );
+    expect(v).toMatchObject({
+      lossless: false,
+      lostProps: ["amount", "schedule"],
+      reason: "heuristic",
+    });
   });
 });

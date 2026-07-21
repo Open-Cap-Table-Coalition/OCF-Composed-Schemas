@@ -147,26 +147,6 @@
           "md5"
         ]
       }
-    },
-    "vesting_terms_files": {
-      "type": "array",
-      "items": {
-        "type": "object",
-        "additionalProperties": false,
-        "properties": {
-          "filepath": {
-            "type": "string"
-          },
-          "md5": {
-            "type": "string",
-            "pattern": "^[a-fA-F0-9]{32}$"
-          }
-        },
-        "required": [
-          "filepath",
-          "md5"
-        ]
-      }
     }
   },
   "required": [
@@ -175,8 +155,7 @@
     "stock_classes_files",
     "stock_plans_files",
     "transactions_files",
-    "valuations_files",
-    "vesting_terms_files"
+    "valuations_files"
   ],
   "additionalProperties": false
 }

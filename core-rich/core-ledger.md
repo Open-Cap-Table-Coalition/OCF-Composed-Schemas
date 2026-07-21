@@ -203,7 +203,7 @@ in the coverage report.
 | Valuation | — | valuation_type | out | no-destination | kind unmappable |
 | VestingTerms | — | id | core | direct |  |
 | VestingTerms | — | object_type | out | no-destination | kind unmappable |
-| VestingTerms | — | statements | core | direct |  |
+| VestingTerms | — | statements | out | heuristic | items: VestingStatement drops schedule, event_condition, percentage (per type mapping) |
 | ConvertibleAcceptance  | — | id | out | no-destination | kind unmappable |
 | ConvertibleAcceptance  | — | comments | out | no-destination | kind unmappable |
 | ConvertibleAcceptance  | — | object_type | out | no-destination | kind unmappable |
@@ -445,7 +445,7 @@ in the coverage report.
 | EquityCompensationIssuance | Option | stock_class_id | core | direct |  |
 | EquityCompensationIssuance | Option | quantity | core | widening |  |
 | EquityCompensationIssuance | Option | vesting_template_id | core | direct |  |
-| EquityCompensationIssuance | Option | vestings | core | direct |  |
+| EquityCompensationIssuance | Option | vestings | out | heuristic | items: Vesting drops amount (per type mapping) |
 | EquityCompensationIssuance | Option | vesting_start_date | core | widening |  |
 | EquityCompensationIssuance | Option | compensation_type | core | value-coarsening | enum→bucket |
 | EquityCompensationIssuance | Option | option_grant_type | core | value-coarsening | enum→bucket |
@@ -469,7 +469,7 @@ in the coverage report.
 | EquityCompensationIssuance | Rsu | stock_class_id | core | direct |  |
 | EquityCompensationIssuance | Rsu | quantity | core | widening |  |
 | EquityCompensationIssuance | Rsu | vesting_template_id | core | direct |  |
-| EquityCompensationIssuance | Rsu | vestings | core | direct |  |
+| EquityCompensationIssuance | Rsu | vestings | out | heuristic | items: Vesting drops amount (per type mapping) |
 | EquityCompensationIssuance | Rsu | vesting_start_date | core | widening |  |
 | EquityCompensationIssuance | Rsu | compensation_type | out | no-destination | kind unmappable |
 | EquityCompensationIssuance | Rsu | option_grant_type | out | no-destination | kind unmappable |
@@ -522,7 +522,7 @@ in the coverage report.
 | StockIssuance | Rsa | board_approval_date | core | widening |  |
 | StockIssuance | Rsa | share_price | core | direct |  |
 | StockIssuance | Rsa | cost_basis | core | direct |  |
-| StockIssuance | Rsa | vestings | core | direct |  |
+| StockIssuance | Rsa | vestings | out | heuristic | items: Vesting drops amount (per type mapping) |
 | StockIssuance | Rsa | issuance_type | out | no-destination | kind unmappable |
 | StockIssuance | Default | id | out | no-destination | kind unmappable |
 | StockIssuance | Default | comments | out | no-destination | kind unmappable |

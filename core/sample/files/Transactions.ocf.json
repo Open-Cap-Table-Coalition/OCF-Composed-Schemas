@@ -2,34 +2,6 @@
   "file_type": "OCF_TRANSACTIONS_FILE",
   "items": [
     {
-      "object_type": "TX_STOCK_ISSUANCE",
-      "id": "tx-si-founder",
-      "security_id": "sec-cs-1",
-      "custom_id": "CS-1",
-      "date": "2024-01-15",
-      "stakeholder_id": "sh-jane",
-      "stock_class_id": "sc-common",
-      "quantity": "4000000",
-      "share_price": { "amount": "0.0001", "currency": "USD" }
-    },
-    {
-      "object_type": "TX_EQUITY_COMPENSATION_ISSUANCE",
-      "id": "tx-ec-raj",
-      "security_id": "sec-ec-1",
-      "custom_id": "EC-1",
-      "date": "2024-03-01",
-      "stakeholder_id": "sh-raj",
-      "stock_plan_id": "plan-2024-eip",
-      "stock_class_id": "sc-common",
-      "quantity": "100000",
-      "exercise_price": { "amount": "0.10", "currency": "USD" },
-      "compensation_type": "OPTION_ISO",
-      "option_grant_type": "ISO",
-      "vesting_template_id": "vt-4yr-1yr-cliff",
-      "early_exercisable": false,
-      "expiration_date": "2034-03-01"
-    },
-    {
       "object_type": "TX_STOCK_CANCELLATION",
       "id": "tx-sc-1",
       "date": "2024-06-01",

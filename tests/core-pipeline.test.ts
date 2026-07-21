@@ -53,13 +53,15 @@ describe("deriveCore (determinism — the drift gate's premise)", () => {
 
     const psi = aliasRows.find((a) => a.entity === "PlanSecurityIssuance");
     expect(psi?.aliasOf).toBe("EquityCompensationIssuance");
-    expect(psi?.admissible).toBe(true); // its base lands, so it has a target
+    // Recursive inspection of the required inline vestings array makes the
+    // strict base inadmissible; the compatibility wrapper mirrors that result.
+    expect(psi?.admissible).toBe(false);
 
     // A wrapper carries no core fields of its own, so it is never drafted as a
-    // Core entity — the canonical base is emitted instead (no duplicate shape).
+    // Core entity, and an inadmissible base is not emitted either.
     const emitted = new Set(d.entities.map((e) => e.entity));
     for (const a of aliasRows) expect(emitted.has(a.entity)).toBe(false);
-    expect(emitted.has("EquityCompensationIssuance")).toBe(true);
+    expect(emitted.has("EquityCompensationIssuance")).toBe(false);
   });
 
   it("every entity carries the OCF identity spine (id + object_type)", async () => {
@@ -87,5 +89,33 @@ describe("deriveCore (determinism — the drift gate's premise)", () => {
     expect(
       richStockClass.properties.items.items.properties.initial_shares_authorized
     ).toBeDefined();
+  });
+
+  it("classifies nested array-item mappings recursively", async () => {
+    const strict = await deriveCore(process.cwd());
+    const rich = await deriveCore(process.cwd(), RICH_PROFILE);
+    const row = (entity: string, variant: string, field: string) =>
+      strict.rows.find((r) => r.entity === entity && r.variant === variant && r.field === field);
+
+    expect(row("VestingTerms", "—", "statements")?.verdict).toMatchObject({
+      class: "out",
+      reason: "heuristic",
+    });
+    expect(row("EquityCompensationIssuance", "Option", "vestings")?.verdict).toMatchObject({
+      class: "out",
+      reason: "heuristic",
+    });
+    expect(row("StockIssuance", "Rsa", "vestings")?.verdict).toMatchObject({
+      class: "out",
+      reason: "heuristic",
+    });
+
+    // These source fields are required for their entities, so strict Core
+    // cannot admit those entities once the nested loss is visible. Core-Rich
+    // deliberately retains the lossy homes and their original OCF shapes.
+    for (const entity of ["VestingTerms", "EquityCompensationIssuance", "StockIssuance"]) {
+      expect(strict.entities.some((e) => e.entity === entity)).toBe(false);
+      expect(rich.entities.some((e) => e.entity === entity)).toBe(true);
+    }
   });
 });

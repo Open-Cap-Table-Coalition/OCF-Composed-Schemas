@@ -11,64 +11,6 @@ One diagram per OCF object — each polymorphic flavor (`Object [Variant]`) full
 drop to that flavor's own `⌀ no Carta home` sink. Edge labels = field count.
 (Reverse-edge `heuristic` lineage is the upstream report's.)
 
-**EquityCompensationIssuance [Sar]**
-
-```mermaid
-flowchart LR
-  classDef adm fill:#e6f4ea,stroke:#34a853,color:#0b3d20;
-  classDef notadm fill:#f1f3f4,stroke:#9aa0a6,color:#5f6368,stroke-dasharray:4 3;
-  classDef carta fill:#e8f0fe,stroke:#1a73e8,color:#0d2b66;
-  classDef sink fill:#fce8e6,stroke:#d93025,color:#5c0d06;
-  subgraph SRC["OCF source objects"]
-    direction TB
-    o0["EquityCompensationIssuance [Sar]"]:::adm
-  end
-  subgraph TGT["Carta target objects"]
-    direction TB
-    sink["⌀ no Carta home"]:::sink
-  end
-  o0 -->|"board_approval_date"| sink
-  o0 -->|"compensation_type"| sink
-  o0 -->|"consideration_text"| sink
-  o0 -->|"custom_id"| sink
-  o0 -->|"early_exercisable"| sink
-  o0 -->|"exercise_price"| sink
-  o0 -->|"option_grant_type"| sink
-  o0 -->|"security_id"| sink
-  o0 -->|"stakeholder_id"| sink
-  o0 -->|"stockholder_approval_date"| sink
-  o0 -->|"termination_exercise_windows"| sink
-  o0 -->|"vesting_start_date"| sink
-  o0 -->|"vestings"| sink
-```
-
-**EquityCompensationIssuance [Rsu]**
-
-```mermaid
-flowchart LR
-  classDef adm fill:#e6f4ea,stroke:#34a853,color:#0b3d20;
-  classDef notadm fill:#f1f3f4,stroke:#9aa0a6,color:#5f6368,stroke-dasharray:4 3;
-  classDef carta fill:#e8f0fe,stroke:#1a73e8,color:#0d2b66;
-  classDef sink fill:#fce8e6,stroke:#d93025,color:#5c0d06;
-  subgraph SRC["OCF source objects"]
-    direction TB
-    o0["EquityCompensationIssuance [Rsu]"]:::adm
-  end
-  subgraph TGT["Carta target objects"]
-    direction TB
-    sink["⌀ no Carta home"]:::sink
-  end
-  o0 -->|"base_price"| sink
-  o0 -->|"compensation_type"| sink
-  o0 -->|"consideration_text"| sink
-  o0 -->|"early_exercisable"| sink
-  o0 -->|"exercise_price"| sink
-  o0 -->|"expiration_date"| sink
-  o0 -->|"option_grant_type"| sink
-  o0 -->|"stockholder_approval_date"| sink
-  o0 -->|"termination_exercise_windows"| sink
-```
-
 **Issuer**
 
 ```mermaid
@@ -94,55 +36,6 @@ flowchart LR
   o0 -->|"initial_shares_authorized"| sink
   o0 -->|"phone"| sink
   o0 -->|"tax_ids"| sink
-```
-
-**StockIssuance [Default]**
-
-```mermaid
-flowchart LR
-  classDef adm fill:#e6f4ea,stroke:#34a853,color:#0b3d20;
-  classDef notadm fill:#f1f3f4,stroke:#9aa0a6,color:#5f6368,stroke-dasharray:4 3;
-  classDef carta fill:#e8f0fe,stroke:#1a73e8,color:#0d2b66;
-  classDef sink fill:#fce8e6,stroke:#d93025,color:#5c0d06;
-  subgraph SRC["OCF source objects"]
-    direction TB
-    o0["StockIssuance [Default]"]:::adm
-  end
-  subgraph TGT["Carta target objects"]
-    direction TB
-    sink["⌀ no Carta home"]:::sink
-  end
-  o0 -->|"board_approval_date"| sink
-  o0 -->|"consideration_text"| sink
-  o0 -->|"issuance_type"| sink
-  o0 -->|"share_numbers_issued"| sink
-  o0 -->|"stock_legend_ids"| sink
-  o0 -->|"stockholder_approval_date"| sink
-  o0 -->|"vestings"| sink
-```
-
-**WarrantIssuance**
-
-```mermaid
-flowchart LR
-  classDef adm fill:#e6f4ea,stroke:#34a853,color:#0b3d20;
-  classDef notadm fill:#f1f3f4,stroke:#9aa0a6,color:#5f6368,stroke-dasharray:4 3;
-  classDef carta fill:#e8f0fe,stroke:#1a73e8,color:#0d2b66;
-  classDef sink fill:#fce8e6,stroke:#d93025,color:#5c0d06;
-  subgraph SRC["OCF source objects"]
-    direction TB
-    o0["WarrantIssuance"]:::adm
-  end
-  subgraph TGT["Carta target objects"]
-    direction TB
-    sink["⌀ no Carta home"]:::sink
-  end
-  o0 -->|"board_approval_date"| sink
-  o0 -->|"consideration_text"| sink
-  o0 -->|"exercise_triggers"| sink
-  o0 -->|"quantity_source"| sink
-  o0 -->|"stockholder_approval_date"| sink
-  o0 -->|"vestings"| sink
 ```
 
 **ConvertibleConversion**
@@ -215,29 +108,6 @@ flowchart LR
   o0 -->|"tax_ids"| sink
 ```
 
-**StockIssuance [Rsa]**
-
-```mermaid
-flowchart LR
-  classDef adm fill:#e6f4ea,stroke:#34a853,color:#0b3d20;
-  classDef notadm fill:#f1f3f4,stroke:#9aa0a6,color:#5f6368,stroke-dasharray:4 3;
-  classDef carta fill:#e8f0fe,stroke:#1a73e8,color:#0d2b66;
-  classDef sink fill:#fce8e6,stroke:#d93025,color:#5c0d06;
-  subgraph SRC["OCF source objects"]
-    direction TB
-    o0["StockIssuance [Rsa]"]:::adm
-  end
-  subgraph TGT["Carta target objects"]
-    direction TB
-    sink["⌀ no Carta home"]:::sink
-  end
-  o0 -->|"consideration_text"| sink
-  o0 -->|"issuance_type"| sink
-  o0 -->|"share_numbers_issued"| sink
-  o0 -->|"stock_legend_ids"| sink
-  o0 -->|"stockholder_approval_date"| sink
-```
-
 **Valuation**
 
 ```mermaid
@@ -259,29 +129,6 @@ flowchart LR
   o0 -->|"provider"| sink
   o0 -->|"stockholder_approval_date"| sink
   o0 -->|"valuation_type"| sink
-```
-
-**EquityCompensationIssuance [Option] → OptionGrant**
-
-```mermaid
-flowchart LR
-  classDef adm fill:#e6f4ea,stroke:#34a853,color:#0b3d20;
-  classDef notadm fill:#f1f3f4,stroke:#9aa0a6,color:#5f6368,stroke-dasharray:4 3;
-  classDef carta fill:#e8f0fe,stroke:#1a73e8,color:#0d2b66;
-  classDef sink fill:#fce8e6,stroke:#d93025,color:#5c0d06;
-  subgraph SRC["OCF source objects"]
-    direction TB
-    o0["EquityCompensationIssuance [Option]"]:::adm
-  end
-  subgraph TGT["Carta target objects"]
-    direction TB
-    t0["OptionGrant"]:::carta
-    sink["⌀ no Carta home"]:::sink
-  end
-  o0 -->|"base_price"| sink
-  o0 -->|"consideration_text"| sink
-  o0 -->|"stockholder_approval_date"| sink
-  o0 -->|"termination_exercise_windows → exercisePeriods"| t0
 ```
 
 **StockClass → ShareClass**
@@ -707,38 +554,6 @@ flowchart LR
 - consideration_text: no-destination — kind unmappable
 - **security_id** (OCF-required): no-destination — kind unmappable
 
-### EquityCompensationIssuance [Option]
-- base_price: no-destination — kind unmappable
-- consideration_text: no-destination — kind unmappable
-- stockholder_approval_date: no-destination — kind unmappable
-- **termination_exercise_windows** (OCF-required): existence-loss — select (first_termination_window)
-
-### EquityCompensationIssuance [Rsu]
-- base_price: no-destination — kind unmappable
-- **compensation_type** (OCF-required): no-destination — kind unmappable
-- consideration_text: no-destination — kind unmappable
-- early_exercisable: no-destination — kind unmappable
-- exercise_price: no-destination — kind unmappable
-- **expiration_date** (OCF-required): no-destination — kind unmappable
-- option_grant_type: no-destination — kind unmappable
-- stockholder_approval_date: no-destination — kind unmappable
-- **termination_exercise_windows** (OCF-required): no-destination — kind unmappable
-
-### EquityCompensationIssuance [Sar]
-- board_approval_date: no-destination — kind unmappable
-- **compensation_type** (OCF-required): no-destination — kind unmappable
-- consideration_text: no-destination — kind unmappable
-- **custom_id** (OCF-required): no-destination — kind unmappable
-- early_exercisable: no-destination — kind unmappable
-- exercise_price: no-destination — kind unmappable
-- option_grant_type: no-destination — kind unmappable
-- **security_id** (OCF-required): no-destination — kind unmappable
-- **stakeholder_id** (OCF-required): no-destination — kind unmappable
-- stockholder_approval_date: no-destination — kind unmappable
-- **termination_exercise_windows** (OCF-required): no-destination — kind unmappable
-- vesting_start_date: no-destination — kind unmappable
-- vestings: no-destination — kind unmappable
-
 ### EquityCompensationRelease [Rsu]
 - consideration_text: no-destination — kind unmappable
 - **security_id** (OCF-required): no-destination — kind unmappable
@@ -789,22 +604,6 @@ flowchart LR
 - **date** (OCF-required): no-destination — kind unmappable
 - stockholder_approval_date: no-destination — kind unmappable
 
-### StockIssuance [Default]
-- board_approval_date: no-destination — kind unmappable
-- consideration_text: no-destination — kind unmappable
-- issuance_type: no-destination — kind unmappable
-- share_numbers_issued: no-destination — kind unmappable
-- **stock_legend_ids** (OCF-required): no-destination — kind unmappable
-- stockholder_approval_date: no-destination — kind unmappable
-- vestings: no-destination — kind unmappable
-
-### StockIssuance [Rsa]
-- consideration_text: no-destination — kind unmappable
-- issuance_type: no-destination — kind unmappable
-- share_numbers_issued: no-destination — kind unmappable
-- **stock_legend_ids** (OCF-required): no-destination — kind unmappable
-- stockholder_approval_date: no-destination — kind unmappable
-
 ### StockPlan
 - board_approval_date: no-destination — kind unmappable
 - default_cancellation_behavior: no-destination — kind unmappable
@@ -829,14 +628,6 @@ flowchart LR
 ### WarrantCancellation
 - balance_security_id: no-destination — kind unmappable
 - **security_id** (OCF-required): no-destination — kind unmappable
-
-### WarrantIssuance
-- board_approval_date: no-destination — kind unmappable
-- consideration_text: no-destination — kind unmappable
-- **exercise_triggers** (OCF-required): no-destination — kind unmappable
-- quantity_source: no-destination — kind unmappable
-- stockholder_approval_date: no-destination — kind unmappable
-- vestings: no-destination — kind unmappable
 
 ### WarrantTransfer
 - balance_security_id: no-destination — kind unmappable
