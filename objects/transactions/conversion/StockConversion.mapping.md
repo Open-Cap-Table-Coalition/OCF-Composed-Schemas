@@ -106,7 +106,7 @@ Source: [`StockConversion.schema.json`](./StockConversion.schema.json)
 ## Mapping
 
 ```yaml
-# kind vocabulary: rename | split | combine | enum-remap | computed | unmappable | TODO
+# kind vocabulary: rename | select | split | combine | enum-remap | computed | unmappable | TODO
 # routing: route_by_security (downstream join). A stock conversion carries only
 # security_id and NO discriminator, so the source security's family is fixed at
 # issuance: join security_id back to the StockIssuance and read its issuance_type

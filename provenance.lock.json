@@ -1,0 +1,16 @@
+{
+  "schema": 1,
+  "ocf": {
+    "repository": "https://github.com/Open-Cap-Table-Coalition/Open-Cap-Format-OCF",
+    "version": "1.2.1-unstable",
+    "revision": "main",
+    "resolved_commit": "d5226fb5cba0fc126317528aed200c218656be0e",
+    "snapshot_sha256": "25539cb0babc74e06611ed344902ec90d47fcfe6d3c055b680f9af0c214c3bfc",
+    "schema_file_count": 165
+  },
+  "carta": {
+    "snapshot_file": "target-schema/Carta.schema.json",
+    "version": "v1alpha1 (2026-04-30)",
+    "sha256": "9cb61cd0464edbba67f721c29afaba22dce15a2d59af2d0587670ad709af8a71"
+  }
+}

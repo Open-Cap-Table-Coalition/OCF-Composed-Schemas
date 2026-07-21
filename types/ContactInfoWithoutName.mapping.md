@@ -69,7 +69,7 @@ Source: [`ContactInfoWithoutName.schema.json`](./ContactInfoWithoutName.schema.j
 ## Mapping
 
 ```yaml
-# kind vocabulary: rename | split | combine | enum-remap | computed | unmappable | TODO
+# kind vocabulary: rename | select | split | combine | enum-remap | computed | unmappable | TODO
 status: complete
 
 fields:
@@ -78,8 +78,10 @@ fields:
     target: null
     reason: no-equivalent
   emails:
-    kind: rename
+    kind: select
     target: "#/$defs/PointOfContact/properties/userEmail"
+    policy: primary_then_first_email
+    source: "/email_address"
 ```
 
 ## Notes / open questions
@@ -91,11 +93,10 @@ fields:
   no `name` field to carry to `PointOfContact.userFullName`; only `emails` and `phone_numbers`
   are present.
 - `emails` (array of OCF `Email`) → `PointOfContact.userEmail`. Carta carries a single scalar
-  `userEmail` string, whereas OCF allows an array of emails. This is lossy in cardinality: only
-  one email survives a round-trip (consumers should take the primary/first email). Carta has no
-  reusable `Email` type — `userEmail` is the only contact-email field on `PointOfContact` — so
-  this is the correct and only target. Modelled as `rename` (single source field → single Carta
-  leaf), matching the type-to-type field treatment in `types/Monetary.mapping.md`.
+  `userEmail` string, whereas OCF allows an array of emails. This is lossy in cardinality: the
+  mapping uses the explicit `primary_then_first_email` policy and source `/email_address`, so only
+  one address survives. Carta has no reusable `Email` type — `userEmail` is the only contact-email
+  field on `PointOfContact` — so this is the correct and only target.
 - `phone_numbers` (array of OCF `Phone`) is `unmappable` / `no-equivalent`. Carta models no
   phone data anywhere in the bundled schema — `PointOfContact` exposes only `issuerId`,
   `userFullName`, `userEmail`, and `type` (a `PointOfContactType` enum); there is no phone

@@ -16,6 +16,7 @@ export interface MappingCoverage {
 
 const KINDS = new Set([
   "rename",
+  "select",
   "split",
   "combine",
   "enum-remap",

@@ -6,8 +6,7 @@
       "id": "sh-jane",
       "issuer_assigned_id": "E-001",
       "stakeholder_type": "INDIVIDUAL",
-      "current_relationship": "FOUNDER",
-      "current_relationships": ["FOUNDER", "BOARD_MEMBER"]
+      "current_relationship": "FOUNDER"
     },
     {
       "object_type": "STAKEHOLDER",

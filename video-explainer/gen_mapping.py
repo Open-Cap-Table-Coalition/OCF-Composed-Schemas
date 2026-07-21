@@ -723,7 +723,7 @@ def s_extschema(t, dur):
     core = ['{', '  "$id": ".../OCFCore/StockClass",', '  "properties": {',
             '    "name":       { "type": "string" },', '    "class_type": { "$ref": "..." },',
             '    "par_value":  { "$ref": "Numeric" }', '  },', '  "additionalProperties": false', '}']
-    _codecard(out, t, 96, 300, 800, 452, "core / strict subset", core, 0.4, hi=1, hicol=OCF, size=21, lh=32)
+    _codecard(out, t, 96, 300, 800, 452, "core / strict projection", core, 0.4, hi=1, hicol=OCF, size=21, lh=32)
     out.append(text(116, 794, "votes_per_share  →  not in Core", 22, fill=MUTE, family=MONO, opacity=appear(t, 1.0, 0.5)))
     ext = ['{', '  "$id": ".../OCF-Extended-StockClass",', '  "allOf": [ { "$ref": ".../OCFCore/StockClass" } ],',
            '  "properties": {', '    "votes_per_share": { "$ref": "Numeric" },',

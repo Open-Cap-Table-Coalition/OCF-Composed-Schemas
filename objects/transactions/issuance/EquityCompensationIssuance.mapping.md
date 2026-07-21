@@ -191,7 +191,7 @@ Source: [`EquityCompensationIssuance.schema.json`](./EquityCompensationIssuance.
 ## Mapping
 
 ```yaml
-# kind vocabulary: rename | split | combine | enum-remap | computed | unmappable | TODO
+# kind vocabulary: rename | select | split | combine | enum-remap | computed | unmappable | TODO
 # routing: discriminator (issuance-time) — compensation_type fans this one OCF
 # transaction out to Carta's Option / Rsu / Sar instrument families.
 # shared: fields common to every variant. A field whose Carta home differs by
@@ -306,7 +306,7 @@ variants:
       base_price:                   { kind: unmappable, target: null, reason: no-equivalent }
       early_exercisable:            { kind: rename, target: "#/$defs/OptionGrant/properties/earlyExercisable" }
       expiration_date:              { kind: rename, target: "#/$defs/OptionIssuanceTransaction/properties/expirationDatetime" }
-      termination_exercise_windows: { kind: rename, target: "#/$defs/OptionGrant/properties/exercisePeriods" }
+      termination_exercise_windows: { kind: select, target: "#/$defs/OptionGrant/properties/exercisePeriods", policy: first_termination_window }
 
   Rsu:
     when: [RSU]
@@ -354,7 +354,8 @@ variants:
   unknown). The remaining `shared:` fields are uniform (all `unmappable`).
 - **Per-variant divergence.** `exercise_price` is Option-only; OCF `base_price` → Carta
   `SarIssuanceTransaction.exercisePrice` (SAR-only); `early_exercisable` and
-  `termination_exercise_windows` are Option-only; RSUs settle (no exercise price, no expiration).
+  `termination_exercise_windows` are Option-only; the Option mapping explicitly selects the
+  first window under `first_termination_window`; RSUs settle (no exercise price, no expiration).
   `option_grant_type` (OCF-deprecated) and `compensation_type` both target `stockOptionType`;
   precedence is importer logic.
 - **SAR has no Carta security object.** Carta models SARs with only a `SarIssuanceTransaction`

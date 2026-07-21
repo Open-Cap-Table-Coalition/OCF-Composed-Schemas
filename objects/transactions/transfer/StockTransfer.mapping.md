@@ -112,7 +112,7 @@ Source: [`StockTransfer.schema.json`](./StockTransfer.schema.json)
 ## Mapping
 
 ```yaml
-# kind vocabulary: rename | split | combine | enum-remap | computed | unmappable | TODO
+# kind vocabulary: rename | select | split | combine | enum-remap | computed | unmappable | TODO
 # routing: route_by_security (downstream join) resolves the stock FAMILY. A
 # StockTransfer carries only security_id and NO discriminator, so the family (RSA
 # vs founders/plain stock) is undecidable from the record alone: it is resolved by

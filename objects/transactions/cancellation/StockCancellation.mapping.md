@@ -102,7 +102,7 @@ Source: [`StockCancellation.schema.json`](./StockCancellation.schema.json)
 ## Mapping
 
 ```yaml
-# kind vocabulary: rename | split | combine | enum-remap | computed | unmappable | TODO
+# kind vocabulary: rename | select | split | combine | enum-remap | computed | unmappable | TODO
 # routing: route_by_security (downstream join). This cancellation carries only
 # security_id and NO discriminator, so the Carta cancellation family
 # (Rsa vs Certificate) is undecidable from the record alone: it is resolved by

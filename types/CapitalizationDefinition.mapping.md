@@ -78,7 +78,7 @@ Source: [`CapitalizationDefinition.schema.json`](./CapitalizationDefinition.sche
 ## Mapping
 
 ```yaml
-# kind vocabulary: rename | split | combine | enum-remap | computed | unmappable | TODO
+# kind vocabulary: rename | select | split | combine | enum-remap | computed | unmappable | TODO
 status: complete
 
 fields:

@@ -256,7 +256,7 @@ entries; `--verbose` reports the derived `X/N` values, and
 The proposed `## Mapping` block. Targets verified: `OptionIssuanceTransaction` has `{issueDatetime, quantity, stockOptionType, exercisePrice, equityPlanId, shareClassId, expirationDatetime, vestingScheduleTemplateId}`; `OptionGrant` carries `earlyExercisable`, `vestingEvents`, `exercisePeriods`, `boardApprovalDate`, `stakeholderId`, `securityId`, `securityLabel`; `RsuIssuanceTransaction` has no exercise/base price; `SarIssuanceTransaction` uses `exercisePrice` (no distinct base-price field). `StockOptionType` includes `ISO`, `NSO`, `OTHER`, `STOCK_OPTION_TYPE_INTL`.
 
 ```yaml
-# kind vocabulary: rename | split | combine | enum-remap | computed | unmappable | TODO
+# kind vocabulary: rename | select | split | combine | enum-remap | computed | unmappable | TODO
 # routing: discriminator (issuance-time) | route_by_security (downstream)
 status: complete
 
@@ -434,23 +434,49 @@ Validator rules:
 
 ## 5. Migration
 
-Roughly ten mappings are affected. The convention is purely additive, so adoption is incremental and each file migrates independently. **Status:** the migration is complete. The validator + `--verbose` report, the two issuance fan-outs (`EquityCompensationIssuance`, `StockIssuance`, both with per-variant target maps), the `composite:` construct (§4.9), and `StockTransfer`'s `route_by_security:` + `composite:` fold (now in Core) are all implemented; and the downstream `route_by_security:` verbs below — Exercise, Cancellation, Release, Retraction, Acceptance, Transfer, Repricing — have since landed as `status: complete` rather than remaining `fields:` stubs. (`ConvertibleIssuance` stays a simple `fields:` file — the backward-compat demonstrator.) The adoption path below is retained as the historical sequencing.
+The migration is complete. The validator + `--verbose` report, the two issuance fan-outs
+(`EquityCompensationIssuance`, `StockIssuance`, both with per-variant target maps), the `composite:`
+construct (§4.9), and `StockTransfer`'s `route_by_security:` + `composite:` fold are implemented.
+The downstream `route_by_security:` verbs — Exercise, Cancellation, Release, Retraction, Acceptance,
+Transfer, and Repricing — are complete. `ConvertibleIssuance` remains the simple `fields:`
+backward-compatibility demonstrator.
 
-| File | Today | Migrates to | Notes |
+### Current implementation
+
+| File | Current mechanism | Status | Notes |
 |---|---|---|---|
-| `issuance/EquityCompensationIssuance.mapping.md` | `fields:` TODO stub | `discriminator: compensation_type` + 3 variants | the canonical fan-out (§4.7) |
-| `issuance/StockIssuance.mapping.md` | `fields:` | `discriminator: issuance_type` + RSA / default variants | default branch = FOUNDERS_STOCK ⇒ Certificate |
-| `issuance/ConvertibleIssuance.mapping.md` | `fields:` | **stays simple** | single family; no routing needed — proves backward-compat |
-| `exercise/EquityCompensationExercise.mapping.md` | `fields:` | `route_by_security:` + Option/Sar (+ Rsu) | Option → `OptionExerciseTransaction`, SAR → `SarExerciseTransaction`; an exercise against an RSU is semantically invalid (RSUs settle via *Release*, §2.3) ⇒ Rsu variant = unmappable |
-| `cancellation/EquityCompensationCancellation.mapping.md` | `fields:` | `route_by_security:` + 3+ variants | fans to Option/Rsu/Sar cancellation, each its own reason enum |
-| `release/EquityCompensationRelease.mapping.md` | `fields:` | `route_by_security:` | RSU → `RsuSettlementTransaction`; Option/SAR variants = unmappable |
-| `retraction/EquityCompensationRetraction.mapping.md` | `fields:` | `route_by_security:` (all-unmappable) | no Carta retraction tx anywhere |
-| `acceptance/EquityCompensationAcceptance.mapping.md` | `fields:` | `route_by_security:` | Option/RSU/RSA set `stakeholderAcceptanceDate` on the security (not a tx); SAR/Certificate variants = unmappable (no such field) |
-| `transfer/EquityCompensationTransfer.mapping.md` | `fields:` | `route_by_security:` (all-unmappable) | no equity-comp transfer tx (only Warrant) |
-| `transfer/StockTransfer.mapping.md` | `route_by_security:` all-unmappable event | `route_by_security:` + `composite:` (cancel + issue) | **§4.9** — folds to Certificate/Rsa cancel + issue; `quantity`/`date` land, so it enters Core |
-| `repricing/EquityCompensationRepricing.mapping.md` | `fields:` | `route_by_security:` | Option/SAR mutate `exercisePrice`; RSU = unmappable |
+| `issuance/EquityCompensationIssuance.mapping.md` | `discriminator: compensation_type` + 3 variants | complete | canonical issuance fan-out (§4.7) |
+| `issuance/StockIssuance.mapping.md` | `discriminator: issuance_type` + RSA/default variants | complete | `FOUNDERS_STOCK` routes to Certificate |
+| `issuance/ConvertibleIssuance.mapping.md` | simple `fields:` | complete | single family; backward-compatibility demonstrator |
+| `exercise/EquityCompensationExercise.mapping.md` | `route_by_security:` | complete | Option/SAR exercise; RSU is explicitly unroutable here because it settles via Release |
+| `cancellation/EquityCompensationCancellation.mapping.md` | `route_by_security:` + variants | complete | Option/RSU/SAR cancellation families |
+| `release/EquityCompensationRelease.mapping.md` | `route_by_security:` | complete | RSU settlement; Option/SAR are unmappable |
+| `retraction/EquityCompensationRetraction.mapping.md` | `route_by_security:` | complete | no Carta retraction transaction |
+| `acceptance/EquityCompensationAcceptance.mapping.md` | `route_by_security:` | complete | acceptance date lands on security where Carta models it |
+| `transfer/EquityCompensationTransfer.mapping.md` | `route_by_security:` | complete | no equity-compensation transfer transaction |
+| `transfer/StockTransfer.mapping.md` | `route_by_security:` + `composite:` | complete | cancel + issue fold (§4.9); quantity/date make it Core-admissible |
+| `repricing/EquityCompensationRepricing.mapping.md` | `route_by_security:` | complete | Option/SAR mutate exercise price; RSU is unmappable |
 
-Adoption path:
+### Historical sequencing — archived
+
+The table and PR sequence below are retained as the 2026-05-18 implementation history. They are not
+the current state and are not an implementation guide.
+
+| File | Historical state | Planned migration | Notes |
+|---|---|---|---|
+| `issuance/EquityCompensationIssuance.mapping.md` | `fields:` TODO stub | `discriminator: compensation_type` + 3 variants | canonical fan-out (§4.7) |
+| `issuance/StockIssuance.mapping.md` | `fields:` | `discriminator: issuance_type` + RSA / default variants | default branch = FOUNDERS_STOCK ⇒ Certificate |
+| `issuance/ConvertibleIssuance.mapping.md` | `fields:` | **stays simple** | single family; no routing needed |
+| `exercise/EquityCompensationExercise.mapping.md` | `fields:` | `route_by_security:` | downstream routing |
+| `cancellation/EquityCompensationCancellation.mapping.md` | `fields:` | `route_by_security:` | downstream routing |
+| `release/EquityCompensationRelease.mapping.md` | `fields:` | `route_by_security:` | downstream routing |
+| `retraction/EquityCompensationRetraction.mapping.md` | `fields:` | `route_by_security:` | no Carta retraction tx |
+| `acceptance/EquityCompensationAcceptance.mapping.md` | `fields:` | `route_by_security:` | security-side acceptance |
+| `transfer/EquityCompensationTransfer.mapping.md` | `fields:` | `route_by_security:` | no equity-comp transfer tx |
+| `transfer/StockTransfer.mapping.md` | all-unmappable event | `route_by_security:` + `composite:` | historical pre-composite state |
+| `repricing/EquityCompensationRepricing.mapping.md` | `fields:` | `route_by_security:` | downstream routing |
+
+Historical PR sequence:
 1. **PR-1 (validator):** land the additive dispatch behind the existing `validateMapping` branch; legacy files are untouched and keep passing. Default `requireUnmappableReason: false` is preserved.
 2. **PR-2 (easy case):** migrate `ConvertibleIssuance` — it stays simple, demonstrating the no-op path, plus add the first downstream all-unmappable file (`Retraction` or `Transfer`) to exercise `route_by_security:` structurally.
 3. **PR-3 (issuance fan-out):** `EquityCompensationIssuance`, then `StockIssuance`.
@@ -475,7 +501,7 @@ Because the dispatch is "discriminator/route_by_security absent ⇒ old path," n
 
 ### 6.2 Carta-side import assumptions
 
-The model assumes Carta's importer (a) holds the full issuance set indexed so it can resolve `security_id → compensation_type` (the two-pass requirement), (b) materializes the per-family transaction *and* security object named in `primary_targets`, and (c) reconciles deprecated/overlapping OCF fields itself (e.g. `option_grant_type` vs `compensation_type`). The `.mapping.md` describes *intent*; the importer owns *execution*.
+The model assumes Carta's importer (a) holds the full issuance set indexed so it can resolve `security_id → compensation_type` (the two-pass requirement), (b) materializes the per-family transaction *and* security object named in `primary_targets`, and (c) reconciles deprecated/overlapping OCF fields itself (e.g. `option_grant_type` vs `compensation_type`). The `.mapping.md` describes *intent*; the importer owns *execution*. These are schema-derived assumptions until an importer-conformance suite pins and verifies them; see [`ocf-core-enrichment.md`](./ocf-core-enrichment.md).
 
 ### 6.3 Discriminator values and families with no home
 

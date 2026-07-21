@@ -126,7 +126,7 @@ Source: [`StockPlan.schema.json`](./StockPlan.schema.json)
 ## Mapping
 
 ```yaml
-# kind vocabulary: rename | split | combine | enum-remap | computed | unmappable | TODO
+# kind vocabulary: rename | select | split | combine | enum-remap | computed | unmappable | TODO
 status: complete
 
 fields:
@@ -171,8 +171,9 @@ fields:
     kind: rename
     target: "#/$defs/OptionPoolSummary/properties/shareClassId"
   stock_class_ids:
-    kind: rename
+    kind: select
     target: "#/$defs/OptionPoolSummary/properties/shareClassId"
+    policy: first_stock_class_id
 ```
 
 ## Notes / open questions
@@ -181,7 +182,7 @@ fields:
 - **`plan_name` → `OptionPoolSummary.name`.** Direct rename; both are the human-readable pool name (Carta `maxLength: 100`).
 - **`initial_shares_reserved` → `OptionPoolSummary.authorizedShares`** (lossy, semantically the closest available slot). OCF's field is explicitly the *initial* Board-reserved pool size (`Numeric` string). Carta's `authorizedShares` (`$ref: Decimal`, no description) is the pool's authorized share count, but the bundle does not document its temporal semantics (initial vs. current-after-amendments vs. as-of). OCF separately tracks pool changes through `StockPlanPoolAdjustment` transactions, so a faithful round-trip would set `authorizedShares` from the *initial* reservation only and let later adjustments move it; consumers wanting the current pool size must replay those events. There is no Carta field that preserves the "initial" qualifier, so this rename loses that distinction. `OptionPoolSummary` also exposes `fullyDilutedShares`, `outstandingEquityAwardDerivatives`, and `outstandingCommittedRestrictedStockAwards`, but those are computed roll-ups of issuances, not the reservation, and are not appropriate targets for the initial reserve.
 - **`stock_class_id` (deprecated, singular) → `OptionPoolSummary.shareClassId`.** Direct rename; Carta's `shareClassId` is "the share class used by the option pool to issue equity," which is exactly OCF's "StockClass object this plan is composed of."
-- **`stock_class_ids` (array) → `OptionPoolSummary.shareClassId`** (cardinality loss). OCF allows a pool to span *multiple* stock classes (array, `minItems: 1`); Carta's `OptionPoolSummary` models only a *single* `shareClassId` (there is no `shareClassIds` plural anywhere in the bundle — the only plural is the inverse `ShareClassSummary.optionPoolIds`, i.e. one share class → many pools). The OCF schema's `oneOf` guarantees that exactly one of `stock_class_id` / `stock_class_ids` is present, so for any given record only one of these two rename targets is exercised. When `stock_class_ids` holds more than one id, only one can be carried into Carta's single `shareClassId` and the remainder are dropped; this multi-class case has no faithful Carta representation.
+- **`stock_class_ids` (array) → `OptionPoolSummary.shareClassId`** (cardinality loss). OCF allows a pool to span *multiple* stock classes (array, `minItems: 1`); Carta's `OptionPoolSummary` models only a *single* `shareClassId` (there is no `shareClassIds` plural anywhere in the bundle — the only plural is the inverse `ShareClassSummary.optionPoolIds`, i.e. one share class → many pools). The OCF schema's `oneOf` guarantees that exactly one of `stock_class_id` / `stock_class_ids` is present, so for any given record only one of these two targets is exercised. When `stock_class_ids` holds more than one id, the explicit `first_stock_class_id` policy selects one and the remainder are dropped; this multi-class case has no faithful Carta representation.
 - **`board_approval_date` / `stockholder_approval_date` → unmappable (no-equivalent).** `OptionPoolSummary` records no plan-governance dates. Its only temporal field is `terminatedDatetime` (`Iso8601CompleteCalendarDateTime`), which is the pool's *termination* timestamp — not a board-approval or stockholder-approval (ISO-qualification) date — so it is not a valid target for either. Carta carries board-approval data on individual securities (`OptionGrant.boardApprovalDate`, etc.), but those are per-grant approvals, not the plan-level approval OCF describes here, and there is no plan-level slot for stockholder approval anywhere in the bundle.
 - **`default_cancellation_behavior` → unmappable (no-equivalent).** OCF stores a *plan-level default rule* (`StockPlanCancellationBehaviorType`: `RETIRE`, `RETURN_TO_POOL`, `HOLD_AS_CAPITAL_STOCK`, `DEFINED_PER_PLAN_SECURITY`) governing what happens to reserved shares when a plan security is cancelled. Carta has no pool-level cancellation-behavior field. Its `OptionPoolSummary` has no enum at all, and Carta's cancellation modeling is entirely *per-security and reason-oriented* (`OptionCancellationReason`, `RsaCancellationReason`, `RsuCancellationReason`, `SarCancellationReason`, etc., e.g. `OPTION_CANCELLATION_REASON_TERMINATION_FORFEITED`). Those enumerate *why* a specific award was cancelled, not the *default disposition of pool shares*, and OCF's own description warns that the event chain (per-security cancel/return/retire transactions) is authoritative over this default field — so there is no value-by-value remap onto any Carta enum. All four OCF values are therefore `null`.
 - **`id`, `comments`, `object_type` → unmappable (ocf-internal).** Standard OCF object scaffolding. `id` is OCF's pool identifier; Carta assigns its own `optionPoolId` server-side. `object_type` is OCF's `STOCK_PLAN` discriminator, which Carta encodes positionally by object type rather than as a field. `comments` has no Carta slot.

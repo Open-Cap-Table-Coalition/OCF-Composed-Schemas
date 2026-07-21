@@ -34,6 +34,7 @@ flowchart LR
   end
   o0 -->|"addresses → address"| t0
   o0 -->|"contact_info → email"| t0
+  o0 -->|"current_relationships → relationship"| t0
   o0 -->|"name → fullName"| t0
   o0 -->|"primary_contact → email"| t0
 ```
@@ -683,7 +684,7 @@ flowchart LR
 ```
 
 
-## A. Lossy home — by OCF object, flowing to Carta (49 (entity,variant,field) rows across 22 objects; 34 OCF-required)
+## A. Lossy home — by OCF object, flowing to Carta (50 (entity,variant,field) rows across 22 objects; 34 OCF-required)
 
 Each field HAS a Carta home but the fold loses fidelity: `existence-loss` = the shape
 collapses (object/array → scalar); `heuristic` = a non-1:1 transform (combine/split/computed).
@@ -736,7 +737,7 @@ is a direct predecessor→`securities` landing.
 | field | OCF-req | variant(s) | flows to (Carta) | loss |
 | --- | :---: | --- | --- | --- |
 | security_law_exemptions | **yes** | Option, Rsu, Sar | Compliance.federalExemption | heuristic (computed) |
-| termination_exercise_windows | **yes** | Option | OptionGrant.exercisePeriods | existence-loss (array→scalar) |
+| termination_exercise_windows | **yes** | Option | OptionGrant.exercisePeriods | existence-loss (select (first_termination_window)) |
 
 ### EquityCompensationRelease — in Core (admissible)
 
@@ -748,9 +749,10 @@ is a direct predecessor→`securities` landing.
 
 | field | OCF-req | variant(s) | flows to (Carta) | loss |
 | --- | :---: | --- | --- | --- |
-| addresses |  |  | Stakeholder.address | existence-loss (array→scalar) |
+| addresses |  |  | Stakeholder.address | existence-loss (select (first_address_country)) |
 | contact_info |  |  | Stakeholder.email | heuristic (combine) |
-| name | **yes** |  | Stakeholder.fullName | existence-loss (structure→scalar) |
+| current_relationships |  |  | Stakeholder.relationship | existence-loss (array→scalar) |
+| name | **yes** |  | Stakeholder.fullName | existence-loss (select (legal_name)) |
 | primary_contact |  |  | Stakeholder.email | heuristic (combine) |
 
 ### StockCancellation — in Core (admissible)
@@ -803,7 +805,7 @@ is a direct predecessor→`securities` landing.
 
 | field | OCF-req | variant(s) | flows to (Carta) | loss |
 | --- | :---: | --- | --- | --- |
-| stock_class_ids |  |  | OptionPoolSummary.shareClassId | existence-loss (array→scalar) |
+| stock_class_ids |  |  | OptionPoolSummary.shareClassId | existence-loss (select (first_stock_class_id)) |
 
 ### StockReissuance — not yet admissible
 
@@ -838,7 +840,7 @@ is a direct predecessor→`securities` landing.
 
 | field | OCF-req | variant(s) | flows to (Carta) | loss |
 | --- | :---: | --- | --- | --- |
-| resulting_security_ids | **yes** |  | WarrantExerciseTransaction.resultingSecurityId | existence-loss (array→scalar) |
+| resulting_security_ids | **yes** |  | WarrantExerciseTransaction.resultingSecurityId | existence-loss (select (first_resulting_security_id)) |
 
 ### WarrantIssuance — in Core (admissible)
 
@@ -850,7 +852,7 @@ is a direct predecessor→`securities` landing.
 
 | field | OCF-req | variant(s) | flows to (Carta) | loss |
 | --- | :---: | --- | --- | --- |
-| resulting_security_ids | **yes** |  | WarrantTransferTransaction.resultingSecurityId | existence-loss (array→scalar) |
+| resulting_security_ids | **yes** |  | WarrantTransferTransaction.resultingSecurityId | existence-loss (select (first_resulting_security_id)) |
 
 ## B. Flow map — Carta slot ← OCF sources
 
@@ -878,6 +880,7 @@ onto one Carta field — most visibly the reverse-edge lineage collapsing onto `
 - `ShareClass.seniority` ← 1: `StockClass.seniority`
 - `Stakeholder.address` ← 1: `Stakeholder.addresses`
 - `Stakeholder.fullName` ← 1: `Stakeholder.name`
+- `Stakeholder.relationship` ← 1: `Stakeholder.current_relationships`
 - `WarrantCancellationTransaction.reason` ← 1: `WarrantCancellation.reason_text`
 - `WarrantExerciseTransaction.resultingSecurityId` ← 1: `WarrantExercise.resulting_security_ids`
 - `WarrantTransferTransaction.resultingSecurityId` ← 1: `WarrantTransfer.resulting_security_ids`

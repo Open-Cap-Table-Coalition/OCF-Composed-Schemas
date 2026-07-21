@@ -42,11 +42,23 @@ Source: [`CountryCode.schema.json`](./CountryCode.schema.json)
 ## Mapping
 
 ```yaml
-# kind vocabulary: rename | split | combine | enum-remap | computed | unmappable | TODO
+# kind vocabulary: rename | select | split | combine | enum-remap | computed | unmappable | TODO
 status: complete
 
 fields: {}
 ```
+
+<!-- BEGIN GENERATED REFERENCE SITES -->
+### Reference sites (generated)
+
+Reverse `$ref` index: **3/3** discovered consumer sites are listed here. The consumer mapping is authoritative; this section exists to make the context-dependent resolution auditable and complete.
+
+| OCF consumer schema | Consumer mapping | Disposition |
+| --- | --- | --- |
+| objects/Issuer | [objects/Issuer · country_of_formation](../objects/Issuer.mapping.md) | unmappable / no-equivalent |
+| types/Address | [types/Address · country](./Address.mapping.md) | rename → #/$defs/StakeholderAddress/properties/country |
+| types/TaxID | [types/TaxID · country](./TaxID.mapping.md) | unmappable / no-equivalent |
+<!-- END GENERATED REFERENCE SITES -->
 
 ## Notes / open questions
 

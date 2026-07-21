@@ -7,7 +7,7 @@ narrowed form. So Core→target is lossy (expected), and a target-sourced Core d
 may not validate back as OCF without OCF relaxing a constraint. These are the
 upstream-OCF-change candidates; OCF-*required* fields (**bold**) are the strongest.
 
-## Overview — where rich-Core's lossy fields flow (36 fields, 25 OCF-required)
+## Overview — where rich-Core's lossy fields flow (37 fields, 25 OCF-required)
 
 One diagram per OCF object — each polymorphic flavor (`Object [Variant]`) fully separate — with
 the Carta objects it lands on. Edge labels = the property flowing; cross-object convergence
@@ -31,6 +31,7 @@ flowchart LR
   end
   o0 -->|"addresses → address"| t0
   o0 -->|"contact_info → email"| t0
+  o0 -->|"current_relationships → relationship"| t0
   o0 -->|"name → fullName"| t0
   o0 -->|"primary_contact → email"| t0
 ```
@@ -546,7 +547,7 @@ flowchart LR
 | field | OCF-req | variant(s) | flows to (Carta) | loss |
 | --- | :---: | --- | --- | --- |
 | security_law_exemptions | **yes** | Option, Rsu, Sar | Compliance.federalExemption | heuristic (computed) |
-| termination_exercise_windows | **yes** | Option | OptionGrant.exercisePeriods | existence-loss (array→scalar) |
+| termination_exercise_windows | **yes** | Option | OptionGrant.exercisePeriods | existence-loss (select (first_termination_window)) |
 
 ### EquityCompensationRelease — in Core (admissible)
 
@@ -558,9 +559,10 @@ flowchart LR
 
 | field | OCF-req | variant(s) | flows to (Carta) | loss |
 | --- | :---: | --- | --- | --- |
-| addresses |  |  | Stakeholder.address | existence-loss (array→scalar) |
+| addresses |  |  | Stakeholder.address | existence-loss (select (first_address_country)) |
 | contact_info |  |  | Stakeholder.email | heuristic (combine) |
-| name | **yes** |  | Stakeholder.fullName | existence-loss (structure→scalar) |
+| current_relationships |  |  | Stakeholder.relationship | existence-loss (array→scalar) |
+| name | **yes** |  | Stakeholder.fullName | existence-loss (select (legal_name)) |
 | primary_contact |  |  | Stakeholder.email | heuristic (combine) |
 
 ### StockCancellation — in Core (admissible)
@@ -595,7 +597,7 @@ flowchart LR
 
 | field | OCF-req | variant(s) | flows to (Carta) | loss |
 | --- | :---: | --- | --- | --- |
-| stock_class_ids |  |  | OptionPoolSummary.shareClassId | existence-loss (array→scalar) |
+| stock_class_ids |  |  | OptionPoolSummary.shareClassId | existence-loss (select (first_stock_class_id)) |
 
 ### StockTransfer — in Core (admissible)
 
@@ -622,7 +624,7 @@ flowchart LR
 
 | field | OCF-req | variant(s) | flows to (Carta) | loss |
 | --- | :---: | --- | --- | --- |
-| resulting_security_ids | **yes** |  | WarrantTransferTransaction.resultingSecurityId | existence-loss (array→scalar) |
+| resulting_security_ids | **yes** |  | WarrantTransferTransaction.resultingSecurityId | existence-loss (select (first_resulting_security_id)) |
 
 ## Flow map — Carta slot ← OCF sources (the narrowest are the strongest upstream asks)
 
@@ -647,6 +649,7 @@ flowchart LR
 - `ShareClass.seniority` ← 1: `StockClass.seniority`
 - `Stakeholder.address` ← 1: `Stakeholder.addresses`
 - `Stakeholder.fullName` ← 1: `Stakeholder.name`
+- `Stakeholder.relationship` ← 1: `Stakeholder.current_relationships`
 - `WarrantCancellationTransaction.reason` ← 1: `WarrantCancellation.reason_text`
 - `WarrantTransferTransaction.resultingSecurityId` ← 1: `WarrantTransfer.resulting_security_ids`
 

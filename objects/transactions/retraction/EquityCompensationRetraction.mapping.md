@@ -96,7 +96,7 @@ Source: [`EquityCompensationRetraction.schema.json`](./EquityCompensationRetract
 ## Mapping
 
 ```yaml
-# kind vocabulary: rename | split | combine | enum-remap | computed | unmappable | TODO
+# kind vocabulary: rename | select | split | combine | enum-remap | computed | unmappable | TODO
 # routing: route_by_security (downstream join). This retraction carries only
 # security_id and NO discriminator, so the equity-comp family (Option/Rsu/Sar)
 # is undecidable from the record alone: it is resolved by joining security_id

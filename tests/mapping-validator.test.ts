@@ -231,6 +231,38 @@ describe("validateMapping — entry shapes", () => {
     expect(errs.some((m) => m.includes("string target"))).toBe(true);
   });
 
+  it("requires a policy on select", () => {
+    const errs = messages(withField({ kind: "select", target: "#/$defs/Thing/properties/name" }));
+    expect(errs.some((m) => m.includes("kind select requires a non-empty policy"))).toBe(true);
+    expect(
+      messages(
+        withField({
+          kind: "select",
+          target: "#/$defs/Thing/properties/name",
+          policy: "legal_name",
+          source: "/legal_name",
+        })
+      )
+    ).toEqual([]);
+  });
+
+  it("rejects an implicit array-to-scalar rename", () => {
+    const input = makeInput({
+      sourceSchema: {
+        ...SOURCE_SCHEMA,
+        properties: { tags: { type: "array", items: { type: "string" } } },
+      },
+      mapping: {
+        status: "complete",
+        coverage: "1/1",
+        fields: {
+          tags: { kind: "rename", target: "#/$defs/Thing/properties/name" },
+        },
+      },
+    });
+    expect(messages(input).some((m) => m.includes("cannot reduce array to scalar"))).toBe(true);
+  });
+
   it("requires split targets to be arrays of at least 2 strings", () => {
     expect(
       messages(withField({ kind: "split", target: ["#/$defs/Thing/properties/name"] })).some((m) =>

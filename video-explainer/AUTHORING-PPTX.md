@@ -167,7 +167,7 @@ re-export all three decks. Route B is for hand-reworking one slide in place.
 - **Keep the fonts** (Helvetica Neue, Menlo) installed, or text reflows/substitutes.
 - **The image deck has no editable content** by design — don't try to edit it; use the editable one
   or `gen.py`.
-- **Data accuracy:** the object lists, counts (21 in / 26 out, 49 lossy / 249 no-home), and field
+- **Data accuracy:** the object lists, counts (22 in / 26 out, 50 lossy / 249 no-home), and field
   examples come from the real repo. If you change a claim, verify it against `core/core-ledger.md`,
   `docs/core-lossy-inventory.md`, and `docs/core-unmapped-inventory.md`.
 - **All three decks regenerate from the same scenes**, so never hand-edit one deck and expect the

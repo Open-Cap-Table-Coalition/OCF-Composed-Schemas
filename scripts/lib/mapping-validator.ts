@@ -145,6 +145,7 @@ export function collectStepTargets(
 
 export const KIND_VOCABULARY = [
   "rename",
+  "select",
   "split",
   "combine",
   "enum-remap",
@@ -349,10 +350,119 @@ function validateFieldMap(
       continue;
     }
     validateEntryShape(entry, name, kind, strict, opts, err);
+    validateTransformSemantics(
+      entry,
+      name,
+      kind,
+      properties[name],
+      input.registry,
+      input.targetBundle,
+      err
+    );
     const sourceEnumValues = detectEnumValues(properties[name], input.registry);
     validateValuesBlock(entry, name, kind, strict, sourceEnumValues, err);
     if (input.targetBundle !== null) {
       validateEntryTargets(entry, name, kind, strict, sourceEnumValues, input.targetBundle, err);
+    }
+  }
+}
+
+/** Resolve an OCF source node through the local registry, including nullable unions. */
+function resolveSourceNode(node: unknown, registry: Registry, depth = 0): unknown {
+  if (depth > 10 || !isPlainObject(node)) return node;
+  if (typeof node.$ref === "string") {
+    const resolved = registry.get(node.$ref);
+    if (resolved && resolved !== node) return resolveSourceNode(resolved, registry, depth + 1);
+  }
+  const union = node.oneOf ?? node.anyOf;
+  if (Array.isArray(union)) {
+    const real = union.filter((branch) => isPlainObject(branch) && branch.type !== "null");
+    if (real.length === 1) return resolveSourceNode(real[0], registry, depth + 1);
+  }
+  return node;
+}
+
+function schemaProperties(node: unknown): Record<string, unknown> | null {
+  if (!isPlainObject(node) || !isPlainObject(node.properties)) return null;
+  const props = node.properties as Record<string, unknown>;
+  return Object.keys(props).length > 0 ? props : null;
+}
+
+function isArraySchema(node: unknown): boolean {
+  return isPlainObject(node) && node.type === "array";
+}
+
+function isMultiPropertySchema(node: unknown): boolean {
+  const props = schemaProperties(node);
+  return props !== null && Object.keys(props).length >= 2;
+}
+
+function targetPointerNodes(target: unknown, bundle: unknown): unknown[] {
+  if (bundle === null) return [];
+  const pointers = Array.isArray(target)
+    ? target.filter((p): p is string => typeof p === "string")
+    : typeof target === "string" && target !== "TODO"
+    ? [target]
+    : [];
+  return pointers.flatMap((ptr) => {
+    const resolved = resolveJsonPointer(bundle, ptr);
+    return resolved.found ? [derefNode(bundle, resolved.value)] : [];
+  });
+}
+
+/**
+ * Keep the declarative DSL honest about whether an entry is executable. `rename` is a
+ * lossless 1:1 copy; reductions must name their policy explicitly so a consumer cannot
+ * mistake a prose note for an executable transform.
+ */
+function validateTransformSemantics(
+  entry: Record<string, unknown>,
+  name: string,
+  kind: string,
+  sourceRaw: unknown,
+  registry: Registry,
+  bundle: unknown | null,
+  err: ErrFn
+): void {
+  const policy = entry.policy;
+  if (kind === "select") {
+    if (typeof entry.target !== "string") return;
+    if (typeof policy !== "string" || policy.trim() === "") {
+      err(name, "kind select requires a non-empty policy: naming the deterministic reduction");
+    }
+    if (
+      entry.source !== undefined &&
+      (typeof entry.source !== "string" || !entry.source.startsWith("/"))
+    ) {
+      err(name, "select source: must be a relative JSON pointer beginning with '/'");
+    }
+    return;
+  }
+
+  if (kind !== "rename" && kind !== "split" && kind !== "enum-remap") return;
+  const source = resolveSourceNode(sourceRaw, registry);
+  const targets = targetPointerNodes(entry.target, bundle);
+  if (targets.length === 0) return;
+
+  const sourceArray = isArraySchema(source);
+  const targetArrays = targets.map(isArraySchema);
+  if (kind === "rename") {
+    if (sourceArray && targetArrays.some((isArray) => !isArray)) {
+      err(name, "kind rename cannot reduce array to scalar; use kind select with policy:");
+    }
+    if (isMultiPropertySchema(source) && targets.some((target) => !isMultiPropertySchema(target))) {
+      err(
+        name,
+        "kind rename cannot reduce a structured object to scalar; use kind select with policy:"
+      );
+    }
+  } else if (
+    (kind === "split" || kind === "enum-remap") &&
+    sourceArray &&
+    targetArrays.some((isArray) => !isArray)
+  ) {
+    if (typeof policy !== "string" || policy.trim() === "") {
+      err(name, `array-to-scalar ${kind} requires policy: naming the deterministic reduction`);
     }
   }
 }
@@ -931,6 +1041,7 @@ function validateEntryShape(
   const target = entry.target;
   switch (kind) {
     case "rename":
+    case "select":
     case "combine":
     case "enum-remap":
     case "computed":

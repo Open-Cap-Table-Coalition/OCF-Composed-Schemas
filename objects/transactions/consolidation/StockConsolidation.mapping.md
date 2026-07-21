@@ -100,7 +100,7 @@ Source: [`StockConsolidation.schema.json`](./StockConsolidation.schema.json)
 ## Mapping
 
 ```yaml
-# kind vocabulary: rename | split | combine | enum-remap | computed | unmappable | TODO
+# kind vocabulary: rename | select | split | combine | enum-remap | computed | unmappable | TODO
 # routing: route_by_security (downstream join). This consolidation carries NO
 # scalar security_id and NO discriminator — it folds many stock positions
 # (security_ids) into one resulting_security_id. The stock family (Rsa vs.
