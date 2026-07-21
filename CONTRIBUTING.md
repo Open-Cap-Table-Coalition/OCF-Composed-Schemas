@@ -108,7 +108,11 @@ The front matter `status` and the mapping-block `status` must agree:
 | `complete` | Every source property has a non-TODO entry and every unmappable entry has a reason |
 | `reviewed` | Complete and explicitly reviewed; it follows the same no-TODO rules |
 
-`coverage: X/N` is machine-checked. `N` is the number of source properties, and `X` is the number of entries that are not `TODO`. In a polymorphic mapping, use one `coverage` value per variant:
+`coverage` is a human-written assertion that the validator checks; it is not automatically filled in for you. Write `X/N`, where `N` is the number of source properties and `X` is the number of those properties with a non-`TODO` entry. The validator independently counts the source properties and mapping entries. If your number is wrong, `npm run mapping:validate` fails with an error—it does not silently correct the file.
+
+For example, `coverage: 10/13` means “this source schema has 13 properties, and 10 have decided mappings; three are still `TODO`.” A completed mapping normally has `13/13` because it cannot contain TODOs. If you add, remove, or change a mapping entry, update the coverage value to match.
+
+In a polymorphic mapping, use one `coverage` value per variant:
 
 ```yaml
 coverage:
@@ -117,7 +121,7 @@ coverage:
   Sar: 8/8
 ```
 
-Do not hand-wave the numerator. The validator calculates it from the source schema and mapping entries.
+The number is intentionally duplicated in the document so a reviewer can see the mapping's completion status at a glance; the validator is the check that keeps that summary honest.
 
 ## Mapping DSL walkthrough
 
