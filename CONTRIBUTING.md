@@ -29,12 +29,12 @@ The engines are declared in [`package.json`](./package.json): Node.js `>=24.11.0
 ```bash
 git switch main
 git pull --ff-only
-git switch -c codex/your-short-description
+git switch -c my-short-description
 
 npm ci
 ```
 
-If you are working in a checkout where `main` is already current, the `git pull` is optional. Do not reset or discard existing work in a shared checkout without confirming whose changes they are.
+Replace `my-short-description` with a branch name that follows your team's convention. If you are working in a checkout where `main` is already current, the `git pull` is optional. Do not reset or discard existing work in a shared checkout without confirming whose changes they are.
 
 ## Where changes belong
 
