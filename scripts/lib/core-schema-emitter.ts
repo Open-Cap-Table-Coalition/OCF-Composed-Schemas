@@ -14,7 +14,9 @@
  * Every value is INLINED into OCF grammar (assertable patterns, synthesized Date),
  * so each file is self-contained — no `$ref`, intra-package or external.
  *
- * `required: []` on every entity: the Carta fold declares nothing required (§3).
+ * Every emitted entity requires OCF's identity spine (`object_type` + `id`);
+ * economic fields remain optional because the Carta fold declares nothing
+ * required (§3).
  */
 import { detectEnumValues } from "./enum-detection.js";
 import { Registry } from "./registry.js";
@@ -178,12 +180,18 @@ function entityDef(e: CoreEntity, registry: Registry): Record<string, unknown> {
     if (f.description) node.description = f.description;
     properties[f.field] = node;
   }
+  const identity = ["object_type", "id"];
+  const missing = identity.filter((field) => properties[field] === undefined);
+  if (missing.length > 0) {
+    throw new Error(`${e.entity} is missing required OCF identity field(s): ${missing.join(", ")}`);
+  }
   return {
     type: "object",
     title: e.entity,
     properties,
-    // Fold-driven required set; the Carta fold requires nothing (§3).
-    required: [],
+    // OCF identity is required for referential closure and union discrimination;
+    // the Carta fold-driven economic required set remains empty (§3).
+    required: identity,
     additionalProperties: false,
   };
 }

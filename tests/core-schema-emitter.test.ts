@@ -138,18 +138,38 @@ const entities: CoreEntity[] = [
   {
     entity: "StockIssuance",
     kind: "event",
-    fields: [{ field: "quantity", srcRaw: { $ref: "ocf://Numeric" } }],
+    fields: [
+      { field: "id", srcRaw: { type: "string" } },
+      { field: "object_type", srcRaw: { const: "TX_STOCK_ISSUANCE" } },
+      { field: "quantity", srcRaw: { $ref: "ocf://Numeric" } },
+    ],
   },
   {
     entity: "StockCancellation",
     kind: "event",
-    fields: [{ field: "date", srcRaw: { $ref: "ocf://Date" } }],
+    fields: [
+      { field: "id", srcRaw: { type: "string" } },
+      { field: "object_type", srcRaw: { const: "TX_STOCK_CANCELLATION" } },
+      { field: "date", srcRaw: { $ref: "ocf://Date" } },
+    ],
   },
-  { entity: "StockClass", kind: "object", fields: [{ field: "name", srcRaw: { type: "string" } }] },
+  {
+    entity: "StockClass",
+    kind: "object",
+    fields: [
+      { field: "id", srcRaw: { type: "string" } },
+      { field: "object_type", srcRaw: { const: "STOCK_CLASS" } },
+      { field: "name", srcRaw: { type: "string" } },
+    ],
+  },
   {
     entity: "Issuer",
     kind: "object",
-    fields: [{ field: "legal_name", srcRaw: { type: "string" } }],
+    fields: [
+      { field: "id", srcRaw: { type: "string" } },
+      { field: "object_type", srcRaw: { const: "ISSUER" } },
+      { field: "legal_name", srcRaw: { type: "string" } },
+    ],
   },
 ];
 
@@ -161,6 +181,9 @@ describe("emitCorePackage", () => {
     expect(tf.properties.file_type.const).toBe("OCF_TRANSACTIONS_FILE");
     const titles = tf.properties.items.items.oneOf.map((o: any) => o.title).sort();
     expect(titles).toEqual(["StockCancellation", "StockIssuance"]);
+    for (const def of tf.properties.items.items.oneOf) {
+      expect(def.required).toEqual(["object_type", "id"]);
+    }
   });
 
   it("packages each object into its OCF category file", () => {
@@ -168,7 +191,7 @@ describe("emitCorePackage", () => {
     expect(scf.properties.file_type.const).toBe("OCF_STOCK_CLASSES_FILE");
     expect(scf.properties.items.items).toMatchObject({
       type: "object",
-      required: [],
+      required: ["object_type", "id"],
       additionalProperties: false,
       properties: { name: { type: "string" } },
     });
@@ -202,5 +225,15 @@ describe("emitCorePackage", () => {
 
   it("emits schemas that compile as draft-07 JSON Schemas", () => {
     expect(validateSchemaPackage(pkg)).toEqual([]);
+  });
+
+  it("rejects an entity that cannot carry the identity spine", () => {
+    expect(() =>
+      emitCorePackage(
+        [{ entity: "Broken", kind: "event", fields: [{ field: "quantity", srcRaw: {} }] }],
+        registry,
+        packaging
+      )
+    ).toThrow("Broken is missing required OCF identity field(s): object_type, id");
   });
 });

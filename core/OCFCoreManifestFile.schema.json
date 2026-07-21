@@ -45,7 +45,10 @@
           "const": "ISSUER"
         }
       },
-      "required": [],
+      "required": [
+        "object_type",
+        "id"
+      ],
       "additionalProperties": false
     },
     "stakeholders_files": {

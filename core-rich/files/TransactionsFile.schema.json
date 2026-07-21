@@ -58,7 +58,10 @@
                 "description": "Identifier for the security (stock, plan security, warrant, or convertible) by which it can be referenced by other transaction objects. N…"
               }
             },
-            "required": [],
+            "required": [
+              "object_type",
+              "id"
+            ],
             "additionalProperties": false
           },
           {
@@ -87,7 +90,10 @@
                 "description": "Identifier for the security (stock, plan security, warrant, or convertible) by which it can be referenced by other transaction objects. N…"
               }
             },
-            "required": [],
+            "required": [
+              "object_type",
+              "id"
+            ],
             "additionalProperties": false
           },
           {
@@ -5037,7 +5043,10 @@
                 "description": "Identifier for the stakeholder that holds legal title to this security"
               }
             },
-            "required": [],
+            "required": [
+              "object_type",
+              "id"
+            ],
             "additionalProperties": false
           },
           {
@@ -5071,7 +5080,10 @@
                 "description": "Reason for the cancellation"
               }
             },
-            "required": [],
+            "required": [
+              "object_type",
+              "id"
+            ],
             "additionalProperties": false
           },
           {
@@ -5108,7 +5120,10 @@
                 "description": "Identifier for the security (or securities) that resulted from the exercise"
               }
             },
-            "required": [],
+            "required": [
+              "object_type",
+              "id"
+            ],
             "additionalProperties": false
           },
           {
@@ -5325,7 +5340,10 @@
                 "description": "Optional materialized projection of exact vesting dates and amounts. A grant may be described by the declarative template (`vesting_templ…"
               }
             },
-            "required": [],
+            "required": [
+              "object_type",
+              "id"
+            ],
             "additionalProperties": false
           },
           {
@@ -5388,7 +5406,10 @@
                 "description": "The settlement date for the shares released, typically after the release transaction date"
               }
             },
-            "required": [],
+            "required": [
+              "object_type",
+              "id"
+            ],
             "additionalProperties": false
           },
           {
@@ -5424,7 +5445,10 @@
                 "const": "TX_EQUITY_COMPENSATION_REPRICING"
               }
             },
-            "required": [],
+            "required": [
+              "object_type",
+              "id"
+            ],
             "additionalProperties": false
           },
           {
@@ -5481,7 +5505,10 @@
                 "description": "Identifier of the Stakeholder object, a subject of this change event \"transaction\""
               }
             },
-            "required": [],
+            "required": [
+              "object_type",
+              "id"
+            ],
             "additionalProperties": false
           },
           {
@@ -5514,7 +5541,10 @@
                 "description": "Reason for the cancellation"
               }
             },
-            "required": [],
+            "required": [
+              "object_type",
+              "id"
+            ],
             "additionalProperties": false
           },
           {
@@ -5538,7 +5568,10 @@
                 "description": "Identifier of the StockClass object, a subject of this transaction"
               }
             },
-            "required": [],
+            "required": [
+              "object_type",
+              "id"
+            ],
             "additionalProperties": false
           },
           {
@@ -5619,7 +5652,10 @@
                 "description": "Identifier of the StockClass object, a subject of this transaction"
               }
             },
-            "required": [],
+            "required": [
+              "object_type",
+              "id"
+            ],
             "additionalProperties": false
           },
           {
@@ -5758,7 +5794,10 @@
                 "description": "List of exact vesting dates and amounts for this security. When `vestings` array is present then `vesting_terms_id` may be ignored."
               }
             },
-            "required": [],
+            "required": [
+              "object_type",
+              "id"
+            ],
             "additionalProperties": false
           },
           {
@@ -5796,7 +5835,10 @@
                 "description": "Array of identifiers for new security (or securities) created as a result of the transaction"
               }
             },
-            "required": [],
+            "required": [
+              "object_type",
+              "id"
+            ],
             "additionalProperties": false
           },
           {
@@ -5825,7 +5867,10 @@
                 "description": "Reason for the cancellation"
               }
             },
-            "required": [],
+            "required": [
+              "object_type",
+              "id"
+            ],
             "additionalProperties": false
           },
           {
@@ -5933,7 +5978,10 @@
                 "description": "What is expiration date of the warrant (if applicable)"
               }
             },
-            "required": [],
+            "required": [
+              "object_type",
+              "id"
+            ],
             "additionalProperties": false
           },
           {
@@ -5971,7 +6019,10 @@
                 "description": "Identifier for the security (stock, plan security, warrant, or convertible) by which it can be referenced by other transaction objects. N…"
               }
             },
-            "required": [],
+            "required": [
+              "object_type",
+              "id"
+            ],
             "additionalProperties": false
           }
         ]

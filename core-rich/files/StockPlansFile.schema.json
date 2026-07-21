@@ -43,7 +43,10 @@
             "description": "Identifiers of StockClass objects this plan is composed of"
           }
         },
-        "required": [],
+        "required": [
+          "object_type",
+          "id"
+        ],
         "additionalProperties": false
       }
     }

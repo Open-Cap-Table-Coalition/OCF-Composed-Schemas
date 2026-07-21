@@ -47,7 +47,10 @@
             "description": "Identifier of the stock class for this valuation"
           }
         },
-        "required": [],
+        "required": [
+          "object_type",
+          "id"
+        ],
         "additionalProperties": false
       }
     }

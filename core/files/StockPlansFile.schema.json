@@ -35,7 +35,10 @@
             "description": "[DEPRECATED in favor of stock_class_ids] Identifier of the StockClass object this plan is composed of."
           }
         },
-        "required": [],
+        "required": [
+          "object_type",
+          "id"
+        ],
         "additionalProperties": false
       }
     }

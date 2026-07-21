@@ -124,7 +124,10 @@
             "description": "Ordered list of vesting statements. They chain implicitly by their `order` field rather than via explicit graph edges."
           }
         },
-        "required": [],
+        "required": [
+          "object_type",
+          "id"
+        ],
         "additionalProperties": false
       }
     }

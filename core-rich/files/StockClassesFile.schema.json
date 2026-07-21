@@ -198,7 +198,10 @@
             "description": "Seniority of the stock - determines repayment priority. Seniority is ordered by increasing number so that stock classes with a higher sen…"
           }
         },
-        "required": [],
+        "required": [
+          "object_type",
+          "id"
+        ],
         "additionalProperties": false
       }
     }

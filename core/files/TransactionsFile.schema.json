@@ -54,7 +54,10 @@
                 "description": "Identifier for the security (stock, plan security, warrant, or convertible) by which it can be referenced by other transaction objects. N…"
               }
             },
-            "required": [],
+            "required": [
+              "object_type",
+              "id"
+            ],
             "additionalProperties": false
           },
           {
@@ -83,7 +86,10 @@
                 "description": "Identifier for the security (stock, plan security, warrant, or convertible) by which it can be referenced by other transaction objects. N…"
               }
             },
-            "required": [],
+            "required": [
+              "object_type",
+              "id"
+            ],
             "additionalProperties": false
           },
           {
@@ -145,7 +151,10 @@
                 "description": "Identifier for the stakeholder that holds legal title to this security"
               }
             },
-            "required": [],
+            "required": [
+              "object_type",
+              "id"
+            ],
             "additionalProperties": false
           },
           {
@@ -175,7 +184,10 @@
                 "description": "Quantity of non-monetary security units cancelled"
               }
             },
-            "required": [],
+            "required": [
+              "object_type",
+              "id"
+            ],
             "additionalProperties": false
           },
           {
@@ -205,7 +217,10 @@
                 "description": "Quantity of shares exercised"
               }
             },
-            "required": [],
+            "required": [
+              "object_type",
+              "id"
+            ],
             "additionalProperties": false
           },
           {
@@ -261,7 +276,10 @@
                 "description": "The settlement date for the shares released, typically after the release transaction date"
               }
             },
-            "required": [],
+            "required": [
+              "object_type",
+              "id"
+            ],
             "additionalProperties": false
           },
           {
@@ -297,7 +315,10 @@
                 "const": "TX_EQUITY_COMPENSATION_REPRICING"
               }
             },
-            "required": [],
+            "required": [
+              "object_type",
+              "id"
+            ],
             "additionalProperties": false
           },
           {
@@ -354,7 +375,10 @@
                 "description": "Identifier of the Stakeholder object, a subject of this change event \"transaction\""
               }
             },
-            "required": [],
+            "required": [
+              "object_type",
+              "id"
+            ],
             "additionalProperties": false
           },
           {
@@ -379,7 +403,10 @@
                 "description": "Quantity of non-monetary security units cancelled"
               }
             },
-            "required": [],
+            "required": [
+              "object_type",
+              "id"
+            ],
             "additionalProperties": false
           },
           {
@@ -403,7 +430,10 @@
                 "description": "Identifier of the StockClass object, a subject of this transaction"
               }
             },
-            "required": [],
+            "required": [
+              "object_type",
+              "id"
+            ],
             "additionalProperties": false
           },
           {
@@ -428,7 +458,10 @@
                 "description": "Quantity of non-monetary security units transferred"
               }
             },
-            "required": [],
+            "required": [
+              "object_type",
+              "id"
+            ],
             "additionalProperties": false
           },
           {
@@ -453,7 +486,10 @@
                 "description": "Quantity of non-monetary security units cancelled"
               }
             },
-            "required": [],
+            "required": [
+              "object_type",
+              "id"
+            ],
             "additionalProperties": false
           },
           {
@@ -482,7 +518,10 @@
                 "description": "Identifier for the security (stock, plan security, warrant, or convertible) by which it can be referenced by other transaction objects. N…"
               }
             },
-            "required": [],
+            "required": [
+              "object_type",
+              "id"
+            ],
             "additionalProperties": false
           }
         ]
