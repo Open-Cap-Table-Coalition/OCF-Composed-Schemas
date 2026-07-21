@@ -191,6 +191,30 @@ flowchart LR
   o0 -->|"stockholder_approval_date"| sink
 ```
 
+**Stakeholder → Stakeholder**
+
+```mermaid
+flowchart LR
+  classDef adm fill:#e6f4ea,stroke:#34a853,color:#0b3d20;
+  classDef notadm fill:#f1f3f4,stroke:#9aa0a6,color:#5f6368,stroke-dasharray:4 3;
+  classDef carta fill:#e8f0fe,stroke:#1a73e8,color:#0d2b66;
+  classDef sink fill:#fce8e6,stroke:#d93025,color:#5c0d06;
+  subgraph SRC["OCF source objects"]
+    direction TB
+    o0["Stakeholder"]:::adm
+  end
+  subgraph TGT["Carta target objects"]
+    direction TB
+    t0["Stakeholder"]:::carta
+    sink["⌀ no Carta home"]:::sink
+  end
+  o0 -->|"addresses → address"| t0
+  o0 -->|"current_relationships → relationship"| t0
+  o0 -->|"current_status"| sink
+  o0 -->|"name → fullName"| t0
+  o0 -->|"tax_ids"| sink
+```
+
 **StockIssuance [Rsa]**
 
 ```mermaid
@@ -258,29 +282,6 @@ flowchart LR
   o0 -->|"consideration_text"| sink
   o0 -->|"stockholder_approval_date"| sink
   o0 -->|"termination_exercise_windows → exercisePeriods"| t0
-```
-
-**Stakeholder → Stakeholder**
-
-```mermaid
-flowchart LR
-  classDef adm fill:#e6f4ea,stroke:#34a853,color:#0b3d20;
-  classDef notadm fill:#f1f3f4,stroke:#9aa0a6,color:#5f6368,stroke-dasharray:4 3;
-  classDef carta fill:#e8f0fe,stroke:#1a73e8,color:#0d2b66;
-  classDef sink fill:#fce8e6,stroke:#d93025,color:#5c0d06;
-  subgraph SRC["OCF source objects"]
-    direction TB
-    o0["Stakeholder"]:::adm
-  end
-  subgraph TGT["Carta target objects"]
-    direction TB
-    t0["Stakeholder"]:::carta
-    sink["⌀ no Carta home"]:::sink
-  end
-  o0 -->|"addresses → address"| t0
-  o0 -->|"current_status"| sink
-  o0 -->|"name → fullName"| t0
-  o0 -->|"tax_ids"| sink
 ```
 
 **StockPlan → OptionPoolSummary**
@@ -708,7 +709,7 @@ flowchart LR
 - base_price: no-destination — kind unmappable
 - consideration_text: no-destination — kind unmappable
 - stockholder_approval_date: no-destination — kind unmappable
-- **termination_exercise_windows** (OCF-required): existence-loss — array→scalar
+- **termination_exercise_windows** (OCF-required): existence-loss — select (first_termination_window)
 
 ### EquityCompensationIssuance [Rsu]
 - base_price: no-destination — kind unmappable
@@ -760,9 +761,10 @@ flowchart LR
 - tax_ids: no-destination — kind unmappable
 
 ### Stakeholder
-- addresses: existence-loss — array→scalar
+- addresses: existence-loss — select (first_address_country)
+- current_relationships: existence-loss — array→scalar
 - current_status: no-destination — kind unmappable
-- **name** (OCF-required): existence-loss — structure→scalar
+- **name** (OCF-required): existence-loss — select (legal_name)
 - tax_ids: no-destination — kind unmappable
 
 ### StakeholderRelationshipChangeEvent
@@ -803,7 +805,7 @@ flowchart LR
 ### StockPlan
 - board_approval_date: no-destination — kind unmappable
 - default_cancellation_behavior: no-destination — kind unmappable
-- stock_class_ids: existence-loss — array→scalar
+- stock_class_ids: existence-loss — select (first_stock_class_id)
 - stockholder_approval_date: no-destination — kind unmappable
 
 ### StockTransfer [Default]
@@ -836,7 +838,7 @@ flowchart LR
 ### WarrantTransfer
 - balance_security_id: no-destination — kind unmappable
 - consideration_text: no-destination — kind unmappable
-- **resulting_security_ids** (OCF-required): existence-loss — array→scalar
+- **resulting_security_ids** (OCF-required): existence-loss — select (first_resulting_security_id)
 
 ## (b) Carta object types no green mapping writes to
 

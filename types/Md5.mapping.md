@@ -40,7 +40,7 @@ Source: [`Md5.schema.json`](./Md5.schema.json)
 ## Mapping
 
 ```yaml
-# kind vocabulary: rename | split | combine | enum-remap | computed | unmappable | TODO
+# kind vocabulary: rename | select | split | combine | enum-remap | computed | unmappable | TODO
 status: complete
 coverage: 0/0
 

@@ -1,15 +1,15 @@
-# OCF Core — Derivation & Build Spec (Straw-Man v2)
+# OCF Core — Derivation & Build Specification
 
 How **OCF Core** is computed from the mapping corpus this repo already has, what the build emits, and
 how CI keeps it honest. This is the **mechanism**; the **definition, rules (R0–R6), and rulings** live
 in [`ocf-core-goal.md`](./ocf-core-goal.md), which is canonical. Where the two disagree, the goal doc
 wins and this doc is wrong.
 
-> **One-line recap of the goal.** OCF Core is an *event-driven* strict subset of OCF that **always
-> folds down to a valid Carta snapshot** (and enriches back up to full OCF). The defining invariant: a
-> document is Core iff the Carta fold is **total** over it — it never gets stuck and never drops a
-> datum with nowhere to land. The fold itself is separate, already-owned machinery; Core's job is to
-> *guarantee it can run*. This spec computes which OCF fields/events satisfy that guarantee.
+> **One-line recap of the goal.** OCF Core is an *event-driven*, OCF-shaped projection whose strict
+> membership is **schema-derived admissibility** for the Carta fold. A Core document can be enriched
+> into **OCF Extended**, a fully OCF-valid document, when the required source/context data is
+> available. The fold and enrichment implementations are separate; this spec computes the static
+> conditions they must satisfy and records the evidence boundary.
 
 > **Two profiles (§9).** The recap above defines the **`strict`** profile — the lossless intersection,
 > emitted to `core/`. Everything in §§1–8 is about it and it is the default everywhere. A second
@@ -211,13 +211,16 @@ emits, all **generated, never hand-edited**:
   **Composite folds** section naming the Carta step objects each event lands on and the fixed `const:`
   values each step supplies. This holds the fold-relevant truth a JSON Schema can't.
 - **Core schema package** — packaged like OCF proper (`core/`): a manifest plus per-category `*File`
-  schemas, **reusing OCF `file_type` consts** so a Core package is also a shape-valid OCF package.
+  schemas, **reusing OCF `file_type` consts** so the package remains OCF-shaped and uses OCF file
+  vocabulary. A Core-valid instance is not necessarily directly valid against the original OCF
+  schemas; OCF Extended is the post-enrichment valid OCF output.
   `files/TransactionsFile.schema.json` holds every admissible **event** (`items.oneOf`); one
   `files/<Category>File.schema.json` per admissible **object**; `OCFCoreManifestFile.schema.json`
   carries the issuer inline + a `*_files` pointer collection per present category. **Entities are OCF
   entities — variants are collapsed**: a Carta-fold split like `StockIssuance` Default/Rsa is one OCF
   `StockIssuance` (R0), with fields = the union of what is `core` in any admissible variant, each
-  optional. **Identity spine:** because Core ⊆ OCF, every entity also carries OCF's universal keys —
+  optional. **Identity spine:** because Core uses OCF's object vocabulary, every entity also carries
+  OCF's universal keys —
   `id` and `object_type` (a `const`, the transaction-union discriminator) — even though they are
   economically `out` (no Carta payload home). They are keys, not payload (the §3 non-degeneracy gate
   ignores them); without them the all-optional event union is ambiguous and referential closure (R4)
@@ -225,7 +228,9 @@ emits, all **generated, never hand-edited**:
   already ship patterns; for `Date` the emitter **synthesizes** `^\d{4}-\d{2}-\d{2}$`, because
   `types/Date.schema.json` only declares `format: date`, annotation-only under draft-07. Every value is
   inlined — each file is self-contained, no `$ref`. An instance valid against the package is, by
-  construction, in OCF grammar — guaranteed-foldable on values.
+  construction, in OCF grammar. This establishes value-shape admissibility, not live-importer
+  execution or complete OCF requiredness; those are covered by the Carta fold and OCF Extended
+  contracts.
 - **Gap report (R5)** — two lists: (a) OCF richness with no Carta home (fold-required fields that are
   `out` with `no-destination`/`existence-loss`), and (b) generally-applicable Carta concepts OCF
   lacks. These are the OCF↔Carta gaps to discuss; they are never smuggled into Core.
@@ -389,10 +394,10 @@ OCF's structured `Name` (`{legal_name, first_name?, last_name?}`), not Carta's f
 `addresses` stays an array of full `Address`, not a country string. `required` is already relaxed
 (`[]`) on every entity. So rich does not *remove* the loss strict avoided — it **relocates** it:
 
-- `strict`: the lossy edge is **OCF→Core** (richness shed on the way in); Core→Carta and Core→OCF are
-  both clean.
+- `strict`: the lossy edge is **OCF→Core** (richness shed on the way in); Core→Carta is
+  schema-derived lossless, while Core→OCF requires OCF Extended enrichment.
 - `rich`: Core is rich, so the lossy edge becomes **Core→target** (a rich `Address` narrows to Carta's
-  `country`) and possibly **Core→OCF** (a target-*sourced* rich doc may under-fill an OCF `required`).
+  `country`); a rich document also requires OCF Extended enrichment when it is returned to OCF.
 
 `rich` therefore **gives up strict's "everything in Core is Carta-expressible" guarantee** in exchange
 for a useful, populated Core. Both artifacts ship; neither replaces the other.

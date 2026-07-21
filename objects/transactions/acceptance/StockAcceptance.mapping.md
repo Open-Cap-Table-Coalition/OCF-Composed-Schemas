@@ -86,7 +86,7 @@ Source: [`StockAcceptance.schema.json`](./StockAcceptance.schema.json)
 ## Mapping
 
 ```yaml
-# kind vocabulary: rename | split | combine | enum-remap | computed | unmappable | TODO
+# kind vocabulary: rename | select | split | combine | enum-remap | computed | unmappable | TODO
 # routing: route_by_security (downstream join). A stock acceptance carries only
 # security_id and NO discriminator, so the family is undecidable from the record
 # alone: it is resolved by joining security_id back to the StockIssuance and

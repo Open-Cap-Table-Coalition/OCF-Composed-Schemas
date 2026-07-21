@@ -106,7 +106,7 @@ Source: [`StockRepurchase.schema.json`](./StockRepurchase.schema.json)
 ## Mapping
 
 ```yaml
-# kind vocabulary: rename | split | combine | enum-remap | computed | unmappable | TODO
+# kind vocabulary: rename | select | split | combine | enum-remap | computed | unmappable | TODO
 # routing: route_by_security (downstream join). A StockRepurchase carries only
 # security_id and NO discriminator, so the repurchased stock's family is undecidable
 # from the record alone: it is resolved by joining security_id back to the

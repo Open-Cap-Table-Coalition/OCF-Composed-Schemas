@@ -43,10 +43,44 @@ Four stages, each with a distinct *shape*:
 | --- | --- | --- |
 | **Mapping** | a declarative DSL | OCF schema → a `fields:` map of per-property transforms |
 | **Validate** | a pure rules function | (mapping, source schema, target bundle) → `error[]` |
-| **Project** | a filter / restriction | mapping corpus → OCF Core (a subset of OCF) |
+| **Project** | a filter / restriction | mapping corpus → an OCF-shaped Core projection |
 | **Report** | a re-cut / render | the derived ledger → markdown + mermaid |
 
 The rest of this guide walks each stage: its shape, its rules, and one illustrative example.
+
+---
+
+## Current workflow and commands
+
+This document is the canonical overview of the mapping lifecycle. The authored source of truth is
+the set of `objects/*.mapping.md` and `types/*.mapping.md` files; generated Core schemas, ledgers,
+gap reports, and coverage reports are outputs and must not be edited by hand.
+
+The mapping-skeleton CLI is a bootstrap and schema-refresh helper, not the source of mapping
+decisions:
+
+```bash
+npm run mapping:skeleton                  # write missing skeletons
+npm run mapping:skeleton -- --dry-run     # preview writes
+npm run mapping:skeleton -- --force       # overwrite existing mappings; use deliberately
+```
+
+It derives each skeleton from the composed OCF schemas. By default it skips existing mapping files,
+so completed mapping decisions remain intact. The current mapping corpus contains 102 mapping files;
+the count is derived from the repository and should not be copied into a hand-maintained plan.
+
+After changing a mapping, run the checks in this order:
+
+```bash
+npm run mapping:validate                  # mapping grammar, pointers, coverage, and enums
+npm run core:check                         # Core derivation, allow-list, and artifact drift
+npm test -- --runInBand                    # behavior and CLI regression tests
+npm run typecheck && npm run lint          # static and formatting checks
+```
+
+For the exact mapping grammar and validator rules, see [`mapping-validation.md`](./mapping-validation.md).
+For Core membership and emission, see [`ocf-core-spec.md`](./ocf-core-spec.md). This workflow
+supersedes the removed mapping-skeleton design and implementation-plan documents.
 
 ---
 
@@ -66,7 +100,8 @@ That per-field entry is the atom of the whole system. Its `kind` is the transfor
 
 | `kind` | what it does | target shape |
 | --- | --- | --- |
-| `rename` | move the value verbatim | one pointer |
+| `rename` | move a shape-compatible value verbatim | one pointer |
+| `select` | reduce an array/object to one target under an explicit policy | one pointer + `policy:` |
 | `enum-remap` | rewrite value-by-value | one pointer + a `values:` map |
 | `split` | fan one field to several | ≥2 pointers |
 | `combine` / `computed` | derive from one or more | one pointer |
@@ -178,16 +213,21 @@ Two invariants are worth calling out because they're what make derivation safe:
 
 ## Stage 3 — Projection (deriving OCF Core)
 
-This is the payoff. **OCF Core** is a minimal, Carta-cleanly-convertible subset of OCF — and it is
-**computed from the mapping corpus, never written by hand.**
+This is the payoff. **OCF Core** is a minimal, OCF-shaped projection whose mapped values are
+statically admissible for the Carta fold — and it is **computed from the mapping corpus, never
+written by hand.** Core is not necessarily valid against the live OCF schema's requiredness rules;
+an explicit enrichment step produces **OCF Extended** when omitted context is available (see
+[`ocf-core-enrichment.md`](./ocf-core-enrichment.md)).
 
 ### The defining invariant
 
-> A document is Core **iff the fold down to Carta is *total* over it** — it always produces a valid
-> Carta snapshot and never silently drops a datum with nowhere to land.
+> A document is strict Core **iff its mapped value shapes are statically admissible for the Carta
+> fold and every required mapped fact has a destination**. Runtime fold totality, source
+> requiredness, and enrichment are separate concerns.
 
-Core is *exactly* the domain on which that fold is guaranteed to succeed. So the projection is:
-**start from all of OCF, keep only what provably survives the mapping to Carta.**
+The strict projection therefore keeps the OCF facts that have a statically admissible, lossless
+destination; rich Core also records explicitly classified lossy homes. Any omitted required OCF
+context is handled by the enrichment boundary rather than silently assumed to be present.
 
 ### Shape
 
@@ -361,9 +401,9 @@ If you remember nothing else, remember these — they're the DNA the whole syste
    surface it.
 3. **Everything must be total and deterministic.** No heuristic, no partial lookup, no "usually
    works" gets into Core. If a rule can't answer for some legal input, it's out.
-4. **Core is OCF-shaped, one-way down.** Core is a *subset of OCF* — same objects and field names,
-   no Carta-isms, no invented objects. It folds *to* Carta; we never require recovering it *from*
-   Carta.
+4. **Core is OCF-shaped, one-way down.** Core uses OCF objects and field names, with intentionally
+   relaxed requiredness; it is not automatically an instance-valid OCF document. It folds *to* Carta
+   and can be enriched into OCF Extended; we never require recovering Core *from* Carta.
 5. **Single source of truth per fact.** The schema owns the property set; the ledger owns
    membership; one predicate owns strict-vs-rich; one `allow-list` owns ratification. No fact is
    stated in two places that could disagree.

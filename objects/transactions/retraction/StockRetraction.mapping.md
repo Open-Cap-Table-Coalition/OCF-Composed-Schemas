@@ -92,7 +92,7 @@ Source: [`StockRetraction.schema.json`](./StockRetraction.schema.json)
 ## Mapping
 
 ```yaml
-# kind vocabulary: rename | split | combine | enum-remap | computed | unmappable | TODO
+# kind vocabulary: rename | select | split | combine | enum-remap | computed | unmappable | TODO
 # routing: route_by_security (downstream join). This retraction carries only
 # security_id and NO discriminator, so the stock family (RSA vs founders/plain
 # certificate) is undecidable from the record alone: it is resolved by joining

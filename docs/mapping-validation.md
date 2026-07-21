@@ -22,12 +22,16 @@ coverage counters never lie, and enum remaps are checked value-by-value.
 
 **Structural (every file):** required frontmatter keys; `status` ∈ `draft | partial | complete |
 reviewed` and identical in frontmatter and mapping block; every `fields:` key is a real property
-of the source schema; `kind` ∈ `rename | split | combine | enum-remap | computed | unmappable |
+of the source schema; `kind` ∈ `rename | select | split | combine | enum-remap | computed | unmappable |
 TODO` with the matching target shape (string; array of ≥2 strings for `split`; `null` for
 `unmappable`; literal `TODO` for `TODO`); `coverage: X/N` where `N` = source property count and
 `X` = non-`TODO` entry count — the counter is machine-checked, never hand-trusted. Any entry may
-carry an optional free-text `note:` (a string), rendered under its field in `--verbose`. In a
-polymorphic mapping (below), an entry may also carry a **`routed_to:`** map
+carry an optional free-text `note:` (a string), rendered under its field in `--verbose`. `rename` is
+a lossless, shape-compatible 1:1 copy. `select` reduces an array or structured value to one target
+and requires a non-empty deterministic `policy:`; an optional relative `source:` pointer identifies
+the member path selected from an object or array item. Array-to-scalar `split` entries likewise
+require a deterministic `policy:`. In a polymorphic mapping (below), an entry may also carry a
+**`routed_to:`** map
 (`{ discriminator value → variant label }`) — a *verified round-trip edge*: a value `null`-ed in
 this variant because it belongs to another. The validator confirms each named variant actually
 *claims* that value (a real, deterministic route), and `--verbose` renders it as

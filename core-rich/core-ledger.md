@@ -150,15 +150,15 @@ in the coverage report.
 | Stakeholder | — | id | out | no-destination | kind unmappable |
 | Stakeholder | — | comments | out | no-destination | kind unmappable |
 | Stakeholder | — | object_type | out | no-destination | kind unmappable |
-| Stakeholder | — | name | out | existence-loss | structure→scalar |
+| Stakeholder | — | name | out | existence-loss | select (legal_name) |
 | Stakeholder | — | stakeholder_type | core | value-coarsening | enum→bucket |
 | Stakeholder | — | issuer_assigned_id | core | direct |  |
 | Stakeholder | — | current_relationship | core | value-coarsening | enum→bucket |
-| Stakeholder | — | current_relationships | core | value-coarsening | enum→bucket |
+| Stakeholder | — | current_relationships | out | existence-loss | array→scalar |
 | Stakeholder | — | current_status | out | no-destination | kind unmappable |
 | Stakeholder | — | primary_contact | out | heuristic | kind combine |
 | Stakeholder | — | contact_info | out | heuristic | kind combine |
-| Stakeholder | — | addresses | out | existence-loss | array→scalar |
+| Stakeholder | — | addresses | out | existence-loss | select (first_address_country) |
 | Stakeholder | — | tax_ids | out | no-destination | kind unmappable |
 | StockClass | — | id | out | no-destination | kind unmappable |
 | StockClass | — | comments | out | no-destination | kind unmappable |
@@ -190,7 +190,7 @@ in the coverage report.
 | StockPlan | — | initial_shares_reserved | core | widening |  |
 | StockPlan | — | default_cancellation_behavior | out | no-destination | kind unmappable |
 | StockPlan | — | stock_class_id | core | direct |  |
-| StockPlan | — | stock_class_ids | out | existence-loss | array→scalar |
+| StockPlan | — | stock_class_ids | out | existence-loss | select (first_stock_class_id) |
 | Valuation | — | id | out | no-destination | kind unmappable |
 | Valuation | — | comments | out | no-destination | kind unmappable |
 | Valuation | — | object_type | out | no-destination | kind unmappable |
@@ -412,7 +412,7 @@ in the coverage report.
 | WarrantExercise  | — | date | core | widening |  |
 | WarrantExercise  | — | security_id | core | direct |  |
 | WarrantExercise  | — | consideration_text | out | no-destination | kind unmappable |
-| WarrantExercise  | — | resulting_security_ids | out | existence-loss | array→scalar |
+| WarrantExercise  | — | resulting_security_ids | out | existence-loss | select (first_resulting_security_id) |
 | WarrantExercise  | — | trigger_id | out | no-destination | kind unmappable |
 | ConvertibleIssuance | — | id | out | no-destination | kind unmappable |
 | ConvertibleIssuance | — | comments | out | no-destination | kind unmappable |
@@ -453,7 +453,7 @@ in the coverage report.
 | EquityCompensationIssuance | Option | base_price | out | no-destination | kind unmappable |
 | EquityCompensationIssuance | Option | early_exercisable | core | direct |  |
 | EquityCompensationIssuance | Option | expiration_date | core | widening |  |
-| EquityCompensationIssuance | Option | termination_exercise_windows | out | existence-loss | array→scalar |
+| EquityCompensationIssuance | Option | termination_exercise_windows | out | existence-loss | select (first_termination_window) |
 | EquityCompensationIssuance | Rsu | id | out | no-destination | kind unmappable |
 | EquityCompensationIssuance | Rsu | comments | out | no-destination | kind unmappable |
 | EquityCompensationIssuance | Rsu | object_type | out | no-destination | kind unmappable |
@@ -766,7 +766,7 @@ in the coverage report.
 | WarrantTransfer | — | security_id | core | direct |  |
 | WarrantTransfer | — | consideration_text | out | no-destination | kind unmappable |
 | WarrantTransfer | — | balance_security_id | out | no-destination | kind unmappable |
-| WarrantTransfer | — | resulting_security_ids | out | existence-loss | array→scalar |
+| WarrantTransfer | — | resulting_security_ids | out | existence-loss | select (first_resulting_security_id) |
 | WarrantTransfer | — | quantity | core | widening |  |
 | VestingAcceleration  | — | id | out | no-destination | kind unmappable |
 | VestingAcceleration  | — | comments | out | no-destination | kind unmappable |

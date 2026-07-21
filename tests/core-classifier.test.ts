@@ -105,6 +105,14 @@ describe("classifyField — rename shape cascade", () => {
     expect(v).toMatchObject({ class: "out", reason: "heuristic" });
     expect(v.detail).toContain("free-text→enum");
   });
+  it("select is explicitly existence-loss with its policy", () => {
+    const v = classifyField(
+      { kind: "select", target: "#/$defs/Scalar", policy: "first" },
+      { type: "array", items: { type: "string" } },
+      ctx()
+    );
+    expect(v).toMatchObject({ class: "out", reason: "existence-loss", detail: "select (first)" });
+  });
   it("a boilerplate-scalar source (properties:{}) is NOT misread as a collapse", () => {
     // Numeric ships `properties: {}`; it must classify as a clean scalar rename.
     expect(

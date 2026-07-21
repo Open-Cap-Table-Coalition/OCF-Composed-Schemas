@@ -33,28 +33,6 @@
             ],
             "description": "What is the current relationship of the stakeholder to the issuer?"
           },
-          "current_relationships": {
-            "type": "array",
-            "items": {
-              "type": "string",
-              "enum": [
-                "ADVISOR",
-                "BOARD_MEMBER",
-                "CONSULTANT",
-                "EMPLOYEE",
-                "EX_ADVISOR",
-                "EX_CONSULTANT",
-                "EX_EMPLOYEE",
-                "EXECUTIVE",
-                "FOUNDER",
-                "INVESTOR",
-                "NON_US_EMPLOYEE",
-                "OFFICER",
-                "OTHER"
-              ]
-            },
-            "description": "What is/are the current relationship(s) of the stakeholder to the issuer?"
-          },
           "id": {
             "type": "string",
             "description": "Identifier for the object"

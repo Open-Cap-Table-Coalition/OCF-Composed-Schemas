@@ -9,7 +9,8 @@ Modes:
 Design system (matches the repo's own diagram palette):
   green = OCF   blue = Carta   gold = Core   red/dashed = lost
 """
-import sys, os, math
+import sys, os, math, re
+from pathlib import Path
 
 W, H = 1920, 1080
 FPS = 15
@@ -32,6 +33,44 @@ AMBER     = "#ffb02e"
 
 FONT = "Helvetica Neue, Helvetica, Arial, sans-serif"
 MONO = "Menlo, monospace"
+
+# These analysis scenes read their counts from the checked-in Core artifacts,
+# so a rebuild cannot silently preserve stale hand-entered numbers.
+REPO_ROOT = Path(__file__).resolve().parent.parent
+
+def _count_core_claims():
+    allow = (REPO_ROOT / "core" / "allow-list.yml").read_text(encoding="utf-8")
+    strict = len(re.findall(r"^\s+-\s+\S+\s*$", allow, flags=re.MULTILINE))
+    # PlanSecurity* schemas are OCF compatibility wrappers for the
+    # EquityCompensation* entities and are not separate economic objects in the
+    # Core inventory. Match the ledger's entity count rather than counting
+    # every wrapper file as a new object.
+    object_files = list((REPO_ROOT / "objects").rglob("*.schema.json"))
+    object_total = len(
+        [file for file in object_files if not file.stem.startswith("PlanSecurity")]
+    )
+    lossy = (REPO_ROOT / "docs" / "core-lossy-inventory.md").read_text(encoding="utf-8")
+    unmapped = (REPO_ROOT / "docs" / "core-unmapped-inventory.md").read_text(encoding="utf-8")
+    lossy_match = re.search(
+        r"Lossy home .*?\((\d+) \(entity,variant,field\) rows across (\d+) objects; (\d+) OCF-required\)",
+        lossy,
+    )
+    no_home_match = re.search(r"No home .*?\((\d+) across (\d+) objects\)", lossy)
+    no_home_required_match = re.search(r"(\d+) per-flavor rows, (\d+) OCF-required", unmapped)
+    if not lossy_match or not no_home_match or not no_home_required_match:
+        raise RuntimeError("Could not read Core inventory counts for the explainer")
+    return {
+        "strict": strict,
+        "out": object_total - strict,
+        "lossy": int(lossy_match.group(1)),
+        "lossy_objects": int(lossy_match.group(2)),
+        "lossy_required": int(lossy_match.group(3)),
+        "no_home": int(no_home_match.group(1)),
+        "no_home_objects": int(no_home_match.group(2)),
+        "no_home_required": int(no_home_required_match.group(2)),
+    }
+
+CORE_COUNTS = _count_core_claims()
 
 # ---- easing / util ---------------------------------------------------------
 def clamp(x, a=0.0, b=1.0): return max(a, min(b, x))
@@ -493,18 +532,18 @@ def s_analysis(t, dur):
     # OCF Core — the emphasized bridge in the middle
     out.append(rrect(kx,y-18,bw,bh+36,20, fill="#1c1706", stroke=CORE, sw=3.5, opacity=ko))
     out.append(text(kx+bw/2,y+66,"OCF Core",40,fill=CORE_TXT,weight="bold",anchor="middle",opacity=ko))
-    out.append(text(kx+bw/2,y+108,"strict, verifiable subset",22,fill=CORE_TXT,anchor="middle",opacity=ko))
+    out.append(text(kx+bw/2,y+108,"OCF-shaped bridge",22,fill=CORE_TXT,anchor="middle",opacity=ko))
     a1=appear(t,1.3,0.5); a2=appear(t,1.6,0.5)
     out.append(arrow(ox+bw+8, y+bh/2, kx-8, y+bh/2, OCF, 3.5, a1))
-    out.append(text((ox+bw+kx)/2, y+bh/2-22, "subset of", 21, fill=OCF_TXT, anchor="middle", opacity=a1))
+    out.append(text((ox+bw+kx)/2, y+bh/2-22, "projection of", 21, fill=OCF_TXT, anchor="middle", opacity=a1))
     out.append(arrow(kx+bw+8, y+bh/2-11, cx2-8, y+bh/2-11, CORE, 3.5, a2))
     out.append(arrow(cx2-8, y+bh/2+21, kx+bw+8, y+bh/2+21, CORE, 3.5, a2))
-    out.append(text((kx+bw+cx2)/2, y+bh/2-34, "to & from", 21, fill=CORE_TXT, weight="bold", anchor="middle", opacity=a2))
-    out.append(text(W/2, 620, "Transforms to and from Carta — with a migration path for teams already on OCF v1.", 30,
+    out.append(text((kx+bw+cx2)/2, y+bh/2-34, "fold + enrich", 21, fill=CORE_TXT, weight="bold", anchor="middle", opacity=a2))
+    out.append(text(W/2, 620, "Folds to Carta; enriches back to OCF Extended when context is available.", 30,
                     fill=WHITE, weight="bold", anchor="middle", opacity=appear(t,2.1,0.6)))
     out.append(text(W/2, 668, "The mapping work finds the gaps in OCF v1 and Carta; OCF Core closes them.", 26,
                     fill=MUTE, anchor="middle", opacity=appear(t,2.4,0.6)))
-    out.append(caption(t, "Hence this effort: map the gaps and propose OCF Core — convertible to/from Carta, a migration path from OCF v1.", start=2.7))
+    out.append(caption(t, "Hence this effort: map the gaps and define an OCF-shaped Core that can fold to Carta and return as OCF Extended.", start=2.7))
     return f'<g opacity="{o:.3f}">'+"".join(out)+'</g>'
 
 def s_captable(t, dur):
@@ -901,7 +940,7 @@ def s_strict_rich(t, dur):
         out.append(circle(kx+14,yy,11,co,ro))
         out.append(text(kx+40,yy+9,h,30,fill=WHITE,weight="bold",opacity=ro))
         out.append(text(kx+40,yy+46,sub,24,fill=MUTE,opacity=ro))
-    out.append(text(kx,ky+3*116+2,"strict ⊂ rich ⊂ OCF",24,fill=FAINT,weight="bold",opacity=appear(t,2.5,0.5)))
+    out.append(text(kx,ky+3*116+2,"strict ⊂ rich · OCF-shaped",24,fill=FAINT,weight="bold",opacity=appear(t,2.5,0.5)))
     out.append(caption(t,"Value-loss is fine — coarsen a number or an enum. Dropping a whole thing (a list, a relationship) is not.",start=2.7))
     return f'<g opacity="{o:.3f}">'+"".join(out)+'</g>'
 
@@ -913,17 +952,17 @@ def s_loss_counted(t, dur):
     lo=appear(t,0.5,0.5)
     out.append(rrect(lx,y,cw,ch,22,fill="#211703",stroke=AMBER,sw=2.5,opacity=lo))
     out.append(text(lx+40,y+62,"LOSSY HOME",24,fill=AMBER,weight="bold",opacity=lo,spacing="2"))
-    out.append(text(lx+40,y+182,"49",118,fill=AMBER,weight="bold",opacity=appear(t,0.7,0.6)))
+    out.append(text(lx+40,y+182,str(CORE_COUNTS["lossy"]),118,fill=AMBER,weight="bold",opacity=appear(t,0.7,0.6)))
     out.append(text(lx+236,y+150,"field-mappings",34,fill=WHITE,opacity=appear(t,0.9,0.5)))
-    out.append(text(lx+236,y+196,"22 objects · 34 required",25,fill=MUTE,opacity=appear(t,0.9,0.5)))
+    out.append(text(lx+236,y+196,f'{CORE_COUNTS["lossy_objects"]} objects · {CORE_COUNTS["lossy_required"]} required',25,fill=MUTE,opacity=appear(t,0.9,0.5)))
     out.append(text(lx+40,y+262,"a Carta home that narrows on the way out",25,fill="#dcdff2",opacity=appear(t,1.1,0.5)))
     out.append(text(lx+40,y+300,"(list→one, combine, split) — rich-Core candidates",23,fill=MUTE,opacity=appear(t,1.1,0.5)))
     ro=appear(t,1.4,0.5)
     out.append(rrect(rx,y,cw,ch,22,fill="#2a0f16",stroke=LOST,sw=2.5,opacity=ro))
     out.append(text(rx+40,y+62,"NO CARTA HOME",24,fill=LOST,weight="bold",opacity=ro,spacing="2"))
-    out.append(text(rx+40,y+182,"249",118,fill=LOST,weight="bold",opacity=appear(t,1.6,0.6)))
+    out.append(text(rx+40,y+182,str(CORE_COUNTS["no_home"]),118,fill=LOST,weight="bold",opacity=appear(t,1.6,0.6)))
     out.append(text(rx+286,y+150,"dropped fields",34,fill=WHITE,opacity=appear(t,1.8,0.5)))
-    out.append(text(rx+286,y+196,"47 objects · 155 required",25,fill=MUTE,opacity=appear(t,1.8,0.5)))
+    out.append(text(rx+286,y+196,f'{CORE_COUNTS["no_home_objects"]} objects · {CORE_COUNTS["no_home_required"]} required',25,fill=MUTE,opacity=appear(t,1.8,0.5)))
     out.append(text(rx+40,y+262,"Carta has nowhere to put them —",25,fill="#f0dada",opacity=appear(t,2.0,0.5)))
     out.append(text(rx+40,y+300,"dropped on the fold, and logged as gaps",23,fill=MUTE,opacity=appear(t,2.0,0.5)))
     out.append(text(W/2,724,"Two generated inventories — lossy-home & unmapped — never hand-maintained, always current.",26,
@@ -941,7 +980,8 @@ def s_inout(t, dur):
         ("Transfers","Stock · Warrant"),
         ("Conversions","ConvertibleConversion · EqComp Exercise"),
         ("EquityComp","Release · Repricing"),
-        ("Adjust / events","StockClass shares · Stakeholder rel.")]
+        ("Adjust / events","StockClass shares · Stakeholder rel."),
+        ("Vesting","VestingTerms")]
     OUT=[("Acceptances","Stock · Convertible · Warrant · EqComp"),
          ("Retractions","Stock · Convertible · Warrant · EqComp"),
          ("Transfers","Convertible · EquityComp"),
@@ -949,7 +989,8 @@ def s_inout(t, dur):
          ("Splits & pools","ClassSplit · PoolAdjust · ReturnToPool"),
          ("Vesting","VestingEvent · VestingAcceleration"),
          ("Adjustments","IssuerShares · ConversionRatio"),
-         ("Events / misc","StatusChange · WarrantExercise · Financing · Document")]
+         ("Events / misc","StatusChange · WarrantExercise · Financing · Document"),
+         ("Templates","StockLegendTemplate")]
     def panel(px,header,co,groups,dash,st):
         h=96+len(groups)*48+22
         out.append(rrect(px,286,800,h,18,fill=PANEL,stroke=co,sw=2.5,opacity=appear(t,st,0.5),dash=dash))
@@ -958,14 +999,14 @@ def s_inout(t, dur):
             ro=appear(t,st+0.3+i*0.08,0.4); ly=286+100+i*48
             out.append(text(px+30,ly,lab,20,fill=co,weight="bold",opacity=ro))
             out.append(text(px+218,ly,mem,20,fill="#d7dbef",opacity=ro))
-    panel(140,"IN CORE · 21 objects",OCF,IN,None,0.4)
-    panel(980,"NOT YET IN CORE · 26 objects","#9aa2c8",OUT,"6 5",0.7)
+    panel(140,f'IN CORE · {CORE_COUNTS["strict"]} objects',OCF,IN,None,0.4)
+    panel(980,f'NOT YET IN CORE · {CORE_COUNTS["out"]} objects',"#9aa2c8",OUT,"6 5",0.7)
     out.append(caption(t,"In = it lands at least one real fact Carta stores. Out (for now) = only ids, dates, or nothing Carta holds.",start=2.5))
     return f'<g opacity="{o:.3f}">'+"".join(out)+'</g>'
 
 def s_lossy_examples(t, dur):
     o=scene_opacity(t,dur); out=[background()]
-    out.append(heading(t,"Lossy vs. lossless — and why","of the fields that land: 49 narrow (lossy) · the rest keep their value"))
+    out.append(heading(t,"Lossy vs. lossless — and why",f'of the fields that land: {CORE_COUNTS["lossy"]} narrow (lossy) · the rest keep their value'))
     LOSSLESS=[("par_value → parValue","the exact number, kept"),
               ("StockClass.name → name","plain text, unchanged"),
               ("quantity → quantity","a number, safely widened"),

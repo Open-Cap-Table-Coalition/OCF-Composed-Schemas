@@ -42,7 +42,6 @@ fields `unmappable`. Anti-laziness applies fully here — hunt for the real targ
 | `Numeric` | `Decimal` |
 | `Date` | `Iso8601CompleteCalendarDate` |
 | `CurrencyCode` | `Iso4217CurrencyAlphaCode` |
-| `CountryCode` | `Iso3166Set1Alpha3Code` (note: alpha-2 → alpha-3) |
 | `ContactInfo` / `ContactInfoWithoutName` | `PointOfContact` |
 | `Address` | `StakeholderAddress` (only `country` survives) |
 
@@ -58,6 +57,20 @@ type), as long as exactly one target object is unambiguously the destination:
 
 > Over-applying bucket 2 to a structured type that has a clear home is the
 > **lazy-unmappable defect** — the thing this policy most wants to prevent.
+
+### Context-dependent reusable scalar — reverse-reference resolution
+
+Some OCF scalar types have a target concept but no single canonical destination.
+`CountryCode` is the current example: Carta has multiple country concepts with
+different encodings and semantics, while OCF consumers use the scalar for an
+address, a tax identifier, or issuer formation. Keep the type-level mapping
+property-less and resolve each `$ref` at its consumer. The generated reverse index
+in [`types/CountryCode.mapping.md`](../types/CountryCode.mapping.md) must list every
+consumer, while the consumer mapping remains authoritative for the disposition.
+
+This is not a document-wide mode. A consumer may be `rename`, `select`, or
+`unmappable` according to its own target context; the validator requires every
+reverse-reference site to have an explicit consumer entry.
 
 ### Bucket 2 — inlined-per-object (no single home)
 
