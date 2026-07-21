@@ -39,6 +39,7 @@
             "items": {
               "type": "string"
             },
+            "minItems": 1,
             "description": "Identifiers of StockClass objects this plan is composed of"
           }
         },

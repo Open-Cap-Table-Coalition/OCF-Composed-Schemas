@@ -29,7 +29,69 @@
               "additionalProperties": false,
               "properties": {
                 "conversion_mechanism": {
-                  "type": "string"
+                  "oneOf": [
+                    {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "properties": {
+                        "conversion_price": {
+                          "type": "object",
+                          "additionalProperties": false,
+                          "properties": {
+                            "amount": {
+                              "type": "string",
+                              "pattern": "^[+-]?[0-9]+(\\.[0-9]{1,10})?$"
+                            },
+                            "currency": {
+                              "type": "string",
+                              "pattern": "^[A-Z]{3}$",
+                              "minLength": 3,
+                              "maxLength": 3
+                            }
+                          },
+                          "required": [
+                            "amount",
+                            "currency"
+                          ]
+                        },
+                        "ratio": {
+                          "type": "object",
+                          "additionalProperties": false,
+                          "properties": {
+                            "denominator": {
+                              "type": "string",
+                              "pattern": "^[+-]?[0-9]+(\\.[0-9]{1,10})?$"
+                            },
+                            "numerator": {
+                              "type": "string",
+                              "pattern": "^[+-]?[0-9]+(\\.[0-9]{1,10})?$"
+                            }
+                          },
+                          "required": [
+                            "numerator",
+                            "denominator"
+                          ]
+                        },
+                        "rounding_type": {
+                          "type": "string",
+                          "enum": [
+                            "CEILING",
+                            "FLOOR",
+                            "NORMAL"
+                          ]
+                        },
+                        "type": {
+                          "const": "RATIO_CONVERSION"
+                        }
+                      },
+                      "required": [
+                        "ratio",
+                        "conversion_price",
+                        "rounding_type",
+                        "type"
+                      ]
+                    }
+                  ]
                 },
                 "converts_to_future_round": {
                   "type": "boolean"
@@ -56,7 +118,19 @@
             "description": "Identifier for the object"
           },
           "initial_shares_authorized": {
-            "type": "string",
+            "oneOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "NOT APPLICABLE",
+                  "UNLIMITED"
+                ]
+              },
+              {
+                "type": "string",
+                "pattern": "^[+-]?[0-9]+(\\.[0-9]{1,10})?$"
+              }
+            ],
             "description": "The initial number of shares authorized for this stock class"
           },
           "liquidation_preference_multiple": {
@@ -81,7 +155,9 @@
               },
               "currency": {
                 "type": "string",
-                "pattern": "^[A-Z]{3}$"
+                "pattern": "^[A-Z]{3}$",
+                "minLength": 3,
+                "maxLength": 3
               }
             },
             "required": [
@@ -105,7 +181,9 @@
               },
               "currency": {
                 "type": "string",
-                "pattern": "^[A-Z]{3}$"
+                "pattern": "^[A-Z]{3}$",
+                "minLength": 3,
+                "maxLength": 3
               }
             },
             "required": [

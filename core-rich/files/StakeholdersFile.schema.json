@@ -33,11 +33,15 @@
                 },
                 "country": {
                   "type": "string",
-                  "pattern": "^[A-Z]{2}$"
+                  "pattern": "^[A-Z]{2}$",
+                  "minLength": 2,
+                  "maxLength": 2
                 },
                 "country_subdivision": {
                   "type": "string",
-                  "pattern": "^[A-Z0-9]{1,}$"
+                  "pattern": "^[A-Z0-9]{1,}$",
+                  "minLength": 1,
+                  "maxLength": 3
                 },
                 "postal_code": {
                   "type": "string"
@@ -108,6 +112,18 @@
                 }
               }
             },
+            "anyOf": [
+              {
+                "required": [
+                  "phone_numbers"
+                ]
+              },
+              {
+                "required": [
+                  "emails"
+                ]
+              }
+            ],
             "description": "The contact info for an individual stakeholder"
           },
           "current_relationship": {
@@ -254,6 +270,20 @@
                 }
               }
             },
+            "anyOf": [
+              {
+                "required": [
+                  "name",
+                  "phone_numbers"
+                ]
+              },
+              {
+                "required": [
+                  "name",
+                  "emails"
+                ]
+              }
+            ],
             "description": "The primary contact info for an institutional stakeholder"
           },
           "stakeholder_type": {
