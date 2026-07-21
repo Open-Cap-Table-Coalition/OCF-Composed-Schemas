@@ -86,7 +86,7 @@ Source: [`ConvertibleAcceptance.schema.json`](./ConvertibleAcceptance.schema.jso
 ## Mapping
 
 ```yaml
-# kind vocabulary: rename | split | combine | enum-remap | computed | unmappable | TODO
+# kind vocabulary: rename | select | split | combine | enum-remap | computed | unmappable | TODO
 status: complete
 coverage: 5/5
 

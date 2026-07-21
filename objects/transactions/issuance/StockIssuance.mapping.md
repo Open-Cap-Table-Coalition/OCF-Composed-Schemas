@@ -180,7 +180,7 @@ Source: [`StockIssuance.schema.json`](./StockIssuance.schema.json)
 ## Mapping
 
 ```yaml
-# kind vocabulary: rename | split | combine | enum-remap | computed | unmappable | TODO
+# kind vocabulary: rename | select | split | combine | enum-remap | computed | unmappable | TODO
 # routing: discriminator (issuance-time) — issuance_type routes an RSA to Carta's
 # RestrictedStockAward family; FOUNDERS_STOCK / absent is a plain Certificate.
 # shared: fields common to both variants. A field whose Carta home differs by

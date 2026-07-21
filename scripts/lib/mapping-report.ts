@@ -42,6 +42,7 @@ function renderItem(
   let item: Item;
   switch (kind) {
     case "rename":
+    case "select":
     case "computed":
     case "combine":
       if (isPlainObject(target)) {
@@ -71,7 +72,9 @@ function renderItem(
           };
         }
       } else {
-        item = { label: `${name} → ${asStringOr(target, "?")} (${kind})`, children: [] };
+        const policy =
+          kind === "select" && typeof entry.policy === "string" ? ` · ${entry.policy}` : "";
+        item = { label: `${name} → ${asStringOr(target, "?")} (${kind}${policy})`, children: [] };
       }
       break;
 

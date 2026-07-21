@@ -296,7 +296,20 @@ export function classifyField(
   }
 
   if (kind === "enum-remap") {
+    const enumSource = sourceShape(srcRaw, ctx.registry);
+    const enumTarget = targetShape(resolved[0]?.node, ctx.bundle);
+    if (enumSource.isArray && !enumTarget.isArray) {
+      return { class: "out", reason: "existence-loss", detail: "array→scalar" };
+    }
+    if (enumSource.isMultiProp && !enumTarget.isMultiProp) {
+      return { class: "out", reason: "existence-loss", detail: "structure→scalar" };
+    }
     return enumRemapTotality(entry, srcRaw, ctx.registry);
+  }
+
+  if (kind === "select") {
+    const policy = typeof entry.policy === "string" ? entry.policy : "unspecified";
+    return { class: "out", reason: "existence-loss", detail: `select (${policy})` };
   }
 
   if (kind === "computed" || kind === "combine" || kind === "split") {
@@ -311,7 +324,8 @@ export function classifyField(
     return { class: "out", reason: "heuristic", detail: `kind ${kind}`, review };
   }
 
-  // kind === "rename": lands unless the shape collapses (existence-loss / free-text→enum).
+  // kind === "rename": lands only when the shape is compatible. The validator rejects
+  // implicit reductions; this defensive classifier keeps generated verdicts honest too.
   const tgtRaw = resolved[0]?.node;
   const s = sourceShape(srcRaw, ctx.registry);
   const t = targetShape(tgtRaw, ctx.bundle);

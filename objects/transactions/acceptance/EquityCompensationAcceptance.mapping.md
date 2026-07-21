@@ -90,7 +90,7 @@ Source: [`EquityCompensationAcceptance.schema.json`](./EquityCompensationAccepta
 ## Mapping
 
 ```yaml
-# kind vocabulary: rename | split | combine | enum-remap | computed | unmappable | TODO
+# kind vocabulary: rename | select | split | combine | enum-remap | computed | unmappable | TODO
 # routing: route_by_security (downstream join). Acceptance is NOT a Carta transaction;
 # it sets a stakeholderAcceptanceDate on the security object. The record carries only
 # security_id and NO discriminator, so the family (Option/Rsu/Sar) is undecidable from

@@ -97,7 +97,7 @@ Source: [`IssuerAuthorizedSharesAdjustment.schema.json`](./IssuerAuthorizedShare
 ## Mapping
 
 ```yaml
-# kind vocabulary: rename | split | combine | enum-remap | computed | unmappable | TODO
+# kind vocabulary: rename | select | split | combine | enum-remap | computed | unmappable | TODO
 status: complete
 coverage: 8/8
 

@@ -143,6 +143,24 @@ async function main(argv: Args): Promise<number> {
     );
   }
 
+  // Reusable scalar types are resolved by their consumers. Keep the reverse
+  // index complete without inventing a document-wide mapping mode.
+  if (!argv.filter) {
+    const countryCodeId = [...registry.keys()].find((id) =>
+      id.endsWith("/types/CountryCode.schema.json")
+    );
+    if (countryCodeId) {
+      const { findTypeReferenceSites, validateReferenceSites } = await import(
+        "./lib/reference-sites.js"
+      );
+      for (const message of validateReferenceSites(
+        await findTypeReferenceSites(repoRoot, countryCodeId)
+      )) {
+        errors.push({ file: "types/CountryCode.mapping.md", field: null, message });
+      }
+    }
+  }
+
   const byFile = new Map<string, ValidationError[]>();
   for (const e of errors) {
     const list = byFile.get(e.file) ?? [];

@@ -89,7 +89,7 @@ Source: [`EquityCompensationRepricing.schema.json`](./EquityCompensationRepricin
 ## Mapping
 
 ```yaml
-# kind vocabulary: rename | split | combine | enum-remap | computed | unmappable | TODO
+# kind vocabulary: rename | select | split | combine | enum-remap | computed | unmappable | TODO
 # routing: route_by_security (downstream join). This repricing carries only
 # security_id and NO discriminator, so the price-bearing family
 # (Option/Sar/Rsu) is undecidable from the record alone: it is resolved by

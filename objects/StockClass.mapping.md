@@ -140,7 +140,7 @@ Source: [`StockClass.schema.json`](./StockClass.schema.json)
 ## Mapping
 
 ```yaml
-# kind vocabulary: rename | split | combine | enum-remap | computed | unmappable | TODO
+# kind vocabulary: rename | select | split | combine | enum-remap | computed | unmappable | TODO
 status: complete
 coverage: 16/16
 
@@ -200,6 +200,7 @@ fields:
     target:
       - "#/$defs/ShareClassRightsAndPreferences/properties/conversionRatio"
       - "#/$defs/ShareClassRightsAndPreferences/properties/conversionPrice"
+    policy: first_ratio_conversion_right
   liquidation_preference_multiple:
     kind: rename
     target: "#/$defs/ShareClassRightsAndPreferences/properties/multiplier"
@@ -218,7 +219,7 @@ fields:
 - `price_per_share` → `preferredShareClassDetails.rightsAndPreferences.originalIssuePrice`: only meaningful for preferred classes. Common stock classes typically don't carry this in OCF, and there is no Carta target on the `ShareClass` for a common's original price.
 - `liquidation_preference_multiple` → `preferredShareClassDetails.rightsAndPreferences.multiplier`: preferred-only. Carta's field is `Decimal` (the OCF field is `Numeric`); both are numeric so this is a straightforward rename.
 - `participation_cap_multiple` → `preferredShareClassDetails.rightsAndPreferences.participationCap`: preferred-only. Same numeric correspondence as `multiplier`. Note that Carta also carries a separate `participating` boolean (whether the preferred is participating at all) which OCF does not represent explicitly; in OCF, "is participating" is implied by `participation_cap_multiple` being set.
-- `conversion_rights` → `rightsAndPreferences.conversionRatio` + `rightsAndPreferences.conversionPrice` (kind `split`): OCF carries an *array* of structured `StockClassConversionRight` objects, each with a `conversion_mechanism` (currently only `RatioConversionMechanism` is allowed), a `converts_to_stock_class_id`, and a `converts_to_future_round` flag. The `RatioConversionMechanism` itself has `conversion_price` (Monetary), `ratio` (Ratio = numerator/denominator), and `rounding_type` (enum). Carta collapses all of that into two scalar fields inside `rightsAndPreferences`: `conversionPrice` (Money) and `conversionRatio` (Decimal). Producing the Carta target therefore requires (a) picking one element of the array (Carta has no slot for alternative conversions), (b) `RatioConversionMechanism.conversion_price` → `conversionPrice`, (c) `RatioConversionMechanism.ratio` (numerator/denominator) → a single `conversionRatio` Decimal. Dropped on the way: `rounding_type`, `converts_to_stock_class_id`, `converts_to_future_round`, and any additional array elements. Modelled as `kind: split` onto the two concrete leaves (`conversionRatio`, `conversionPrice`) rather than `computed` onto the parent `rightsAndPreferences` object, so the structured `target` names both real destinations a transformer must populate; the within-leaf `ratio` (numerator/denominator) → `conversionRatio` `Decimal` reduction is the derivation described in (c).
+- `conversion_rights` → `rightsAndPreferences.conversionRatio` + `rightsAndPreferences.conversionPrice` (kind `split`, policy `first_ratio_conversion_right`): OCF carries an *array* of structured conversion rights, while Carta has only one ratio and one price. The explicit policy selects the first applicable ratio right; the ratio quotient is then reduced to Carta's Decimal and the monetary price maps to Money. Additional rights and unsupported mechanism details are dropped.
 - `board_approval_date` / `stockholder_approval_date`: unmappable. Carta has a `BoardApproval` *enum* (`BOARD_APPROVAL_APPROVED` / `BOARD_APPROVAL_NOT_APPROVED`) but no field that carries the approval *date*. There is no Carta concept for stockholder approval at all on `ShareClass`.
 - `votes_per_share`: unmappable. Carta's `ShareClass` has no voting-rights field. (Carta's `ShareClassType` description does mention "PREFERRED: with no voting rights" — implying a categorical assumption rather than a per-class field — but there is no slot to express anything other than the type-level default.)
 - `id`, `comments`, `object_type`: unmappable OCF object scaffolding (same pattern as `Document`, `Issuer`, `Stakeholder`).

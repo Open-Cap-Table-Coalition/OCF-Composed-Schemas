@@ -1,15 +1,15 @@
 # OCF Core — explainer video
 
-A ~3-minute, plain-English motion explainer that walks a **non-technical** viewer from
+A ~6.4-minute, plain-English motion explainer that walks a **non-technical** viewer from
 "what is a cap table?" to "what is OCF Core, and how did we build it?" — through real
 example objects.
 
 | File | What it is |
 | --- | --- |
-| `ocf-core-explainer.mp4` | 1920×1080, h264, 30 fps, 319 s, ~11 MB (primary) |
-| `ocf-core-explainer.gif` | 900×506, 12 fps, ~14 MB (for embeds/chat) |
-| `ocf-core-explainer.pptx` | **27-slide deck (image)** — one slide per scene, 16:9, each the final frame as a full-bleed image. Pixel-perfect styling; text **not** editable |
-| `ocf-core-explainer-editable.pptx` | **27-slide deck (editable)** — same styling, but every word is a native, **editable** text box over a text-less styled plate (429 text boxes) |
+| `ocf-core-explainer.mp4` | 1920×1080, h264, 30 fps, ~385 s (32 scenes; primary) |
+| `ocf-core-explainer.gif` | 900×506, 12 fps (for embeds/chat) |
+| `ocf-core-explainer.pptx` | **32-slide deck (image)** — one slide per scene, 16:9, each the final frame as a full-bleed image. Pixel-perfect styling; text **not** editable |
+| `ocf-core-explainer-editable.pptx` | **32-slide deck (editable)** — same styling, but every word is a native, **editable** text box over a text-less styled plate |
 | `poster.png` | still thumbnail (the recap scene) |
 | `gen.py` | the SVG frame generator (see *Rebuilding* below) |
 | `build_pptx.py` | builds the image deck from rendered slide PNGs |
@@ -35,7 +35,7 @@ underlying event stream is the source of truth SMEs audit against — so OCF mod
 **board mandate** in two beats — *"Why now"* (agentic workflows heighten the
 need for a **deterministic oracle**; OCF + its validation tools already provide predictable
 cap-table integrity; aligning OCF with Carta unlocks the agentic future) and *"So we propose OCF
-Core"* (a strict, verifiable subset that transforms **to and from Carta**, with a **migration path
+Core"* (an OCF-shaped, statically admissible projection that folds **to Carta** and can return as **OCF Extended**, with a **migration path
 for OCF v1 adopters**). *(Sourced from the OCT Law Firm Working Group briefing deck; per direction,
 OCX is not covered.)*
 
@@ -47,21 +47,22 @@ Then the **explainer**:
 4. **Two ways to keep the ledger** — OCF is **event-driven** (a stream of events you replay to get
    today's picture); Carta is **hybrid** — a live snapshot/**statement** of current state *plus*
    some events. This is *why* some OCF events convert into state changes rather than Carta events.
-5. **What OCF Core is** — the part of OCF that *always* converts cleanly into Carta —
-   **derived**, field by field, not hand-declared.
+5. **What OCF Core is** — the OCF-shaped projection that is statically admissible for the Carta
+   fold — **derived**, field by field, not hand-declared; an enriched return is called **OCF Extended**.
 6. **The rule** — keep a fact if Carta can hold it; losing a little *precision* is OK, losing a
    whole *thing* is not; an object joins Core only if at least one real fact lands.
 7. **How we write it down** — one small, declarative `.mapping.md` file per object (`rename`,
-   `enum-remap`, `unmappable`, and for the hard cases **polymorphism** and **composite**),
+   explicit `select`/`split` policies, `enum-remap`, `unmappable`, and for the hard cases
+   **polymorphism** and **composite**),
    handled like the legal docs they encode: **proposed → reviewed → validated (CI) → versioned**
    in git. A transparent, auditable approach to mapping between the standards.
 8. **Worked examples** (below): four objects that show how OCF folds into Carta, then a fifth
    showing the reverse gap — followed by a recap.
 9. **Core vs. Core loss** — a four-scene analytical block:
    - **strict** Core (only what lands cleanly) vs **rich** Core (also keeps lossy-home fields);
-   - a **specific in/out inventory** — the **21** objects in Core vs the **26** not-yet (grouped by
+   - a **specific in/out inventory** — the **22** objects in Core vs the **26** not-yet (grouped by
      family: issuances/cancellations in, most acceptances/retractions/transfers out);
-   - the loss **counted** — **49** field-mappings that land lossily vs **249** dropped with no home;
+   - the loss **counted** — **50** field-mappings that land lossily vs **249** dropped with no home;
    - **lossy vs. lossless examples, with the why** — `par_value`/`quantity`/`class_type` land whole;
      `addresses`→one, `contact_info`→one email, `conversion_rights`→ratio+price collapse.
    *(All from `core/core-ledger.md`, `docs/core-lossy-inventory.md`, `docs/core-unmapped-inventory.md`.)*
@@ -97,7 +98,7 @@ the brand so the multi-colour field coding keeps its contrast.
 Requires `rsvg-convert` (librsvg), `ffmpeg`, and `python3` — no browser needed.
 
 ```sh
-# 1. generate the SVG frame sequence (20 fps → 6380 frames)
+# 1. generate the SVG frame sequence (20 fps → 7700 frames at the current 385-second duration)
 python3 gen.py all frames --fps 20
 
 # 2. render every frame to PNG (parallel)

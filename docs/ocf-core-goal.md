@@ -1,15 +1,17 @@
 # OCF Core — Goal Statement
 
-**North star.** Define **OCF Core**: a minimal, event-driven cap-table data standard that is a
-strict subset of OCF and is *guaranteed* to convert cleanly into a Carta snapshot — so that any Core
-document can be (a) **folded down** to Carta and (b) **enriched up** to full OCF without
-special-casing.
+**North star.** Define **OCF Core**: a minimal, event-driven, OCF-shaped cap-table dialect whose
+strict profile is statically admissible for the Carta fold. A Core document can be (a) **folded down**
+to Carta and (b) explicitly enriched into **OCF Extended**, a fully OCF-valid document, when the
+enrichment context supplies omitted required data. The contract is defined in
+[`ocf-core-enrichment.md`](./ocf-core-enrichment.md).
 
 ## What it is
 
-- **A subset of OCF, not a new format.** Core uses OCF's own objects, field names, types, and event
-  model. Producing Core from OCF drops detail; enriching Core back to OCF re-adds it. Core is "more
-  OCF than Carta" by construction.
+- **An OCF-shaped projection, not a new vendor format.** Core uses OCF's own objects, field names,
+  types, and event model. Its generated schemas relax OCF requiredness so that the projection can
+  omit fields the Core rules exclude. Enrichment produces OCF Extended by supplying the missing
+  source/context data; a raw Core instance is not necessarily valid against the original OCF schemas.
 - **Event-driven.** Core preserves OCF's transaction stream as first-class. Whether Carta ultimately
   stores an event as a transaction or folds it into state is a *translation-time* concern, not a Core
   one.
@@ -29,16 +31,18 @@ special-casing.
 
 ## The defining invariant
 
-A document is Core **iff the Carta fold is total over it** — it always produces a valid Carta
-snapshot, never gets stuck, and never silently drops a datum that has nowhere to land. **Core is
-exactly the domain on which that fold is guaranteed to succeed.**
+A document is strict Core **iff the repository's schema-derived admissibility rules establish that it
+is statically suitable for the Carta fold**: its mapped payloads have deterministic destinations,
+referential closure holds, and no classified datum is silently left without a landing rule. Runtime
+totality against a live importer is a separate importer-confirmed evidence level.
 
 ## The membership rules
 
 The standard, applied uniformly and dialed in against the real fold:
 
-- **R0 — Shape.** Core ⊆ OCF (same objects, field names, types, event model). No Carta objects, no
-  invented objects. "Enrich to OCF" = re-add the omitted optional fields.
+- **R0 — Shape.** Core uses only OCF objects, field names, types, and the event model. No Carta
+  objects and no invented objects. Core requiredness is intentionally relaxed; "enrich to OCF" means
+  supplying omitted optional and required source/context fields to produce OCF Extended.
 - **R1 — Field inclusion.** Include a field/event only if it has a **clear, deterministic, and
   *total*** destination in Carta (a Carta field, or a deterministic state derivation). Type widening
   (OCF → a wider Carta type) is trivially in. Enum bucketing is in **only** as an explicit, *total*
@@ -77,14 +81,17 @@ The standard, applied uniformly and dialed in against the real fold:
   whether a forward mapping edge *could* fill a Core slot from a Carta document; it never inverts or
   executes a mapping, so it imposes no Carta→Core requirement. (Rich Core can be *populated* from
   Carta best-effort, but that is never a lossless obligation.)
-- **The fold mechanism is separate, already-owned machinery** — Core's job is only to *guarantee it
-  can run*.
+- **The fold and enrichment mechanisms are separate, already-owned machinery** — this repository
+  establishes schema-derived admissibility and the OCF Extended contract; runtime implementations
+  must provide their own conformance evidence.
 
 ## Success criteria
 
 1. A written Core schema (a constrained OCF dialect) plus the membership rules, derivable from — and
    consistent with — the existing mapping corpus.
-2. Every Core instance provably folds to a valid Carta snapshot and enriches to valid OCF.
+2. Every strict Core instance is statically admissible for the Carta fold; with sufficient enrichment
+   context it can produce OCF Extended, and runtime fold/enrichment claims are backed by conformance
+   tests.
 3. An honest **gap report**: OCF richness Carta can't hold, and generally-applicable Carta concepts
    OCF lacks.
 4. The rules sharpened by iterating against the real fold until first-cut Core stops surprising us.

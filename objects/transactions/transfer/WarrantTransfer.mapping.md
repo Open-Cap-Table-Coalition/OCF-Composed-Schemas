@@ -112,7 +112,7 @@ Source: [`WarrantTransfer.schema.json`](./WarrantTransfer.schema.json)
 ## Mapping
 
 ```yaml
-# kind vocabulary: rename | split | combine | enum-remap | computed | unmappable | TODO
+# kind vocabulary: rename | select | split | combine | enum-remap | computed | unmappable | TODO
 status: complete
 coverage: 9/9
 
@@ -146,8 +146,9 @@ fields:
     target: null
     reason: no-equivalent
   resulting_security_ids:
-    kind: rename
+    kind: select
     target: "#/$defs/WarrantTransferTransaction/properties/resultingSecurityId"
+    policy: first_resulting_security_id
   quantity:
     kind: rename
     target: "#/$defs/WarrantTransferTransaction/properties/quantity"
@@ -159,7 +160,7 @@ fields:
 - `quantity` → `WarrantTransferTransaction.quantity`. Both are decimal counts of non-monetary warrant units transferred (OCF `types/Numeric`; Carta `#/$defs/Decimal`). Direct rename.
 - `date` → `WarrantTransferTransaction.transferredDatetime`. **Granularity difference:** OCF records a calendar `Date` (`YYYY-MM-DD`), while Carta's field is an `Iso8601CompleteCalendarDateTime` (`#/$defs/Iso8601CompleteCalendarDateTime`), i.e. a full datetime. Writing OCF→Carta requires widening the date to a datetime (e.g. appending a midnight/`T00:00:00Z` time component); reading back loses the time-of-day. Same date-vs-datetime caveat called out across the transaction precedents.
 - `security_id` → `WarrantTransactionItem.securityId`. In OCF, `security_id` identifies the *source* warrant being transferred. Carta's `WarrantTransferTransaction` itself carries no `securityId` — the warrant identity sits one level up on the containing `WarrantTransactionItem` (whose `securityId` is described as "the identifier of the warrant"), and the transfer transaction is nested inside that warrant's `transfers[]` array. So this is a `rename` onto the parent item's `securityId`; the transfer is positionally associated with that warrant by containment rather than carrying its own foreign key.
-- `resulting_security_ids` → `WarrantTransferTransaction.resultingSecurityId`. **Cardinality narrowing (lossy):** OCF allows an *array* of resulting security IDs (`minItems: 1`, `uniqueItems: true`) to model a transfer fanning out into multiple new warrants; Carta exposes a single scalar `resultingSecurityId` ("the identifier of the new warrant created as a result of the transfer"). The common one-to-one transfer maps cleanly (`resulting_security_ids[0]` → `resultingSecurityId`); a one-to-many OCF split-on-transfer cannot be fully represented and would have to be modeled in Carta as multiple transfer transactions. Marked `rename` (not `split`, which is for one OCF field fanning out to ≥2 *distinct* Carta properties — here OCF fans *in* to one Carta field). Carta's companion `resultingSecurityLabel` (human-readable label of the new warrant, e.g. "W-8") has no OCF source field and is simply left unpopulated; it is a Carta-side display convenience, not an OCF concept.
+- `resulting_security_ids` → `WarrantTransferTransaction.resultingSecurityId`. **Cardinality narrowing (lossy):** OCF allows an *array* of resulting security IDs (`minItems: 1`, `uniqueItems: true`) to model a transfer fanning out into multiple new warrants; Carta exposes a single scalar `resultingSecurityId`. The mapping makes the reduction explicit with policy `first_resulting_security_id`; a one-to-many OCF split-on-transfer cannot be fully represented. Carta's companion `resultingSecurityLabel` has no OCF source field and is left unpopulated.
 - `consideration_text` — OCF's free-text description of consideration paid in the secondary sale/transfer. **No Carta home:** a full-text scan of the bundle for `consideration` returns nothing, and `WarrantTransferTransaction` has no price/consideration/cash field (contrast `WarrantExerciseTransaction`, which does carry payment fields — transfers in Carta are recorded as pure quantity moves). Marked `no-equivalent`.
 - `balance_security_id` — OCF's identifier for the security holding the remainder after a *partial* transfer. **No Carta home:** Carta's transfer transaction records only the resulting (transferred-out) warrant via `resultingSecurityId`; there is no field for the residual/balance security left with the transferor. In Carta the remaining balance is implicit in the source warrant's updated quantity rather than a referenced security object. Marked `no-equivalent`.
 - `object_type` is the OCF discriminator constant `TX_WARRANT_TRANSFER`. Carta types transactions *positionally* — a transfer is a transfer by virtue of appearing in `WarrantTransactionItem.transfers[]`, and `WarrantTransferTransaction` carries no `object_type`/type-discriminator field. There is therefore no Carta enum to remap onto, so this is `no-equivalent` (not `enum-remap`); the single OCF enum value `TX_WARRANT_TRANSFER` is listed and maps to `null`. (Same treatment as the retraction/cancellation precedents.)

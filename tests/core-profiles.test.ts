@@ -108,8 +108,8 @@ describe("upstream-OCF report", () => {
     expect(rich).toContain("upstream-OCF change candidates");
     expect(rich).toContain("```mermaid"); // visual flow diagram
     expect(rich).toContain("### Stakeholder — in Core (admissible)"); // grouped by object
-    // name flows to the flattened Carta fullName (structure→scalar), OCF-required.
-    expect(rich).toMatch(/\| name \| \*\*yes\*\* \|.*Stakeholder\.fullName.*structure→scalar/);
+    // name explicitly selects legal_name into the flattened Carta fullName, OCF-required.
+    expect(rich).toMatch(/\| name \| \*\*yes\*\* \|.*Stakeholder\.fullName.*select \(legal_name\)/);
     expect(rich).toContain("addresses");
 
     const strict = renderUpstreamReport(await deriveCore(process.cwd(), STRICT_PROFILE));

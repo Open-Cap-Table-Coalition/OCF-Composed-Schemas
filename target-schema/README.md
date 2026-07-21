@@ -9,15 +9,17 @@ re-review affected mappings) rather than silent misalignment.
 - **Version:** v1alpha1 (2026-04-30)
 - **Source:** Google Drive
 - **Last copied:** 2026-05-19 by MattCantor
+- **Content lock:** [`../provenance.lock.json`](../provenance.lock.json) — SHA-256 `9cb61cd0464edbba67f721c29afaba22dce15a2d59af2d0587670ad709af8a71`
 
 ## How to refresh
 
 1. Download the latest version from the Google Drive.
 2. Replace `Carta.schema.json` in this directory.
-3. Sanity-check the file parses: `jq . target-schema/Carta.schema.json > /dev/null` (should exit
+3. Update `provenance.lock.json` with the new SHA-256 and run `npm run provenance:check`.
+4. Sanity-check the file parses: `jq . target-schema/Carta.schema.json > /dev/null` (should exit
    silently).
-4. Update the **Version** and **Last copied** lines above.
-5. Open a tracking issue to re-review the `.mapping.md` files whose target paths land in changed
+5. Update the **Version** and **Last copied** lines above.
+6. Open a tracking issue to re-review the `.mapping.md` files whose target paths land in changed
    parts of the schema.
 
 ## Notes

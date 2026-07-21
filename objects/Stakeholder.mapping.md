@@ -122,7 +122,7 @@ Source: [`Stakeholder.schema.json`](./Stakeholder.schema.json)
 ## Mapping
 
 ```yaml
-# kind vocabulary: rename | split | combine | enum-remap | computed | unmappable | TODO
+# kind vocabulary: rename | select | split | combine | enum-remap | computed | unmappable | TODO
 status: complete
 coverage: 13/13
 
@@ -142,8 +142,10 @@ fields:
     values:
       STAKEHOLDER: null
   name:
-    kind: rename
+    kind: select
     target: "#/$defs/Stakeholder/properties/fullName"
+    policy: legal_name
+    source: "/legal_name"
   stakeholder_type:
     kind: enum-remap
     target: "#/$defs/Stakeholder/properties/entityType"
@@ -173,6 +175,7 @@ fields:
   current_relationships:
     kind: enum-remap
     target: "#/$defs/Stakeholder/properties/relationship"
+    policy: first_relationship_in_order
     values:
       ADVISOR: ADVISOR
       BOARD_MEMBER: BOARD_MEMBER
@@ -208,8 +211,10 @@ fields:
     kind: combine
     target: "#/$defs/Stakeholder/properties/email"
   addresses:
-    kind: rename
+    kind: select
     target: "#/$defs/Stakeholder/properties/address"
+    policy: first_address_country
+    source: "/country"
   tax_ids:
     kind: unmappable
     target: null
@@ -218,15 +223,15 @@ fields:
 
 ## Notes / open questions
 
-- `name` → `fullName`: OCF `name` is a structured `Name` (required `legal_name`, optional `first_name`/`last_name`); Carta `fullName` is a flat string. Only `legal_name` carries; `first_name`/`last_name` have no Carta slot and are dropped.
+- `name` → `fullName`: OCF `name` is a structured `Name` (required `legal_name`, optional `first_name`/`last_name`); Carta `fullName` is a flat string. The mapping explicitly selects `/legal_name` under policy `legal_name`; `first_name`/`last_name` have no Carta slot and are dropped.
 - `stakeholder_type` → `entityType`: OCF's 2-value enum (`INDIVIDUAL` / `INSTITUTION`) is coarser than Carta's 7-value `StakeholderEntityType` (`INDIVIDUAL`, `CORPORATION`, `LIMITED_LIABILITY_CORPORATION`, `ESTATE_OR_TRUST`, `PARTNERSHIP`, `DISREGARDED_ENTITY`, `UNKNOWN`). `INDIVIDUAL` maps cleanly. `INSTITUTION` collapses to `UNKNOWN` because OCF doesn't say *what kind* of institution. A consumer with side information (e.g., the stakeholder's name) can refine `UNKNOWN` to a more specific Carta value, but that's out of scope for the schema-level mapping.
 - Carta also defines an unused `StakeholderType` enum (`STAKEHOLDER_TYPE_INDIVIDUAL` / `STAKEHOLDER_TYPE_NON_INDIVIDUAL`) that is a closer 1:1 match for OCF's `stakeholder_type`, but it is not `$ref`'d from `Stakeholder` — Carta's `Stakeholder.entityType` uses the finer-grained `StakeholderEntityType` instead. So `StakeholderType` is a dead-end target.
 - `issuer_assigned_id` → `employeeId`: rename. OCF's description (e.g., "an internal company ID for an employee stakeholder") aligns with Carta's field. Carta is more narrowly named ("employee") but the underlying semantics match.
 - `current_relationship` (deprecated singular) and `current_relationships` (canonical v2 array) both target Carta's single-valued `relationship`. Both rows pointing at the same target mirrors the `path`/`uri` pattern in `Document`. Per-value mapping is a near-identity rename; the only renamed value is `NON_US_EMPLOYEE` → `INTERNATIONAL_EMPLOYEE`. Carta has additional values (`EX_BOARD_MEMBER`, `EX_INTERNATIONAL_EMPLOYEE`) with no OCF source — those would have to come from elsewhere if needed.
-- `current_relationships` array → single Carta value is a lossy collapse: if OCF carries `[BOARD_MEMBER, FOUNDER]`, only one fits Carta. The mapping doc doesn't prescribe the rule; the consumer picks per-record (e.g., the most senior, the first, or by some policy).
+- `current_relationships` array → single Carta value is a lossy collapse: if OCF carries `[BOARD_MEMBER, FOUNDER]`, only one fits Carta. The mapping uses the explicit deterministic policy `first_relationship_in_order`; a consumer that needs a different business policy must preserve the full array outside this mapping rather than silently changing the fold.
 - `current_status`: unmappable. Carta has no per-stakeholder status field. The `EX_*` values of Carta's `relationship` enum partially encode termination (someone is an `EX_EMPLOYEE` rather than `EMPLOYEE`), but the finer-grained OCF status values (`LEAVE_OF_ABSENCE`, the various `TERMINATION_*` reasons) have no Carta target.
 - `primary_contact` (institutional) and `contact_info` (individual) both → Carta `email`: both OCF types carry `emails: array` and `phone_numbers: array` (and `primary_contact` also carries `name`). Only the email is transferred, and Carta accepts only a single string — so only the first email per record survives. Phone numbers, the contact person's name (for institutions), and additional emails are all dropped. Marked `kind: combine` rather than `rename`: these are two *distinct* optional OCF fields that both feed Carta's single `email`, so the relationship is a two-source → one-target fan-in, not a 1:1 field rename. Selection is by `stakeholder_type` (`contact_info` for an `INDIVIDUAL`, `primary_contact` for an `INSTITUTION`); the OCF schema places no `oneOf`/`anyOf` on the two fields, so if both happen to be set the one matching `stakeholder_type` wins. (`computed` is reserved for cross-record or otherwise-derived values; here the value is copied verbatim from whichever source applies, just collapsed to the first email.)
-- `addresses` → `address`: dramatic loss in two dimensions. OCF carries an *array* of richly structured `Address` objects (street, city, state, country, postal code, etc.); Carta's `StakeholderAddress` has *only* `country` (a single string, no structure). Only the country of one address survives; all other address data is dropped.
+- `addresses` → `address`: dramatic loss in two dimensions. OCF carries an *array* of richly structured `Address` objects (street, city, state, country, postal code, etc.); Carta's `StakeholderAddress` has *only* `country` (a single string, no structure). The mapping explicitly selects the first address's `/country` under policy `first_address_country`; all other address data is dropped.
 - `tax_ids`: unmappable. Carta's `Stakeholder` has no tax-id field.
 - `id`, `comments`, `object_type`: unmappable boilerplate OCF object scaffolding (same as `Document`/`Issuer`).
 - Carta-side fields with no OCF counterpart: `issuerId` (a back-reference; in OCF the issuer is implicit because each OCF file represents one issuer), `group` (an arbitrary tag with no OCF analogue).
