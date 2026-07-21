@@ -59,14 +59,21 @@ describe("deriveCore profiles over the real corpus", () => {
     expect(pkgStr(def.package)).toEqual(pkgStr(strict.package));
   });
 
-  it("rich is a strict SUPERSET of entities, adding exactly Document + ratio-adjustment", async () => {
+  it("rich is a strict SUPERSET of entities, adding lossy nested mappings", async () => {
     const strict = await deriveCore(process.cwd(), STRICT_PROFILE);
     const rich = await deriveCore(process.cwd(), RICH_PROFILE);
     const se = new Set(strict.entities.map((e) => e.entity));
     const re = new Set(rich.entities.map((e) => e.entity));
     for (const e of se) expect(re.has(e)).toBe(true); // superset — no strict entity lost
     const added = [...re].filter((e) => !se.has(e)).sort();
-    expect(added).toEqual(["Document", "StockClassConversionRatioAdjustment"]);
+    expect(added).toEqual([
+      "Document",
+      "EquityCompensationIssuance",
+      "StockClassConversionRatioAdjustment",
+      "StockIssuance",
+      "VestingTerms",
+      "WarrantIssuance",
+    ]);
   });
 
   it("rich Stakeholder carries the personal-info fields strict drops, in OCF's structured shape", async () => {

@@ -39,6 +39,28 @@ flowchart LR
   o0 -->|"primary_contact → email"| t0
 ```
 
+**EquityCompensationIssuance [Option] → Compliance, OptionGrant**
+
+```mermaid
+flowchart LR
+  classDef adm fill:#e6f4ea,stroke:#34a853,color:#0b3d20;
+  classDef notadm fill:#f1f3f4,stroke:#9aa0a6,color:#5f6368,stroke-dasharray:4 3;
+  classDef carta fill:#e8f0fe,stroke:#1a73e8,color:#0d2b66;
+  classDef sink fill:#fce8e6,stroke:#d93025,color:#5c0d06;
+  subgraph SRC["OCF source objects"]
+    direction TB
+    o0["EquityCompensationIssuance [Option]"]:::notadm
+  end
+  subgraph TGT["Carta target objects"]
+    direction TB
+    t0["Compliance"]:::carta
+    t1["OptionGrant"]:::carta
+  end
+  o0 -->|"security_law_exemptions → federalExemption"| t0
+  o0 -->|"termination_exercise_windows → exercisePeriods"| t1
+  o0 -->|"vestings → vestingEvents"| t1
+```
+
 **StockClass → ShareClass, ShareClassRightsAndPreferences**
 
 ```mermaid
@@ -102,7 +124,7 @@ flowchart LR
   o0 -->|"uri → fileId"| t0
 ```
 
-**EquityCompensationIssuance [Option] → Compliance, OptionGrant**
+**EquityCompensationIssuance [Rsu] → Compliance, RestrictedStockUnit**
 
 ```mermaid
 flowchart LR
@@ -112,15 +134,15 @@ flowchart LR
   classDef sink fill:#fce8e6,stroke:#d93025,color:#5c0d06;
   subgraph SRC["OCF source objects"]
     direction TB
-    o0["EquityCompensationIssuance [Option]"]:::adm
+    o0["EquityCompensationIssuance [Rsu]"]:::notadm
   end
   subgraph TGT["Carta target objects"]
     direction TB
     t0["Compliance"]:::carta
-    t1["OptionGrant"]:::carta
+    t1["RestrictedStockUnit"]:::carta
   end
   o0 -->|"security_law_exemptions → federalExemption"| t0
-  o0 -->|"termination_exercise_windows → exercisePeriods"| t1
+  o0 -->|"vestings → vestingEvents"| t1
 ```
 
 **StockCancellation [Default] → CertificateCancellationTransaction, CertificatePrecededBy**
@@ -243,6 +265,27 @@ flowchart LR
   end
   o0 -->|"balance_security_id → securities"| t0
   o0 -->|"resulting_security_ids → securities"| t0
+```
+
+**StockIssuance [Rsa] → Compliance, RestrictedStockAward**
+
+```mermaid
+flowchart LR
+  classDef adm fill:#e6f4ea,stroke:#34a853,color:#0b3d20;
+  classDef notadm fill:#f1f3f4,stroke:#9aa0a6,color:#5f6368,stroke-dasharray:4 3;
+  classDef carta fill:#e8f0fe,stroke:#1a73e8,color:#0d2b66;
+  classDef sink fill:#fce8e6,stroke:#d93025,color:#5c0d06;
+  subgraph SRC["OCF source objects"]
+    direction TB
+    o0["StockIssuance [Rsa]"]:::notadm
+  end
+  subgraph TGT["Carta target objects"]
+    direction TB
+    t0["Compliance"]:::carta
+    t1["RestrictedStockAward"]:::carta
+  end
+  o0 -->|"security_law_exemptions → federalExemption"| t0
+  o0 -->|"vestings → vestingEvents"| t1
 ```
 
 **StockTransfer [Default] → CertificatePrecededBy**
@@ -399,25 +442,6 @@ flowchart LR
   o0 -->|"resulting_security_ids → securities"| t0
 ```
 
-**EquityCompensationIssuance [Rsu] → Compliance**
-
-```mermaid
-flowchart LR
-  classDef adm fill:#e6f4ea,stroke:#34a853,color:#0b3d20;
-  classDef notadm fill:#f1f3f4,stroke:#9aa0a6,color:#5f6368,stroke-dasharray:4 3;
-  classDef carta fill:#e8f0fe,stroke:#1a73e8,color:#0d2b66;
-  classDef sink fill:#fce8e6,stroke:#d93025,color:#5c0d06;
-  subgraph SRC["OCF source objects"]
-    direction TB
-    o0["EquityCompensationIssuance [Rsu]"]:::adm
-  end
-  subgraph TGT["Carta target objects"]
-    direction TB
-    t0["Compliance"]:::carta
-  end
-  o0 -->|"security_law_exemptions → federalExemption"| t0
-```
-
 **EquityCompensationIssuance [Sar] → Compliance**
 
 ```mermaid
@@ -428,7 +452,7 @@ flowchart LR
   classDef sink fill:#fce8e6,stroke:#d93025,color:#5c0d06;
   subgraph SRC["OCF source objects"]
     direction TB
-    o0["EquityCompensationIssuance [Sar]"]:::adm
+    o0["EquityCompensationIssuance [Sar]"]:::notadm
   end
   subgraph TGT["Carta target objects"]
     direction TB
@@ -485,26 +509,7 @@ flowchart LR
   classDef sink fill:#fce8e6,stroke:#d93025,color:#5c0d06;
   subgraph SRC["OCF source objects"]
     direction TB
-    o0["StockIssuance [Default]"]:::adm
-  end
-  subgraph TGT["Carta target objects"]
-    direction TB
-    t0["Compliance"]:::carta
-  end
-  o0 -->|"security_law_exemptions → federalExemption"| t0
-```
-
-**StockIssuance [Rsa] → Compliance**
-
-```mermaid
-flowchart LR
-  classDef adm fill:#e6f4ea,stroke:#34a853,color:#0b3d20;
-  classDef notadm fill:#f1f3f4,stroke:#9aa0a6,color:#5f6368,stroke-dasharray:4 3;
-  classDef carta fill:#e8f0fe,stroke:#1a73e8,color:#0d2b66;
-  classDef sink fill:#fce8e6,stroke:#d93025,color:#5c0d06;
-  subgraph SRC["OCF source objects"]
-    direction TB
-    o0["StockIssuance [Rsa]"]:::adm
+    o0["StockIssuance [Default]"]:::notadm
   end
   subgraph TGT["Carta target objects"]
     direction TB
@@ -608,6 +613,25 @@ flowchart LR
   o0 -->|"balance_security_id → securities"| t0
 ```
 
+**VestingTerms → VestingScheduleTemplate**
+
+```mermaid
+flowchart LR
+  classDef adm fill:#e6f4ea,stroke:#34a853,color:#0b3d20;
+  classDef notadm fill:#f1f3f4,stroke:#9aa0a6,color:#5f6368,stroke-dasharray:4 3;
+  classDef carta fill:#e8f0fe,stroke:#1a73e8,color:#0d2b66;
+  classDef sink fill:#fce8e6,stroke:#d93025,color:#5c0d06;
+  subgraph SRC["OCF source objects"]
+    direction TB
+    o0["VestingTerms"]:::notadm
+  end
+  subgraph TGT["Carta target objects"]
+    direction TB
+    t0["VestingScheduleTemplate"]:::carta
+  end
+  o0 -->|"statements → periods"| t0
+```
+
 **WarrantCancellation → WarrantCancellationTransaction**
 
 ```mermaid
@@ -656,7 +680,7 @@ flowchart LR
   classDef sink fill:#fce8e6,stroke:#d93025,color:#5c0d06;
   subgraph SRC["OCF source objects"]
     direction TB
-    o0["WarrantIssuance"]:::adm
+    o0["WarrantIssuance"]:::notadm
   end
   subgraph TGT["Carta target objects"]
     direction TB
@@ -685,7 +709,7 @@ flowchart LR
 ```
 
 
-## A. Lossy home — by OCF object, flowing to Carta (51 (entity,variant,field) rows across 22 objects; 35 OCF-required)
+## A. Lossy home — by OCF object, flowing to Carta (55 (entity,variant,field) rows across 23 objects; 36 OCF-required)
 
 Each field HAS a Carta home but the fold loses fidelity: `existence-loss` = the shape
 collapses (object/array → scalar); `heuristic` = a non-1:1 transform (combine/split/computed).
@@ -733,12 +757,14 @@ is a direct predecessor→`securities` landing.
 | --- | :---: | --- | --- | --- |
 | resulting_security_ids | **yes** | Option, Sar | CertificatePrecededBy.securities | heuristic (computed) |
 
-### EquityCompensationIssuance — in Core (admissible)
+### EquityCompensationIssuance — not yet admissible
 
 | field | OCF-req | variant(s) | flows to (Carta) | loss |
 | --- | :---: | --- | --- | --- |
 | security_law_exemptions | **yes** | Option, Rsu, Sar | Compliance.federalExemption | heuristic (computed) |
 | termination_exercise_windows | **yes** | Option | OptionGrant.exercisePeriods | existence-loss (select (first_termination_window)) |
+| vestings |  | Option | OptionGrant.vestingEvents | heuristic (items: Vesting drops amount (per type mapping)) |
+| vestings |  | Rsu | RestrictedStockUnit.vestingEvents | heuristic (items: Vesting drops amount (per type mapping)) |
 
 ### EquityCompensationRelease — in Core (admissible)
 
@@ -797,11 +823,12 @@ is a direct predecessor→`securities` landing.
 | resulting_security_ids | **yes** | Rsa | RestrictedStockAwardPrecededBy.securities | heuristic (computed) |
 | resulting_security_ids | **yes** | Default | CertificatePrecededBy.securities | heuristic (computed) |
 
-### StockIssuance — in Core (admissible)
+### StockIssuance — not yet admissible
 
 | field | OCF-req | variant(s) | flows to (Carta) | loss |
 | --- | :---: | --- | --- | --- |
 | security_law_exemptions | **yes** | Rsa, Default | Compliance.federalExemption | heuristic (computed) |
+| vestings |  | Rsa | RestrictedStockAward.vestingEvents | heuristic (items: Vesting drops amount (per type mapping)) |
 
 ### StockPlan — in Core (admissible)
 
@@ -832,6 +859,12 @@ is a direct predecessor→`securities` landing.
 | resulting_security_ids | **yes** | Rsa | RestrictedStockAwardPrecededBy.securities | heuristic (computed) |
 | resulting_security_ids | **yes** | Default | CertificatePrecededBy.securities | heuristic (computed) |
 
+### VestingTerms — not yet admissible
+
+| field | OCF-req | variant(s) | flows to (Carta) | loss |
+| --- | :---: | --- | --- | --- |
+| statements | **yes** |  | VestingScheduleTemplate.periods | heuristic (items: VestingStatement drops schedule, event_condition, percentage (per type mapping)) |
+
 ### WarrantCancellation — in Core (admissible)
 
 | field | OCF-req | variant(s) | flows to (Carta) | loss |
@@ -844,7 +877,7 @@ is a direct predecessor→`securities` landing.
 | --- | :---: | --- | --- | --- |
 | resulting_security_ids | **yes** |  | WarrantExerciseTransaction.resultingSecurityId | existence-loss (select (first_resulting_security_id)) |
 
-### WarrantIssuance — in Core (admissible)
+### WarrantIssuance — not yet admissible
 
 | field | OCF-req | variant(s) | flows to (Carta) | loss |
 | --- | :---: | --- | --- | --- |
@@ -875,7 +908,10 @@ onto one Carta field — most visibly the reverse-edge lineage collapsing onto `
 - `ConvertibleIssuanceTransaction.valuationCap` ← 1: `ConvertibleIssuance.conversion_triggers`
 - `OptionCancellationTransaction.reason` ← 1: `EquityCompensationCancellation.reason_text [Option]`
 - `OptionGrant.exercisePeriods` ← 1: `EquityCompensationIssuance.termination_exercise_windows [Option]`
+- `OptionGrant.vestingEvents` ← 1: `EquityCompensationIssuance.vestings [Option]`
 - `OptionPoolSummary.shareClassId` ← 1: `StockPlan.stock_class_ids`
+- `RestrictedStockAward.vestingEvents` ← 1: `StockIssuance.vestings [Rsa]`
+- `RestrictedStockUnit.vestingEvents` ← 1: `EquityCompensationIssuance.vestings [Rsu]`
 - `RsaCancellationTransaction.reason` ← 1: `StockCancellation.reason_text [Rsa]`
 - `RsuCancellationTransaction.reason` ← 1: `EquityCompensationCancellation.reason_text [Rsu]`
 - `SarCancellationTransaction.reason` ← 1: `EquityCompensationCancellation.reason_text [Sar]`
@@ -884,6 +920,7 @@ onto one Carta field — most visibly the reverse-edge lineage collapsing onto `
 - `Stakeholder.address` ← 1: `Stakeholder.addresses`
 - `Stakeholder.fullName` ← 1: `Stakeholder.name`
 - `Stakeholder.relationship` ← 1: `Stakeholder.current_relationships`
+- `VestingScheduleTemplate.periods` ← 1: `VestingTerms.statements`
 - `WarrantCancellationTransaction.reason` ← 1: `WarrantCancellation.reason_text`
 - `WarrantExerciseTransaction.resultingSecurityId` ← 1: `WarrantExercise.resulting_security_ids`
 - `WarrantTransferTransaction.resultingSecurityId` ← 1: `WarrantTransfer.resulting_security_ids`
@@ -903,7 +940,7 @@ rich-Core recovers — listed for contrast.
 - **EquityCompensationAcceptance** *(not yet admissible)* — **date**, **security_id**
 - **EquityCompensationCancellation** — balance_security_id, **security_id**
 - **EquityCompensationExercise** — consideration_text, **date**, **quantity**, **resulting_security_ids**, **security_id**
-- **EquityCompensationIssuance** — base_price, board_approval_date, **compensation_type**, consideration_text, **custom_id**, early_exercisable, exercise_price, **expiration_date**, option_grant_type, **security_id**, **stakeholder_id**, stockholder_approval_date, **termination_exercise_windows**, vesting_start_date, vestings
+- **EquityCompensationIssuance** *(not yet admissible)* — base_price, board_approval_date, **compensation_type**, consideration_text, **custom_id**, early_exercisable, exercise_price, **expiration_date**, option_grant_type, **security_id**, **stakeholder_id**, stockholder_approval_date, **termination_exercise_windows**, vesting_start_date, vestings
 - **EquityCompensationRelease** — consideration_text, **date**, **quantity**, **release_price**, **resulting_security_ids**, **security_id**, **settlement_date**
 - **EquityCompensationRepricing** — **date**, **new_exercise_price**, **security_id**
 - **EquityCompensationRetraction** *(not yet admissible)* — **date**, **reason_text**, **security_id**
@@ -922,7 +959,7 @@ rich-Core recovers — listed for contrast.
 - **StockClassSplit** *(not yet admissible)* — **date**, **split_ratio**, **stock_class_id**
 - **StockConsolidation** *(not yet admissible)* — **date**, reason_text
 - **StockConversion** *(not yet admissible)* — **date**, **quantity_converted**, **security_id**
-- **StockIssuance** — board_approval_date, consideration_text, issuance_type, share_numbers_issued, **stock_legend_ids**, stockholder_approval_date, vestings
+- **StockIssuance** *(not yet admissible)* — board_approval_date, consideration_text, issuance_type, share_numbers_issued, **stock_legend_ids**, stockholder_approval_date, vestings
 - **StockLegendTemplate** *(not yet admissible)* — **name**, **text**
 - **StockPlan** — board_approval_date, default_cancellation_behavior, stockholder_approval_date
 - **StockPlanPoolAdjustment** *(not yet admissible)* — board_approval_date, **date**, **shares_reserved**, **stock_plan_id**, stockholder_approval_date
@@ -937,7 +974,7 @@ rich-Core recovers — listed for contrast.
 - **WarrantAcceptance** *(not yet admissible)* — **date**, **security_id**
 - **WarrantCancellation** — balance_security_id, **security_id**
 - **WarrantExercise** *(not yet admissible)* — consideration_text, **trigger_id**
-- **WarrantIssuance** — board_approval_date, consideration_text, **exercise_triggers**, quantity_source, stockholder_approval_date, vestings
+- **WarrantIssuance** *(not yet admissible)* — board_approval_date, consideration_text, **exercise_triggers**, quantity_source, stockholder_approval_date, vestings
 - **WarrantRetraction** *(not yet admissible)* — **date**, **reason_text**, **security_id**
 - **WarrantTransfer** — balance_security_id, consideration_text
 
