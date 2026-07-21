@@ -44,12 +44,17 @@ The repository has a deliberate source/generated split.
 | --- | --- | --- |
 | A field-to-Carta relationship | The relevant `objects/**/*.mapping.md` or `types/**/*.mapping.md` | `npm run mapping:validate`, then the Core checks if applicable |
 | A mapping convention or validator rule | `scripts/lib/mapping-parser.ts`, `scripts/lib/mapping-validator.ts`, related report code | Targeted tests, full mapping validation, typecheck, lint, and test suite |
-| Core membership or referential closure metadata | `core/allow-list.yml`, `core-rich/allow-list.yml`, or `core/reference-graph.yml` as appropriate | `npm run core:build`, `npm run core:check`, `npm run core:validate-sample` |
+| Decide which OCF entities may graduate into Core, or describe which IDs must resolve | Add the entity to `core/allow-list.yml` / `core-rich/allow-list.yml`, or add the relationship to `core/reference-graph.yml` | `npm run core:build`, `npm run core:check`, `npm run core:validate-sample` |
 | Generated Core schema, ledger, gap, upstream, or inventory output | Do not edit directly | Change the input, then `npm run core:build` |
 | Upstream OCF version or content | Coordinate a provenance update | Update [`OCF_SOURCE.md`](./OCF_SOURCE.md), the content lock, composed schemas, and affected mappings together |
 | Carta target bundle | Coordinate a target-bundle update | Update the bundle, target version references, mappings, reports, and tests together |
 
 `core/allow-list.yml`, `core-rich/allow-list.yml`, and `core/reference-graph.yml` are hand-maintained inputs. Most other files under `core/`, `core-rich/`, and the three generated inventory documents under `docs/` are outputs of the Core pipeline.
+
+There are two different kinds of human-maintained Core metadata here:
+
+- The **allow-list is an approval gate**. The generator examines the mappings and drafts the entities that appear technically admissible. A human must add an entity to the relevant allow-list before that entity can ship as part of Core. `npm run core:check` fails when the generator finds a new admissible entity that has not been approved. Conversely, an entity may be listed in advance and remain absent from the generated package until its mappings become admissible. In other words: the human approves *which entities are allowed*; the generator proves *whether their current mappings are good enough* and produces their schemas.
+- The **reference graph is not an approval list**. It tells the generator what an ID field points to so Core sample validation can check referential closure—for example, that a `stock_class_id` resolves to a Core `StockClass`. Add to it when a relationship is missing or changes; do not use it to admit an entity.
 
 ## The mapping document contract
 
@@ -400,7 +405,7 @@ OCF Core is derived from the mapping corpus; it is not declared by adding Core-o
 - [`core/reference-graph.yml`](./core/reference-graph.yml) supplies referential-closure metadata for `*_id` relationships.
 - `core-ledger.md`, `core-gaps.md`, `core-upstream.md`, and the three `docs/core-*-inventory.md` documents are generated reports.
 
-If a mapping change causes a new entity to become admissible, `npm run core:check` will identify an entity missing from the profile's allow-list. Review the mapping and the proposed entity first; then add it to the appropriate allow-list only if it belongs in that profile. Do not make the generated schema less accurate to avoid the gate.
+If a mapping change causes a new entity to become admissible, `npm run core:check` will identify an entity missing from the profile's allow-list. Review the mapping and the proposed entity first; then add it to the appropriate allow-list only if it belongs in that profile. That edit is the human graduation decision. Do not make the generated schema less accurate to avoid the gate.
 
 If you add or rename a foreign-key field, inspect [`core/reference-graph.yml`](./core/reference-graph.yml) and update the graph when the relationship needs closure checking. The graph describes relationships, not field shapes; the generator owns field shape.
 
