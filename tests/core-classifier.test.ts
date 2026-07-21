@@ -120,6 +120,15 @@ describe("classifyField — rename shape cascade", () => {
         .class
     ).toBe("core");
   });
+  it("a non-null source union cannot pass as a direct rename", () => {
+    const v = classifyField(
+      { kind: "rename", target: "#/$defs/Scalar" },
+      { oneOf: [{ $ref: "ocf://Enum2" }, { $ref: "ocf://Numeric" }] },
+      ctx()
+    );
+    expect(v).toMatchObject({ class: "out", reason: "partial" });
+    expect(v.detail).toContain("multiple real branches");
+  });
 });
 
 describe("classifyField — enum-remap totality (ruling C)", () => {

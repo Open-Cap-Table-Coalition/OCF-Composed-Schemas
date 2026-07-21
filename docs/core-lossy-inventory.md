@@ -39,6 +39,28 @@ flowchart LR
   o0 -->|"primary_contact → email"| t0
 ```
 
+**StockClass → ShareClass, ShareClassRightsAndPreferences**
+
+```mermaid
+flowchart LR
+  classDef adm fill:#e6f4ea,stroke:#34a853,color:#0b3d20;
+  classDef notadm fill:#f1f3f4,stroke:#9aa0a6,color:#5f6368,stroke-dasharray:4 3;
+  classDef carta fill:#e8f0fe,stroke:#1a73e8,color:#0d2b66;
+  classDef sink fill:#fce8e6,stroke:#d93025,color:#5c0d06;
+  subgraph SRC["OCF source objects"]
+    direction TB
+    o0["StockClass"]:::adm
+  end
+  subgraph TGT["Carta target objects"]
+    direction TB
+    t0["ShareClass"]:::carta
+    t1["ShareClassRightsAndPreferences"]:::carta
+  end
+  o0 -->|"conversion_rights → conversionRatio / conversionPrice"| t1
+  o0 -->|"initial_shares_authorized → authorizedShareCount"| t0
+  o0 -->|"seniority → seniority"| t0
+```
+
 **ConvertibleIssuance → Compliance, ConvertibleIssuanceTransaction**
 
 ```mermaid
@@ -141,27 +163,6 @@ flowchart LR
   end
   o0 -->|"balance_security_id → securities"| t0
   o0 -->|"reason_text → reason"| t1
-```
-
-**StockClass → ShareClass, ShareClassRightsAndPreferences**
-
-```mermaid
-flowchart LR
-  classDef adm fill:#e6f4ea,stroke:#34a853,color:#0b3d20;
-  classDef notadm fill:#f1f3f4,stroke:#9aa0a6,color:#5f6368,stroke-dasharray:4 3;
-  classDef carta fill:#e8f0fe,stroke:#1a73e8,color:#0d2b66;
-  classDef sink fill:#fce8e6,stroke:#d93025,color:#5c0d06;
-  subgraph SRC["OCF source objects"]
-    direction TB
-    o0["StockClass"]:::adm
-  end
-  subgraph TGT["Carta target objects"]
-    direction TB
-    t0["ShareClass"]:::carta
-    t1["ShareClassRightsAndPreferences"]:::carta
-  end
-  o0 -->|"conversion_rights → conversionRatio / conversionPrice"| t1
-  o0 -->|"seniority → seniority"| t0
 ```
 
 **StockConsolidation [Default] → CertificatePrecededBy**
@@ -684,7 +685,7 @@ flowchart LR
 ```
 
 
-## A. Lossy home — by OCF object, flowing to Carta (50 (entity,variant,field) rows across 22 objects; 34 OCF-required)
+## A. Lossy home — by OCF object, flowing to Carta (51 (entity,variant,field) rows across 22 objects; 35 OCF-required)
 
 Each field HAS a Carta home but the fold loses fidelity: `existence-loss` = the shape
 collapses (object/array → scalar); `heuristic` = a non-1:1 transform (combine/split/computed).
@@ -769,6 +770,7 @@ is a direct predecessor→`securities` landing.
 | field | OCF-req | variant(s) | flows to (Carta) | loss |
 | --- | :---: | --- | --- | --- |
 | conversion_rights |  |  | ShareClassRightsAndPreferences.{conversionRatio, conversionPrice} | heuristic (split) |
+| initial_shares_authorized | **yes** |  | ShareClass.authorizedShareCount | partial (source union has multiple real branches; direct rename is not total) |
 | seniority | **yes** |  | ShareClass.seniority | heuristic (computed) |
 
 ### StockClassConversionRatioAdjustment — not yet admissible
@@ -877,6 +879,7 @@ onto one Carta field — most visibly the reverse-edge lineage collapsing onto `
 - `RsaCancellationTransaction.reason` ← 1: `StockCancellation.reason_text [Rsa]`
 - `RsuCancellationTransaction.reason` ← 1: `EquityCompensationCancellation.reason_text [Rsu]`
 - `SarCancellationTransaction.reason` ← 1: `EquityCompensationCancellation.reason_text [Sar]`
+- `ShareClass.authorizedShareCount` ← 1: `StockClass.initial_shares_authorized`
 - `ShareClass.seniority` ← 1: `StockClass.seniority`
 - `Stakeholder.address` ← 1: `Stakeholder.addresses`
 - `Stakeholder.fullName` ← 1: `Stakeholder.name`

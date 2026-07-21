@@ -1,4 +1,4 @@
-import { deriveCore } from "../scripts/lib/core-pipeline.js";
+import { deriveCore, RICH_PROFILE } from "../scripts/lib/core-pipeline.js";
 
 /** Recursively sort object keys for structural comparison (mirrors core:check). */
 function canonical(value: unknown): unknown {
@@ -74,5 +74,18 @@ describe("deriveCore (determinism — the drift gate's premise)", () => {
     for (const def of tf.properties.items.items.oneOf) {
       expect(def.properties.object_type).toBeDefined();
     }
+  });
+
+  it("does not admit StockClass.initial_shares_authorized to strict Core", async () => {
+    const strict = await deriveCore(process.cwd());
+    const rich = await deriveCore(process.cwd(), RICH_PROFILE);
+    const strictStockClass = strict.package.get("files/StockClassesFile.schema.json") as any;
+    const richStockClass = rich.package.get("files/StockClassesFile.schema.json") as any;
+    expect(
+      strictStockClass.properties.items.items.properties.initial_shares_authorized
+    ).toBeUndefined();
+    expect(
+      richStockClass.properties.items.items.properties.initial_shares_authorized
+    ).toBeDefined();
   });
 });

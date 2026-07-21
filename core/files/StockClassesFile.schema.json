@@ -30,22 +30,6 @@
             "type": "string",
             "description": "Identifier for the object"
           },
-          "initial_shares_authorized": {
-            "oneOf": [
-              {
-                "type": "string",
-                "enum": [
-                  "NOT APPLICABLE",
-                  "UNLIMITED"
-                ]
-              },
-              {
-                "type": "string",
-                "pattern": "^[+-]?[0-9]+(\\.[0-9]{1,10})?$"
-              }
-            ],
-            "description": "The initial number of shares authorized for this stock class"
-          },
           "liquidation_preference_multiple": {
             "type": "string",
             "pattern": "^[+-]?[0-9]+(\\.[0-9]{1,10})?$",

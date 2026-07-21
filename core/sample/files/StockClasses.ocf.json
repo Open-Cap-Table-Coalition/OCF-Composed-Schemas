@@ -7,7 +7,6 @@
       "name": "Common Stock",
       "class_type": "COMMON",
       "default_id_prefix": "CS-",
-      "initial_shares_authorized": "10000000",
       "par_value": { "amount": "0.0001", "currency": "USD" },
       "price_per_share": { "amount": "0.0001", "currency": "USD" },
       "liquidation_preference_multiple": "1",

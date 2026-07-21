@@ -170,6 +170,8 @@ interface Shape {
   isArray: boolean;
   isScalar: boolean;
   isMultiProp: boolean;
+  /** More than one non-null branch remains after nullable-union unwrapping. */
+  hasRealUnion: boolean;
   /** Raw `items` node (pre-resolution) when isArray, else null. */
   items: unknown;
   /** Resolved + unwrapped node. */
@@ -185,6 +187,7 @@ function sourceShape(raw: unknown, registry: Registry): Shape {
     isArray: arr,
     isScalar: isScalarNode(node, resolve),
     isMultiProp: isMultiPropObject(node, resolve),
+    hasRealUnion: hasRealUnion(node),
     items: arr ? itemsOf(node) : null,
     node,
   };
@@ -199,9 +202,18 @@ function targetShape(raw: unknown, bundle: unknown): Shape {
     isArray: arr,
     isScalar: isScalarNode(node, resolve),
     isMultiProp: isMultiPropObject(node, resolve),
+    hasRealUnion: hasRealUnion(node),
     items: arr ? itemsOf(node) : null,
     node,
   };
+}
+
+function hasRealUnion(node: unknown): boolean {
+  if (!isPlainObject(node)) return false;
+  const union = node.oneOf ?? node.anyOf;
+  if (!Array.isArray(union)) return false;
+  const branches = union.filter(isPlainObject);
+  return branches.length === union.length && branches.filter((b) => b.type !== "null").length > 1;
 }
 
 /** The three structural collapses, in cascade order. Returns the first that fires. */
@@ -329,6 +341,20 @@ export function classifyField(
   const tgtRaw = resolved[0]?.node;
   const s = sourceShape(srcRaw, ctx.registry);
   const t = targetShape(tgtRaw, ctx.bundle);
+
+  // A direct rename cannot prove that multiple legal source branches all land
+  // in the same Carta slot. Nullable unions were already unwrapped; this is a
+  // genuine multi-branch domain and must be explicitly transformed before it
+  // can enter strict Core. StockClass.initial_shares_authorized is the current
+  // concrete example: Numeric has a Decimal home, but its two sentinel enum
+  // members do not.
+  if (s.hasRealUnion) {
+    return {
+      class: "out",
+      reason: "partial",
+      detail: "source union has multiple real branches; direct rename is not total",
+    };
+  }
 
   const top = collapse(s, t);
   if (top) return { class: "out", reason: top.reason, detail: top.detail };

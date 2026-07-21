@@ -284,6 +284,29 @@ flowchart LR
   o0 -->|"termination_exercise_windows → exercisePeriods"| t0
 ```
 
+**StockClass → ShareClass**
+
+```mermaid
+flowchart LR
+  classDef adm fill:#e6f4ea,stroke:#34a853,color:#0b3d20;
+  classDef notadm fill:#f1f3f4,stroke:#9aa0a6,color:#5f6368,stroke-dasharray:4 3;
+  classDef carta fill:#e8f0fe,stroke:#1a73e8,color:#0d2b66;
+  classDef sink fill:#fce8e6,stroke:#d93025,color:#5c0d06;
+  subgraph SRC["OCF source objects"]
+    direction TB
+    o0["StockClass"]:::adm
+  end
+  subgraph TGT["Carta target objects"]
+    direction TB
+    t0["ShareClass"]:::carta
+    sink["⌀ no Carta home"]:::sink
+  end
+  o0 -->|"board_approval_date"| sink
+  o0 -->|"initial_shares_authorized → authorizedShareCount"| t0
+  o0 -->|"stockholder_approval_date"| sink
+  o0 -->|"votes_per_share"| sink
+```
+
 **StockPlan → OptionPoolSummary**
 
 ```mermaid
@@ -305,27 +328,6 @@ flowchart LR
   o0 -->|"default_cancellation_behavior"| sink
   o0 -->|"stock_class_ids → shareClassId"| t0
   o0 -->|"stockholder_approval_date"| sink
-```
-
-**StockClass**
-
-```mermaid
-flowchart LR
-  classDef adm fill:#e6f4ea,stroke:#34a853,color:#0b3d20;
-  classDef notadm fill:#f1f3f4,stroke:#9aa0a6,color:#5f6368,stroke-dasharray:4 3;
-  classDef carta fill:#e8f0fe,stroke:#1a73e8,color:#0d2b66;
-  classDef sink fill:#fce8e6,stroke:#d93025,color:#5c0d06;
-  subgraph SRC["OCF source objects"]
-    direction TB
-    o0["StockClass"]:::adm
-  end
-  subgraph TGT["Carta target objects"]
-    direction TB
-    sink["⌀ no Carta home"]:::sink
-  end
-  o0 -->|"board_approval_date"| sink
-  o0 -->|"stockholder_approval_date"| sink
-  o0 -->|"votes_per_share"| sink
 ```
 
 **StockClassAuthorizedSharesAdjustment**
@@ -778,6 +780,7 @@ flowchart LR
 
 ### StockClass
 - board_approval_date: no-destination — kind unmappable
+- **initial_shares_authorized** (OCF-required): partial — source union has multiple real branches; direct rename is not total
 - stockholder_approval_date: no-destination — kind unmappable
 - **votes_per_share** (OCF-required): no-destination — kind unmappable
 
