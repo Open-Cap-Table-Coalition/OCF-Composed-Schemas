@@ -295,7 +295,10 @@
             "description": "Distinguish individuals from institutions"
           }
         },
-        "required": [],
+        "required": [
+          "object_type",
+          "id"
+        ],
         "additionalProperties": false
       }
     }

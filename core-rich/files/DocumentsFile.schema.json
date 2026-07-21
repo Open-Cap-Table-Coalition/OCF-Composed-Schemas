@@ -30,7 +30,10 @@
             "description": "Uniform resource identifier for the document if not using the `path` property and associated ZIP archive separate from the OCF package."
           }
         },
-        "required": [],
+        "required": [
+          "object_type",
+          "id"
+        ],
         "additionalProperties": false
       }
     }
