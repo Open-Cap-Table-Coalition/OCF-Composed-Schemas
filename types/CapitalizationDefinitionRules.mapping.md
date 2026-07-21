@@ -92,7 +92,6 @@ Source: [`CapitalizationDefinitionRules.schema.json`](./CapitalizationDefinition
 ```yaml
 # kind vocabulary: rename | select | split | combine | enum-remap | computed | unmappable | TODO
 status: complete
-coverage: 8/8
 
 fields:
   include_outstanding_shares:

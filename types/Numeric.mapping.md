@@ -42,14 +42,13 @@ Source: [`Numeric.schema.json`](./Numeric.schema.json)
 ```yaml
 # kind vocabulary: rename | select | split | combine | enum-remap | computed | unmappable | TODO
 status: complete
-coverage: 0/0
 
 fields: {}
 ```
 
 ## Notes / open questions
 
-- `Numeric` is a bare scalar type with zero properties — a fixed-point numeric string (`^[+-]?[0-9]+(\.[0-9]{1,10})?$`, up to 10 decimal places). Like `Md5`, there are no member fields to map, so `fields: {}` and `coverage: 0/0`; the correspondence is type-level and is captured here.
+- `Numeric` is a bare scalar type with zero properties — a fixed-point numeric string (`^[+-]?[0-9]+(\.[0-9]{1,10})?$`, up to 10 decimal places). Like `Md5`, there are no member fields to map, so `fields: {}`; the correspondence is type-level and is captured here.
 - Carta models numeric magnitudes with the same string-based-decimal strategy as OCF. The closest type is **`#/$defs/Decimal`** ("A string-based representation of the decimal type."), whose sole member **`#/$defs/Decimal/properties/value`** carries the number as a string (`pattern ^[\+\-]?((0|[1-9][0-9]*)(\.[0-9]*)?|\.[0-9]+)([eE][\+\-]?[0-9]+)?$`, `minLength 1`, `maxLength 100`). This is the natural target for an OCF `Numeric`: both sides encode an exact decimal as text rather than as an IEEE float, avoiding binary rounding.
 - The two patterns are **not** in a strict superset/subset relationship — each accepts strings the other rejects, so a verbatim copy is not always valid and light normalization is needed in both directions:
     - Carta → OCF: Carta additionally permits scientific notation (`+1.23456e-3`, `1e-05`), a bare-leading-dot form (`.321`), trailing dots / unbounded fractional digits, and is bounded by `maxLength 100`. Any such value must be expanded to plain fixed-point and rounded/truncated to ≤10 decimal places to satisfy OCF's `^[+-]?[0-9]+(\.[0-9]{1,10})?$`.

@@ -89,7 +89,6 @@ Source: [`Financing.schema.json`](./Financing.schema.json)
 ```yaml
 # kind vocabulary: rename | select | split | combine | enum-remap | computed | unmappable | TODO
 status: complete
-coverage: 6/6
 
 fields:
   id:

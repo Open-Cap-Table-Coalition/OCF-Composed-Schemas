@@ -108,7 +108,6 @@ Source: [`WarrantExercise.schema.json`](./WarrantExercise.schema.json)
 ```yaml
 # kind vocabulary: rename | select | split | combine | enum-remap | computed | unmappable | TODO
 status: complete
-coverage: 8/8
 
 fields:
   id:

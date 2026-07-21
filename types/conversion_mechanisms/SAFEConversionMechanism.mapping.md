@@ -86,7 +86,6 @@ Source: [`SAFEConversionMechanism.schema.json`](./SAFEConversionMechanism.schema
 ```yaml
 # kind vocabulary: rename | select | split | combine | enum-remap | computed | unmappable | TODO
 status: complete
-coverage: 8/8
 
 fields:
   type:

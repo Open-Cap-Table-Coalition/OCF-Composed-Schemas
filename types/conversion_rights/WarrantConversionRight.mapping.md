@@ -84,7 +84,6 @@ Source: [`WarrantConversionRight.schema.json`](./WarrantConversionRight.schema.j
 ```yaml
 # kind vocabulary: rename | select | split | combine | enum-remap | computed | unmappable | TODO
 status: complete
-coverage: 4/4
 
 fields:
   type:

@@ -99,7 +99,6 @@ Source: [`IssuerAuthorizedSharesAdjustment.schema.json`](./IssuerAuthorizedShare
 ```yaml
 # kind vocabulary: rename | select | split | combine | enum-remap | computed | unmappable | TODO
 status: complete
-coverage: 8/8
 
 fields:
   id:

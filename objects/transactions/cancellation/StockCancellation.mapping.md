@@ -162,10 +162,7 @@ variants:
       - "#/$defs/CertificateCancellationTransaction"
     fields: {}
 
-coverage:
-  Rsa: 8/8
-  Default: 8/8
-```
+ ```
 
 ## Notes / open questions
 

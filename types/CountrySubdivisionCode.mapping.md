@@ -44,14 +44,13 @@ Source: [`CountrySubdivisionCode.schema.json`](./CountrySubdivisionCode.schema.j
 ```yaml
 # kind vocabulary: rename | select | split | combine | enum-remap | computed | unmappable | TODO
 status: complete
-coverage: 0/0
 
 fields: {}
 ```
 
 ## Notes / open questions
 
-- **Type-level correspondence (bucket 1, type-to-type).** OCF `CountrySubdivisionCode` is a zero-property scalar string (`type: string`, `pattern: ^[A-Z0-9]{1,}$`, max 3 chars) carrying an ISO 3166-2 principal-subdivision code (e.g. `CA`, `NY`, `BC`). Carta models the exact same concept as a reusable `$def`: `#/$defs/Iso3166Set2Code` — "Codes identifying the principal subdivisions of countries as defined by the ISO 3166-2 standard." The whole OCF type therefore corresponds, value-for-value, to `Iso3166Set2Code`. As with `types/Md5.mapping.md`, a scalar type has no `properties`, so `fields: {}` and `coverage: 0/0`; the correspondence lives here in Notes rather than in a per-field row.
+- **Type-level correspondence (bucket 1, type-to-type).** OCF `CountrySubdivisionCode` is a zero-property scalar string (`type: string`, `pattern: ^[A-Z0-9]{1,}$`, max 3 chars) carrying an ISO 3166-2 principal-subdivision code (e.g. `CA`, `NY`, `BC`). Carta models the exact same concept as a reusable `$def`: `#/$defs/Iso3166Set2Code` — "Codes identifying the principal subdivisions of countries as defined by the ISO 3166-2 standard." The whole OCF type therefore corresponds, value-for-value, to `Iso3166Set2Code`. As with `types/Md5.mapping.md`, a scalar type has no `properties`, so `fields: {}`; the correspondence lives here in Notes rather than in a per-field row.
 - **Shape note.** OCF carries the subdivision code as a bare JSON string. Carta wraps it in an object with a single `value: string` property (`Iso3166Set2Code.properties.value`). A converter writing OCF→Carta lifts the OCF string into `{ "value": "<code>" }`; reading Carta→OCF reads `.value` back out.
 - **Value-format mismatch (encoding, not field, gap).** The two ends use different encodings of the *same* concept, so the lift is not a verbatim copy. OCF `CountrySubdivisionCode` is the bare subdivision part only — `type: string`, `minLength: 1`, `maxLength: 3`, `pattern: ^[A-Z0-9]{1,}$` (e.g. `CA`, `NY`, `BC`). Carta's `Iso3166Set2Code.properties.value` is the **full** ISO 3166-2 code — `minLength: 4`, `maxLength: 6`, `pattern: [A-Z]{2}-[A-Z0-9]{1,3}` (e.g. `US-CA`), i.e. the ISO 3166-1 country prefix, a hyphen, then the subdivision. A faithful converter must therefore: OCF→Carta, prefix the sibling `country` (an ISO 3166-1 code) and a hyphen onto the OCF subdivision to form `CC-SUB`; Carta→OCF, strip the `CC-` prefix and keep the part after the hyphen. The OCF subdivision alone is **not** a valid Carta `value` and would fail Carta's pattern. Round-tripping is lossless *only* when the country context is available to supply/strip the prefix; an OCF subdivision with no associated country cannot be encoded into a valid Carta `value` on its own.
 - **Where the value lands at the OBJECT level.** Carta does not reference `Iso3166Set2Code` from a generic address structure; it surfaces it on two specific objects:

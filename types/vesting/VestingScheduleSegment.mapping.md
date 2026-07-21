@@ -69,7 +69,6 @@ Source: [`VestingScheduleSegment.schema.json`](./VestingScheduleSegment.schema.j
 # kind vocabulary: rename | select | split | combine | enum-remap | computed | unmappable | TODO
 # unmappable reason vocabulary: no-equivalent | excluded-from-snapshot | out-of-scope | ocf-internal
 status: complete
-coverage: 4/4
 
 fields:
   occurrences:

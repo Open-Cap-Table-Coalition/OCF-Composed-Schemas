@@ -49,7 +49,6 @@ Source: [`PlanSecurityExercise.schema.json`](./PlanSecurityExercise.schema.json)
 ```yaml
 # kind vocabulary: rename | select | split | combine | enum-remap | computed | unmappable | TODO
 status: complete
-coverage: 1/1
 
 fields:
   object_type:

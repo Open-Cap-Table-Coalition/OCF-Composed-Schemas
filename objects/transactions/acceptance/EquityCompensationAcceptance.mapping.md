@@ -140,11 +140,7 @@ variants:
     primary_targets: null
     fields: {}
 
-coverage:
-  Option: 5/5
-  Rsu: 5/5
-  Sar: 5/5
-```
+ ```
 
 ## Notes / open questions
 

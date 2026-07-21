@@ -60,7 +60,6 @@ Source: [`InterestRate.schema.json`](./InterestRate.schema.json)
 ```yaml
 # kind vocabulary: rename | select | split | combine | enum-remap | computed | unmappable | TODO
 status: complete
-coverage: 3/3
 
 fields:
   rate:

@@ -114,7 +114,6 @@ Source: [`NoteConversionMechanism.schema.json`](./NoteConversionMechanism.schema
 ```yaml
 # kind vocabulary: rename | select | split | combine | enum-remap | computed | unmappable | TODO
 status: complete
-coverage: 12/12
 
 fields:
   type:

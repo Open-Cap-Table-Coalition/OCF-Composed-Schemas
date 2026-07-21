@@ -114,7 +114,6 @@ Source: [`WarrantTransfer.schema.json`](./WarrantTransfer.schema.json)
 ```yaml
 # kind vocabulary: rename | select | split | combine | enum-remap | computed | unmappable | TODO
 status: complete
-coverage: 9/9
 
 fields:
   id:
@@ -166,4 +165,4 @@ fields:
 - `object_type` is the OCF discriminator constant `TX_WARRANT_TRANSFER`. Carta types transactions *positionally* — a transfer is a transfer by virtue of appearing in `WarrantTransactionItem.transfers[]`, and `WarrantTransferTransaction` carries no `object_type`/type-discriminator field. There is therefore no Carta enum to remap onto, so this is `no-equivalent` (not `enum-remap`); the single OCF enum value `TX_WARRANT_TRANSFER` is listed and maps to `null`. (Same treatment as the retraction/cancellation precedents.)
 - `id` and `comments` are OCF object scaffolding from the `Object` primitive. `id` is OCF's own object identifier (Carta assigns identifiers server-side and the relevant security identifiers are `resultingSecurityId`/`securityId`, not the transaction-object id); `comments` has no Carta slot on any transaction. Both are `ocf-internal`, matching the Issuer/Document/WarrantRetraction precedents.
 - **Stakeholder/recipient not modeled here:** OCF's `WarrantTransfer` does not name the transferee (the new holder) — the recipient is implied by who holds the `resulting_security_ids` warrant. Carta surfaces a holder via `WarrantTransactionItem.stakeholderId` ("the identifier of the current holder of the warrant"), but since OCF carries no transferee field on this object there is nothing to map there; noted for completeness, not counted as a field.
-- **Coverage 9/9:** 5 fields map (`date`, `security_id`, `resulting_security_ids`, `quantity` to the transfer/item structure; plus the parent-item routing for `security_id`), 4 are unmappable (`id`/`comments` ocf-internal; `object_type`/`consideration_text`/`balance_security_id` no-equivalent). Of the nine source properties, four mappable renames carry the substantive transfer data; the two genuine data losses are the consideration text and the partial-transfer balance reference, plus the array→scalar narrowing on resulting securities.
+- **Coverage:** all nine source properties are explicitly accounted for: 5 fields map (`date`, `security_id`, `resulting_security_ids`, `quantity` to the transfer/item structure; plus the parent-item routing for `security_id`), 4 are unmappable (`id`/`comments` ocf-internal; `object_type`/`consideration_text`/`balance_security_id` no-equivalent). Of the nine source properties, four mappable renames carry the substantive transfer data; the two genuine data losses are the consideration text and the partial-transfer balance reference, plus the array→scalar narrowing on resulting securities.

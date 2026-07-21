@@ -165,11 +165,7 @@ variants:
     primary_targets: null
     fields: {}
 
-coverage:
-  Option: 9/9
-  Rsu: 9/9
-  Sar: 9/9
-```
+ ```
 
 ## Notes / open questions
 

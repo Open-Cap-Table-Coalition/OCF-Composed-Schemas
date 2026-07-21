@@ -80,7 +80,6 @@ Source: [`CapitalizationDefinition.schema.json`](./CapitalizationDefinition.sche
 ```yaml
 # kind vocabulary: rename | select | split | combine | enum-remap | computed | unmappable | TODO
 status: complete
-coverage: 4/4
 
 fields:
   include_stock_class_ids:

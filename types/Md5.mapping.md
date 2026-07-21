@@ -42,7 +42,6 @@ Source: [`Md5.schema.json`](./Md5.schema.json)
 ```yaml
 # kind vocabulary: rename | select | split | combine | enum-remap | computed | unmappable | TODO
 status: complete
-coverage: 0/0
 
 fields: {}
 ```

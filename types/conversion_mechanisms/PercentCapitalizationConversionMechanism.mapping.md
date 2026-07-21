@@ -70,7 +70,6 @@ Source: [`PercentCapitalizationConversionMechanism.schema.json`](./PercentCapita
 ```yaml
 # kind vocabulary: rename | select | split | combine | enum-remap | computed | unmappable | TODO
 status: complete
-coverage: 4/4
 
 fields:
   type:

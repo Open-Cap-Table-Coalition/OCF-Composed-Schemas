@@ -162,10 +162,7 @@ variants:
     primary_targets: null
     fields: {}
 
-coverage:
-  Rsa: 8/8
-  Default: 8/8
-```
+ ```
 
 ## Notes / open questions
 
@@ -211,7 +208,7 @@ coverage:
   Carta field (`ocf-internal`). `id` is OCF's own object identifier and `object_type`
   is the fixed discriminator const `TX_STOCK_CONVERSION` (Carta types transactions
   positionally and has no conversion discriminator at all) — both `ocf-internal`.
-- **Coverage.** Both variants are `8/8`: all eight source properties are shared and
+- **Coverage.** Both variants account for all eight source properties: all eight are shared and
   non-TODO (six resolved `unmappable`, two resolved `computed` lineage), and neither
   variant adds any variant-specific fields, so X = shared (8) + own (0) = N = 8.
 - Open question: representing the conversion *event* on Carta at all requires the

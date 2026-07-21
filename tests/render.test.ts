@@ -69,7 +69,6 @@ describe("renderMappingBlock", () => {
         "# kind vocabulary: rename | select | split | combine | enum-remap | computed | unmappable | TODO",
         "# unmappable reason vocabulary: no-equivalent | excluded-from-snapshot | out-of-scope | ocf-internal",
         "status: draft",
-        "coverage: 0/2",
         "",
         "fields:",
         "  id:",
@@ -133,9 +132,9 @@ describe("renderMappingBlock", () => {
     expect(out).not.toContain("    amount:");
   });
 
-  it("handles empty properties with a 0/0 coverage line", () => {
+  it("handles empty properties without a hand-maintained coverage line", () => {
     const out = renderMappingBlock({}, EMPTY_REGISTRY);
-    expect(out).toContain("coverage: 0/0");
+    expect(out).not.toContain("coverage:");
     expect(out).toContain("fields:");
   });
 });
@@ -176,7 +175,7 @@ describe("renderMappingMarkdown", () => {
     expect(out).toContain('"$id": "https://example/StockIssuance.schema.json"');
     expect(out).toContain("</details>");
     expect(out).toContain("## Mapping");
-    expect(out).toContain("coverage: 0/3");
+    expect(out).not.toContain("coverage:");
     expect(out).toContain("      TX_STOCK_ISSUANCE: TODO");
     expect(out).toContain("## Notes / open questions");
     expect(out.endsWith("- \n")).toBe(true);
@@ -191,7 +190,7 @@ describe("renderMappingMarkdown", () => {
     });
     expect(out).toContain("> _(no description in source schema)_");
     expect(out).toContain("ocf_kind: type");
-    expect(out).toContain("coverage: 0/0");
+    expect(out).not.toContain("coverage:");
     expect(out).toMatch(/fields:\s*\n```/);
   });
 

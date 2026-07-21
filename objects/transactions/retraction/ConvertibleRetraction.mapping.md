@@ -94,7 +94,6 @@ Source: [`ConvertibleRetraction.schema.json`](./ConvertibleRetraction.schema.jso
 ```yaml
 # kind vocabulary: rename | select | split | combine | enum-remap | computed | unmappable | TODO
 status: complete
-coverage: 6/6
 
 fields:
   id:

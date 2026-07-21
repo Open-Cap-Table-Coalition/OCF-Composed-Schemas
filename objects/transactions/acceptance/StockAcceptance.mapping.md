@@ -130,10 +130,7 @@ variants:
     primary_targets: null
     fields: {}
 
-coverage:
-  Rsa: 5/5
-  Default: 5/5
-```
+ ```
 
 ## Notes / open questions
 

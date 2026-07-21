@@ -124,7 +124,6 @@ Source: [`Stakeholder.schema.json`](./Stakeholder.schema.json)
 ```yaml
 # kind vocabulary: rename | select | split | combine | enum-remap | computed | unmappable | TODO
 status: complete
-coverage: 13/13
 
 fields:
   id:

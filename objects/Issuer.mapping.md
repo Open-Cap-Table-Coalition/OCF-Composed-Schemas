@@ -152,7 +152,6 @@ Source: [`Issuer.schema.json`](./Issuer.schema.json)
 ```yaml
 # kind vocabulary: rename | select | split | combine | enum-remap | computed | unmappable | TODO
 status: complete
-coverage: 14/14
 
 fields:
   id:

@@ -193,22 +193,13 @@ describe("polymorphic mapping — issuance (discriminator + variants)", () => {
     expect(errs.some((s) => /exercise_price/.test(s) && /missing/i.test(s))).toBe(true);
   });
 
-  it("rejects per-variant coverage whose denominator disagrees with the property count", () => {
-    const m = issuanceMapping({ coverage: { Option: "3/3", Rsu: "3/4" } });
-    const errs = messages(input({ mapping: m }));
-    expect(errs.some((s) => /Rsu/.test(s) && /denominator/i.test(s))).toBe(true);
-  });
+  it("does not require or read hand-maintained per-variant coverage", () => {
+    const withoutCoverage = issuanceMapping();
+    delete withoutCoverage.coverage;
+    expect(messages(input({ mapping: withoutCoverage }))).toEqual([]);
 
-  it("rejects a missing per-variant coverage entry", () => {
-    const m = issuanceMapping({ coverage: { Option: "3/3" } });
-    const errs = messages(input({ mapping: m }));
-    expect(errs.some((s) => /coverage.*Rsu/i.test(s))).toBe(true);
-  });
-
-  it("rejects a string coverage on a polymorphic mapping", () => {
-    const m = issuanceMapping({ coverage: "3/3" });
-    const errs = messages(input({ mapping: m }));
-    expect(errs.some((s) => /coverage/i.test(s))).toBe(true);
+    const stale = issuanceMapping({ coverage: { Option: "0/999", Rsu: "0/999" } });
+    expect(messages(input({ mapping: stale }))).toEqual([]);
   });
 });
 
@@ -373,14 +364,9 @@ describe("per-variant target maps (divergent shared targets)", () => {
     expect(messages(input({ mapping: m }))).toEqual([]);
   });
 
-  it("counts a null per-variant target as a covered (non-TODO) entry", () => {
-    // quantity is null in Rsu but is still one of the 3 covered properties → 3/3 holds, 2/3 fails.
-    const m = withSharedQuantity(
-      { Option: "#/$defs/OptionTx/properties/quantity", Rsu: null },
-      { coverage: { Option: "3/3", Rsu: "2/3" } }
-    );
-    const errs = messages(input({ mapping: m }));
-    expect(errs.some((s) => /Rsu/.test(s) && /numerator/i.test(s))).toBe(true);
+  it("treats a null per-variant target as a covered (non-TODO) entry", () => {
+    const m = withSharedQuantity({ Option: "#/$defs/OptionTx/properties/quantity", Rsu: null });
+    expect(messages(input({ mapping: m }))).toEqual([]);
   });
 
   it("rejects a per-variant target map on an enum-remap entry", () => {

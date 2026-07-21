@@ -1,6 +1,23 @@
 import { renderMappingReport } from "../scripts/lib/mapping-report.js";
 
 describe("renderMappingReport", () => {
+  it("derives coverage from the source schema when one is provided", () => {
+    const out = renderMappingReport({
+      file: "types/Derived.mapping.md",
+      frontmatter: { target_standard: "Carta" },
+      mapping: {
+        status: "partial",
+        coverage: "0/999",
+        fields: { a: { kind: "rename", target: "#/a" } },
+      },
+      sourceSchema: {
+        $id: "test://derived",
+        properties: { a: { type: "string" }, b: { type: "string" } },
+      },
+    });
+    expect(out).toBe("types/Derived.mapping.md  partial 1/2 → Carta\n└── a → #/a (rename)");
+  });
+
   it("renders the full worked example exactly", () => {
     const out = renderMappingReport({
       file: "objects/Stakeholder.mapping.md",

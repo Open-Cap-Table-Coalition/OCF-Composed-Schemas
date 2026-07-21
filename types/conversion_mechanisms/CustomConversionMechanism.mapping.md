@@ -62,7 +62,6 @@ Source: [`CustomConversionMechanism.schema.json`](./CustomConversionMechanism.sc
 ```yaml
 # kind vocabulary: rename | select | split | combine | enum-remap | computed | unmappable | TODO
 status: complete
-coverage: 2/2
 
 fields:
   type:

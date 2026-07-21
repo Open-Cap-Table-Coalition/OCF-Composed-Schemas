@@ -109,9 +109,9 @@ That per-field entry is the atom of the whole system. Its `kind` is the transfor
 | `TODO` | not yet mapped | literal `TODO` |
 
 Targets are **JSON pointers into a pinned target bundle** (`target-schema/Carta.schema.json`) —
-never free-text. A `coverage: X/N` counter (N = source properties, X = non-`TODO` entries) rides
-along, and a `status` lifecycle (`draft → partial → complete → reviewed`) gates how strict the
-file must be.
+never free-text. Coverage is derived from the source schema and mapping entries; it is reported in
+the validator output and generated heatmap, not copied into each mapping file. A `status` lifecycle
+(`draft → partial → complete → reviewed`) gates how strict the file must be.
 
 ### The three shapes a mapping can take
 
@@ -145,14 +145,13 @@ over there."
   when Carta instead inlines the concept as bare fields across many objects, the *type* is marked
   `no-equivalent` and each consuming object maps it locally; when Carta lacks the concept entirely,
   it's `no-equivalent` everywhere. (Bare scalar types with no properties simply carry
-  `fields: {}` and `coverage: 0/0` — the correspondence is described in prose.) The discipline is to
+  `fields: {}` — the correspondence is described in prose.) The discipline is to
   avoid a "lazy `unmappable`" — declaring no home for a type that has a perfectly good one.
 
 ### Example — a simple mapping (`Stakeholder`)
 
 ```yaml
 status: complete
-coverage: 13/13
 fields:
   name:
     kind: rename

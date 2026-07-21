@@ -335,11 +335,7 @@ variants:
       expiration_date:              { kind: rename, target: "#/$defs/SarIssuanceTransaction/properties/expirationDatetime" }
       termination_exercise_windows: { kind: unmappable, target: null, reason: no-equivalent }
 
-coverage:
-  Option: 24/24
-  Rsu: 24/24
-  Sar: 24/24
-```
+ ```
 
 ## Notes / open questions
 

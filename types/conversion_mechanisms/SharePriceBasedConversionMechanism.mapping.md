@@ -119,7 +119,6 @@ Source: [`SharePriceBasedConversionMechanism.schema.json`](./SharePriceBasedConv
 ```yaml
 # kind vocabulary: rename | select | split | combine | enum-remap | computed | unmappable | TODO
 status: complete
-coverage: 5/5
 
 fields:
   type:

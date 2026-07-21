@@ -1,3 +1,6 @@
+import { RawSchema } from "./registry.js";
+import { deriveMappingCoverage, formatCoverage } from "./mapping-coverage.js";
+
 /**
  * Pure renderer for the `--verbose` mapping report. Given a parsed mapping
  * document it produces a per-file ASCII tree of what each OCF field maps to.
@@ -11,6 +14,7 @@ export interface MappingReportInput {
   file: string;
   frontmatter: Record<string, unknown>;
   mapping: Record<string, unknown>;
+  sourceSchema?: RawSchema;
 }
 
 function isPlainObject(value: unknown): value is Record<string, unknown> {
@@ -161,12 +165,17 @@ function fieldTrees(
 
 export function renderMappingReport(input: MappingReportInput): string {
   const status = asStringOr(input.mapping.status, "?");
-  const coverage = asStringOr(input.mapping.coverage, "?");
+  const derivedCoverage = input.sourceSchema
+    ? deriveMappingCoverage(input.mapping, input.sourceSchema)
+    : null;
+  const coverage = derivedCoverage?.overall
+    ? formatCoverage(derivedCoverage.overall)
+    : asStringOr(input.mapping.coverage, "?");
   const target = asStringOr(input.frontmatter.target_standard, "?");
 
   // Polymorphic mappings (discriminator / route_by_security + variants) carry no
-  // top-level fields:/coverage; render the routing plus each variant's per-field
-  // routes (shared fields shown once).
+  // top-level fields; render the routing plus each variant's per-field routes
+  // (shared fields shown once).
   const rawVariants = input.mapping.variants;
   if (isPlainObject(rawVariants)) {
     const disc = input.mapping.discriminator;
@@ -176,7 +185,16 @@ export function renderMappingReport(input: MappingReportInput): string {
       : isPlainObject(rbs)
       ? `route_by_security: ${asStringOr(rbs.via, "?")} → ${asStringOr(rbs.resolve, "?")}`
       : "variants";
-    const coverageMap = isPlainObject(input.mapping.coverage) ? input.mapping.coverage : {};
+    const coverageMap = derivedCoverage?.variants
+      ? Object.fromEntries(
+          Object.entries(derivedCoverage.variants).map(([label, slice]) => [
+            label,
+            formatCoverage(slice),
+          ])
+        )
+      : isPlainObject(input.mapping.coverage)
+      ? input.mapping.coverage
+      : {};
 
     // variant label → its primary_targets, so routed_to edges can name the
     // actual Carta destination ("routed to Rsu variant: RsuIssuanceTransaction").

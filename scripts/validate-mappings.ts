@@ -75,16 +75,6 @@ async function main(argv: Args): Promise<number> {
       throw err;
     }
 
-    if (argv.verbose) {
-      console.log(
-        renderMappingReport({
-          file: rel,
-          frontmatter: parsed.frontmatter,
-          mapping: parsed.mapping,
-        }) + "\n"
-      );
-    }
-
     const schemaRel = rel.replace(/\.mapping\.md$/, ".schema.json");
     let sourceSchema: RawSchema;
     try {
@@ -98,6 +88,17 @@ async function main(argv: Args): Promise<number> {
         message: `cannot read sibling schema ${schemaRel}: ${(err as Error).message}`,
       });
       continue;
+    }
+
+    if (argv.verbose) {
+      console.log(
+        renderMappingReport({
+          file: rel,
+          frontmatter: parsed.frontmatter,
+          mapping: parsed.mapping,
+          sourceSchema,
+        }) + "\n"
+      );
     }
 
     const standard = parsed.frontmatter.target_standard;

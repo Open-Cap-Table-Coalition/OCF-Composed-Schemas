@@ -56,7 +56,6 @@ Source: [`ShareNumberRange.schema.json`](./ShareNumberRange.schema.json)
 ```yaml
 # kind vocabulary: rename | select | split | combine | enum-remap | computed | unmappable | TODO
 status: complete
-coverage: 2/2
 
 fields:
   starting_share_number:

@@ -42,7 +42,6 @@ Source: [`Date.schema.json`](./Date.schema.json)
 ```yaml
 # kind vocabulary: rename | select | split | combine | enum-remap | computed | unmappable | TODO
 status: complete
-coverage: 0/0
 
 fields: {}
 ```
@@ -50,7 +49,7 @@ fields: {}
 ## Notes / open questions
 
 - OCF `Type - Date` is a bare scalar (`type: string`, `format: date`) with zero
-  `properties`, so there is no per-field mapping table here — coverage is `0/0`
+  `properties`, so there is no per-field mapping table here
   and the type-level correspondence is documented below (same pattern as
   `types/Md5.mapping.md`).
 - Carta DOES model this concept. The faithful target is

@@ -49,7 +49,6 @@ Source: [`PlanSecurityRetraction.schema.json`](./PlanSecurityRetraction.schema.j
 ```yaml
 # kind vocabulary: rename | select | split | combine | enum-remap | computed | unmappable | TODO
 status: complete
-coverage: 1/1
 
 fields:
   object_type:

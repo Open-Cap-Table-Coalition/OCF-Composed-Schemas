@@ -101,7 +101,6 @@ Source: [`Document.schema.json`](./Document.schema.json)
 ```yaml
 # kind vocabulary: rename | select | split | combine | enum-remap | computed | unmappable | TODO
 status: complete
-coverage: 7/7
 
 fields:
   id:

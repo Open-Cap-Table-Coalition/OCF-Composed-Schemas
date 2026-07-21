@@ -104,7 +104,6 @@ Source: [`WarrantCancellation.schema.json`](./WarrantCancellation.schema.json)
 ```yaml
 # kind vocabulary: rename | select | split | combine | enum-remap | computed | unmappable | TODO
 status: complete
-coverage: 8/8
 
 fields:
   id:
@@ -149,4 +148,4 @@ fields:
 - `security_id` → unmappable / `no-equivalent`. Carta's `WarrantCancellationTransaction` carries no security/warrant reference field at all (no `securityId`, `warrantId`, etc. on the transaction object itself). The link between the cancellation event and the warrant it acts on is carried structurally in Carta by the parent container `#/$defs/WarrantTransactionItem`, whose `securityId` (+ `stakeholderId`, `securityLabel`) identifies the warrant and whose `cancellations` array holds these `WarrantCancellationTransaction` records. So the reference exists one level up, not as a property on the transaction, and OCF's explicit per-transaction `security_id` foreign key has nowhere to land on `WarrantCancellationTransaction` itself.
 - `balance_security_id` → unmappable / `no-equivalent`. This OCF field names the new security that holds the remainder balance after a **partial** cancellation. Carta's cancellation transaction models neither partial-balance splitting nor a pointer to a successor security, so there is no field for it.
 - `id`, `comments`, `object_type` → unmappable / `ocf-internal`. These are OCF object scaffolding: `id` is OCF's internal object identifier, `comments` is free-form annotation, and `object_type` is the discriminant const `TX_WARRANT_CANCELLATION` (Carta encodes the transaction kind by *which* `$def` is used, not by a stored value). The single `object_type` value `TX_WARRANT_CANCELLATION` maps to `null` for the same reason. This matches the `objects/Issuer.mapping.md` precedent for `id`/`comments`/`object_type` and the sibling `ConvertibleCancellation.mapping.md`.
-- Net coverage to Carta's 3 transaction fields: `effectiveDatetime` ← `date`, `quantity` ← `quantity`, `reason` ← `reason_text` (lossy). Every Carta `WarrantCancellationTransaction` field has an OCF source; the unmapped OCF fields are either internal scaffolding or reference/partial-balance data Carta does not record here.
+- Net mapping to Carta's transaction fields: `effectiveDatetime` ← `date`, `quantity` ← `quantity`, `reason` ← `reason_text` (lossy). Every Carta `WarrantCancellationTransaction` field has an OCF source; the unmapped OCF fields are either internal scaffolding or reference/partial-balance data Carta does not record here.

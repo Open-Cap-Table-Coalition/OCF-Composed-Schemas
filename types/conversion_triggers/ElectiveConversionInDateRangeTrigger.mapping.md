@@ -102,7 +102,6 @@ Source: [`ElectiveConversionInDateRangeTrigger.schema.json`](./ElectiveConversio
 ```yaml
 # kind vocabulary: rename | select | split | combine | enum-remap | computed | unmappable | TODO
 status: complete
-coverage: 7/7
 
 fields:
   type:
