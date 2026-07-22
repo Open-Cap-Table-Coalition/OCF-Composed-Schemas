@@ -20,6 +20,14 @@ export function targetString(target: unknown): string {
 /** Render all Carta targets named by a field entry, including union-map cases. */
 export function entryTargetString(entry: unknown): string {
   if (!isPlainObject(entry)) return "—";
+  if (entry.kind === "sequential_transform" && Array.isArray(entry.steps)) {
+    const targets: string[] = [];
+    for (const step of entry.steps) {
+      if (!isPlainObject(step) || !Array.isArray(step.targets)) continue;
+      for (const target of step.targets) if (typeof target === "string") targets.push(target);
+    }
+    return targets.join(" + ") || "—";
+  }
   if (entry.kind !== "union-map" || !Array.isArray(entry.cases)) {
     return targetString(entry.target);
   }

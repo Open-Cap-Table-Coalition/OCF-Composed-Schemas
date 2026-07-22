@@ -362,6 +362,55 @@ describe("validateMapping — entry shapes", () => {
     ).toEqual([]);
   });
 
+  it("rejects an unregistered policy", () => {
+    const errs = messages(
+      withField({
+        kind: "select",
+        target: "#/$defs/Thing/properties/name",
+        policy: "first_name_that_does_not_exist",
+      })
+    );
+    expect(
+      errs.some((m) => m.includes('policy "first_name_that_does_not_exist" is not registered'))
+    ).toBe(true);
+  });
+
+  it("validates a sequential select then apply_mapping transform", () => {
+    const input = withField({
+      kind: "sequential_transform",
+      steps: [
+        { kind: "select", policy: "first_ratio_conversion_right" },
+        {
+          kind: "apply_mapping",
+          mapping: "types/Thing.mapping.md",
+          targets: ["#/$defs/Thing/properties/name"],
+        },
+      ],
+    });
+    input.mappingFiles = new Set(["types/Thing.mapping.md"]);
+    expect(messages(input)).toEqual([]);
+  });
+
+  it("rejects an unregistered sequential policy and mapping reference", () => {
+    const input = withField({
+      kind: "sequential_transform",
+      steps: [
+        { kind: "select", policy: "missing_policy" },
+        {
+          kind: "apply_mapping",
+          mapping: "types/Missing.mapping.md",
+          targets: ["#/$defs/Thing/properties/name"],
+        },
+      ],
+    });
+    input.mappingFiles = new Set(["types/Thing.mapping.md"]);
+    const errs = messages(input);
+    expect(errs.some((m) => m.includes('policy "missing_policy" is not registered'))).toBe(true);
+    expect(
+      errs.some((m) => m.includes('mapping "types/Missing.mapping.md" is not registered'))
+    ).toBe(true);
+  });
+
   it("rejects an implicit array-to-scalar rename", () => {
     const input = makeInput({
       sourceSchema: {

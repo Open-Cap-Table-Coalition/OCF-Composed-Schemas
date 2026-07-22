@@ -86,7 +86,12 @@ export function classifyType(fields: Record<string, unknown>, bundle: unknown): 
       reason ??= "existence-loss";
       continue;
     }
-    if (kind === "computed" || kind === "combine" || kind === "split") {
+    if (
+      kind === "computed" ||
+      kind === "combine" ||
+      kind === "split" ||
+      kind === "sequential_transform"
+    ) {
       lost.push(name);
       reason ??= "heuristic";
       continue;
@@ -480,6 +485,18 @@ export function classifyField(
   }
 
   if (kind === "union-map") return unionMapTotality(entry, srcRaw, ctx);
+
+  if (kind === "sequential_transform") {
+    const steps = Array.isArray(entry.steps) ? entry.steps : [];
+    const select = steps[0];
+    const policy =
+      isPlainObject(select) && typeof select.policy === "string" ? select.policy : "unspecified";
+    return {
+      class: "out",
+      reason: "heuristic",
+      detail: `sequential_transform (select ${policy})`,
+    };
+  }
 
   const pointers = targetPointers(entry.target);
   if (pointers.length === 0) {
