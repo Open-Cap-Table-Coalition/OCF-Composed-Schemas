@@ -315,6 +315,38 @@ describe("validateMapping — entry shapes", () => {
     ).toBe(true);
   });
 
+  it("rejects undefined construct properties and normalization values", () => {
+    const construct = {
+      property: "value",
+      normalization: { integer_leading_zeros: "strip" },
+    };
+
+    expect(
+      messages(
+        withField({
+          kind: "construct",
+          target: "#/$defs/Wrap",
+          construct: { ...construct, property: "missing" },
+        })
+      )
+    ).toContain(
+      "name: kind construct requires a bare string source and a target object with exactly one string property named missing"
+    );
+
+    expect(
+      messages(
+        withField({
+          kind: "construct",
+          target: "#/$defs/Wrap",
+          construct: {
+            ...construct,
+            normalization: { integer_leading_zeros: "remove" },
+          },
+        })
+      )
+    ).toContain("name: construct.normalization.integer_leading_zeros must be preserve or strip");
+  });
+
   it("requires a policy on select", () => {
     const errs = messages(withField({ kind: "select", target: "#/$defs/Thing/properties/name" }));
     expect(errs.some((m) => m.includes("kind select requires a non-empty policy"))).toBe(true);
