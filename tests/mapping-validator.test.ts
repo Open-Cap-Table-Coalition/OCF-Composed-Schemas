@@ -266,12 +266,47 @@ describe("validateMapping — entry shapes", () => {
     expect(errs.some((m) => m.includes("string target"))).toBe(true);
   });
 
-  it("accepts wrap only for a bare string to a value wrapper", () => {
-    expect(messages(withField({ kind: "wrap", target: "#/$defs/Wrap" }))).toEqual([]);
+  it("accepts wrap only with an explicit member and normalization contract", () => {
+    const wrap = {
+      property: "value",
+      normalization: { integer_leading_zeros: "preserve" },
+    };
+    expect(messages(withField({ kind: "wrap", target: "#/$defs/Wrap", wrap }))).toEqual([]);
     expect(
-      messages(withField({ kind: "wrap", target: "#/$defs/Thing/properties/name" })).some((m) =>
-        m.includes("kind wrap requires a bare string source")
+      messages(withField({ kind: "wrap", target: "#/$defs/Wrap" })).some((m) =>
+        m.includes("kind wrap requires wrap:")
       )
+    ).toBe(true);
+    expect(
+      messages(
+        withField({
+          kind: "wrap",
+          target: "#/$defs/Wrap",
+          wrap: { property: "value", normalization: { integer_leading_zeros: "other" } },
+        })
+      ).some((m) => m.includes("must be preserve or strip"))
+    ).toBe(true);
+    expect(
+      messages(
+        withField({
+          kind: "wrap",
+          target: "#/$defs/Wrap",
+          wrap: {
+            property: "value",
+            normalization: { integer_leading_zeros: "preserve" },
+            extra: true,
+          },
+        })
+      ).some((m) => m.includes("allows only wrap.property and wrap.normalization"))
+    ).toBe(true);
+    expect(
+      messages(
+        withField({
+          kind: "wrap",
+          target: "#/$defs/Thing/properties/name",
+          wrap,
+        })
+      ).some((m) => m.includes("kind wrap requires a bare string source"))
     ).toBe(true);
   });
 

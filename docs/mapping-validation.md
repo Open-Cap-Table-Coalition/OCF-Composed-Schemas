@@ -39,18 +39,28 @@ this variant because it belongs to another. The validator confirms each named va
 `VALUE → routed to "Variant" variant: <that variant's Carta primary_targets>` instead of
 `VALUE ✗ dropped` — so it is clear which Carta objects the value actually lands in.
 
-### `wrap`: bare scalar to a value wrapper
+### `wrap`: bare scalar to an explicitly declared wrapper member
 
-Use `wrap` when a bare string scalar is written to the `value` member of a target object such as Carta's `Decimal`:
+Use `wrap` when a bare string scalar is written to one explicitly named member of a target object. The mapping must declare both the member and the lexical rule; neither is inferred from the target schema:
 
 ```yaml
 fields:
   percentage:
     kind: wrap
     target: "#/$defs/VestingPeriod/properties/percentage"
+    wrap:
+      property: value
+      normalization:
+        integer_leading_zeros: strip
 ```
 
-The validator requires a bare string source and a target object with exactly one string property named `value`. `wrap` is deterministic and lossless at the numeric-value level; lexical normalization remains defined by the source type's mapping.
+The grammar is closed:
+
+- `wrap.property` is a non-empty string and must be the sole string property in the target object.
+- `wrap.normalization` contains exactly `integer_leading_zeros`, whose value is `preserve` or `strip`.
+- `preserve` copies the scalar text unchanged. `strip` removes redundant leading zeroes from the integer part, retains the sign, and retains at least one integer zero (`0007` → `7`, `-000.50` → `-0.50`, `000` → `0`).
+
+The validator rejects a missing member, an unknown normalization key, or an unsupported normalization value. For OCF `Numeric` → Carta `Decimal`, use `strip` because Carta's `Decimal.value` rejects multi-digit integer leading zeroes.
 
 **Semantic (when `target_standard` ≠ `TBD`):** every string target must be a `#/...` JSON pointer
 that resolves in the target bundle (`target_standard` → bundle file via `TARGET_BUNDLES` in the

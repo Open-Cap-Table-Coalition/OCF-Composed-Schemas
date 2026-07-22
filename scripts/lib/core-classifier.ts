@@ -2,8 +2,9 @@ import { detectEnumValues } from "./enum-detection.js";
 import { Registry } from "./registry.js";
 import {
   derefNode,
+  isDeclaredStringWrapperNode,
   isPlainObject,
-  isValueWrapperNode,
+  readWrapSpec,
   resolveJsonPointer,
   sourceUnionBranches,
   targetEnumValuesAt,
@@ -507,12 +508,17 @@ export function classifyField(
   }
 
   if (kind === "wrap") {
+    const spec = readWrapSpec(entry);
     const source = sourceShape(srcRaw, ctx.registry);
     const target = resolved[0]?.node;
-    if (!source.isScalar || !isValueWrapperNode(ctx.bundle, target)) {
+    if (
+      !spec ||
+      !source.isScalar ||
+      !isDeclaredStringWrapperNode(ctx.bundle, target, spec.property)
+    ) {
       return { class: "out", reason: "no-destination", detail: "invalid wrap shape" };
     }
-    return { class: "core", loss: "widening", detail: "scalar→value wrapper" };
+    return { class: "core", loss: "widening", detail: `scalar→${spec.property} wrapper` };
   }
 
   if (kind === "computed" || kind === "combine" || kind === "split") {

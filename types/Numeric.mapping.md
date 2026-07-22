@@ -40,7 +40,7 @@ Source: [`Numeric.schema.json`](./Numeric.schema.json)
 ## Mapping
 
 ```yaml
-# kind vocabulary: rename | select | split | combine | enum-remap | computed | unmappable | TODO
+# kind vocabulary: rename | wrap | select | split | combine | enum-remap | computed | unmappable | TODO
 status: complete
 
 fields: {}
@@ -55,3 +55,5 @@ fields: {}
     - OCF → Carta: OCF permits multi-digit leading zeros in the integer part (`007`, `00123`, `010`), which Carta's `(0|[1-9][0-9]*)` integer rule rejects (verified by testing both regexes). Such values must have leading zeros stripped before they are valid `Decimal.value`s. All other OCF `Numeric` forms (e.g. `0`, `0.5`, `+1`, `-456.0`, `1.0000000000`) copy through verbatim.
 - `#/$defs/Decimal` is the workhorse numeric type across the Carta bundle: 118 properties `$ref` it for share counts and quantities (e.g. `Certificate.quantity`, `CapitalizationTableSummary.fullyDilutedShares`/`.outstandingShares`), and `#/$defs/Money/properties/amount` is itself a `Decimal`. Wherever an OCF object embeds a `Numeric` (e.g. `Monetary.amount`, share quantities, ratios), the per-object mapping should land on the specific `Decimal`-typed property for that field; this type-level mapping records the generic correspondence rather than picking one representative leaf.
 - No semantic value transformation is required beyond the lexical normalization noted above: an OCF `Numeric` string can be written into a Carta `Decimal.value` verbatim except when it carries multi-digit leading zeros (strip them), and any Carta `Decimal.value` that uses scientific notation, a bare leading dot, or more than 10 decimal places needs normalization to round-trip back into OCF's stricter fixed-point pattern. The numeric value itself is preserved in every case.
+
+The field-level DSL records the OCF → Carta direction with `kind: wrap`, `wrap.property: value`, and `wrap.normalization.integer_leading_zeros: strip`. The normalization key and its `preserve`/`strip` semantics are defined centrally in [`mapping-validation.md`](../docs/mapping-validation.md); the field mapping must carry the rule explicitly rather than relying on the target member name or this note.

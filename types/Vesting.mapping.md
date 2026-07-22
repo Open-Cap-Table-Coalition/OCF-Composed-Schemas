@@ -64,6 +64,10 @@ fields:
   amount:
     kind: wrap
     target: "#/$defs/OptionGrantVestingEvent/properties/quantity"
+    wrap:
+      property: value
+      normalization:
+        integer_leading_zeros: strip
 ```
 
 ## Notes / open questions
@@ -77,4 +81,4 @@ fields:
   | `StockIssuance` | `RestrictedStockAwardVestingEvent` |
   | `WarrantIssuance` | unmappable — Carta has no warrant vesting event |
 
-  Field names (`vestDate`, `quantity`) are identical across the three Carta event types, so the per-field mapping above holds regardless. The `target:` paths above reference `OptionGrantVestingEvent` as a representative; the actual selection happens in the containing OCF object's mapping. `amount` uses `kind: wrap`; Numeric lexical canonicalization is defined by [`Numeric.mapping.md`](./Numeric.mapping.md).
+  Field names (`vestDate`, `quantity`) are identical across the three Carta event types, so the per-field mapping above holds regardless. The `target:` paths above reference `OptionGrantVestingEvent` as a representative; the actual selection happens in the containing OCF object's mapping. The `wrap` block declares the destination member and the required Numeric lexical rule.

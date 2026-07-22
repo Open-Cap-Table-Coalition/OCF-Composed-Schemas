@@ -92,8 +92,24 @@ describe("classifyField — rename shape cascade", () => {
   });
   it("wrap bare scalar → one-property Decimal wrapper as core/widening", () => {
     expect(
-      classifyField({ kind: "wrap", target: "#/$defs/Dec" }, { $ref: "ocf://Numeric" }, ctx())
+      classifyField(
+        {
+          kind: "wrap",
+          target: "#/$defs/Dec",
+          wrap: {
+            property: "value",
+            normalization: { integer_leading_zeros: "strip" },
+          },
+        },
+        { $ref: "ocf://Numeric" },
+        ctx()
+      )
     ).toMatchObject({ class: "core", loss: "widening" });
+  });
+  it("rejects a wrap without its explicit member and normalization contract", () => {
+    expect(
+      classifyField({ kind: "wrap", target: "#/$defs/Dec" }, { $ref: "ocf://Numeric" }, ctx())
+    ).toMatchObject({ class: "out", reason: "no-destination" });
   });
   it("array(src) → scalar(tgt) is existence-loss (array→scalar)", () => {
     const v = classifyField(
