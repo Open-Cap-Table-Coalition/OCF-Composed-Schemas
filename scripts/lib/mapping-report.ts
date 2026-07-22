@@ -165,12 +165,9 @@ function renderSequentialStep(step: unknown, index: number, context: RenderConte
     const mapping = asStringOr(step.mapping, "?");
     const document = context.mappingDocuments?.get(mapping);
     const selectedType = document ? mappingLabel(mapping) : "value";
-    const children: Tree[] = [
-      { label: `mapping: ${mapping}`, children: [] },
-      { label: `input: selected ${selectedType}`, children: [] },
-    ];
+    const inputChildren: Tree[] = [];
     if (document) {
-      children.push(
+      inputChildren.push(
         ...renderReferencedFields(mapping, document, {
           ...context,
           depth: 0,
@@ -181,8 +178,12 @@ function renderSequentialStep(step: unknown, index: number, context: RenderConte
       const targets = Array.isArray(step.targets)
         ? step.targets.map((target) => ({ label: asStringOr(target, "?"), children: [] }))
         : [];
-      children.push({ label: "target summary", children: targets });
+      inputChildren.push({ label: "target summary", children: targets });
     }
+    const children: Tree[] = [
+      { label: `mapping: ${mapping}`, children: [] },
+      { label: `input: selected ${selectedType}`, children: inputChildren },
+    ];
     return { label: `${index + 1}. apply_mapping`, children };
   }
 
