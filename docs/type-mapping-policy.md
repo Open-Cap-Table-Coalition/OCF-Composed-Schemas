@@ -118,7 +118,7 @@ Once a field is `unmappable`, pick the most accurate reason
 ## See also
 
 - [`polymorphic-transaction-routing.md`](./polymorphic-transaction-routing.md) —
-  `discriminator:` / `route_by_security:` / `composite:` routing for transactions.
+  `route_by_property:` / `composite:` routing for transactions.
 - [`ocf-core-goal.md`](./ocf-core-goal.md) and [`ocf-core-spec.md`](./ocf-core-spec.md) —
   how these mapping decisions (and `unmappable` / loss verdicts) feed OCF Core (strict vs
   rich) membership.

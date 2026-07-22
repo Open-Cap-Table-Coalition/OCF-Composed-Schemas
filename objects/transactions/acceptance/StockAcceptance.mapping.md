@@ -87,7 +87,7 @@ Source: [`StockAcceptance.schema.json`](./StockAcceptance.schema.json)
 
 ```yaml
 # kind vocabulary: rename | select | split | combine | enum-remap | computed | unmappable | TODO
-# routing: route_by_security (downstream join). A stock acceptance carries only
+# routing: route_by_property (downstream join). A stock acceptance carries only
 # security_id and NO discriminator, so the family is undecidable from the record
 # alone: it is resolved by joining security_id back to the StockIssuance and
 # reading that issuance's issuance_type. An RSA acceptance lands on
@@ -96,11 +96,12 @@ Source: [`StockAcceptance.schema.json`](./StockAcceptance.schema.json)
 # See docs/polymorphic-transaction-routing.md §2.2/§4.3.
 status: complete
 
-route_by_security:
-  via: security_id
-  resolve: issuance_type
-  resolve_enum: "https://raw.githubusercontent.com/Open-Cap-Table-Coalition/Open-Cap-Format-OCF/main/schema/enums/StockIssuanceType.schema.json"
-  source_mapping: ../issuance/StockIssuance.mapping.md
+route_by_property:
+  property: issuance_type
+  from:
+    via: security_id
+    mapping: ../issuance/StockIssuance.mapping.md
+  enum: "https://raw.githubusercontent.com/Open-Cap-Table-Coalition/Open-Cap-Format-OCF/main/schema/enums/StockIssuanceType.schema.json"
   exhaustive: true
 
 # shared: every source property. `date` is the only mappable field and its Carta
@@ -150,7 +151,7 @@ variants:
   no `StockAcceptanceTransaction` and no generic acceptance transaction, so there is
   nowhere to record a founders'-stock acceptance — `primary_targets: null` and
   `date → null` for this variant.
-- **`security_id`** is the join key (`route_by_security.via`); it routes the family,
+- **`security_id`** is the join key (`route_by_property.from.via`); it routes the family,
   it is not itself a stored Carta field on the resolved security.
 - **`id`, `comments`, `object_type` → unmappable.** Standard OCF object scaffolding:
   `id` is OCF's own object identifier (Carta assigns server-side ids) and

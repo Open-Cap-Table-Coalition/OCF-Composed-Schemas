@@ -97,7 +97,7 @@ Source: [`EquityCompensationRetraction.schema.json`](./EquityCompensationRetract
 
 ```yaml
 # kind vocabulary: rename | select | split | combine | enum-remap | computed | unmappable | TODO
-# routing: route_by_security (downstream join). This retraction carries only
+# routing: route_by_property (downstream join). This retraction carries only
 # security_id and NO discriminator, so the equity-comp family (Option/Rsu/Sar)
 # is undecidable from the record alone: it is resolved by joining security_id
 # back to the EquityCompensationIssuance and reading that issuance's
@@ -106,16 +106,17 @@ Source: [`EquityCompensationRetraction.schema.json`](./EquityCompensationRetract
 # all. See docs/polymorphic-transaction-routing.md §2.2/§4.3.
 status: complete
 
-route_by_security:
-  via: security_id
-  resolve: compensation_type
-  resolve_enum: "https://raw.githubusercontent.com/Open-Cap-Table-Coalition/Open-Cap-Format-OCF/main/schema/enums/CompensationType.schema.json"
-  source_mapping: ../issuance/EquityCompensationIssuance.mapping.md
+route_by_property:
+  property: compensation_type
+  from:
+    via: security_id
+    mapping: ../issuance/EquityCompensationIssuance.mapping.md
+  enum: "https://raw.githubusercontent.com/Open-Cap-Table-Coalition/Open-Cap-Format-OCF/main/schema/enums/CompensationType.schema.json"
   exhaustive: true
 
 # shared: every source property. There is no per-variant target map here because
 # every field is unmappable in every family — Carta has no retraction tx to host
-# any of them. security_id is the join key (route_by_security.via).
+# any of them. security_id is the join key (route_by_property.from.via).
 shared:
   id:          { kind: unmappable, target: null, reason: ocf-internal }
   comments:    { kind: unmappable, target: null, reason: no-equivalent }
@@ -149,7 +150,7 @@ variants:
   `security_id` and no discriminator, so the instrument family is fixed at issuance, not
   on this record. An importer must resolve `compensation_type` from the joined
   `EquityCompensationIssuance` first (the two-pass requirement, §2.2). We declare the
-  `route_by_security` join — partitioning `CompensationType` into Option `[OPTION,
+  `route_by_property` join — partitioning `CompensationType` into Option `[OPTION,
   OPTION_NSO, OPTION_ISO]`, Rsu `[RSU]`, and Sar `[CSAR, SSAR]` — so the routing tree is
   honest and exhaustive, even though no family has a destination.
 - **All-unmappable: Carta has no retraction transaction.** In OCF a *retraction* voids a
@@ -161,7 +162,7 @@ variants:
   concept for "this previously-entered transaction is being retracted/void." Searching the
   pinned bundle (`target-schema/Carta.schema.json`) for `retract` / `Retraction` returns
   nothing — so `primary_targets` is `null` for every variant and 0 of 6 fields map.
-- **`security_id`** is the join key (`route_by_security.via`); it routes the family, it is
+- **`security_id`** is the join key (`route_by_property.from.via`); it routes the family, it is
   not itself a stored Carta field. `ocf-internal`.
 - **`reason_text` has no home.** OCF free-text reason for the retraction. The only
   `reason`-bearing fields in Carta are the per-cancellation enums (`OptionCancellationReason`,

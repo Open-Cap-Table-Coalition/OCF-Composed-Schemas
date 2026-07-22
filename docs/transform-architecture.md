@@ -123,10 +123,9 @@ the validator output and generated heatmap, not copied into each mapping file. A
 Most files are the simple 1:1 case. Two extensions handle the hard cases where OCF and Carta
 disagree on structure:
 
-- **Polymorphic** — one OCF object fans out to *several* Carta families, selected by a
-  discriminator. Either the discriminator is a field on this schema (`discriminator:`,
-  *issuance-time*) or it lives on a joined record reached by a foreign key (`route_by_security:`,
-  *downstream*). Variants are **mutually exclusive** — pick one.
+- **Polymorphic** — one OCF object fans out to *several* Carta families, selected by one
+  `route_by_property:` block. Its `from:` is either `self` or a related record reached through
+  `from.via`. Variants are **mutually exclusive** — pick one.
 - **Composite** — one OCF *verb* has no single Carta target and folds into an **ordered set** of
   Carta transactions, **all emitted**. Orthogonal to variants (which are exclusive), composite
   steps are additive.

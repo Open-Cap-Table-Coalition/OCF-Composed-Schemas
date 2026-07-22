@@ -101,7 +101,7 @@ Source: [`StockConsolidation.schema.json`](./StockConsolidation.schema.json)
 
 ```yaml
 # kind vocabulary: rename | select | split | combine | enum-remap | computed | unmappable | TODO
-# routing: route_by_security (downstream join). This consolidation carries NO
+# routing: route_by_property (downstream join). This consolidation carries NO
 # scalar security_id and NO discriminator — it folds many stock positions
 # (security_ids) into one resulting_security_id. The stock family (Rsa vs.
 # Founders/Default) is fixed at issuance, so it is resolved by joining the
@@ -112,11 +112,12 @@ Source: [`StockConsolidation.schema.json`](./StockConsolidation.schema.json)
 # See docs/polymorphic-transaction-routing.md §2.2/§4.3.
 status: complete
 
-route_by_security:
-  via: security_ids
-  resolve: issuance_type
-  resolve_enum: "https://raw.githubusercontent.com/Open-Cap-Table-Coalition/Open-Cap-Format-OCF/main/schema/enums/StockIssuanceType.schema.json"
-  source_mapping: ../issuance/StockIssuance.mapping.md
+route_by_property:
+  property: issuance_type
+  from:
+    via: security_ids
+    mapping: ../issuance/StockIssuance.mapping.md
+  enum: "https://raw.githubusercontent.com/Open-Cap-Table-Coalition/Open-Cap-Format-OCF/main/schema/enums/StockIssuanceType.schema.json"
   exhaustive: true
 
 # shared: every source property. No Carta consolidation tx exists, so the event
@@ -156,10 +157,10 @@ variants:
 
 ## Notes / open questions
 
-- **Join-dependent (downstream).** OCF `TX_STOCK_CONSOLIDATION` carries only the foreign keys — the array `security_ids` of the positions being folded together and the single `resulting_security_id` — and no discriminator of its own. The stock family is fixed at issuance, so an importer would resolve `issuance_type` by joining the consolidated securities back to their `StockIssuance` (the two-pass requirement, §2.2). Because this object has no scalar `security_id`, the join key (`route_by_security.via`) is the array `security_ids`. The `StockIssuanceType` enum partitions exactly into `Rsa` (`RSA`) and `Default` (`FOUNDERS_STOCK`).
+- **Join-dependent (downstream).** OCF `TX_STOCK_CONSOLIDATION` carries only the foreign keys — the array `security_ids` of the positions being folded together and the single `resulting_security_id` — and no discriminator of its own. The stock family is fixed at issuance, so an importer would resolve `issuance_type` by joining the consolidated securities back to their `StockIssuance` (the two-pass requirement, §2.2). Because this object has no scalar `security_id`, the join key (`route_by_property.from.via`) is the array `security_ids`. The `StockIssuanceType` enum partitions exactly into `Rsa` (`RSA`) and `Default` (`FOUNDERS_STOCK`).
 - **Carta has no consolidation *transaction* in either family**, so `primary_targets` is `null` for both variants — the event itself (its `date`, its `reason_text`) has nowhere to land. OCF's consolidation is a balance-housekeeping merge of several lots into one with no economic effect; Carta's transaction set is purely issuance/exercise/settlement/cancellation/transfer per security family and models no consolidation *event*. The token "consolidat" does not appear in the bundle. The consolidation *lineage*, however, is not lost: Carta records the same many-to-one relationship as reverse lineage edges on the resulting stock security (see below).
 - **Consolidation lineage round-trips losslessly (kind `computed`).** OCF puts the consolidated inputs (`security_ids`) and the consolidated-into balance (`resulting_security_id`) as foreign keys on the transaction; Carta records the same information as `precededBy.securities` (a `PrecededBySecurity` array) on the resulting *stock* security — `RestrictedStockAwardPrecededBy.securities` for `Rsa`, `CertificatePrecededBy.securities` for `Default`. An importer therefore writes every consolidated input id into the resulting security's `precededBy.securities`. N inputs → one output is exactly the many-to-one shape `precededBy.securities` expresses, so the lineage survives even though the event does not.
-  - **`security_ids`** is also the join key (`route_by_security.via`); it routes the family *and* supplies the set of inputs that become the resulting security's `precededBy.securities`. It is `computed` (importer-derived placement onto the record the consolidation references), not a stored scalar Carta field.
+  - **`security_ids`** is also the join key (`route_by_property.from.via`); it routes the family *and* supplies the set of inputs that become the resulting security's `precededBy.securities`. It is `computed` (importer-derived placement onto the record the consolidation references), not a stored scalar Carta field.
   - **`resulting_security_id`** identifies the consolidated-into stock security (a Carta `Certificate` / `RestrictedStockAward`) — the record whose `precededBy.securities` the inputs are written onto. (Carta's tx-level `resultingSecurityId` field exists only on derivative-conversion events and means "the security *produced* by an exercise/settlement," not "the lot that absorbs consolidated positions," so the lineage lands on `precededBy`, not on that same-named field.)
 - **`reason_text` has no home** — free-form human-readable justification, and Carta has neither a general per-transaction reason field nor a consolidation transaction to host one (`no-equivalent`). (Even where Carta exposes a `reason`, it is an enum, and free-text → enum is unmappable, not a rename.)
 - **`date`** is an OCF calendar `Date` (`YYYY-MM-DD`); Carta's transaction timestamps are `Iso8601CompleteCalendarDateTime` on the concrete transaction objects. With no Carta consolidation transaction to carry it, it has nowhere to land (`no-equivalent`), independent of the date-vs-datetime granularity gap.

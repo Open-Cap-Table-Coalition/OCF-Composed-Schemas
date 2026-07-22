@@ -1,6 +1,6 @@
 # Polymorphic Transaction Routing: OCF → Carta Per-Instrument Families
 
-Design + as-built notes for extending the `.mapping.md` convention to express how one OCF *polymorphic* transaction routes onto Carta's *dedicated* per-instrument transaction and security families. The design is **implemented** — the additive validator (`validatePolymorphicMapping`), the `--verbose` route report, per-variant target maps (§4.8), and the two migrated issuance fan-outs (`EquityCompensationIssuance` / `StockIssuance`). Landed subsequently and also implemented: the `composite:` construct (§4.9) and `StockTransfer`'s green `route_by_security:` + `composite:` (cancel + issue) mapping, now admitted into OCF Core. Every Carta type and field named below was confirmed against the pinned bundle `target-schema/Carta.schema.json`; every parser/validator claim against `scripts/lib/{mapping-validator,mapping-parser}.ts`. Where no Carta home exists, that gap is called out rather than papered over.
+Design + as-built notes for extending the `.mapping.md` convention to express how one OCF *polymorphic* transaction routes onto Carta's *dedicated* per-instrument transaction and security families. The design is **implemented** — the additive validator (`validatePolymorphicMapping`), the `--verbose` route report, per-variant target maps (§4.8), and the two migrated issuance fan-outs (`EquityCompensationIssuance` / `StockIssuance`). Landed subsequently and also implemented: the `composite:` construct (§4.9) and `StockTransfer`'s green `route_by_property:` + `composite:` (cancel + issue) mapping, now admitted into OCF Core. Every Carta type and field named below was confirmed against the pinned bundle `target-schema/Carta.schema.json`; every parser/validator claim against `scripts/lib/{mapping-validator,mapping-parser}.ts`. Where no Carta home exists, that gap is called out rather than papered over.
 
 ---
 
@@ -28,7 +28,7 @@ Coverage is a single scalar matched by `/^(\d+)\/(\d+)$/`: numerator = non-`TODO
 
 | Gap | Concrete instance | Why the format can't express it |
 |---|---|---|
-| **Object-level fan-out by discriminator** | `EquityCompensationIssuance.compensation_type` ∈ {OPTION, OPTION_NSO, OPTION_ISO, RSU, CSAR, SSAR} routes one OCF tx to 3 Carta families | `enum-remap` rewrites a *field value*; it cannot switch the *target object*. There is one `target` per field and one Carta `$def` per file. |
+| **Object-level fan-out by route property** | `EquityCompensationIssuance.compensation_type` ∈ {OPTION, OPTION_NSO, OPTION_ISO, RSU, CSAR, SSAR} routes one OCF tx to 3 Carta families | `enum-remap` rewrites a *field value*; it cannot switch the *target object*. There is one `target` per field and one Carta `$def` per file. |
 | **Cross-record JOIN dependency** | `EquityCompensationExercise` carries only `security_id` — its family lives on the *issuance* record, not on itself | The discriminator is not a property of the record being mapped, so there is no field to hang any kind on. |
 | **Behavioral verb divergence** | The same OCF "exercise" verb becomes `OptionExerciseTransaction` for options, `SarExerciseTransaction` for SARs, but `RsuSettlementTransaction` for RSUs — RSUs *settle*, they do not exercise | A different Carta *transaction type* with a different field set is an object-selection decision, not a field rename; the kind vocabulary has no slot for it. |
 
@@ -62,7 +62,7 @@ Each row is `(discriminator value) → (Carta transaction, Carta security object
 Notes grounded in the bundle:
 - The OPTION* → `OptionGrant.stockOptionType` step (OCF `OptionType`/`compensation_type` → Carta `StockOptionType`) is the *only* place where today's `enum-remap` applies. Everything else is object-level routing — the format's blind spot.
 - CSAR vs SSAR (cash- vs stock-settled) **collapse to one** `SarIssuanceTransaction`; Carta has no settlement-mode field to carry the distinction, so it is lost.
-- `ConvertibleIssuance` needs **no** object-level routing: one family, and `convertible_type` is a `NoteBlock.noteType` enum-remap. It fits the *current* format unchanged — the backward-compatibility demonstrator.
+- `ConvertibleIssuance` needs **no** object-level routing: one family, and `convertible_type` is a `NoteBlock.noteType` enum-remap. It remains a simple single-family mapping.
 
 ### 2.2 Downstream propagation — the JOIN
 
@@ -156,25 +156,29 @@ The sharp case: `issuance_type` is **structural** (a pure router, no field) in t
 
 ## 4. Proposed format convention
 
-Two design constraints drive everything: (a) **backward compatibility** — a plain `fields:`-only file must validate exactly as today; (b) **one ```yaml``` fence** — the parser's hard `blocks.length === 1` invariant means all routing nests *inside* that single block. No multi-block parsing is introduced.
+Two design constraints drive everything: (a) **one public polymorphic routing operator** —
+`route_by_property` handles both local and joined properties; (b) **one ```yaml``` fence** — the
+parser's hard `blocks.length === 1` invariant means all routing nests *inside* that single block.
+No multi-block parsing is introduced. A plain `fields:`-only file remains the separate
+single-family shape.
 
 ### 4.1 Two mutually exclusive shapes under `## Mapping`
 
 | Shape | Trigger | Behavior |
 |---|---|---|
-| **Simple** (today) | `fields:` present, no `discriminator:`/`route_by_security:` | unchanged |
-| **Polymorphic (issuance)** | `discriminator:` block + `variants:` map | per-variant field maps |
-| **Polymorphic (downstream)** | `route_by_security:` block + `variants:` map | declares the JOIN; per-variant field maps |
+| **Simple** (today) | `fields:` present, no `route_by_property:` | unchanged |
+| **Polymorphic** | `route_by_property:` block + `variants:` map | local or joined property routing; per-variant field maps |
 
-### 4.2 Issuance routing keys
+### 4.2 Routing keys
 
 ```yaml
-discriminator:
-  field: compensation_type     # must be an enum property of the source schema
-  exhaustive: true             # every source enum value must be claimed by some variant
+route_by_property:
+  property: compensation_type  # must be an enum property of the selected record
+  from: self                   # use a related-record map for join-dependent routing
+  exhaustive: true             # every route property value must be claimed by some variant
 variants:
   Option:
-    when: [OPTION, OPTION_NSO, OPTION_ISO]   # discriminator values routed here
+    when: [OPTION, OPTION_NSO, OPTION_ISO]   # route property values routed here
     primary_targets:                          # the Carta family this variant materializes
       - "#/$defs/OptionIssuanceTransaction"
       - "#/$defs/OptionGrant"
@@ -184,22 +188,23 @@ shared:                                        # fields identical across all var
   stakeholder_id: { kind: rename, target: "#/$defs/OptionGrant/properties/stakeholderId" }
 ```
 
-- `discriminator.field` — the routing property; validator asserts it is enum-typed via `detectEnumValues`.
+- `route_by_property.property` — the routing property. With `from: self`, the validator asserts it is an enum-typed source property via `detectEnumValues`.
 - `variants.<label>.when` — the enum values this variant claims. Across all variants these must **partition** the source enum (pairwise disjoint; with `exhaustive: true`, every value claimed).
 - `variants.<label>.primary_targets` — the family roots (a list, because one OCF record fans out to a transaction *and* a security object). Each must resolve. For families with no security `$def` (SAR) the list holds only the transaction.
 - `variants.<label>.fields` — a complete field map for that variant, using the *exact* existing entry grammar.
 - `shared:` — fields common to every variant, expanded into each before coverage counting. A shared field whose *kind* is identical but whose Carta *home* differs by variant uses a per-variant target map (§4.8) instead of a single pointer; the rest carry one pointer (or `unmappable`) as usual.
 
-### 4.3 Downstream routing keys
+### 4.3 Joined-property routing
 
 ```yaml
 # Example: EquityCompensationCancellation — the one downstream verb where all three
 # families have a real Carta tx, so it shows the grammar without a verb-divergence caveat.
-route_by_security:
-  via: security_id                                    # FK on THIS transaction
-  resolve: compensation_type                          # discriminator on the joined issuance
-  resolve_enum: ".../enums/CompensationType.schema.json"  # registry $id of that enum, so routes are counted
-  source_mapping: ../issuance/EquityCompensationIssuance.mapping.md
+route_by_property:
+  property: compensation_type                          # property on the joined issuance
+  from:
+    via: security_id                                    # FK on THIS transaction
+    mapping: ../issuance/EquityCompensationIssuance.mapping.md
+  enum: ".../enums/CompensationType.schema.json"      # registry $id of that enum, so routes are counted
   exhaustive: true                                    # every CompensationType value must be routed (or unmappable)
 variants:
   Option: { when: [OPTION, OPTION_NSO, OPTION_ISO], primary_targets: ["#/$defs/OptionCancellationTransaction"], fields: { ... } }
@@ -207,11 +212,11 @@ variants:
   Sar:    { when: [CSAR, SSAR], primary_targets: ["#/$defs/SarCancellationTransaction"], fields: { ... } }
 ```
 
-For *Exercise* and *Release* the same grammar applies but some variants resolve to `unmappable` (RSUs settle rather than exercise; options/SARs do not release — §2.3).
+For *Exercise* and *Release* the same grammar applies but some variants resolve to `unmappable` (RSUs settle rather than exercise; options/SARs do not release — §2.3). The same `route_by_property:` block also supports local routing with `from: self`.
 
-`route_by_security:` declares "this mapping is **join-dependent**; an importer must resolve `resolve` from the referenced issuance first." The validator checks structure **and counts the routes**: `via` is a source property; `resolve`/`source_mapping` are present; and given `resolve_enum` (a registry `$id`) the variants' `when:` sets must **partition that enum** — with `exhaustive: true`, every instrument value is routed or explicitly marked unroutable, exactly like the issuance side. It deliberately does not *execute* the join (a real `security_id`'s resolvability is unprovable from static text).
+`route_by_property:` declares "this mapping is **join-dependent**; an importer must resolve `property` from the related record first." The validator checks structure **and counts the routes**: `from.via` is a source property; `property`/`from.mapping` are present; and given `enum` (a registry `$id`) the variants' `when:` sets must **partition that enum** — with `exhaustive: true`, every value is routed or explicitly marked unroutable, exactly like the issuance side. It deliberately does not *execute* the join (a real foreign-key's resolvability is unprovable from static text).
 
-### 4.4 Unmappable discriminator values
+### 4.4 Unmappable route property values
 
 Expressed with existing vocabulary, not prose:
 
@@ -235,21 +240,27 @@ entries; `--verbose` reports the derived `X/N` values, and
 
 | Check | Mechanism (existing → extended) |
 |---|---|
-| Discriminator is enum-typed | `detectEnumValues(properties[discriminator.field], registry)` non-null |
+| Route property is enum-typed | with `from: self`, `detectEnumValues(properties[route_by_property.property], registry)` is non-null |
 | Variants partition the enum | union of `when` lists == source enum set, pairwise disjoint; `exhaustive` ⇒ no missing value (mirrors the values-completeness loop, validator ll. 340–342) |
 | `primary_targets` resolve | `resolveJsonPointer` + `derefNode`; reject `true` exactly as `validateEntryTargets` does today |
 | Per-variant field targets | run `validateEntryShape` / `validateValuesBlock` / `validateEntryTargets` **once per variant's `fields:`** — zero new target logic |
 | Per-variant coverage | for `complete`/`reviewed`, every source property in `shared:` ∪ `variant.fields` for each variant; the derived numerator counts valid non-`TODO` entries |
-| Join declared **and routes counted** | if `route_by_security:` present: `via` ∈ source properties; `resolve`/`source_mapping` non-empty; and given `resolve_enum` (a registry `$id`) the variants partition that enum just like the issuance side |
+| Join declared **and routes counted** | if `route_by_property:` is joined: `from.via` ∈ source properties; `property`/`from.mapping` non-empty; and given `enum` (a registry `$id`) the variants partition that enum just like the issuance side |
 
 `--verbose` renders the routing line plus **each variant's per-field routes** as a nested tree
 (`shared:` shown once), so the routes are auditable in CI output, not just pass/fail.
 
 ### 4.6 Minimal parser + validator changes
 
-**Parser: zero structural change.** It already YAML-parses the one frontmatter block and the one `## Mapping` block. `discriminator`, `variants`, and `route_by_security` parse as ordinary YAML; the single-fence invariant holds because everything nests inside that fence.
+**Parser: zero structural change.** It already YAML-parses the one frontmatter block and the one `## Mapping` block. `route_by_property` and `variants` parse as ordinary YAML; the single-fence invariant holds because everything nests inside that fence.
 
-**Validator: additive dispatch.** Concretely: in `validateMapping`, after parsing, branch — `discriminator`/`route_by_security` absent → existing path untouched; else → new `validatePolymorphicMapping`. The per-field rules run once for a simple mapping and once per variant for a polymorphic mapping. `validateEntryShape`/`validateValuesBlock`/`validateEntryTargets` remain the source of truth for entry validation. Coverage reporting is a separate derived artifact, so no mapping document needs a numerator or denominator.
+**Validator: one routing dispatch.** Concretely: in `validateMapping`, after parsing, branch —
+`route_by_property` absent → the ordinary `fields:` path; present →
+`validatePolymorphicMapping`. The old `discriminator` and `route_by_security` keys are rejected,
+not treated as aliases. The per-field rules run once for a simple mapping and once per variant for
+a polymorphic mapping. `validateEntryShape`/`validateValuesBlock`/`validateEntryTargets` remain
+the source of truth for entry validation. Coverage reporting is a separate derived artifact, so
+no mapping document needs a numerator or denominator.
 
 ### 4.7 Worked example — `EquityCompensationIssuance.mapping.md`
 
@@ -257,11 +268,12 @@ The proposed `## Mapping` block. Targets verified: `OptionIssuanceTransaction` h
 
 ```yaml
 # kind vocabulary: rename | construct | select | split | combine | enum-remap | union-map | computed | unmappable | TODO
-# routing: discriminator (issuance-time) | route_by_security (downstream)
+# routing: route_by_property (local or joined property)
 status: complete
 
-discriminator:
-  field: compensation_type
+route_by_property:
+  property: compensation_type
+  from: self
   exhaustive: true
 
 shared:
@@ -380,7 +392,7 @@ Validator rules (the keys must **stay in sync** with the variant set):
 
 `null` = unmappable in that variant (still a covered, non-`TODO` entry, so per-variant `coverage` is unchanged). Map targets are allowed only on `rename`/`computed`/`combine` `shared:` entries — not on `enum-remap` (route enum *values* in `variants.fields`) and not inside a variant's own `fields:` (already variant-specific). Keyed by **variant label**, not discriminator value, so the `Sar` variant — which claims both `CSAR` and `SSAR` — gets one entry, not two. `--verbose` renders each variant's own target (or `✗ unmappable`) beneath the field, so RSU/SAR name their own objects instead of borrowing a representative pointer.
 
-Implemented in `validateSharedTargetMaps` (`scripts/lib/mapping-validator.ts`): it validates the maps once, then projects each into the per-variant effective field map (a `null`/absent value becomes an internal `unmappable` so coverage counts it and the per-field validator does not re-flag it). Backward compatible — a string/array/`null` `target:` keeps the legacy single-target path byte-for-byte.
+Implemented in `validateSharedTargetMaps` (`scripts/lib/mapping-validator.ts`): it validates the maps once, then projects each into the per-variant effective field map (a `null`/absent value becomes an internal `unmappable` so coverage counts it and the per-field validator does not re-flag it). A string/array/`null` `target:` remains the ordinary uniform-target form.
 
 ---
 
@@ -389,7 +401,10 @@ Implemented in `validateSharedTargetMaps` (`scripts/lib/mapping-validator.ts`): 
 Some OCF transactions have **no single Carta target** because Carta records ledger *state*, not the event: a stock transfer is not a `*TransferTransaction` (there is none for certificates) but a **pair** of certificate events — cancel the source, issue the transferee's. `composite:` models that fold. It is orthogonal to variants: variants are **mutually exclusive** (pick one family), whereas composite steps are **additive** (all emitted, in declared order).
 
 ```yaml
-route_by_security: { via: security_id, resolve: issuance_type, ... }   # family axis (kept)
+route_by_property:                                                       # family axis
+  property: issuance_type
+  from: { via: security_id, mapping: ../issuance/StockIssuance.mapping.md }
+  enum: ".../enums/StockIssuanceType.schema.json"
 
 composite:                                   # ordered steps, ALL emitted
   - step: cancel
@@ -426,7 +441,7 @@ Validator rules:
 | **Step target resolves** (per family) | `composite step "cancel" target for variant "Rsa" "#/$defs/X" does not resolve…` |
 | **`const` field exists on the step $def** | `composite step "cancel" const.reason has no property "reason" on #/$defs/…` |
 | **`const` enum value is a member** | `composite step "cancel" const.reason = "BOGUS" is not a member of the target enum…` |
-| **Requires a polymorphic block** | `composite: is only supported alongside a route_by_security or discriminator + variants block` |
+| **Requires a polymorphic block** | `composite: is only supported alongside a route_by_property + variants block` |
 
 **Why it matters for Core.** Before, a stock transfer landed only lineage references → no payload → held out of Core (§3 non-degeneracy). With `composite:`, `quantity` lands on the step transactions — a real payload — so `StockTransfer` becomes Core-admissible. The generated membership ledger (`core/core-ledger.md`) gains a **Composite folds** section listing each composite entity and the Carta objects each step lands on, and `--verbose` renders the steps beneath the routing line. Implemented in `validateCompositeBlock` + `validateSharedTargetMaps` (`scripts/lib/mapping-validator.ts`) and projected by `variantFieldMaps` (`scripts/lib/core-corpus.ts`). Proven on `StockTransfer`; the sibling transfers (`ConvertibleTransfer`, `EquityCompensationTransfer`, `PlanSecurityTransfer`) are the same "cancel + reissue" shape.
 
@@ -436,26 +451,26 @@ Validator rules:
 
 The migration is complete. The validator + `--verbose` report, the two issuance fan-outs
 (`EquityCompensationIssuance`, `StockIssuance`, both with per-variant target maps), the `composite:`
-construct (§4.9), and `StockTransfer`'s `route_by_security:` + `composite:` fold are implemented.
-The downstream `route_by_security:` verbs — Exercise, Cancellation, Release, Retraction, Acceptance,
-Transfer, and Repricing — are complete. `ConvertibleIssuance` remains the simple `fields:`
-backward-compatibility demonstrator.
+construct (§4.9), and `StockTransfer`'s `route_by_property:` + `composite:` fold are implemented.
+The downstream `route_by_property:` verbs — Exercise, Cancellation, Release, Retraction, Acceptance,
+Transfer, and Repricing — are complete. `ConvertibleIssuance` remains the simple single-family
+`fields:` mapping.
 
 ### Current implementation
 
 | File | Current mechanism | Status | Notes |
 |---|---|---|---|
-| `issuance/EquityCompensationIssuance.mapping.md` | `discriminator: compensation_type` + 3 variants | complete | canonical issuance fan-out (§4.7) |
-| `issuance/StockIssuance.mapping.md` | `discriminator: issuance_type` + RSA/default variants | complete | `FOUNDERS_STOCK` routes to Certificate |
-| `issuance/ConvertibleIssuance.mapping.md` | simple `fields:` | complete | single family; backward-compatibility demonstrator |
-| `exercise/EquityCompensationExercise.mapping.md` | `route_by_security:` | complete | Option/SAR exercise; RSU is explicitly unroutable here because it settles via Release |
-| `cancellation/EquityCompensationCancellation.mapping.md` | `route_by_security:` + variants | complete | Option/RSU/SAR cancellation families |
-| `release/EquityCompensationRelease.mapping.md` | `route_by_security:` | complete | RSU settlement; Option/SAR are unmappable |
-| `retraction/EquityCompensationRetraction.mapping.md` | `route_by_security:` | complete | no Carta retraction transaction |
-| `acceptance/EquityCompensationAcceptance.mapping.md` | `route_by_security:` | complete | acceptance date lands on security where Carta models it |
-| `transfer/EquityCompensationTransfer.mapping.md` | `route_by_security:` | complete | no equity-compensation transfer transaction |
-| `transfer/StockTransfer.mapping.md` | `route_by_security:` + `composite:` | complete | cancel + issue fold (§4.9); quantity/date make it Core-admissible |
-| `repricing/EquityCompensationRepricing.mapping.md` | `route_by_security:` | complete | Option/SAR mutate exercise price; RSU is unmappable |
+| `issuance/EquityCompensationIssuance.mapping.md` | `route_by_property: compensation_type` + 3 variants | complete | canonical issuance fan-out (§4.7) |
+| `issuance/StockIssuance.mapping.md` | `route_by_property: issuance_type` + RSA/default variants | complete | `FOUNDERS_STOCK` routes to Certificate |
+| `issuance/ConvertibleIssuance.mapping.md` | simple `fields:` | complete | single family; no polymorphic routing needed |
+| `exercise/EquityCompensationExercise.mapping.md` | `route_by_property:` | complete | Option/SAR exercise; RSU is explicitly unroutable here because it settles via Release |
+| `cancellation/EquityCompensationCancellation.mapping.md` | `route_by_property:` + variants | complete | Option/RSU/SAR cancellation families |
+| `release/EquityCompensationRelease.mapping.md` | `route_by_property:` | complete | RSU settlement; Option/SAR are unmappable |
+| `retraction/EquityCompensationRetraction.mapping.md` | `route_by_property:` | complete | no Carta retraction transaction |
+| `acceptance/EquityCompensationAcceptance.mapping.md` | `route_by_property:` | complete | acceptance date lands on security where Carta models it |
+| `transfer/EquityCompensationTransfer.mapping.md` | `route_by_property:` | complete | no equity-compensation transfer transaction |
+| `transfer/StockTransfer.mapping.md` | `route_by_property:` + `composite:` | complete | cancel + issue fold (§4.9); quantity/date make it Core-admissible |
+| `repricing/EquityCompensationRepricing.mapping.md` | `route_by_property:` | complete | Option/SAR mutate exercise price; RSU is unmappable |
 
 ### Historical sequencing — archived
 
@@ -464,25 +479,25 @@ the current state and are not an implementation guide.
 
 | File | Historical state | Planned migration | Notes |
 |---|---|---|---|
-| `issuance/EquityCompensationIssuance.mapping.md` | `fields:` TODO stub | `discriminator: compensation_type` + 3 variants | canonical fan-out (§4.7) |
-| `issuance/StockIssuance.mapping.md` | `fields:` | `discriminator: issuance_type` + RSA / default variants | default branch = FOUNDERS_STOCK ⇒ Certificate |
+| `issuance/EquityCompensationIssuance.mapping.md` | `fields:` TODO stub | `route_by_property: compensation_type` + 3 variants | canonical fan-out (§4.7) |
+| `issuance/StockIssuance.mapping.md` | `fields:` | `route_by_property: issuance_type` + RSA / default variants | default branch = FOUNDERS_STOCK ⇒ Certificate |
 | `issuance/ConvertibleIssuance.mapping.md` | `fields:` | **stays simple** | single family; no routing needed |
-| `exercise/EquityCompensationExercise.mapping.md` | `fields:` | `route_by_security:` | downstream routing |
-| `cancellation/EquityCompensationCancellation.mapping.md` | `fields:` | `route_by_security:` | downstream routing |
-| `release/EquityCompensationRelease.mapping.md` | `fields:` | `route_by_security:` | downstream routing |
-| `retraction/EquityCompensationRetraction.mapping.md` | `fields:` | `route_by_security:` | no Carta retraction tx |
-| `acceptance/EquityCompensationAcceptance.mapping.md` | `fields:` | `route_by_security:` | security-side acceptance |
-| `transfer/EquityCompensationTransfer.mapping.md` | `fields:` | `route_by_security:` | no equity-comp transfer tx |
-| `transfer/StockTransfer.mapping.md` | all-unmappable event | `route_by_security:` + `composite:` | historical pre-composite state |
-| `repricing/EquityCompensationRepricing.mapping.md` | `fields:` | `route_by_security:` | downstream routing |
+| `exercise/EquityCompensationExercise.mapping.md` | `fields:` | `route_by_property:` | downstream routing |
+| `cancellation/EquityCompensationCancellation.mapping.md` | `fields:` | `route_by_property:` | downstream routing |
+| `release/EquityCompensationRelease.mapping.md` | `fields:` | `route_by_property:` | downstream routing |
+| `retraction/EquityCompensationRetraction.mapping.md` | `fields:` | `route_by_property:` | no Carta retraction tx |
+| `acceptance/EquityCompensationAcceptance.mapping.md` | `fields:` | `route_by_property:` | security-side acceptance |
+| `transfer/EquityCompensationTransfer.mapping.md` | `fields:` | `route_by_property:` | no equity-comp transfer tx |
+| `transfer/StockTransfer.mapping.md` | all-unmappable event | `route_by_property:` + `composite:` | historical pre-composite state |
+| `repricing/EquityCompensationRepricing.mapping.md` | `fields:` | `route_by_property:` | downstream routing |
 
 Historical PR sequence:
-1. **PR-1 (validator):** land the additive dispatch behind the existing `validateMapping` branch; legacy files are untouched and keep passing. Default `requireUnmappableReason: false` is preserved.
-2. **PR-2 (easy case):** migrate `ConvertibleIssuance` — it stays simple, demonstrating the no-op path, plus add the first downstream all-unmappable file (`Retraction` or `Transfer`) to exercise `route_by_security:` structurally.
+1. **PR-1 (validator):** add the single `route_by_property` dispatch to `validateMapping`; simple files continue through the ordinary `fields:` path. Default `requireUnmappableReason: false` is preserved.
+2. **PR-2 (easy case):** migrate `ConvertibleIssuance` — it stays simple, demonstrating the no-op path, plus add the first downstream all-unmappable file (`Retraction` or `Transfer`) to exercise `route_by_property:` structurally.
 3. **PR-3 (issuance fan-out):** `EquityCompensationIssuance`, then `StockIssuance`.
 4. **PR-4 (downstream verbs):** `Exercise`, `Cancellation`, `Release`, then the remaining all-unmappable files.
 
-Because the dispatch is "discriminator/route_by_security absent ⇒ old path," no file changes behavior until it is rewritten, satisfying the backward-compatibility constraint.
+When `route_by_property` is absent, simple mappings continue through the ordinary `fields:` path.
 
 ---
 
@@ -492,7 +507,7 @@ Because the dispatch is "discriminator/route_by_security absent ⇒ old path," n
 
 | Limit | Detail |
 |---|---|
-| **Resolvability is unprovable** | `route_by_security:` declares the join; a static `.mapping.md` can never verify that a real `security_id` resolves. Validation is shape-only. |
+| **Resolvability is unprovable** | `route_by_property:` declares the join; a static `.mapping.md` can never verify that a real `security_id` resolves. Validation is shape-only. |
 | **Coverage is per-variant only** | A field mapped in Option but unmappable in RSU has no single coverage number; the scalar `X/N` had to become a map. |
 | **Cross-field precedence** | `compensation_type` and deprecated `option_grant_type` both target `stockOptionType`; the format lists both but cannot say which wins. Importer logic. |
 | **Shared field, divergent *kind*** | Per-variant target maps (§4.8) **solve** the divergent-*home* case — a shared field of uniform kind landing on `OptionGrant` vs `RestrictedStockUnit` now names each directly. The residual: a field whose *kind* differs per variant (e.g. `StockIssuance.issuance_type`: a structural router in RSA but `enum-remap` in default, §3.2) cannot be `shared:` at all — it lives in each variant's `fields:` instead. |

@@ -113,40 +113,52 @@ may not, must cover every property, and every `unmappable` entry must carry a `r
 | `out-of-scope` | deliberately dropped from the mapping effort |
 | `ocf-internal` | OCF scaffolding (`id`, `object_type`, `comments`) with no target meaning |
 
-## Polymorphic mappings (discriminator routing)
+## Polymorphic mappings (route-by-property routing)
 
 Some OCF transactions are **polymorphic** — one shared transaction type whose instrument is
-selected by a discriminator field (e.g. `EquityCompensationIssuance.compensation_type` →
+selected by a route property (e.g. `EquityCompensationIssuance.compensation_type` →
 option / RSU / SAR; `StockIssuance.issuance_type` → RSA / plain stock) — while the target splits
 them into dedicated per-instrument families. A `.mapping.md` may declare routing **inside** its
-single `## Mapping` block (no parser change; absent these keys, the legacy single-target path runs
-unchanged). The full design is in
+single `## Mapping` block (no parser change; mappings without this block use the ordinary
+single-target `fields:` shape). The full design is in
 [`polymorphic-transaction-routing.md`](./polymorphic-transaction-routing.md).
 
-**Issuance-time** (`discriminator:`) — the discriminator is a property of this schema:
+OCF source schemas may use discriminator fields, but the mapping DSL has one polymorphic routing
+operator: `route_by_property`. `discriminator` and `route_by_security` are not supported mapping
+keys.
+
+**Polymorphic routing** (`route_by_property:`) — the routed property may belong to the current
+record or to a related record:
 
 ```yaml
-discriminator: { field: compensation_type, exhaustive: true }
+route_by_property:
+  property: compensation_type
+  from: self
+  exhaustive: true
 shared: { <field>: <entry> }            # fields identical across variants (validated once per variant)
 variants:
   <Label>:
-    when: [ENUM_VALUE, ...]             # the discriminator values this variant claims
+    when: [ENUM_VALUE, ...]             # the route property values this variant claims
     primary_targets: ["#/$defs/...", ...]  # the Carta family roots (or null for an unroutable variant)
     fields: { <field>: <entry> }        # same entry grammar as a simple mapping
 ```
 
-**Downstream** (`route_by_security:`) — the discriminator lives on the *joined issuance*, reached
-via a foreign key; the file declares the join (the validator checks its shape, not its resolution):
+For a related record, `from` declares the relationship (the validator checks its shape, not its
+runtime resolution):
 
 ```yaml
-route_by_security:
-  via: security_id                 # FK property on THIS schema
-  resolve: compensation_type       # discriminator on the joined issuance
-  resolve_enum: "<registry $id>"   # the enum the routes must cover
-  source_mapping: ../issuance/EquityCompensationIssuance.mapping.md
+route_by_property:
+  property: compensation_type      # property on the related record
+  from:
+    via: security_id                # FK property on THIS schema
+    mapping: ../issuance/EquityCompensationIssuance.mapping.md
+  enum: "<registry $id>"           # the enum the routes must cover
   exhaustive: true
 variants: { ... }                  # as above
 ```
+
+`from: self` is the only local form; joined routing uses `from.via` plus `from.mapping`. The same
+construct therefore covers local and cross-record polymorphism without a security-specific key.
 
 **Per-variant target maps.** A `shared:` field is common to every variant, but its Carta *home*
 may differ by variant (e.g. `quantity` lands on `OptionIssuanceTransaction` for options but
@@ -177,7 +189,7 @@ covered, non-`TODO` entry). Map targets are allowed only on `rename` / `computed
 variant's own `fields:`. `--verbose` prints each variant's target (or `✗ unmappable`) beneath the
 field.
 
-**Checks (in addition to the per-field rules above):** the discriminator is enum-typed; the
+**Checks (in addition to the per-field rules above):** the route property is enum-typed; the
 variants' `when:` sets **partition** the routed enum — pairwise disjoint, and with
 `exhaustive: true` every enum value is claimed by some variant (handled or explicitly unroutable);
 each `primary_targets` pointer resolves (and is not the `true` sentinel); each variant's
@@ -194,7 +206,7 @@ Some OCF transactions have **no single Carta target** because Carta records ledg
 event — a stock transfer is not a transfer transaction but a **pair** of certificate events (cancel
 the source, issue the transferee's). A `composite:` block models that fold: an **ordered list of
 steps, ALL emitted** (additive), orthogonal to `variants:`, which are mutually exclusive (pick one).
-It is only valid **alongside** a `route_by_security:` or `discriminator:` + `variants:` block — the
+It is only valid **alongside** a `route_by_property:` + `variants:` block — the
 polymorphic block supplies the family axis its per-step target maps key into. The full design is in
 [`polymorphic-transaction-routing.md`](./polymorphic-transaction-routing.md) §4.9.
 
@@ -203,7 +215,10 @@ and an optional per-family `const:` map of fixed Carta values the step always ca
 `*_TRANSFERRED` reason enums):
 
 ```yaml
-route_by_security: { via: security_id, resolve: issuance_type, ... }   # family axis (required)
+route_by_property:                                                     # family axis (required)
+  property: issuance_type
+  from: { via: security_id, mapping: ../issuance/StockIssuance.mapping.md }
+  enum: ".../enums/StockIssuanceType.schema.json"
 
 composite:                                     # ordered steps, ALL emitted
   - step: cancel

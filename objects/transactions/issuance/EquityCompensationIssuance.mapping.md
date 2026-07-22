@@ -192,7 +192,7 @@ Source: [`EquityCompensationIssuance.schema.json`](./EquityCompensationIssuance.
 
 ```yaml
 # kind vocabulary: rename | select | split | combine | enum-remap | computed | unmappable | TODO
-# routing: discriminator (issuance-time) — compensation_type fans this one OCF
+# routing: route_by_property (local) — compensation_type fans this one OCF
 # transaction out to Carta's Option / Rsu / Sar instrument families.
 # shared: fields common to every variant. A field whose Carta home differs by
 # variant carries a per-variant target map { Option/Rsu/Sar: pointer|null } — so
@@ -200,8 +200,9 @@ Source: [`EquityCompensationIssuance.schema.json`](./EquityCompensationIssuance.
 # means the field has no home in that variant (SAR has no Carta security object).
 status: complete
 
-discriminator:
-  field: compensation_type
+route_by_property:
+  property: compensation_type
+  from: self
   exhaustive: true
 
 shared:
@@ -341,7 +342,7 @@ variants:
 
 - **Polymorphic by `compensation_type`.** OCF carries option grants, RSUs, and SARs in this
   one transaction; Carta splits them into dedicated families. This mapping uses the
-  `discriminator:` convention (see [`docs/polymorphic-transaction-routing.md`](../../../docs/polymorphic-transaction-routing.md)):
+  `route_by_property:` convention (see [`docs/polymorphic-transaction-routing.md`](../../../docs/polymorphic-transaction-routing.md)):
   `OPTION*` → `OptionIssuanceTransaction` + `OptionGrant`; `RSU` → `RsuIssuanceTransaction` +
   `RestrictedStockUnit`; `CSAR`/`SSAR` → `SarIssuanceTransaction`. The three `when:` sets
   partition all six `CompensationType` values (`exhaustive: true`).

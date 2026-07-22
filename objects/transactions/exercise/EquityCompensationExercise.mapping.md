@@ -111,7 +111,7 @@ Source: [`EquityCompensationExercise.schema.json`](./EquityCompensationExercise.
 
 ```yaml
 # kind vocabulary: rename | select | split | combine | enum-remap | computed | unmappable | TODO
-# routing: route_by_security (downstream join). This exercise carries only
+# routing: route_by_property (downstream join). This exercise carries only
 # security_id and NO discriminator, so the Carta exercise family is undecidable
 # from the record alone: it is resolved by joining security_id back to the
 # EquityCompensationIssuance and reading that issuance's compensation_type.
@@ -121,11 +121,12 @@ Source: [`EquityCompensationExercise.schema.json`](./EquityCompensationExercise.
 # See docs/polymorphic-transaction-routing.md §2.2/§4.3.
 status: complete
 
-route_by_security:
-  via: security_id
-  resolve: compensation_type
-  resolve_enum: "https://raw.githubusercontent.com/Open-Cap-Table-Coalition/Open-Cap-Format-OCF/main/schema/enums/CompensationType.schema.json"
-  source_mapping: ../issuance/EquityCompensationIssuance.mapping.md
+route_by_property:
+  property: compensation_type
+  from:
+    via: security_id
+    mapping: ../issuance/EquityCompensationIssuance.mapping.md
+  enum: "https://raw.githubusercontent.com/Open-Cap-Table-Coalition/Open-Cap-Format-OCF/main/schema/enums/CompensationType.schema.json"
   exhaustive: true
 
 # shared: fields whose Carta home differs by family carry a per-variant target map
@@ -208,7 +209,7 @@ variants:
     convenience pointer (a single id), whereas `precededBy.securities` carries the full
     set, so in any snapshot the complete lineage forest stays traceable. (Cash-settled
     SARs settle to `cashAcquired` and produce no resulting security.)
-- **`security_id`** is the join key (`route_by_security.via`); it routes the family,
+- **`security_id`** is the join key (`route_by_property.from.via`); it routes the family,
   it is not itself a stored Carta field. Carta's exercise transactions hold no
   reference to the source grant — that linkage is structural (the exercise sits under
   its grant), not a leaf property — so `security_id` is `ocf-internal` here.

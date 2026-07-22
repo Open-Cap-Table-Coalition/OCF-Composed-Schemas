@@ -322,13 +322,14 @@ The validator rejects TODOs in `complete` and `reviewed` mappings. If investigat
 
 OCF sometimes puts several instrument families behind one transaction schema, while Carta uses a distinct target family for each instrument. The flat `fields:` form cannot express that object-level routing. Use the conventions in [`docs/polymorphic-transaction-routing.md`](./docs/polymorphic-transaction-routing.md).
 
-### Issuance-time routing with `discriminator`
+### Local routing with `route_by_property`
 
-When the source object contains the discriminator, declare it at the top of the mapping block:
+When the route property is on the source object, declare `from: self`:
 
 ```yaml
-discriminator:
-  field: compensation_type
+route_by_property:
+  property: compensation_type
+  from: self
   exhaustive: true
 
 shared:
@@ -379,16 +380,17 @@ compensation_type:
   routed_to: { RSU: Rsu, CSAR: Sar, SSAR: Sar }
 ```
 
-### Downstream routing with `route_by_security`
+### Downstream routing with `route_by_property`
 
-Downstream records often carry only `security_id`; their instrument family is fixed on the issuance record. Declare the join rather than pretending the downstream record has a local discriminator:
+Downstream records often carry only a foreign key; their target family is fixed on a related record. Declare the relationship rather than pretending the downstream record has a local route property:
 
 ```yaml
-route_by_security:
-  via: security_id
-  resolve: compensation_type
-  resolve_enum: "https://raw.githubusercontent.com/Open-Cap-Table-Coalition/Open-Cap-Format-OCF/main/schema/enums/CompensationType.schema.json"
-  source_mapping: ../issuance/EquityCompensationIssuance.mapping.md
+route_by_property:
+  property: compensation_type
+  from:
+    via: security_id
+    mapping: ../issuance/EquityCompensationIssuance.mapping.md
+  enum: "https://raw.githubusercontent.com/Open-Cap-Table-Coalition/Open-Cap-Format-OCF/main/schema/enums/CompensationType.schema.json"
   exhaustive: true
 
 variants:
@@ -408,11 +410,11 @@ variants:
     fields: {}
 ```
 
-`via` is the foreign key on the current record. `resolve` is the discriminator field on the joined issuance. `source_mapping` identifies the mapping that owns the issuance-time routing. The validator can check the declaration's shape and enum coverage, but a runtime converter still has to resolve the actual IDs in an input package.
+`from.via` is the foreign key on the current record. `property` is the routed property on the related record. `from.mapping` identifies that record's mapping. The validator can check the declaration's shape and enum coverage, but a runtime converter still has to resolve the actual IDs in an input package. Use `from: self` when the routed property belongs to the current record.
 
 ### Composite folds
 
-Some OCF events have no single Carta transaction. A stock transfer, for example, can fold into an ordered cancel-plus-issue pair. Use `composite:` alongside a discriminator or `route_by_security:` block:
+Some OCF events have no single Carta transaction. A stock transfer, for example, can fold into an ordered cancel-plus-issue pair. Use `composite:` alongside a `route_by_property:` block:
 
 ```yaml
 composite:
@@ -525,7 +527,7 @@ Good mapping reviews answer these questions:
 - Does the target pointer resolve in the pinned Carta bundle?
 - Does the mapping preserve the fact, or does it narrow or drop it?
 - Is the transformation total over the entire declared OCF domain?
-- Does a polymorphic event route using its real discriminator or an explicit foreign-key join?
+- Does a polymorphic event route using its local route property or an explicit foreign-key join?
 - Does an event's effect land in Carta even if Carta represents it as state or as a composite of transactions?
 - Are all source enum values handled, including values routed to another variant?
 - Is every unmappable field explicit and explained?
@@ -572,7 +574,7 @@ If the source has an array and the target has one scalar slot, document which in
 
 ### Treating downstream transactions as self-describing
 
-An event with only `security_id` usually needs a join to its issuance record before its Carta family is known. Use `route_by_security:` and explain the two-pass runtime requirement.
+An event with only `security_id` usually needs a join to its issuance record before its Carta family is known. Use `route_by_property:` and explain the two-pass runtime requirement.
 
 ### Editing generated files directly
 

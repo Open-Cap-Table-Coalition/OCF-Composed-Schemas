@@ -93,7 +93,7 @@ Source: [`StockRetraction.schema.json`](./StockRetraction.schema.json)
 
 ```yaml
 # kind vocabulary: rename | select | split | combine | enum-remap | computed | unmappable | TODO
-# routing: route_by_security (downstream join). This retraction carries only
+# routing: route_by_property (downstream join). This retraction carries only
 # security_id and NO discriminator, so the stock family (RSA vs founders/plain
 # certificate) is undecidable from the record alone: it is resolved by joining
 # security_id back to the StockIssuance and reading that issuance's issuance_type.
@@ -102,11 +102,12 @@ Source: [`StockRetraction.schema.json`](./StockRetraction.schema.json)
 # See docs/polymorphic-transaction-routing.md §2.2/§4.3.
 status: complete
 
-route_by_security:
-  via: security_id
-  resolve: issuance_type
-  resolve_enum: "https://raw.githubusercontent.com/Open-Cap-Table-Coalition/Open-Cap-Format-OCF/main/schema/enums/StockIssuanceType.schema.json"
-  source_mapping: ../issuance/StockIssuance.mapping.md
+route_by_property:
+  property: issuance_type
+  from:
+    via: security_id
+    mapping: ../issuance/StockIssuance.mapping.md
+  enum: "https://raw.githubusercontent.com/Open-Cap-Table-Coalition/Open-Cap-Format-OCF/main/schema/enums/StockIssuanceType.schema.json"
   exhaustive: true
 
 # shared: every source property. All six are unmappable in BOTH families (there is
@@ -155,7 +156,7 @@ variants:
   retraction is dropped entirely on import; the faithful behavior is *not replaying*
   the retracted transaction in the first place.
 - Per-field justification (all six unmappable in both families):
-    - `security_id`: the `route_by_security.via` join key. It routes the family back to
+    - `security_id`: the `route_by_property.from.via` join key. It routes the family back to
       the issuance; it is not itself a stored Carta field on any retraction tx (none
       exists). `ocf-internal`.
     - `reason_text`: free-text reason for the retraction. Carta has no free-text reason

@@ -181,15 +181,16 @@ Source: [`StockIssuance.schema.json`](./StockIssuance.schema.json)
 
 ```yaml
 # kind vocabulary: rename | select | split | combine | enum-remap | computed | unmappable | TODO
-# routing: discriminator (issuance-time) — issuance_type routes an RSA to Carta's
+# routing: route_by_property (local) — issuance_type routes an RSA to Carta's
 # RestrictedStockAward family; FOUNDERS_STOCK / absent is a plain Certificate.
 # shared: fields common to both variants. A field whose Carta home differs by
 # variant carries a per-variant target map { Rsa/Default: pointer }; the validator
 # enforces the keys stay in sync with the variant set.
 status: complete
 
-discriminator:
-  field: issuance_type
+route_by_property:
+  property: issuance_type
+  from: self
   exhaustive: true
 
 shared:

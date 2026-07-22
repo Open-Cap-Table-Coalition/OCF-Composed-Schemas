@@ -2,8 +2,8 @@ import { validateMapping, ValidateInput } from "../scripts/lib/mapping-validator
 import { renderMappingReport } from "../scripts/lib/mapping-report.js";
 import { RawSchema, Registry } from "../scripts/lib/registry.js";
 
-// A miniature of the EquityCompensationIssuance polymorphism: a discriminator
-// (comp_type ∈ {OPT, RSU}) routes one OCF transaction to two Carta families.
+// A miniature polymorphic mapping: one route property (comp_type ∈ {OPT, RSU})
+// routes one OCF transaction to two Carta families.
 const BUNDLE = {
   $defs: {
     OptionTx: {
@@ -48,7 +48,7 @@ function frontmatter(over: Record<string, unknown> = {}): Record<string, unknown
 function issuanceMapping(over: Record<string, unknown> = {}): Record<string, unknown> {
   return {
     status: "complete",
-    discriminator: { field: "comp_type", exhaustive: true },
+    route_by_property: { property: "comp_type", from: "self", exhaustive: true },
     shared: {
       quantity: { kind: "rename", target: "#/$defs/OptionTx/properties/quantity" },
     },
@@ -78,11 +78,13 @@ function issuanceMapping(over: Record<string, unknown> = {}): Record<string, unk
 function downstreamMapping(over: Record<string, unknown> = {}): Record<string, unknown> {
   return {
     status: "complete",
-    route_by_security: {
-      via: "security_id",
-      resolve: "comp_type",
-      resolve_enum: "test://comptype", // registry-resolvable enum the variants must cover
-      source_mapping: "../issuance/EquityComp.mapping.md",
+    route_by_property: {
+      property: "comp_type",
+      from: {
+        via: "security_id",
+        mapping: "../issuance/EquityComp.mapping.md",
+      },
+      enum: "test://comptype", // registry-resolvable enum the variants must cover
       exhaustive: true,
     },
     variants: {
@@ -126,21 +128,25 @@ function messages(inp: ValidateInput, requireUnmappableReason = true): string[] 
   );
 }
 
-describe("polymorphic mapping — issuance (discriminator + variants)", () => {
+describe("polymorphic mapping — route_by_property", () => {
   it("accepts a valid issuance polymorphic mapping", () => {
     expect(messages(input())).toEqual([]);
   });
 
-  it("rejects a discriminator field that is not a source property", () => {
-    const m = issuanceMapping({ discriminator: { field: "nope", exhaustive: true } });
+  it("rejects a route property that is not a source property", () => {
+    const m = issuanceMapping({
+      route_by_property: { property: "nope", from: "self", exhaustive: true },
+    });
     const errs = messages(input({ mapping: m }));
-    expect(errs.some((s) => /discriminator.*"nope".*not a property/i.test(s))).toBe(true);
+    expect(errs.some((s) => /route_by_property.*"nope".*not a property/i.test(s))).toBe(true);
   });
 
-  it("rejects a discriminator field that is not enum-typed", () => {
-    const m = issuanceMapping({ discriminator: { field: "quantity", exhaustive: true } });
+  it("rejects a route property that is not enum-typed", () => {
+    const m = issuanceMapping({
+      route_by_property: { property: "quantity", from: "self", exhaustive: true },
+    });
     const errs = messages(input({ mapping: m }));
-    expect(errs.some((s) => /discriminator.*enum/i.test(s))).toBe(true);
+    expect(errs.some((s) => /route_by_property.*enum/i.test(s))).toBe(true);
   });
 
   it("rejects variants that do not cover every enum value when exhaustive", () => {
@@ -289,7 +295,7 @@ describe("routed_to: (verified round-trip edges)", () => {
       frontmatter: { target_standard: "Carta" },
       mapping: {
         status: "complete",
-        discriminator: { field: "comp_type", exhaustive: true },
+        route_by_property: { property: "comp_type", from: "self", exhaustive: true },
         variants: {
           Option: {
             when: ["OPT"],
@@ -391,7 +397,7 @@ describe("per-variant target maps (divergent shared targets)", () => {
       frontmatter: { target_standard: "Carta" },
       mapping: {
         status: "complete",
-        discriminator: { field: "comp_type", exhaustive: true },
+        route_by_property: { property: "comp_type", from: "self", exhaustive: true },
         shared: {
           quantity: {
             kind: "rename",
@@ -411,7 +417,7 @@ describe("per-variant target maps (divergent shared targets)", () => {
   });
 });
 
-describe("polymorphic mapping — downstream (route_by_security)", () => {
+describe("polymorphic mapping — downstream (route_by_property)", () => {
   function dinput(over: Partial<ValidateInput> = {}): ValidateInput {
     return input({
       file: "objects/transactions/exercise/ECExercise.mapping.md",
@@ -421,16 +427,19 @@ describe("polymorphic mapping — downstream (route_by_security)", () => {
     });
   }
 
-  it("accepts a valid route_by_security mapping", () => {
+  it("accepts a valid route_by_property mapping", () => {
     expect(messages(dinput())).toEqual([]);
   });
 
-  it("rejects a route_by_security.via that is not a source property", () => {
+  it("rejects a route_by_property.from.via that is not a source property", () => {
     const m = downstreamMapping({
-      route_by_security: { via: "nope", resolve: "comp_type", source_mapping: "x" },
+      route_by_property: {
+        property: "comp_type",
+        from: { via: "nope", mapping: "x" },
+      },
     });
     const errs = messages(dinput({ mapping: m }));
-    expect(errs.some((s) => /route_by_security.*"nope".*not a property/i.test(s))).toBe(true);
+    expect(errs.some((s) => /route_by_property.*"nope".*not a property/i.test(s))).toBe(true);
   });
 
   it("the verbose report shows per-variant routes (not just a bare '?' coverage)", () => {
@@ -440,7 +449,7 @@ describe("polymorphic mapping — downstream (route_by_security)", () => {
       mapping: issuanceMapping(),
     });
     expect(out).toContain("polymorphic");
-    expect(out).toContain("discriminator: comp_type");
+    expect(out).toContain("route_by_property: comp_type (self)");
     expect(out).toContain("shared (1)"); // shared fields shown once
     expect(out).toContain("Option (3/3)");
     expect(out).toContain("#/$defs/OptionGrant"); // variant primary_target
@@ -450,12 +459,15 @@ describe("polymorphic mapping — downstream (route_by_security)", () => {
     expect(out).not.toMatch(/complete \? →/);
   });
 
-  it("rejects a route_by_security missing resolve/source_mapping", () => {
+  it("rejects a route_by_property missing property/from.mapping", () => {
     const m = downstreamMapping({
-      route_by_security: { via: "security_id", resolve_enum: "test://comptype" },
+      route_by_property: {
+        from: { via: "security_id" },
+        enum: "test://comptype",
+      },
     });
     const errs = messages(dinput({ mapping: m }));
-    expect(errs.some((s) => /route_by_security.*(resolve|source_mapping)/i.test(s))).toBe(true);
+    expect(errs.some((s) => /route_by_property.*(property|from\.mapping)/i.test(s))).toBe(true);
   });
 
   it("rejects routes that do not cover every value of the resolved enum (exhaustive)", () => {
@@ -474,6 +486,35 @@ describe("polymorphic mapping — downstream (route_by_security)", () => {
       fields: { security_id: { kind: "unmappable", target: null, reason: "no-equivalent" } },
     };
     expect(messages(dinput({ mapping: m }))).toEqual([]);
+  });
+
+  it("rejects the removed discriminator key", () => {
+    const m = issuanceMapping();
+    delete m.route_by_property;
+    m.discriminator = { field: "comp_type", exhaustive: true };
+    const errs = messages(input({ mapping: m }));
+    expect(
+      errs.some((s) => /unsupported routing key.*discriminator.*route_by_property/i.test(s))
+    ).toBe(true);
+  });
+
+  it("renders joined route_by_property as property plus relationship", () => {
+    const out = renderMappingReport({
+      file: "objects/transactions/exercise/ECExercise.mapping.md",
+      frontmatter: { target_standard: "Carta" },
+      mapping: downstreamMapping(),
+    });
+    expect(out).toContain("route_by_property: comp_type (via security_id)");
+  });
+
+  it("rejects the removed route_by_security key", () => {
+    const m = downstreamMapping();
+    delete m.route_by_property;
+    m.route_by_security = {};
+    const errs = messages(dinput({ mapping: m }));
+    expect(
+      errs.some((s) => /unsupported routing key.*route_by_security.*route_by_property/i.test(s))
+    ).toBe(true);
   });
 });
 
@@ -502,11 +543,10 @@ const COMPOSITE_BUNDLE = {
 function compositeMapping(over: Record<string, unknown> = {}): Record<string, unknown> {
   return {
     status: "complete",
-    route_by_security: {
-      via: "security_id",
-      resolve: "comp_type",
-      resolve_enum: "test://comptype",
-      source_mapping: "../issuance/EquityComp.mapping.md",
+    route_by_property: {
+      property: "comp_type",
+      from: { via: "security_id", mapping: "../issuance/EquityComp.mapping.md" },
+      enum: "test://comptype",
       exhaustive: true,
     },
     composite: [
@@ -642,7 +682,7 @@ describe("composite: (one OCF transaction → an ordered set of Carta steps)", (
     const errs = messages(cinput({ mapping: m }));
     expect(
       errs.some((s) =>
-        /composite.*only supported alongside.*route_by_security or discriminator/i.test(s)
+        /composite.*only supported alongside.*route_by_property \+ variants/i.test(s)
       )
     ).toBe(true);
   });
@@ -654,11 +694,10 @@ describe("field-level const (fixed values on the target object)", () => {
   function fieldConstMapping(over: Record<string, unknown> = {}): Record<string, unknown> {
     return {
       status: "complete",
-      route_by_security: {
-        via: "security_id",
-        resolve: "comp_type",
-        resolve_enum: "test://comptype",
-        source_mapping: "x",
+      route_by_property: {
+        property: "comp_type",
+        from: { via: "security_id", mapping: "x" },
+        enum: "test://comptype",
         exhaustive: true,
       },
       shared: {

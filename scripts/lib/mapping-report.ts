@@ -410,18 +410,19 @@ export function renderMappingReport(input: MappingReportInput): string {
     : asStringOr(input.mapping.coverage, "?");
   const target = asStringOr(input.frontmatter.target_standard, "?");
 
-  // Polymorphic mappings (discriminator / route_by_security + variants) carry no
+  // Polymorphic mappings (route_by_property + variants) carry no
   // top-level fields; render the routing plus each variant's per-field routes
   // (shared fields shown once).
   const rawVariants = input.mapping.variants;
   if (isPlainObject(rawVariants)) {
-    const disc = input.mapping.discriminator;
-    const rbs = input.mapping.route_by_security;
-    const routing = isPlainObject(disc)
-      ? `discriminator: ${asStringOr(disc.field, "?")}`
-      : isPlainObject(rbs)
-      ? `route_by_security: ${asStringOr(rbs.via, "?")} → ${asStringOr(rbs.resolve, "?")}`
-      : "variants";
+    const rbp = input.mapping.route_by_property;
+    const routeByPropertyLabel = (route: Record<string, unknown>): string => {
+      const from = route.from;
+      if (from === "self") return `route_by_property: ${asStringOr(route.property, "?")} (self)`;
+      const via = isPlainObject(from) ? asStringOr(from.via, "?") : "?";
+      return `route_by_property: ${asStringOr(route.property, "?")} (via ${via})`;
+    };
+    const routing = isPlainObject(rbp) ? routeByPropertyLabel(rbp) : "variants";
     const coverageMap = derivedCoverage?.variants
       ? Object.fromEntries(
           Object.entries(derivedCoverage.variants).map(([label, slice]) => [

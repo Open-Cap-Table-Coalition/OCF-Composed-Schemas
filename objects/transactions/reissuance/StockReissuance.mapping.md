@@ -107,7 +107,7 @@ Source: [`StockReissuance.schema.json`](./StockReissuance.schema.json)
 
 ```yaml
 # kind vocabulary: rename | select | split | combine | enum-remap | computed | unmappable | TODO
-# routing: route_by_security (downstream join). This reissuance carries only
+# routing: route_by_property (downstream join). This reissuance carries only
 # security_id and NO discriminator, so the stock family (Rsa vs plain stock) is
 # undecidable from the record alone: it is resolved by joining security_id back to
 # the StockIssuance and reading that issuance's issuance_type. The reissuance verb
@@ -118,11 +118,12 @@ Source: [`StockReissuance.schema.json`](./StockReissuance.schema.json)
 # See docs/polymorphic-transaction-routing.md §2.2/§4.3.
 status: complete
 
-route_by_security:
-  via: security_id
-  resolve: issuance_type
-  resolve_enum: "https://raw.githubusercontent.com/Open-Cap-Table-Coalition/Open-Cap-Format-OCF/main/schema/enums/StockIssuanceType.schema.json"
-  source_mapping: ../issuance/StockIssuance.mapping.md
+route_by_property:
+  property: issuance_type
+  from:
+    via: security_id
+    mapping: ../issuance/StockIssuance.mapping.md
+  enum: "https://raw.githubusercontent.com/Open-Cap-Table-Coalition/Open-Cap-Format-OCF/main/schema/enums/StockIssuanceType.schema.json"
   exhaustive: true
 
 # shared: every source property. The reissuance event itself is unmappable in both
@@ -169,7 +170,7 @@ variants:
   that record their origin in `precededBy.securities`, so `resulting_security_ids`
   still round-trips losslessly via computed lineage. See
   docs/polymorphic-transaction-routing.md §4.3.
-- **`security_id`** is the join key (`route_by_security.via`); it routes the family,
+- **`security_id`** is the join key (`route_by_property.from.via`); it routes the family,
   it is not itself a stored Carta field — hence `ocf-internal`, not a rename.
 - **No transaction-level endpoint.** Carta has no stock-reissuance transaction (the
   `CertificatePrecededByReason` set is share-reserve / option-exercised /

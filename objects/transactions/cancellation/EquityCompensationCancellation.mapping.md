@@ -107,18 +107,19 @@ Source: [`EquityCompensationCancellation.schema.json`](./EquityCompensationCance
 
 ```yaml
 # kind vocabulary: rename | select | split | combine | enum-remap | computed | unmappable | TODO
-# routing: route_by_security (downstream join). This cancellation carries only
+# routing: route_by_property (downstream join). This cancellation carries only
 # security_id and NO discriminator, so the Carta cancellation family
 # (Option/Rsu/Sar) is undecidable from the record alone: it is resolved by
 # joining security_id back to the EquityCompensationIssuance and reading that
 # issuance's compensation_type. See docs/polymorphic-transaction-routing.md §2.2/§4.3.
 status: complete
 
-route_by_security:
-  via: security_id
-  resolve: compensation_type
-  resolve_enum: "https://raw.githubusercontent.com/Open-Cap-Table-Coalition/Open-Cap-Format-OCF/main/schema/enums/CompensationType.schema.json"
-  source_mapping: ../issuance/EquityCompensationIssuance.mapping.md
+route_by_property:
+  property: compensation_type
+  from:
+    via: security_id
+    mapping: ../issuance/EquityCompensationIssuance.mapping.md
+  enum: "https://raw.githubusercontent.com/Open-Cap-Table-Coalition/Open-Cap-Format-OCF/main/schema/enums/CompensationType.schema.json"
   exhaustive: true
 
 # shared: fields whose Carta home differs by family carry a per-variant target map
@@ -188,7 +189,7 @@ variants:
   bucket and dropping the prose. It lands on the family's cancellation tx `reason` via
   a per-variant target map, mirroring `date`/`quantity` — and matching the
   `ConvertibleCancellation` / `WarrantCancellation` siblings.
-- **`security_id`** is the join key (`route_by_security.via`); it routes the family,
+- **`security_id`** is the join key (`route_by_property.from.via`); it routes the family,
   it is not itself a stored Carta field. **`balance_security_id`** (partial-cancel
   remainder) has no Carta equivalent on any cancellation tx.
 - **Lineage asymmetry — why `balance_security_id` stays unmappable here.** A partial
