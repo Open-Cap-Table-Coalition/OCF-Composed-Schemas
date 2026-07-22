@@ -18,6 +18,7 @@ const BUNDLE = {
       },
     },
     Color: { type: "string", enum: ["red", "blue"] },
+    Wrap: { type: "object", properties: { value: { type: "string" } } },
     Excluded: true,
     Loop: { $ref: "#/$defs/Loop" },
   },
@@ -260,9 +261,90 @@ describe("validateMapping — entry shapes", () => {
     expect(errs.some((m) => m.includes('kind "renamed"'))).toBe(true);
   });
 
-  it("requires string targets for rename/combine/enum-remap/computed", () => {
+  it("requires string targets for rename/construct/combine/enum-remap/computed", () => {
     const errs = messages(withField({ kind: "rename", target: null }));
     expect(errs.some((m) => m.includes("string target"))).toBe(true);
+  });
+
+  it("accepts construct only with an explicit member and normalization contract", () => {
+    const construct = {
+      property: "value",
+      normalization: { integer_leading_zeros: "preserve" },
+    };
+    expect(messages(withField({ kind: "construct", target: "#/$defs/Wrap", construct }))).toEqual(
+      []
+    );
+    expect(
+      messages(withField({ kind: "construct", target: "#/$defs/Wrap" })).some((m) =>
+        m.includes("kind construct requires construct:")
+      )
+    ).toBe(true);
+    expect(
+      messages(
+        withField({
+          kind: "construct",
+          target: "#/$defs/Wrap",
+          construct: {
+            property: "value",
+            normalization: { integer_leading_zeros: "other" },
+          },
+        })
+      ).some((m) => m.includes("must be preserve or strip"))
+    ).toBe(true);
+    expect(
+      messages(
+        withField({
+          kind: "construct",
+          target: "#/$defs/Wrap",
+          construct: {
+            property: "value",
+            normalization: { integer_leading_zeros: "preserve" },
+            extra: true,
+          },
+        })
+      ).some((m) => m.includes("allows only construct.property and construct.normalization"))
+    ).toBe(true);
+    expect(
+      messages(
+        withField({
+          kind: "construct",
+          target: "#/$defs/Thing/properties/name",
+          construct,
+        })
+      ).some((m) => m.includes("kind construct requires a bare string source"))
+    ).toBe(true);
+  });
+
+  it("rejects undefined construct properties and normalization values", () => {
+    const construct = {
+      property: "value",
+      normalization: { integer_leading_zeros: "strip" },
+    };
+
+    expect(
+      messages(
+        withField({
+          kind: "construct",
+          target: "#/$defs/Wrap",
+          construct: { ...construct, property: "missing" },
+        })
+      )
+    ).toContain(
+      "name: kind construct requires a bare string source and a target object with exactly one string property named missing"
+    );
+
+    expect(
+      messages(
+        withField({
+          kind: "construct",
+          target: "#/$defs/Wrap",
+          construct: {
+            ...construct,
+            normalization: { integer_leading_zeros: "remove" },
+          },
+        })
+      )
+    ).toContain("name: construct.normalization.integer_leading_zeros must be preserve or strip");
   });
 
   it("requires a policy on select", () => {

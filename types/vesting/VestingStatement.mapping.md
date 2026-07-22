@@ -75,7 +75,7 @@ Source: [`VestingStatement.schema.json`](./VestingStatement.schema.json)
 ## Mapping
 
 ```yaml
-# kind vocabulary: rename | select | split | combine | enum-remap | computed | unmappable | TODO
+# kind vocabulary: rename | construct | select | split | combine | enum-remap | computed | unmappable | TODO
 # unmappable reason vocabulary: no-equivalent | excluded-from-snapshot | out-of-scope | ocf-internal
 status: complete
 
@@ -132,17 +132,18 @@ fields:
       here to stay consistent with the VestingEventCondition mapping + the v2
       design — worth a reviewer confirm.) Absent for pure DATE statements.
   percentage:
-    kind: computed
+    kind: construct
     target: "#/$defs/VestingPeriod/properties/percentage"
-    transform: |
-      percentage = { value: percentage }
-      OCF percentage is already a decimal fraction string (e.g. "0.25");
-      it is wrapped in Carta's Decimal object ({ value: "0.25" }).
+    construct:
+      property: value
+      normalization:
+        integer_leading_zeros: strip
 ```
 
 ## Notes / open questions
 
 - One `VestingStatement` → one Carta `VestingPeriod` (an item of `VestingScheduleTemplate.periods[]`), matching the pre-v2 canonical `VestingStatement → Carta` mapping.
 - The statement's two optional axes line up with Carta's `VestingScheduleType` at the template level: `schedule` only → `DATE`, `event_condition` only → `MILESTONE`, both → `HYBRID`. That enum is set on the parent template, not the period, so it is not a target here.
+- `percentage` declares the destination member and Numeric lexical rule in its `construct` block.
 - `event_condition.event_id` has no first-class home on Carta's `VestingPeriod`, so it is reused as `milestoneName`. Open question: a richer mapping could populate `VestingPeriod.performanceCondition` (name/type/status) for HYBRID statements, but OCF carries only the event id here, so `milestoneName` is the faithful one-to-one choice.
 - `schedule` is mapped as a `split` at the statement level because the whole sub-object spreads across one `VestingPeriod`'s time fields; the per-sub-field breakdown (occurrences/period/period_type/cliff) lives in the sibling `VestingScheduleSegment` and `VestingScheduleCliff` mappings (still drafts as of #227).

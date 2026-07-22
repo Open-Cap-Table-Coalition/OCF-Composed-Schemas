@@ -96,6 +96,25 @@ fields: {}
 
 For a reusable OCF type, use `ocf_kind: type` and `ocf_object_type: null`. Type mappings contribute leaves to object mappings; they are not Core entities by themselves.
 
+### Operator cheat sheet
+
+The canonical operator reference is [`docs/mapping-validation.md#dsl-operator-reference`](./docs/mapping-validation.md#dsl-operator-reference).
+The short version is:
+
+| Operator | Cardinality | Use it for |
+| --- | --- | --- |
+| `rename` | 1 → 1 | Shape-compatible value transfer |
+| `construct` | 1 scalar → 1 object slot | Explicit scalar-to-member construction |
+| `select` | 1 aggregate → 1 | Policy-driven reduction |
+| `split` | 1 → N | One field populating several target slots |
+| `combine` | N → 1 | Several fields sharing one target slot |
+| `enum-remap` / `union-map` | 1 → 1 outcome | Closed-value or branch routing |
+| `computed` | N → 1 | Derived or context-dependent values |
+| `unmappable` / `TODO` | 1 → 0 / unresolved | Explicit gap or unfinished work |
+| `composite:` | 1 record → N records | Ordered target-record folds; all steps emit |
+
+`construct` changes value shape, `split` and `combine` change field cardinality, and `composite:` changes record cardinality. They are separate axes and can be used together.
+
 ### Status and coverage
 
 The front matter `status` and the mapping-block `status` must agree:
@@ -148,6 +167,23 @@ fields:
 ```
 
 The name `rename` describes the shape of the relationship, not a promise that the two schemas have identical business semantics. For example, a numeric OCF type may land in a wider Carta decimal type. Document any narrowing or context requirement in a `note:` or the prose below the YAML block.
+
+### `construct`: construct a target object from a scalar
+
+Use `construct` when a bare string scalar is used to construct a target object with one explicitly named member:
+
+```yaml
+fields:
+  percentage:
+    kind: construct
+    target: "#/$defs/VestingPeriod/properties/percentage"
+    construct:
+      property: value
+      normalization:
+        integer_leading_zeros: strip
+```
+
+The validator checks the source and target shapes plus the closed `construct` contract: `property` must name the target's sole string member, and `normalization.integer_leading_zeros` must be `preserve` or `strip`. `preserve` copies text unchanged; `strip` removes redundant integer leading zeroes while preserving sign and numeric value. Core treats a valid `construct` as deterministic and value-preserving.
 
 ### 3. `union-map`: map the alternatives of a source union
 

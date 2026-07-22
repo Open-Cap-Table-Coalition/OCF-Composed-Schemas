@@ -61,7 +61,7 @@ Source: [`VestingScheduleCliff.schema.json`](./VestingScheduleCliff.schema.json)
 ## Mapping
 
 ```yaml
-# kind vocabulary: rename | select | split | combine | enum-remap | computed | unmappable | TODO
+# kind vocabulary: rename | construct | select | split | combine | enum-remap | computed | unmappable | TODO
 # unmappable reason vocabulary: no-equivalent | excluded-from-snapshot | out-of-scope | ocf-internal
 status: complete
 
@@ -77,14 +77,16 @@ fields:
       MONTHS: MONTH
       YEARS: YEAR
   percentage:
-    kind: computed
+    kind: construct
     target: "#/$defs/VestingPeriod/properties/cliffPercentage"
-    transform: |
-      cliffPercentage.value = percentage   # OCF Numeric decimal string -> Carta Decimal { value }
+    construct:
+      property: value
+      normalization:
+        integer_leading_zeros: strip
 ```
 
 ## Notes / open questions
 
 - A `VestingScheduleCliff` lands on Carta's `VestingPeriod` cliff fields: `length`/`period_type`/`percentage` map to `cliffLength`/`cliffLengthUnit`/`cliffPercentage`. This matches the pre-#227 `canonical/vesting` cliff mapping, which pointed the same fields at `VestingPeriod`.
 - `period_type` is an `enum-remap` because OCF's `PeriodType` (`DAYS`/`MONTHS`/`YEARS`) is plural while Carta's `PeriodUnit` (`#/$defs/PeriodUnit`, referenced by `cliffLengthUnit`) is singular (`DAY`/`MONTH`/`YEAR`). The two enums are 1:1, so the remap is total.
-- `percentage` is `computed` rather than a straight rename: OCF carries a `Numeric` fixed-point decimal *string*, while Carta's `cliffPercentage` is a `Decimal` object (`{ value: "<decimal string>" }`), so the value is wrapped. The pre-#227 canonical mapping computed this from a `numerator`/`denominator` fraction; #129 simplified the cliff share to a single decimal, so it's now a direct string-into-`.value` wrap.
+- `percentage` declares the destination member and Numeric lexical rule in its `construct` block. The pre-#227 canonical mapping computed this from a `numerator`/`denominator` fraction; #129 simplified the cliff share to a single decimal.

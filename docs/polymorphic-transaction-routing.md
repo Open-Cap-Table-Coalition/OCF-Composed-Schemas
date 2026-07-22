@@ -256,7 +256,7 @@ entries; `--verbose` reports the derived `X/N` values, and
 The proposed `## Mapping` block. Targets verified: `OptionIssuanceTransaction` has `{issueDatetime, quantity, stockOptionType, exercisePrice, equityPlanId, shareClassId, expirationDatetime, vestingScheduleTemplateId}`; `OptionGrant` carries `earlyExercisable`, `vestingEvents`, `exercisePeriods`, `boardApprovalDate`, `stakeholderId`, `securityId`, `securityLabel`; `RsuIssuanceTransaction` has no exercise/base price; `SarIssuanceTransaction` uses `exercisePrice` (no distinct base-price field). `StockOptionType` includes `ISO`, `NSO`, `OTHER`, `STOCK_OPTION_TYPE_INTL`.
 
 ```yaml
-# kind vocabulary: rename | select | split | combine | enum-remap | computed | unmappable | TODO
+# kind vocabulary: rename | construct | select | split | combine | enum-remap | union-map | computed | unmappable | TODO
 # routing: discriminator (issuance-time) | route_by_security (downstream)
 status: complete
 

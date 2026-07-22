@@ -96,17 +96,21 @@ anatomy is always the same —
 - a single **`## Mapping` YAML block** whose heart is a `fields:` map:
   `<ocf property> → { kind, target, … }`.
 
-That per-field entry is the atom of the whole system. Its `kind` is the transform verb:
+That per-field entry is the atom of the whole system. Its `kind` is the transform verb. The
+canonical operator reference, including cardinality and examples, lives in
+[`docs/mapping-validation.md#dsl-operator-reference`](./mapping-validation.md#dsl-operator-reference).
 
-| `kind` | what it does | target shape |
+| `kind` / block | scope | cardinality |
 | --- | --- | --- |
-| `rename` | move a shape-compatible value verbatim | one pointer |
-| `select` | reduce an array/object to one target under an explicit policy | one pointer + `policy:` |
-| `enum-remap` | rewrite value-by-value | one pointer + a `values:` map |
-| `split` | fan one field to several | ≥2 pointers |
-| `combine` / `computed` | derive from one or more | one pointer |
-| `unmappable` | no home; record *why* | `null` + a `reason:` |
-| `TODO` | not yet mapped | literal `TODO` |
+| `rename` | value transfer | 1 → 1 |
+| `construct` | scalar shape construction | 1 scalar → 1 object slot |
+| `select` | value reduction | 1 aggregate → 1 |
+| `split` | field fan-out | 1 → N |
+| `combine` | field fan-in | N → 1 |
+| `enum-remap` / `union-map` | alternative/value routing | 1 → 1 declared outcome |
+| `computed` | derivation | N → 1 |
+| `unmappable` / `TODO` | no destination / unresolved | 1 → 0 / unresolved |
+| `composite:` | record fold, all steps emitted | 1 record → N records |
 
 Targets are **JSON pointers into a pinned target bundle** (`target-schema/Carta.schema.json`) —
 never free-text. Coverage is derived from the source schema and mapping entries; it is reported in

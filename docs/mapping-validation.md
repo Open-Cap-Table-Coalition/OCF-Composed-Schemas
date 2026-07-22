@@ -18,11 +18,34 @@ derived coverage stays reviewable, and enum remaps are checked value-by-value.
   when present — a `composite (N steps, all emitted)` node listing each step's Carta target(s) and
   any fixed `const:` fills).
 
+## DSL operator reference
+
+Each `fields:` entry has one `kind`. Cardinality below describes one source record and its target
+record(s); `N` means one or more items. `composite` is the one record-level block, not a `kind`.
+
+| Operator | What changes | Cardinality | Simple example |
+| --- | --- | --- | --- |
+| `rename` | Copy a shape-compatible value to a target slot | 1 value → 1 slot | `name` → `ShareClass.fullName` |
+| `construct` | Put a scalar in an explicitly named member of a one-member target object | 1 scalar → 1 object slot | `"0.25"` → `{ value: "0.25" }` |
+| `select` | Reduce an array/object under an explicit policy | 1 aggregate → 1 slot | `addresses[]` → first `address.country` |
+| `split` | Fan one source property out to several target slots | 1 property → N slots | `schedule` → `length` + `lengthUnit` |
+| `combine` | Fan several source properties into one target slot | N properties → 1 slot | `primary_contact` **or** `contact_info` → `email` |
+| `enum-remap` | Map each member of a closed source enum | 1 enum value → 1 enum value | `PREFERRED` → `PREFERRED` |
+| `union-map` | Choose one mapping for the source union branch | 1 union value → 1 branch mapping | `Numeric` branch → `ShareClass.authorizedShareCount` |
+| `computed` | Derive a target value from source data or context | N inputs → 1 derived slot | stock-class seniority → Carta rank |
+| `unmappable` | Explicitly record that no target exists | 1 property → 0 slots | `votes_per_share` → no-equivalent |
+| `TODO` | Leave an unresolved mapping during drafting | unresolved | `new_field` → `TODO` |
+| `composite:` block | Fold one source event into ordered target records; all steps emit | 1 record → N records | `StockTransfer` → `cancel` + `issue` |
+
+The axes are intentionally separate: `construct` changes a value's shape, `split`/`combine` change
+field cardinality, and `composite` changes record cardinality. A composite step may still use
+ordinary field operators, including `construct` or `combine`, for the fields it emits.
+
 ## Rules
 
 **Structural (every file):** required frontmatter keys; `status` ∈ `draft | partial | complete |
 reviewed` and identical in frontmatter and mapping block; every `fields:` key is a real property
-of the source schema; `kind` ∈ `rename | select | split | combine | enum-remap | union-map | computed | unmappable |
+of the source schema; `kind` ∈ `rename | construct | select | split | combine | enum-remap | union-map | computed | unmappable |
 TODO` with the matching target shape (string; array of ≥2 strings for `split`; a `cases:` list for
 `union-map`; `null` for
 `unmappable`; literal `TODO` for `TODO`). Coverage is derived from the source schema and effective
@@ -38,6 +61,29 @@ this variant because it belongs to another. The validator confirms each named va
 *claims* that value (a real, deterministic route), and `--verbose` renders it as
 `VALUE → routed to "Variant" variant: <that variant's Carta primary_targets>` instead of
 `VALUE ✗ dropped` — so it is clear which Carta objects the value actually lands in.
+
+### `construct`: construct a target object from a scalar
+
+Use `construct` when a bare string scalar is used to construct a target object with one explicitly named member. The mapping must declare both the member and the lexical rule; neither is inferred from the target schema:
+
+```yaml
+fields:
+  percentage:
+    kind: construct
+    target: "#/$defs/VestingPeriod/properties/percentage"
+    construct:
+      property: value
+      normalization:
+        integer_leading_zeros: strip
+```
+
+The grammar is closed:
+
+- `construct.property` is a non-empty string and must be the sole string property in the target object.
+- `construct.normalization` contains exactly `integer_leading_zeros`, whose value is `preserve` or `strip`.
+- `preserve` copies the scalar text unchanged. `strip` removes redundant leading zeroes from the integer part, retains the sign, and retains at least one integer zero (`0007` → `7`, `-000.50` → `-0.50`, `000` → `0`).
+
+The validator rejects a missing member, an unknown normalization key, or an unsupported normalization value. For OCF `Numeric` → Carta `Decimal`, use `strip` because Carta's `Decimal.value` rejects multi-digit integer leading zeroes.
 
 **Semantic (when `target_standard` ≠ `TBD`):** every string target must be a `#/...` JSON pointer
 that resolves in the target bundle (`target_standard` → bundle file via `TARGET_BUNDLES` in the

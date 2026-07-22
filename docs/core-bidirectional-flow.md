@@ -14,7 +14,7 @@ flowchart LR
   classDef in fill:#e6f4ea,stroke:#34a853,color:#0b3d20;
   classDef out fill:#fce8e6,stroke:#d93025,color:#5c0d06;
   classDef defer fill:#fff8e1,stroke:#f9a825,color:#5c4400,stroke-dasharray:4 3;
-  OCF["OCF"]:::in -->|"94 clean + 38 lossy"| CORE
+  OCF["OCF"]:::in -->|"96 clean + 36 lossy"| CORE
   OCF -.->|"146 left behind"| ocfvoid["⌀ dropped (no Carta home)"]:::out
   CORE["OCF Core (rich)"]:::core
   Carta["Carta"]:::in -->|"183 fields"| CORE
@@ -1288,14 +1288,13 @@ are DISTINCT fields per object (variants collapsed; a field that lands in any va
 | Issuer | ✓ | 2 | 0 | 9 |
 | ConvertibleIssuance | ✓ | 6 | 2 | 5 |
 | Stakeholder | ✓ | 3 | 5 | 2 |
-| StockIssuance | ✓ | 11 | 2 | 5 |
 | WarrantIssuance | ✓ | 9 | 1 | 6 |
 | ConvertibleTransfer | ✗ | 0 | 0 | 6 |
 | EquityCompensationTransfer | ✗ | 0 | 0 | 6 |
 | StockClass | ✓ | 7 | 3 | 3 |
+| StockIssuance | ✓ | 12 | 1 | 5 |
 | StockRepurchase | ✗ | 0 | 1 | 5 |
 | ConvertibleConversion | ✓ | 3 | 0 | 5 |
-| EquityCompensationIssuance | ✓ | 16 | 3 | 2 |
 | IssuerAuthorizedSharesAdjustment | ✗ | 0 | 0 | 5 |
 | StockConversion | ✗ | 0 | 2 | 3 |
 | StockPlanPoolAdjustment | ✗ | 0 | 0 | 5 |
@@ -1303,6 +1302,7 @@ are DISTINCT fields per object (variants collapsed; a field that lands in any va
 | StockReissuance | ✗ | 0 | 1 | 4 |
 | Valuation | ✓ | 2 | 0 | 5 |
 | Document | ✓ | 0 | 2 | 2 |
+| EquityCompensationIssuance | ✓ | 17 | 2 | 2 |
 | StockConsolidation | ✗ | 0 | 2 | 2 |
 | StockPlan | ✓ | 3 | 1 | 3 |
 | StockTransfer | ✓ | 2 | 2 | 2 |
