@@ -1,4 +1,5 @@
-import { renderMappingReport } from "../scripts/lib/mapping-report.js";
+import { MappingReportDocument, renderMappingReport } from "../scripts/lib/mapping-report.js";
+import { RawSchema } from "../scripts/lib/registry.js";
 
 describe("renderMappingReport", () => {
   it("derives coverage from the source schema when one is provided", () => {
@@ -310,10 +311,78 @@ describe("renderMappingReport", () => {
     );
   });
 
-  it("renders sequential transform steps and their targets", () => {
+  it("expands sequential transform steps and the referenced mapping fields", () => {
+    const rightId = "test://types/conversion_rights/StockClassConversionRight.schema.json";
+    const ratioId = "test://types/conversion_mechanisms/RatioConversionMechanism.schema.json";
+    const mappingDocuments: ReadonlyMap<string, MappingReportDocument> = new Map([
+      [
+        "types/conversion_rights/StockClassConversionRight.mapping.md",
+        {
+          frontmatter: {},
+          sourceSchema: {
+            $id: rightId,
+            properties: {
+              type: { type: "string" },
+              conversion_mechanism: { oneOf: [{ $ref: ratioId }] },
+              converts_to_future_round: { type: "boolean" },
+              converts_to_stock_class_id: { type: "string" },
+            },
+          } as RawSchema,
+          mapping: {
+            fields: {
+              type: { kind: "unmappable", target: null, reason: "no-equivalent" },
+              conversion_mechanism: {
+                kind: "split",
+                target: ["#/$defs/Ratio", "#/$defs/Price"],
+              },
+              converts_to_future_round: {
+                kind: "unmappable",
+                target: null,
+                reason: "no-equivalent",
+              },
+              converts_to_stock_class_id: {
+                kind: "unmappable",
+                target: null,
+                reason: "no-equivalent",
+              },
+            },
+          },
+        },
+      ],
+      [
+        "types/conversion_mechanisms/RatioConversionMechanism.mapping.md",
+        {
+          frontmatter: {},
+          sourceSchema: {
+            $id: ratioId,
+            properties: {
+              type: { type: "string" },
+              conversion_price: { type: "object" },
+              ratio: { type: "object" },
+              rounding_type: { type: "string" },
+            },
+          } as RawSchema,
+          mapping: {
+            fields: {
+              type: { kind: "unmappable", target: null, reason: "ocf-internal" },
+              conversion_price: { kind: "rename", target: "#/$defs/Price" },
+              ratio: { kind: "computed", target: "#/$defs/Ratio" },
+              rounding_type: { kind: "unmappable", target: null, reason: "no-equivalent" },
+            },
+          },
+        },
+      ],
+    ]);
     const out = renderMappingReport({
       file: "objects/StockClass.mapping.md",
       frontmatter: { target_standard: "Carta" },
+      sourceSchema: {
+        $id: "test://objects/StockClass.schema.json",
+        properties: {
+          conversion_rights: { type: "array", items: { $ref: rightId } },
+        },
+      },
+      mappingDocuments,
       mapping: {
         status: "complete",
         coverage: "1/1",
@@ -336,10 +405,23 @@ describe("renderMappingReport", () => {
       [
         "objects/StockClass.mapping.md  complete 1/1 → Carta",
         "└── conversion_rights (sequential_transform)",
-        "    ├── select · policy: first_ratio_conversion_right",
-        "    └── apply_mapping → types/conversion_rights/StockClassConversionRight.mapping.md",
-        "        ├── #/$defs/Ratio",
-        "        └── #/$defs/Price",
+        "    ├── 1. select",
+        "    │   ├── input: conversion_rights[] (StockClassConversionRight)",
+        "    │   ├── policy: first_ratio_conversion_right [registered]",
+        "    │   ├── rule: select the first StockClassConversionRight with a ratio conversion mechanism",
+        "    │   ├── result: one selected StockClassConversionRight",
+        "    │   └── unselected values: dropped",
+        "    └── 2. apply_mapping",
+        "        ├── mapping: types/conversion_rights/StockClassConversionRight.mapping.md",
+        "        ├── input: selected StockClassConversionRight",
+        "        ├── type ✗ unmappable: no-equivalent",
+        "        ├── conversion_mechanism (split; nested mapping: RatioConversionMechanism)",
+        "        │   ├── type ✗ unmappable: ocf-internal",
+        "        │   ├── conversion_price → #/$defs/Price (rename)",
+        "        │   ├── ratio → #/$defs/Ratio (computed)",
+        "        │   └── rounding_type ✗ unmappable: no-equivalent",
+        "        ├── converts_to_future_round ✗ unmappable: no-equivalent",
+        "        └── converts_to_stock_class_id ✗ unmappable: no-equivalent",
       ].join("\n")
     );
   });

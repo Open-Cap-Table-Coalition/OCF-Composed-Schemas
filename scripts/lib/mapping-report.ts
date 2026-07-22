@@ -1,5 +1,6 @@
 import { RawSchema } from "./registry.js";
 import { deriveMappingCoverage, formatCoverage } from "./mapping-coverage.js";
+import { getTransformPolicy } from "./mapping-policies.js";
 
 /**
  * Pure renderer for the `--verbose` mapping report. Given a parsed mapping
@@ -15,6 +16,13 @@ export interface MappingReportInput {
   frontmatter: Record<string, unknown>;
   mapping: Record<string, unknown>;
   sourceSchema?: RawSchema;
+  mappingDocuments?: ReadonlyMap<string, MappingReportDocument>;
+}
+
+export interface MappingReportDocument {
+  frontmatter: Record<string, unknown>;
+  mapping: Record<string, unknown>;
+  sourceSchema?: RawSchema;
 }
 
 function isPlainObject(value: unknown): value is Record<string, unknown> {
@@ -25,24 +33,157 @@ function asStringOr(value: unknown, fallback: string): string {
   return typeof value === "string" ? value : fallback;
 }
 
-function renderSequentialStep(step: unknown, index: number): Tree {
+interface RenderContext {
+  fieldName?: string;
+  sourceSchema?: RawSchema;
+  mappingDocuments?: ReadonlyMap<string, MappingReportDocument>;
+  mappingPath?: string;
+  depth?: number;
+  visitedMappings?: ReadonlySet<string>;
+}
+
+function mappingLabel(path: string): string {
+  return (
+    path
+      .split("/")
+      .pop()
+      ?.replace(/\.mapping\.md$/, "") ?? path
+  );
+}
+
+function sourceRef(node: unknown): string | null {
+  if (!isPlainObject(node)) return null;
+  if (typeof node.$ref === "string") return node.$ref;
+  for (const key of ["oneOf", "anyOf"]) {
+    const branches = node[key];
+    if (!Array.isArray(branches)) continue;
+    const refs = branches
+      .filter(isPlainObject)
+      .map((branch) => (typeof branch.$ref === "string" ? branch.$ref : null))
+      .filter((ref): ref is string => ref !== null);
+    if (refs.length === 1) return refs[0] ?? null;
+  }
+  return null;
+}
+
+function nestedMappingForField(
+  document: MappingReportDocument,
+  field: string,
+  mappingDocuments: ReadonlyMap<string, MappingReportDocument> | undefined
+): [string, MappingReportDocument] | null {
+  if (!document.sourceSchema || !mappingDocuments) return null;
+  const properties = document.sourceSchema.properties;
+  const sourceNode = isPlainObject(properties) ? properties[field] : undefined;
+  const node =
+    isPlainObject(sourceNode) && sourceNode.type === "array" ? sourceNode.items : sourceNode;
+  const ref = sourceRef(node);
+  if (!ref) return null;
+  for (const [path, candidate] of mappingDocuments) {
+    if (candidate.sourceSchema?.$id === ref) return [path, candidate];
+  }
+  return null;
+}
+
+function sourceFieldLabel(sourceSchema: RawSchema | undefined, field: string): string {
+  if (!sourceSchema || !isPlainObject(sourceSchema.properties)) return field;
+  const node = sourceSchema.properties[field];
+  if (!isPlainObject(node)) return field;
+  if (node.type !== "array") return field;
+  const item = sourceItemLabel(sourceSchema, field);
+  return `${field}[]${item ? ` (${item})` : ""}`;
+}
+
+function sourceItemLabel(sourceSchema: RawSchema | undefined, field: string): string | null {
+  if (!sourceSchema || !isPlainObject(sourceSchema.properties)) return null;
+  const node = sourceSchema.properties[field];
+  if (!isPlainObject(node) || node.type !== "array" || !isPlainObject(node.items)) return null;
+  const ref = sourceRef(node.items);
+  return ref ? sourceSchemaLabel(ref) : null;
+}
+
+function renderReferencedFields(
+  path: string,
+  document: MappingReportDocument,
+  context: RenderContext
+): Tree[] {
+  const fields = document.mapping.fields;
+  if (!isPlainObject(fields)) return [];
+  const depth = context.depth ?? 0;
+  const visited = new Set(context.visitedMappings ?? []);
+  visited.add(path);
+  return Object.entries(fields).map(([field, entry]) => {
+    const nested =
+      depth < 4 && isPlainObject(entry) && entry.kind === "split"
+        ? nestedMappingForField(document, field, context.mappingDocuments)
+        : null;
+    if (nested && !visited.has(nested[0])) {
+      const [nestedPath, nestedDocument] = nested;
+      const nestedFields = renderReferencedFields(nestedPath, nestedDocument, {
+        ...context,
+        depth: depth + 1,
+        visitedMappings: visited,
+      });
+      return {
+        label: `${field} (${
+          isPlainObject(entry) ? `${String(entry.kind)}; ` : ""
+        }nested mapping: ${mappingLabel(nestedPath)})`,
+        children: nestedFields,
+      };
+    }
+    return itemToTree(renderItem(field, entry));
+  });
+}
+
+function renderSequentialStep(step: unknown, index: number, context: RenderContext): Tree {
   if (!isPlainObject(step)) {
     return { label: `step ${index + 1} ⚠ malformed`, children: [] };
   }
 
   if (step.kind === "select") {
     const policy = typeof step.policy === "string" ? step.policy : "?";
-    const children =
-      typeof step.source === "string" ? [{ label: `source: ${step.source}`, children: [] }] : [];
-    return { label: `select · policy: ${policy}`, children };
+    const policyDefinition =
+      typeof step.policy === "string" ? getTransformPolicy(step.policy) : null;
+    const input = sourceFieldLabel(context.sourceSchema, context.fieldName ?? "source");
+    const selectedType = sourceItemLabel(context.sourceSchema, context.fieldName ?? "source");
+    const children: Tree[] = [
+      { label: `input: ${input}`, children: [] },
+      {
+        label: `policy: ${policy}${policyDefinition ? " [registered]" : " [unregistered]"}`,
+        children: [],
+      },
+    ];
+    if (policyDefinition)
+      children.push({ label: `rule: ${policyDefinition.description}`, children: [] });
+    if (typeof step.source === "string")
+      children.push({ label: `source: ${step.source}`, children: [] });
+    children.push({ label: `result: one selected ${selectedType ?? "value"}`, children: [] });
+    if (input.includes("[]")) children.push({ label: "unselected values: dropped", children: [] });
+    return { label: `${index + 1}. select`, children };
   }
 
   if (step.kind === "apply_mapping") {
     const mapping = asStringOr(step.mapping, "?");
-    const targets = Array.isArray(step.targets)
-      ? step.targets.map((target) => ({ label: asStringOr(target, "?"), children: [] }))
-      : [];
-    return { label: `apply_mapping → ${mapping}`, children: targets };
+    const document = context.mappingDocuments?.get(mapping);
+    const selectedType = document ? mappingLabel(mapping) : "value";
+    const children: Tree[] = [
+      { label: `mapping: ${mapping}`, children: [] },
+      { label: `input: selected ${selectedType}`, children: [] },
+    ];
+    if (document) {
+      children.push(
+        ...renderReferencedFields(mapping, document, {
+          ...context,
+          depth: 0,
+          visitedMappings: new Set([mapping]),
+        })
+      );
+    } else {
+      const targets = Array.isArray(step.targets)
+        ? step.targets.map((target) => ({ label: asStringOr(target, "?"), children: [] }))
+        : [];
+      children.push({ label: "target summary", children: targets });
+    }
+    return { label: `${index + 1}. apply_mapping`, children };
   }
 
   return { label: `step ${index + 1} ⚠ kind: ${String(step.kind)}`, children: [] };
@@ -74,7 +215,8 @@ function renderItem(
   name: string,
   entry: unknown,
   routeTargets?: Record<string, string[]>,
-  stepIds: string[] = []
+  stepIds: string[] = [],
+  context: RenderContext = {}
 ): Item {
   if (!isPlainObject(entry)) {
     return { label: `${name} ⚠ malformed entry`, children: [] };
@@ -172,7 +314,12 @@ function renderItem(
       const steps = Array.isArray(entry.steps) ? entry.steps : [];
       item = {
         label: `${name} (sequential_transform)`,
-        children: steps.map((step, index) => renderSequentialStep(step, index)),
+        children: steps.map((step, index) =>
+          renderSequentialStep(step, index, {
+            ...context,
+            fieldName: name,
+          })
+        ),
       };
       break;
     }
@@ -242,11 +389,12 @@ function renderTree(nodes: Tree[], prefix = ""): string[] {
 function fieldTrees(
   fields: unknown,
   routeTargets?: Record<string, string[]>,
-  stepIds: string[] = []
+  stepIds: string[] = [],
+  context: RenderContext = {}
 ): Tree[] {
   return isPlainObject(fields)
     ? Object.entries(fields).map(([name, entry]) =>
-        itemToTree(renderItem(name, entry, routeTargets, stepIds))
+        itemToTree(renderItem(name, entry, routeTargets, stepIds, context))
       )
     : [];
 }
@@ -325,7 +473,10 @@ export function renderMappingReport(input: MappingReportInput): string {
     if (isPlainObject(shared) && Object.keys(shared).length > 0) {
       roots.push({
         label: `shared (${Object.keys(shared).length})`,
-        children: fieldTrees(shared, variantTargets, stepIds),
+        children: fieldTrees(shared, variantTargets, stepIds, {
+          sourceSchema: input.sourceSchema,
+          mappingDocuments: input.mappingDocuments,
+        }),
       });
     }
     for (const [label, rawV] of Object.entries(rawVariants)) {
@@ -335,7 +486,10 @@ export function renderMappingReport(input: MappingReportInput): string {
         : "";
       roots.push({
         label: `${label} (${asStringOr(coverageMap[label], "?")})${targets}`,
-        children: fieldTrees(v.fields, variantTargets, stepIds),
+        children: fieldTrees(v.fields, variantTargets, stepIds, {
+          sourceSchema: input.sourceSchema,
+          mappingDocuments: input.mappingDocuments,
+        }),
       });
     }
     return [`${input.file}  ${status} polymorphic → ${target}`, ...renderTree(roots)].join("\n");
@@ -353,7 +507,12 @@ export function renderMappingReport(input: MappingReportInput): string {
       todoCount++;
       continue;
     }
-    items.push(renderItem(name, entry));
+    items.push(
+      renderItem(name, entry, undefined, [], {
+        sourceSchema: input.sourceSchema,
+        mappingDocuments: input.mappingDocuments,
+      })
+    );
   }
 
   // All-TODO (or some TODOs and no concrete items): collapse to a header suffix.

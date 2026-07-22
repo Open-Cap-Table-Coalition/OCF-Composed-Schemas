@@ -8,7 +8,7 @@ import { minimatch } from "minimatch";
 import { loadRegistry, RawSchema } from "./lib/registry.js";
 import { parseMappingDocument, MappingParseError } from "./lib/mapping-parser.js";
 import { validateMapping, ValidationError, TARGET_BUNDLES } from "./lib/mapping-validator.js";
-import { renderMappingReport } from "./lib/mapping-report.js";
+import { MappingReportDocument, renderMappingReport } from "./lib/mapping-report.js";
 
 const MAPPING_DIRS = ["objects", "types"] as const;
 
@@ -57,6 +57,25 @@ async function main(argv: Args): Promise<number> {
 
   const bundleCache = new Map<string, unknown>();
   const errors: ValidationError[] = [];
+  const mappingDocuments = new Map<string, MappingReportDocument>();
+
+  // Verbose reports may expand an apply_mapping reference into the referenced
+  // mapping's effective fields. Preload the report index without changing the
+  // validator's normal error handling for the selected --filter set.
+  if (argv.verbose) {
+    for (const rel of all) {
+      try {
+        const parsed = parseMappingDocument(await readFile(path.join(repoRoot, rel), "utf8"), rel);
+        const schemaRel = rel.replace(/\.mapping\.md$/, ".schema.json");
+        const sourceSchema = JSON.parse(
+          await readFile(path.join(repoRoot, schemaRel), "utf8")
+        ) as RawSchema;
+        mappingDocuments.set(rel, { ...parsed, sourceSchema });
+      } catch {
+        // The selected file's parse/schema error is still reported below.
+      }
+    }
+  }
 
   for (const rel of files) {
     const markdown = await readFile(path.join(repoRoot, rel), "utf8");
@@ -98,6 +117,7 @@ async function main(argv: Args): Promise<number> {
           frontmatter: parsed.frontmatter,
           mapping: parsed.mapping,
           sourceSchema,
+          mappingDocuments,
         }) + "\n"
       );
     }
