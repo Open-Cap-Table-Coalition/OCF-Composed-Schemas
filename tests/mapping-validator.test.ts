@@ -148,6 +148,40 @@ function makeInput(over: Partial<ValidateInput> = {}): ValidateInput {
   };
 }
 
+const UNION_SOURCE_SCHEMA: RawSchema = {
+  $id: "test://union",
+  properties: {
+    value: {
+      oneOf: [{ $ref: "test://authorized" }, { $ref: "test://numeric" }],
+    },
+  },
+};
+
+const UNION_REGISTRY: Registry = new Map([
+  ["test://authorized", { $id: "test://authorized", enum: ["NOT APPLICABLE", "UNLIMITED"] }],
+  ["test://numeric", { $id: "test://numeric", type: "string", pattern: "^[0-9]+$" }],
+]);
+
+const UNION_BUNDLE = {
+  $defs: {
+    Decimal: { type: "object", properties: { value: { type: "string" } } },
+  },
+};
+
+function unionMapInput(entry: Record<string, unknown>): ValidateInput {
+  return {
+    file: "objects/Union.mapping.md",
+    frontmatter: frontmatter({ ocf_schema_id: "test://union", required_fields: ["value"] }),
+    mapping: {
+      status: "complete",
+      fields: { value: entry },
+    },
+    sourceSchema: UNION_SOURCE_SCHEMA,
+    registry: UNION_REGISTRY,
+    targetBundle: UNION_BUNDLE,
+  };
+}
+
 function messages(input: ValidateInput, requireUnmappableReason = false): string[] {
   return validateMapping(input, { requireUnmappableReason }).map((e) =>
     e.field ? `${e.field}: ${e.message}` : e.message
@@ -559,6 +593,54 @@ describe("validateMapping — semantic target checks", () => {
       },
     });
     expect(messages(input)).toEqual([]);
+  });
+});
+
+describe("validateMapping — union-map cases", () => {
+  const validEntry = {
+    kind: "union-map",
+    cases: [
+      {
+        source_schema: "test://authorized",
+        mapping: {
+          kind: "unmappable",
+          target: null,
+          reason: "no-equivalent",
+          values: { "NOT APPLICABLE": null, UNLIMITED: null },
+        },
+      },
+      {
+        source_schema: "test://numeric",
+        mapping: { kind: "rename", target: "#/$defs/Decimal" },
+      },
+    ],
+  };
+
+  it("accepts one exact case for every source union branch", () => {
+    expect(messages(unionMapInput(validEntry))).toEqual([]);
+  });
+
+  it("rejects a missing source union case", () => {
+    const entry = {
+      ...validEntry,
+      cases: [validEntry.cases[1]],
+    };
+    const errs = messages(unionMapInput(entry));
+    expect(
+      errs.some((m) => m.includes('cases is missing source union branch "test://authorized"'))
+    ).toBe(true);
+  });
+
+  it("rejects a case whose source schema is not one of the union alternatives", () => {
+    const entry = {
+      ...validEntry,
+      cases: [
+        ...validEntry.cases.slice(0, 1),
+        { source_schema: "test://other", mapping: { kind: "rename", target: "#/$defs/Decimal" } },
+      ],
+    };
+    const errs = messages(unionMapInput(entry));
+    expect(errs.some((m) => m.includes('source_schema "test://other" is not a branch'))).toBe(true);
   });
 });
 

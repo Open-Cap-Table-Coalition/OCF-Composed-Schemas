@@ -606,7 +606,7 @@ flowchart LR
 | field | OCF-req | variant(s) | flows to (Carta) | loss |
 | --- | :---: | --- | --- | --- |
 | conversion_rights |  |  | ShareClassRightsAndPreferences.{conversionRatio, conversionPrice} | heuristic (split) |
-| initial_shares_authorized | **yes** |  | ShareClass.authorizedShareCount | partial (source union has multiple real branches; direct rename is not total) |
+| initial_shares_authorized | **yes** |  | ShareClass.authorizedShareCount | partial (AuthorizedShares: unmapped members NOT APPLICABLE, UNLIMITED; Numeric: widening) |
 | seniority | **yes** |  | ShareClass.seniority | heuristic (computed) |
 
 ### StockClassConversionRatioAdjustment — in Core (admissible)

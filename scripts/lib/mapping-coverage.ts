@@ -20,6 +20,7 @@ const KINDS = new Set([
   "split",
   "combine",
   "enum-remap",
+  "union-map",
   "computed",
   "unmappable",
   "TODO",

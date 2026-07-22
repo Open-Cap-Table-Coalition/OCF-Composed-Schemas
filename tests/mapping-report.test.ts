@@ -202,6 +202,49 @@ describe("renderMappingReport", () => {
     expect(out).toBe(["f.md  draft 0/1 → Carta", "└── e → #/T (enum-remap)"].join("\n"));
   });
 
+  it("renders union-map cases with their source schemas and dropped values", () => {
+    const out = renderMappingReport({
+      file: "objects/StockClass.mapping.md",
+      frontmatter: { target_standard: "Carta" },
+      mapping: {
+        status: "complete",
+        coverage: "1/1",
+        fields: {
+          initial_shares_authorized: {
+            kind: "union-map",
+            cases: [
+              {
+                source_schema: "https://example/enums/AuthorizedShares.schema.json",
+                mapping: {
+                  kind: "unmappable",
+                  target: null,
+                  reason: "no-equivalent",
+                  values: { "NOT APPLICABLE": null, UNLIMITED: null },
+                },
+              },
+              {
+                source_schema: "https://example/types/Numeric.schema.json",
+                mapping: { kind: "rename", target: "#/authorizedShareCount" },
+              },
+            ],
+          },
+        },
+      },
+    });
+    expect(out).toBe(
+      [
+        "objects/StockClass.mapping.md  complete 1/1 → Carta",
+        "└── initial_shares_authorized (union-map)",
+        "    ├── AuthorizedShares",
+        "    │   └── ✗ unmappable: no-equivalent",
+        "    │       ├── NOT APPLICABLE ✗ dropped",
+        "    │       └── UNLIMITED ✗ dropped",
+        "    └── Numeric",
+        "        └── → #/authorizedShareCount (rename)",
+      ].join("\n")
+    );
+  });
+
   it("renders computed, combine, and rename one-liners", () => {
     const out = renderMappingReport({
       file: "f.md",

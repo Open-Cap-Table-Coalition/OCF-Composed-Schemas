@@ -23,7 +23,7 @@ import { isPlainObject } from "./lib/mapping-validator.js";
 import { classifyField, ClassifyCtx, Verdict } from "./lib/core-classifier.js";
 import { computeAdmissibility, Admissibility } from "./lib/core-admissibility.js";
 import { loadGreenCorpus, loadReferenceGraph } from "./lib/core-corpus.js";
-import { targetString } from "./lib/report-helpers.js";
+import { entryTargetString } from "./lib/report-helpers.js";
 
 const SPINE = [
   "StockIssuance",
@@ -63,7 +63,7 @@ async function main(argv: { entity?: string; md?: string }): Promise<number> {
           variant,
           field,
           kind: typeof rawEntry.kind === "string" ? rawEntry.kind : String(rawEntry.kind),
-          target: targetString(rawEntry.target),
+          target: entryTargetString(rawEntry),
           verdict: classifyField(rawEntry, obj.properties[field], ctx),
         });
       }

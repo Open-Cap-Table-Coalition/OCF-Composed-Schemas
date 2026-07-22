@@ -363,6 +363,25 @@ function collectTargets(target: unknown, into: Set<string>): void {
   else if (isPlainObject(target)) Object.values(target).forEach((t) => collectTargets(t, into));
 }
 
+/** Collect Carta targets from a normal entry, including nested union-map cases. */
+function collectEntryTargets(
+  entry: Record<string, unknown>,
+  into: Set<string>,
+  pointers: Set<string>
+): void {
+  collectTargets(entry.target, into);
+  collectPointers(entry.target, pointers);
+  collectTargets(entry.values, into);
+  collectPointers(entry.values, pointers);
+  if (entry.kind === "union-map" && Array.isArray(entry.cases)) {
+    for (const rawCase of entry.cases) {
+      if (isPlainObject(rawCase) && isPlainObject(rawCase.mapping)) {
+        collectEntryTargets(rawCase.mapping, into, pointers);
+      }
+    }
+  }
+}
+
 /** The `composite:` steps of a mapping (each step id + the Carta $def roots it lands on), or undefined. */
 function compositeSteps(mapping: Record<string, unknown>): CompositeStep[] | undefined {
   if (!Array.isArray(mapping.composite)) return undefined;
@@ -575,12 +594,7 @@ export async function loadGreenCorpus(repoRoot: string): Promise<Corpus> {
     for (const fm of variantFieldMaps(mapping).values()) {
       for (const entry of Object.values(fm)) {
         if (isPlainObject(entry)) {
-          collectTargets(entry.target, targetedDefs);
-          collectPointers(entry.target, targetedPointers);
-          // enum-value → Carta pointer maps (`values:` on a field entry) are
-          // targets too, but sit beside `target:` where the old harvest missed them.
-          collectTargets(entry.values, targetedDefs);
-          collectPointers(entry.values, targetedPointers);
+          collectEntryTargets(entry, targetedDefs, targetedPointers);
         }
       }
     }

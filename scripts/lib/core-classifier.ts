@@ -4,6 +4,7 @@ import {
   derefNode,
   isPlainObject,
   resolveJsonPointer,
+  sourceUnionBranches,
   targetEnumValuesAt,
 } from "./mapping-validator.js";
 
@@ -380,6 +381,87 @@ function enumRemapTotality(
   return { class: "core", loss: "value-coarsening", detail: "enum→bucket" };
 }
 
+function sourceSchemaName(sourceSchema: string): string {
+  return (
+    sourceSchema
+      .split("/")
+      .pop()
+      ?.replace(/\.schema\.json$/, "") ?? sourceSchema
+  );
+}
+
+function unionCaseDetail(
+  sourceSchema: string,
+  mapping: Record<string, unknown>,
+  verdict: Verdict
+): string {
+  const label = sourceSchemaName(sourceSchema);
+  if (verdict.reason === "no-destination" && isPlainObject(mapping.values)) {
+    const dropped = Object.entries(mapping.values)
+      .filter(([, value]) => value === null || value === "TODO")
+      .map(([value]) => value);
+    if (dropped.length > 0) return `${label}: unmapped members ${dropped.join(", ")}`;
+  }
+  if (verdict.class === "core") return `${label}: ${verdict.loss ?? "direct"}`;
+  return `${label}: ${verdict.reason ?? "out"}${verdict.detail ? ` (${verdict.detail})` : ""}`;
+}
+
+function unionMapTotality(
+  entry: Record<string, unknown>,
+  srcRaw: unknown,
+  ctx: ClassifyCtx
+): Verdict {
+  const branches = sourceUnionBranches(srcRaw, ctx.registry);
+  const cases = Array.isArray(entry.cases) ? entry.cases : [];
+  const casesByRef = new Map<string, Record<string, unknown>>();
+  for (const rawCase of cases) {
+    if (!isPlainObject(rawCase) || typeof rawCase.source_schema !== "string") continue;
+    if (isPlainObject(rawCase.mapping)) casesByRef.set(rawCase.source_schema, rawCase.mapping);
+  }
+
+  const verdicts: Array<{ detail: string; verdict: Verdict }> = [];
+  for (const branch of branches) {
+    const mapping = casesByRef.get(branch.sourceSchema);
+    if (!mapping) {
+      verdicts.push({
+        detail: `${sourceSchemaName(branch.sourceSchema)}: missing case`,
+        verdict: { class: "out", reason: "partial" },
+      });
+      continue;
+    }
+    const verdict = classifyField(mapping, branch.node, ctx);
+    verdicts.push({
+      detail: unionCaseDetail(branch.sourceSchema, mapping, verdict),
+      verdict,
+    });
+  }
+
+  if (verdicts.length === 0) {
+    return {
+      class: "out",
+      reason: "no-destination",
+      detail: "union-map has no resolvable source cases",
+    };
+  }
+
+  const details = verdicts.map((v) => v.detail).join("; ");
+  const out = verdicts.filter((v) => v.verdict.class === "out");
+  if (out.length === 0) {
+    const rank: Record<CoreLoss, number> = { direct: 0, widening: 1, "value-coarsening": 2 };
+    const loss = verdicts
+      .map((v) => v.verdict.loss ?? "direct")
+      .sort((a, b) => rank[b] - rank[a])[0] as CoreLoss;
+    return { class: "core", loss, detail: details };
+  }
+
+  const hasLanding = verdicts.some((v) => v.verdict.class === "core");
+  const hasPartial = out.some((v) => v.verdict.reason === "partial");
+  if (hasLanding || hasPartial) return { class: "out", reason: "partial", detail: details };
+
+  const firstReason = out[0]?.verdict.reason ?? "partial";
+  return { class: "out", reason: firstReason, detail: details };
+}
+
 /**
  * Classify one mapping entry for a single `(entity, variant, field)`.
  * `srcRaw` is the source schema's property node (raw, pre-resolution).
@@ -394,6 +476,8 @@ export function classifyField(
   if (kind === "unmappable" || kind === "TODO") {
     return { class: "out", reason: "no-destination", detail: `kind ${kind}` };
   }
+
+  if (kind === "union-map") return unionMapTotality(entry, srcRaw, ctx);
 
   const pointers = targetPointers(entry.target);
   if (pointers.length === 0) {

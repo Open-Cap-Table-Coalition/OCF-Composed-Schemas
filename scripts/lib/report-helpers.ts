@@ -17,6 +17,26 @@ export function targetString(target: unknown): string {
   return JSON.stringify(target);
 }
 
+/** Render all Carta targets named by a field entry, including union-map cases. */
+export function entryTargetString(entry: unknown): string {
+  if (!isPlainObject(entry)) return "—";
+  if (entry.kind !== "union-map" || !Array.isArray(entry.cases)) {
+    return targetString(entry.target);
+  }
+  const cases = entry.cases.filter(isPlainObject).map((rawCase) => {
+    const source =
+      typeof rawCase.source_schema === "string"
+        ? rawCase.source_schema
+            .split("/")
+            .pop()
+            ?.replace(/\.schema\.json$/, "")
+        : "?";
+    const mapping = isPlainObject(rawCase.mapping) ? rawCase.mapping : {};
+    return `${source ?? "?"} → ${targetString(mapping.target)}`;
+  });
+  return cases.join("; ") || "—";
+}
+
 /** `"<entity> <variant> <field>"` → the Carta target the mapping names, as a display string. */
 export function buildTargetIndex(objects: GreenObject[]): Map<string, string> {
   const targetOf = new Map<string, string>();
@@ -24,7 +44,7 @@ export function buildTargetIndex(objects: GreenObject[]): Map<string, string> {
     for (const [variant, fields] of o.variants) {
       for (const [field, entry] of Object.entries(fields)) {
         if (isPlainObject(entry)) {
-          targetOf.set(`${o.entity} ${variant} ${field}`, targetString(entry.target));
+          targetOf.set(`${o.entity} ${variant} ${field}`, entryTargetString(entry));
         }
       }
     }

@@ -149,6 +149,7 @@ export const KIND_VOCABULARY = [
   "split",
   "combine",
   "enum-remap",
+  "union-map",
   "computed",
   "unmappable",
   "TODO",
@@ -349,6 +350,10 @@ function validateFieldMap(
       err(name, `kind "${String(kind)}" is not one of ${KIND_VOCABULARY.join(" | ")}`);
       continue;
     }
+    if (kind === "union-map") {
+      validateUnionMapEntry(entry, name, properties[name], input, strict, opts, err);
+      continue;
+    }
     validateEntryShape(entry, name, kind, strict, opts, err);
     validateTransformSemantics(
       entry,
@@ -380,6 +385,25 @@ function resolveSourceNode(node: unknown, registry: Registry, depth = 0): unknow
     if (real.length === 1) return resolveSourceNode(real[0], registry, depth + 1);
   }
   return node;
+}
+
+export interface SourceUnionBranch {
+  sourceSchema: string;
+  node: unknown;
+}
+
+/** Resolve the named alternatives of a source `oneOf`/`anyOf` union. */
+export function sourceUnionBranches(raw: unknown, registry: Registry): SourceUnionBranch[] {
+  const node = resolveSourceNode(raw, registry);
+  if (!isPlainObject(node)) return [];
+  const union = node.oneOf ?? node.anyOf;
+  if (!Array.isArray(union)) return [];
+  const out: SourceUnionBranch[] = [];
+  for (const branch of union) {
+    if (!isPlainObject(branch) || typeof branch.$ref !== "string") continue;
+    out.push({ sourceSchema: branch.$ref, node: resolveSourceNode(branch, registry) });
+  }
+  return out;
 }
 
 function schemaProperties(node: unknown): Record<string, unknown> | null {
@@ -463,6 +487,98 @@ function validateTransformSemantics(
   ) {
     if (typeof policy !== "string" || policy.trim() === "") {
       err(name, `array-to-scalar ${kind} requires policy: naming the deterministic reduction`);
+    }
+  }
+}
+
+/** Validate a branch-aware mapping for a source `oneOf`/`anyOf` union. */
+function validateUnionMapEntry(
+  entry: Record<string, unknown>,
+  name: string,
+  sourceRaw: unknown,
+  input: ValidateInput,
+  strict: boolean,
+  opts: ValidateOptions,
+  err: ErrFn
+): void {
+  const cases = entry.cases;
+  if (!Array.isArray(cases) || cases.length === 0) {
+    err(name, "kind union-map requires a non-empty cases: list");
+    return;
+  }
+
+  const sourceBranches = sourceUnionBranches(sourceRaw, input.registry);
+  if (sourceBranches.length < 2) {
+    err(name, "kind union-map requires a source oneOf/anyOf with at least two named $ref branches");
+  }
+  const sourceByRef = new Map(sourceBranches.map((branch) => [branch.sourceSchema, branch]));
+  const seen = new Set<string>();
+
+  for (let index = 0; index < cases.length; index++) {
+    const rawCase = cases[index];
+    const caseName = `${name}.cases[${index}]`;
+    if (!isPlainObject(rawCase)) {
+      err(caseName, "must be a map with source_schema: and mapping:");
+      continue;
+    }
+    const sourceSchema = rawCase.source_schema;
+    if (typeof sourceSchema !== "string") {
+      err(caseName, "source_schema: must be the exact $ref of a source union branch");
+    } else {
+      if (seen.has(sourceSchema)) err(caseName, `source_schema "${sourceSchema}" is duplicated`);
+      seen.add(sourceSchema);
+      if (!sourceByRef.has(sourceSchema)) {
+        err(caseName, `source_schema "${sourceSchema}" is not a branch of this source union`);
+      }
+    }
+
+    const mapping = rawCase.mapping;
+    if (!isPlainObject(mapping)) {
+      err(caseName, "mapping: must be a map with kind: and target:");
+      continue;
+    }
+    const kind = mapping.kind;
+    if (typeof kind !== "string" || !(KIND_VOCABULARY as readonly string[]).includes(kind)) {
+      err(
+        `${caseName}.mapping`,
+        `kind "${String(kind)}" is not one of ${KIND_VOCABULARY.join(" | ")}`
+      );
+      continue;
+    }
+    if (kind === "union-map") {
+      err(`${caseName}.mapping`, "nested union-map cases are not supported");
+      continue;
+    }
+    const branch = typeof sourceSchema === "string" ? sourceByRef.get(sourceSchema) : undefined;
+    const branchSource = branch?.node ?? {};
+    validateEntryShape(mapping, `${caseName}.mapping`, kind, strict, opts, err);
+    validateTransformSemantics(
+      mapping,
+      `${caseName}.mapping`,
+      kind,
+      branchSource,
+      input.registry,
+      input.targetBundle,
+      err
+    );
+    const sourceEnumValues = detectEnumValues(branchSource, input.registry);
+    validateValuesBlock(mapping, `${caseName}.mapping`, kind, strict, sourceEnumValues, err);
+    if (input.targetBundle !== null) {
+      validateEntryTargets(
+        mapping,
+        `${caseName}.mapping`,
+        kind,
+        strict,
+        sourceEnumValues,
+        input.targetBundle,
+        err
+      );
+    }
+  }
+
+  for (const branch of sourceBranches) {
+    if (!seen.has(branch.sourceSchema)) {
+      err(name, `cases is missing source union branch "${branch.sourceSchema}"`);
     }
   }
 }
@@ -1046,6 +1162,9 @@ function validateEntryShape(
     case "enum-remap":
     case "computed":
       if (typeof target !== "string") err(name, `kind ${kind} requires a string target`);
+      break;
+    case "union-map":
+      if (!Array.isArray(entry.cases)) err(name, "kind union-map requires cases: to be a list");
       break;
     case "split":
       if (
