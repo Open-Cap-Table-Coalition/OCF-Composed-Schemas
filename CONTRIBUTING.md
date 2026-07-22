@@ -149,6 +149,19 @@ fields:
 
 The name `rename` describes the shape of the relationship, not a promise that the two schemas have identical business semantics. For example, a numeric OCF type may land in a wider Carta decimal type. Document any narrowing or context requirement in a `note:` or the prose below the YAML block.
 
+### `wrap`: a bare scalar into a value wrapper
+
+Use `wrap` when a bare string scalar is written to a target object with exactly one string property named `value`:
+
+```yaml
+fields:
+  percentage:
+    kind: wrap
+    target: "#/$defs/VestingPeriod/properties/percentage"
+```
+
+The validator checks both source and target shapes, and Core treats a valid `wrap` as deterministic and value-preserving. Keep any source-specific lexical normalization in the source type's mapping.
+
 ### 3. `union-map`: map the alternatives of a source union
 
 Use `union-map` when one source property is a `oneOf`/`anyOf` and its alternatives have different

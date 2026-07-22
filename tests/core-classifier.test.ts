@@ -90,9 +90,9 @@ describe("classifyField — rename shape cascade", () => {
       classifyField({ kind: "rename", target: "#/$defs/Scalar" }, { $ref: "ocf://Numeric" }, ctx())
     ).toMatchObject({ class: "core" });
   });
-  it("bare scalar → one-property Decimal wrapper lands as core/widening", () => {
+  it("wrap bare scalar → one-property Decimal wrapper as core/widening", () => {
     expect(
-      classifyField({ kind: "rename", target: "#/$defs/Dec" }, { $ref: "ocf://Numeric" }, ctx())
+      classifyField({ kind: "wrap", target: "#/$defs/Dec" }, { $ref: "ocf://Numeric" }, ctx())
     ).toMatchObject({ class: "core", loss: "widening" });
   });
   it("array(src) → scalar(tgt) is existence-loss (array→scalar)", () => {

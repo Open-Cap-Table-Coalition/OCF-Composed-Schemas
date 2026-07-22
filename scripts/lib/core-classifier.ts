@@ -3,6 +3,7 @@ import { Registry } from "./registry.js";
 import {
   derefNode,
   isPlainObject,
+  isValueWrapperNode,
   resolveJsonPointer,
   sourceUnionBranches,
   targetEnumValuesAt,
@@ -503,6 +504,15 @@ export function classifyField(
   if (kind === "select") {
     const policy = typeof entry.policy === "string" ? entry.policy : "unspecified";
     return { class: "out", reason: "existence-loss", detail: `select (${policy})` };
+  }
+
+  if (kind === "wrap") {
+    const source = sourceShape(srcRaw, ctx.registry);
+    const target = resolved[0]?.node;
+    if (!source.isScalar || !isValueWrapperNode(ctx.bundle, target)) {
+      return { class: "out", reason: "no-destination", detail: "invalid wrap shape" };
+    }
+    return { class: "core", loss: "widening", detail: "scalar→value wrapper" };
   }
 
   if (kind === "computed" || kind === "combine" || kind === "split") {

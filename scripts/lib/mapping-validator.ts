@@ -145,6 +145,7 @@ export function collectStepTargets(
 
 export const KIND_VOCABULARY = [
   "rename",
+  "wrap",
   "select",
   "split",
   "combine",
@@ -434,6 +435,17 @@ function targetPointerNodes(target: unknown, bundle: unknown): unknown[] {
   });
 }
 
+/** A `wrap` target is a single-value object whose value member is a string. */
+export function isValueWrapperNode(bundle: unknown, node: unknown): boolean {
+  const target = derefNode(bundle, node);
+  const props = schemaProperties(target);
+  if (!isPlainObject(target) || target.type !== "object" || !props) return false;
+  const keys = Object.keys(props);
+  if (keys.length !== 1 || keys[0] !== "value") return false;
+  const value = derefNode(bundle, props.value);
+  return isPlainObject(value) && value.type === "string";
+}
+
 /**
  * Keep the declarative DSL honest about whether an entry is executable. `rename` is a
  * lossless 1:1 copy; reductions must name their policy explicitly so a consumer cannot
@@ -459,6 +471,24 @@ function validateTransformSemantics(
       (typeof entry.source !== "string" || !entry.source.startsWith("/"))
     ) {
       err(name, "select source: must be a relative JSON pointer beginning with '/'");
+    }
+    return;
+  }
+
+  if (kind === "wrap") {
+    const source = resolveSourceNode(sourceRaw, registry);
+    const targets = targetPointerNodes(entry.target, bundle);
+    if (targets.length === 0) return;
+    if (
+      !isPlainObject(source) ||
+      source.type !== "string" ||
+      targets.length !== 1 ||
+      !isValueWrapperNode(bundle, targets[0])
+    ) {
+      err(
+        name,
+        "kind wrap requires a bare string source and a target object with exactly one string property named value"
+      );
     }
     return;
   }
@@ -840,7 +870,7 @@ function unmappableProjection(): Record<string, unknown> {
 }
 
 /** Kinds whose `target:` is a single pointer and so may diverge per variant. */
-const PER_VARIANT_TARGET_KINDS = new Set(["rename", "computed", "combine"]);
+const PER_VARIANT_TARGET_KINDS = new Set(["rename", "wrap", "computed", "combine"]);
 
 /**
  * A per-variant/per-step target value: null (= unmappable here) or a "#/..."
@@ -1050,7 +1080,7 @@ function validateSharedTargetMaps(
       err(
         field,
         `a per-variant target map is not supported for kind ${kind} ` +
-          "(only rename/computed/combine; route enum values in variants.fields)"
+          "(only rename/wrap/computed/combine; route enum values in variants.fields)"
       );
       for (const label of variantLabels) projected[label]![field] = unmappableProjection();
       continue;

@@ -54,7 +54,7 @@ Source: [`Vesting.schema.json`](./Vesting.schema.json)
 ## Mapping
 
 ```yaml
-# kind vocabulary: rename | select | split | combine | enum-remap | computed | unmappable | TODO
+# kind vocabulary: rename | wrap | select | split | combine | enum-remap | computed | unmappable | TODO
 status: complete
 
 fields:
@@ -62,7 +62,7 @@ fields:
     kind: rename
     target: "#/$defs/OptionGrantVestingEvent/properties/vestDate"
   amount:
-    kind: rename
+    kind: wrap
     target: "#/$defs/OptionGrantVestingEvent/properties/quantity"
 ```
 
@@ -77,4 +77,4 @@ fields:
   | `StockIssuance` | `RestrictedStockAwardVestingEvent` |
   | `WarrantIssuance` | unmappable — Carta has no warrant vesting event |
 
-  Field names (`vestDate`, `quantity`) are identical across the three Carta event types, so the per-field mapping above holds regardless. The `target:` paths above reference `OptionGrantVestingEvent` as a representative; the actual selection happens in the containing OCF object's mapping. `amount` is a lossless scalar-wrapper `rename`; as with the other OCF `Numeric` mappings, the importer must apply the lexical canonicalization documented in [`Numeric.mapping.md`](./Numeric.mapping.md) before writing Carta `Decimal.value`.
+  Field names (`vestDate`, `quantity`) are identical across the three Carta event types, so the per-field mapping above holds regardless. The `target:` paths above reference `OptionGrantVestingEvent` as a representative; the actual selection happens in the containing OCF object's mapping. `amount` uses `kind: wrap`; Numeric lexical canonicalization is defined by [`Numeric.mapping.md`](./Numeric.mapping.md).

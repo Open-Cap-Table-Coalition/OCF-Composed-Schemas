@@ -66,7 +66,7 @@ describe("renderMappingBlock", () => {
     expect(out).toBe(
       [
         "```yaml",
-        "# kind vocabulary: rename | select | split | combine | enum-remap | union-map | computed | unmappable | TODO",
+        "# kind vocabulary: rename | wrap | select | split | combine | enum-remap | union-map | computed | unmappable | TODO",
         "# unmappable reason vocabulary: no-equivalent | excluded-from-snapshot | out-of-scope | ocf-internal",
         "status: draft",
         "",

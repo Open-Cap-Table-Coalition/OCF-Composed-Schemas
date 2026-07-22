@@ -22,7 +22,7 @@ derived coverage stays reviewable, and enum remaps are checked value-by-value.
 
 **Structural (every file):** required frontmatter keys; `status` ∈ `draft | partial | complete |
 reviewed` and identical in frontmatter and mapping block; every `fields:` key is a real property
-of the source schema; `kind` ∈ `rename | select | split | combine | enum-remap | union-map | computed | unmappable |
+of the source schema; `kind` ∈ `rename | wrap | select | split | combine | enum-remap | union-map | computed | unmappable |
 TODO` with the matching target shape (string; array of ≥2 strings for `split`; a `cases:` list for
 `union-map`; `null` for
 `unmappable`; literal `TODO` for `TODO`). Coverage is derived from the source schema and effective
@@ -38,6 +38,19 @@ this variant because it belongs to another. The validator confirms each named va
 *claims* that value (a real, deterministic route), and `--verbose` renders it as
 `VALUE → routed to "Variant" variant: <that variant's Carta primary_targets>` instead of
 `VALUE ✗ dropped` — so it is clear which Carta objects the value actually lands in.
+
+### `wrap`: bare scalar to a value wrapper
+
+Use `wrap` when a bare string scalar is written to the `value` member of a target object such as Carta's `Decimal`:
+
+```yaml
+fields:
+  percentage:
+    kind: wrap
+    target: "#/$defs/VestingPeriod/properties/percentage"
+```
+
+The validator requires a bare string source and a target object with exactly one string property named `value`. `wrap` is deterministic and lossless at the numeric-value level; lexical normalization remains defined by the source type's mapping.
 
 **Semantic (when `target_standard` ≠ `TBD`):** every string target must be a `#/...` JSON pointer
 that resolves in the target bundle (`target_standard` → bundle file via `TARGET_BUNDLES` in the

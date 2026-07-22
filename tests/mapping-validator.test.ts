@@ -18,6 +18,7 @@ const BUNDLE = {
       },
     },
     Color: { type: "string", enum: ["red", "blue"] },
+    Wrap: { type: "object", properties: { value: { type: "string" } } },
     Excluded: true,
     Loop: { $ref: "#/$defs/Loop" },
   },
@@ -260,9 +261,18 @@ describe("validateMapping — entry shapes", () => {
     expect(errs.some((m) => m.includes('kind "renamed"'))).toBe(true);
   });
 
-  it("requires string targets for rename/combine/enum-remap/computed", () => {
+  it("requires string targets for rename/wrap/combine/enum-remap/computed", () => {
     const errs = messages(withField({ kind: "rename", target: null }));
     expect(errs.some((m) => m.includes("string target"))).toBe(true);
+  });
+
+  it("accepts wrap only for a bare string to a value wrapper", () => {
+    expect(messages(withField({ kind: "wrap", target: "#/$defs/Wrap" }))).toEqual([]);
+    expect(
+      messages(withField({ kind: "wrap", target: "#/$defs/Thing/properties/name" })).some((m) =>
+        m.includes("kind wrap requires a bare string source")
+      )
+    ).toBe(true);
   });
 
   it("requires a policy on select", () => {

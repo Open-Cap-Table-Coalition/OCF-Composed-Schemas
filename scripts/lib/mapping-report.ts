@@ -62,6 +62,7 @@ function renderItem(
   let item: Item;
   switch (kind) {
     case "rename":
+    case "wrap":
     case "select":
     case "computed":
     case "combine":

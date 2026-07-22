@@ -48,7 +48,7 @@ function yamlKey(s: string): string {
 }
 
 const KIND_VOCAB =
-  "# kind vocabulary: rename | select | split | combine | enum-remap | union-map | computed | unmappable | TODO";
+  "# kind vocabulary: rename | wrap | select | split | combine | enum-remap | union-map | computed | unmappable | TODO";
 const REASON_VOCAB =
   "# unmappable reason vocabulary: no-equivalent | excluded-from-snapshot | out-of-scope | ocf-internal";
 
