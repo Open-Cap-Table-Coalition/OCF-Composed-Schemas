@@ -106,6 +106,7 @@ canonical operator reference, including cardinality and examples, lives in
 | `construct` | scalar shape construction | 1 scalar → 1 object slot |
 | `select` | value reduction | 1 aggregate → 1 |
 | `split` | field fan-out | 1 → N |
+| `sequential_transform` | ordered field-level composition | 1 aggregate → N target slots |
 | `combine` | field fan-in | N → 1 |
 | `enum-remap` / `union-map` | alternative/value routing | 1 → 1 declared outcome |
 | `computed` | derivation | N → 1 |

@@ -45,8 +45,9 @@ ordinary field operators, including `construct` or `combine`, for the fields it 
 
 **Structural (every file):** required frontmatter keys; `status` ∈ `draft | partial | complete |
 reviewed` and identical in frontmatter and mapping block; every `fields:` key is a real property
-of the source schema; `kind` ∈ `rename | construct | select | split | combine | enum-remap | union-map | computed | unmappable |
-TODO` with the matching target shape (string; array of ≥2 strings for `split`; a `cases:` list for
+of the source schema; `kind` ∈ `rename | construct | select | split | sequential_transform | combine | enum-remap | union-map | computed | unmappable |
+TODO` with the matching target shape (string; `construct` requires its construction block; array of ≥2 strings for `split`; exactly two `steps`
+(`select` then `apply_mapping`) for `sequential_transform`; a `cases:` list for
 `union-map`; `null` for
 `unmappable`; literal `TODO` for `TODO`). Coverage is derived from the source schema and effective
 mapping entries; it is not a mapping key and is never hand-maintained. Any entry may carry an
@@ -54,7 +55,12 @@ optional free-text `note:` (a string), rendered under its field in `--verbose`. 
 a lossless, shape-compatible 1:1 copy. `select` reduces an array or structured value to one target
 and requires a non-empty deterministic `policy:`; an optional relative `source:` pointer identifies
 the member path selected from an object or array item. Array-to-scalar `split` entries likewise
-require a deterministic `policy:`. In a polymorphic mapping (below), an entry may also carry a
+require a deterministic `policy:`. Every policy name must be registered in
+[`scripts/lib/mapping-policies.ts`](../scripts/lib/mapping-policies.ts), and a policy may only be
+used with its registered host kind. `sequential_transform` is the narrow composition form for a
+field-level pipeline: its first step selects one intermediate value, and its second
+`apply_mapping` step names the reusable mapping file and its Carta target pointers. In a
+polymorphic mapping (below), an entry may also carry a
 **`routed_to:`** map
 (`{ discriminator value → variant label }`) — a *verified round-trip edge*: a value `null`-ed in
 this variant because it belongs to another. The validator confirms each named variant actually

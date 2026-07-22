@@ -373,6 +373,13 @@ function collectEntryTargets(
   collectPointers(entry.target, pointers);
   collectTargets(entry.values, into);
   collectPointers(entry.values, pointers);
+  if (entry.kind === "sequential_transform" && Array.isArray(entry.steps)) {
+    for (const step of entry.steps) {
+      if (!isPlainObject(step)) continue;
+      collectTargets(step.targets, into);
+      collectPointers(step.targets, pointers);
+    }
+  }
   if (entry.kind === "union-map" && Array.isArray(entry.cases)) {
     for (const rawCase of entry.cases) {
       if (isPlainObject(rawCase) && isPlainObject(rawCase.mapping)) {

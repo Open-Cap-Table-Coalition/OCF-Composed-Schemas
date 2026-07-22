@@ -140,7 +140,7 @@ Source: [`StockClass.schema.json`](./StockClass.schema.json)
 ## Mapping
 
 ```yaml
-# kind vocabulary: rename | select | split | combine | enum-remap | union-map | computed | unmappable | TODO
+# kind vocabulary: rename | select | split | sequential_transform | combine | enum-remap | union-map | computed | unmappable | TODO
 status: complete
 
 fields:
@@ -207,11 +207,15 @@ fields:
     kind: computed
     target: "#/$defs/ShareClass/properties/seniority"
   conversion_rights:
-    kind: split
-    target:
-      - "#/$defs/ShareClassRightsAndPreferences/properties/conversionRatio"
-      - "#/$defs/ShareClassRightsAndPreferences/properties/conversionPrice"
-    policy: first_ratio_conversion_right
+    kind: sequential_transform
+    steps:
+      - kind: select
+        policy: first_ratio_conversion_right
+      - kind: apply_mapping
+        mapping: types/conversion_rights/StockClassConversionRight.mapping.md
+        targets:
+          - "#/$defs/ShareClassRightsAndPreferences/properties/conversionRatio"
+          - "#/$defs/ShareClassRightsAndPreferences/properties/conversionPrice"
   liquidation_preference_multiple:
     kind: rename
     target: "#/$defs/ShareClassRightsAndPreferences/properties/multiplier"
@@ -230,7 +234,7 @@ fields:
 - `price_per_share` → `preferredShareClassDetails.rightsAndPreferences.originalIssuePrice`: only meaningful for preferred classes. Common stock classes typically don't carry this in OCF, and there is no Carta target on the `ShareClass` for a common's original price.
 - `liquidation_preference_multiple` → `preferredShareClassDetails.rightsAndPreferences.multiplier`: preferred-only. Carta's field is `Decimal` (the OCF field is `Numeric`); both are numeric so this is a straightforward rename.
 - `participation_cap_multiple` → `preferredShareClassDetails.rightsAndPreferences.participationCap`: preferred-only. Same numeric correspondence as `multiplier`. Note that Carta also carries a separate `participating` boolean (whether the preferred is participating at all) which OCF does not represent explicitly; in OCF, "is participating" is implied by `participation_cap_multiple` being set.
-- `conversion_rights` → `rightsAndPreferences.conversionRatio` + `rightsAndPreferences.conversionPrice` (kind `split`, policy `first_ratio_conversion_right`): OCF carries an *array* of structured conversion rights, while Carta has only one ratio and one price. The explicit policy selects the first applicable ratio right; the ratio quotient is then reduced to Carta's Decimal and the monetary price maps to Money. Additional rights and unsupported mechanism details are dropped.
+- `conversion_rights` → `rightsAndPreferences.conversionRatio` + `rightsAndPreferences.conversionPrice` (kind `sequential_transform`): first select the registered `first_ratio_conversion_right` from OCF's array, then apply [`StockClassConversionRight.mapping.md`](../types/conversion_rights/StockClassConversionRight.mapping.md), which splits the selected right's ratio and conversion price into Carta's two leaves. Carta has only one ratio and one price; additional rights and unsupported mechanism details are dropped.
 - `board_approval_date` / `stockholder_approval_date`: unmappable. Carta has a `BoardApproval` *enum* (`BOARD_APPROVAL_APPROVED` / `BOARD_APPROVAL_NOT_APPROVED`) but no field that carries the approval *date*. There is no Carta concept for stockholder approval at all on `ShareClass`.
 - `votes_per_share`: unmappable. Carta's `ShareClass` has no voting-rights field. (Carta's `ShareClassType` description does mention "PREFERRED: with no voting rights" — implying a categorical assumption rather than a per-class field — but there is no slot to express anything other than the type-level default.)
 - `id`, `comments`, `object_type`: unmappable OCF object scaffolding (same pattern as `Document`, `Issuer`, `Stakeholder`).

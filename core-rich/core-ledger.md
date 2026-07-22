@@ -173,7 +173,7 @@ in the coverage report.
 | StockClass | — | par_value | core | direct |  |
 | StockClass | — | price_per_share | core | direct |  |
 | StockClass | — | seniority | out | heuristic | kind computed |
-| StockClass | — | conversion_rights | out | heuristic | kind split |
+| StockClass | — | conversion_rights | out | heuristic | sequential_transform (select first_ratio_conversion_right) |
 | StockClass | — | liquidation_preference_multiple | core | widening |  |
 | StockClass | — | participation_cap_multiple | core | widening |  |
 | StockLegendTemplate  | — | id | out | no-destination | kind unmappable |

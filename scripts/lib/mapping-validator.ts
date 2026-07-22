@@ -1,5 +1,6 @@
 import jsonpointer from "jsonpointer";
 import { detectEnumValues } from "./enum-detection.js";
+import { getTransformPolicy, PolicyHostKind, registeredPolicyNames } from "./mapping-policies.js";
 import { RawSchema, Registry } from "./registry.js";
 
 export interface PointerResult {
@@ -148,6 +149,7 @@ export const KIND_VOCABULARY = [
   "construct",
   "select",
   "split",
+  "sequential_transform",
   "combine",
   "enum-remap",
   "union-map",
@@ -221,6 +223,8 @@ export interface ValidateInput {
   registry: Registry;
   /** Parsed target bundle, or null when target_standard is TBD. */
   targetBundle: unknown | null;
+  /** Mapping paths available for sequential_transform apply_mapping steps. */
+  mappingFiles?: Set<string>;
 }
 
 export interface ValidateOptions {
@@ -365,6 +369,10 @@ function validateFieldMap(
       continue;
     }
     validateEntryShape(entry, name, kind, strict, opts, err);
+    if (kind === "sequential_transform") {
+      validateSequentialTransformEntry(entry, name, input, err);
+      continue;
+    }
     validateTransformSemantics(
       entry,
       name,
@@ -488,9 +496,20 @@ function validateTransformSemantics(
   err: ErrFn
 ): void {
   const policy = entry.policy;
+  const policyHost: PolicyHostKind | null =
+    kind === "select" || kind === "split" || kind === "enum-remap" ? kind : null;
+
+  if (policyHost && policy !== undefined) {
+    if (typeof policy !== "string" || policy.trim() === "") {
+      err(name, `kind ${kind} policy must be a non-empty registered policy`);
+    } else {
+      validateRegisteredPolicy(policy, policyHost, name, err);
+    }
+  }
+
   if (kind === "select") {
     if (typeof entry.target !== "string") return;
-    if (typeof policy !== "string" || policy.trim() === "") {
+    if (policy === undefined) {
       err(name, "kind select requires a non-empty policy: naming the deterministic reduction");
     }
     if (
@@ -589,9 +608,97 @@ function validateTransformSemantics(
     sourceArray &&
     targetArrays.some((isArray) => !isArray)
   ) {
-    if (typeof policy !== "string" || policy.trim() === "") {
+    if (policy === undefined) {
       err(name, `array-to-scalar ${kind} requires policy: naming the deterministic reduction`);
     }
+  }
+}
+
+function validateRegisteredPolicy(
+  policy: string,
+  hostKind: PolicyHostKind,
+  name: string,
+  err: ErrFn
+): void {
+  const definition = getTransformPolicy(policy);
+  if (!definition) {
+    err(
+      name,
+      `policy "${policy}" is not registered (known: ${registeredPolicyNames().join(", ")})`
+    );
+    return;
+  }
+  if (!definition.hosts.includes(hostKind)) {
+    err(name, `policy "${policy}" is not registered for kind ${hostKind}`);
+  }
+}
+
+/** Validate the deliberately narrow first sequential-transform composition. */
+function validateSequentialTransformEntry(
+  entry: Record<string, unknown>,
+  name: string,
+  input: ValidateInput,
+  err: ErrFn
+): void {
+  const steps = entry.steps;
+  if (!Array.isArray(steps) || steps.length !== 2) return;
+
+  const selectStep = steps[0];
+  if (!isPlainObject(selectStep)) return;
+  if (selectStep.kind !== "select") return;
+
+  if (selectStep.target !== undefined) {
+    err(`${name}.steps[0]`, "sequential_transform select step must not declare a target");
+  }
+
+  const policy = selectStep.policy;
+  if (typeof policy !== "string" || policy.trim() === "") {
+    err(name, "sequential_transform select step requires a non-empty registered policy");
+  } else {
+    validateRegisteredPolicy(policy, "select", `${name}.steps[0]`, err);
+  }
+  if (
+    selectStep.source !== undefined &&
+    (typeof selectStep.source !== "string" || !selectStep.source.startsWith("/"))
+  ) {
+    err(`${name}.steps[0]`, "select source: must be a relative JSON pointer beginning with '/'");
+  }
+
+  const applyStep = steps[1];
+  if (!isPlainObject(applyStep) || applyStep.kind !== "apply_mapping") return;
+
+  const mapping = applyStep.mapping;
+  if (
+    typeof mapping !== "string" ||
+    !mapping.endsWith(".mapping.md") ||
+    (!mapping.startsWith("objects/") && !mapping.startsWith("types/")) ||
+    mapping.includes("..")
+  ) {
+    err(
+      `${name}.steps[1]`,
+      "apply_mapping mapping: must be a repo-relative objects/ or types/ .mapping.md path"
+    );
+  } else if (input.mappingFiles && !input.mappingFiles.has(mapping)) {
+    err(`${name}.steps[1]`, `apply_mapping mapping "${mapping}" is not registered`);
+  }
+
+  const targets = applyStep.targets;
+  if (
+    !Array.isArray(targets) ||
+    targets.length === 0 ||
+    !targets.every((t) => typeof t === "string")
+  ) {
+    err(`${name}.steps[1]`, "apply_mapping targets: must be a non-empty list of strings");
+  } else if (input.targetBundle !== null) {
+    validateEntryTargets(
+      { target: targets },
+      `${name}.steps[1]`,
+      "split",
+      false,
+      null,
+      input.targetBundle,
+      err
+    );
   }
 }
 
@@ -1266,6 +1373,22 @@ function validateEntryShape(
     case "enum-remap":
     case "computed":
       if (typeof target !== "string") err(name, `kind ${kind} requires a string target`);
+      break;
+    case "sequential_transform":
+      if (target !== undefined) {
+        err(name, "kind sequential_transform must not declare a top-level target");
+      }
+      if (!Array.isArray(entry.steps) || entry.steps.length !== 2) {
+        err(name, "kind sequential_transform requires exactly 2 steps: select then apply_mapping");
+      } else {
+        const [selectStep, applyStep] = entry.steps;
+        if (!isPlainObject(selectStep) || selectStep.kind !== "select") {
+          err(name, "kind sequential_transform step 1 must be kind select");
+        }
+        if (!isPlainObject(applyStep) || applyStep.kind !== "apply_mapping") {
+          err(name, "kind sequential_transform step 2 must be kind apply_mapping");
+        }
+      }
       break;
     case "union-map":
       if (!Array.isArray(entry.cases)) err(name, "kind union-map requires cases: to be a list");

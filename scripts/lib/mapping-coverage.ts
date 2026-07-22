@@ -19,6 +19,7 @@ const KINDS = new Set([
   "construct",
   "select",
   "split",
+  "sequential_transform",
   "combine",
   "enum-remap",
   "union-map",

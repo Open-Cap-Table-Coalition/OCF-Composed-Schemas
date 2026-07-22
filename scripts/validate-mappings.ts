@@ -52,6 +52,7 @@ async function main(argv: Args): Promise<number> {
   }
 
   const all = await collectMappingFiles(repoRoot);
+  const mappingFiles = new Set(all);
   const files = argv.filter ? all.filter((rel) => minimatch(rel, argv.filter as string)) : all;
 
   const bundleCache = new Map<string, unknown>();
@@ -138,6 +139,7 @@ async function main(argv: Args): Promise<number> {
           sourceSchema,
           registry,
           targetBundle,
+          mappingFiles,
         },
         { requireUnmappableReason: true }
       )

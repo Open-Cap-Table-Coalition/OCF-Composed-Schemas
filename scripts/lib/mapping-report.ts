@@ -25,6 +25,29 @@ function asStringOr(value: unknown, fallback: string): string {
   return typeof value === "string" ? value : fallback;
 }
 
+function renderSequentialStep(step: unknown, index: number): Tree {
+  if (!isPlainObject(step)) {
+    return { label: `step ${index + 1} ⚠ malformed`, children: [] };
+  }
+
+  if (step.kind === "select") {
+    const policy = typeof step.policy === "string" ? step.policy : "?";
+    const children =
+      typeof step.source === "string" ? [{ label: `source: ${step.source}`, children: [] }] : [];
+    return { label: `select · policy: ${policy}`, children };
+  }
+
+  if (step.kind === "apply_mapping") {
+    const mapping = asStringOr(step.mapping, "?");
+    const targets = Array.isArray(step.targets)
+      ? step.targets.map((target) => ({ label: asStringOr(target, "?"), children: [] }))
+      : [];
+    return { label: `apply_mapping → ${mapping}`, children: targets };
+  }
+
+  return { label: `step ${index + 1} ⚠ kind: ${String(step.kind)}`, children: [] };
+}
+
 function sourceSchemaLabel(value: unknown): string {
   if (typeof value !== "string") return "?";
   return (
@@ -134,10 +157,25 @@ function renderItem(
     }
 
     case "split":
-      item = !Array.isArray(target)
-        ? { label: `${name} → ? (split)`, children: [] }
-        : { label: `${name} (split)`, children: target.map((el) => asStringOr(el, "?")) };
+      {
+        const policy = typeof entry.policy === "string" ? ` · policy: ${entry.policy}` : "";
+        item = !Array.isArray(target)
+          ? { label: `${name} → ? (split${policy})`, children: [] }
+          : {
+              label: `${name} (split${policy})`,
+              children: target.map((el) => asStringOr(el, "?")),
+            };
+      }
       break;
+
+    case "sequential_transform": {
+      const steps = Array.isArray(entry.steps) ? entry.steps : [];
+      item = {
+        label: `${name} (sequential_transform)`,
+        children: steps.map((step, index) => renderSequentialStep(step, index)),
+      };
+      break;
+    }
 
     case "enum-remap": {
       const label = `${name} → ${asStringOr(target, "?")} (enum-remap)`;

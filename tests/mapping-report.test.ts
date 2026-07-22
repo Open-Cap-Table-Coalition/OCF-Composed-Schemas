@@ -310,6 +310,40 @@ describe("renderMappingReport", () => {
     );
   });
 
+  it("renders sequential transform steps and their targets", () => {
+    const out = renderMappingReport({
+      file: "objects/StockClass.mapping.md",
+      frontmatter: { target_standard: "Carta" },
+      mapping: {
+        status: "complete",
+        coverage: "1/1",
+        fields: {
+          conversion_rights: {
+            kind: "sequential_transform",
+            steps: [
+              { kind: "select", policy: "first_ratio_conversion_right" },
+              {
+                kind: "apply_mapping",
+                mapping: "types/conversion_rights/StockClassConversionRight.mapping.md",
+                targets: ["#/$defs/Ratio", "#/$defs/Price"],
+              },
+            ],
+          },
+        },
+      },
+    });
+    expect(out).toBe(
+      [
+        "objects/StockClass.mapping.md  complete 1/1 → Carta",
+        "└── conversion_rights (sequential_transform)",
+        "    ├── select · policy: first_ratio_conversion_right",
+        "    └── apply_mapping → types/conversion_rights/StockClassConversionRight.mapping.md",
+        "        ├── #/$defs/Ratio",
+        "        └── #/$defs/Price",
+      ].join("\n")
+    );
+  });
+
   it("renders an unknown kind with a warning line", () => {
     const out = renderMappingReport({
       file: "f.md",
