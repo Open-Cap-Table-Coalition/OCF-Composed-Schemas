@@ -22,7 +22,7 @@ derived coverage stays reviewable, and enum remaps are checked value-by-value.
 
 **Structural (every file):** required frontmatter keys; `status` ∈ `draft | partial | complete |
 reviewed` and identical in frontmatter and mapping block; every `fields:` key is a real property
-of the source schema; `kind` ∈ `rename | wrap | select | split | combine | enum-remap | union-map | computed | unmappable |
+of the source schema; `kind` ∈ `rename | construct | select | split | combine | enum-remap | union-map | computed | unmappable |
 TODO` with the matching target shape (string; array of ≥2 strings for `split`; a `cases:` list for
 `union-map`; `null` for
 `unmappable`; literal `TODO` for `TODO`). Coverage is derived from the source schema and effective
@@ -39,16 +39,16 @@ this variant because it belongs to another. The validator confirms each named va
 `VALUE → routed to "Variant" variant: <that variant's Carta primary_targets>` instead of
 `VALUE ✗ dropped` — so it is clear which Carta objects the value actually lands in.
 
-### `wrap`: bare scalar to an explicitly declared wrapper member
+### `construct`: construct a target object from a scalar
 
-Use `wrap` when a bare string scalar is written to one explicitly named member of a target object. The mapping must declare both the member and the lexical rule; neither is inferred from the target schema:
+Use `construct` when a bare string scalar is used to construct a target object with one explicitly named member. The mapping must declare both the member and the lexical rule; neither is inferred from the target schema:
 
 ```yaml
 fields:
   percentage:
-    kind: wrap
+    kind: construct
     target: "#/$defs/VestingPeriod/properties/percentage"
-    wrap:
+    construct:
       property: value
       normalization:
         integer_leading_zeros: strip
@@ -56,8 +56,8 @@ fields:
 
 The grammar is closed:
 
-- `wrap.property` is a non-empty string and must be the sole string property in the target object.
-- `wrap.normalization` contains exactly `integer_leading_zeros`, whose value is `preserve` or `strip`.
+- `construct.property` is a non-empty string and must be the sole string property in the target object.
+- `construct.normalization` contains exactly `integer_leading_zeros`, whose value is `preserve` or `strip`.
 - `preserve` copies the scalar text unchanged. `strip` removes redundant leading zeroes from the integer part, retains the sign, and retains at least one integer zero (`0007` → `7`, `-000.50` → `-0.50`, `000` → `0`).
 
 The validator rejects a missing member, an unknown normalization key, or an unsupported normalization value. For OCF `Numeric` → Carta `Decimal`, use `strip` because Carta's `Decimal.value` rejects multi-digit integer leading zeroes.

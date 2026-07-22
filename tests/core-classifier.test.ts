@@ -90,13 +90,13 @@ describe("classifyField — rename shape cascade", () => {
       classifyField({ kind: "rename", target: "#/$defs/Scalar" }, { $ref: "ocf://Numeric" }, ctx())
     ).toMatchObject({ class: "core" });
   });
-  it("wrap bare scalar → one-property Decimal wrapper as core/widening", () => {
+  it("construct bare scalar → one-property Decimal object as core/widening", () => {
     expect(
       classifyField(
         {
-          kind: "wrap",
+          kind: "construct",
           target: "#/$defs/Dec",
-          wrap: {
+          construct: {
             property: "value",
             normalization: { integer_leading_zeros: "strip" },
           },
@@ -106,9 +106,9 @@ describe("classifyField — rename shape cascade", () => {
       )
     ).toMatchObject({ class: "core", loss: "widening" });
   });
-  it("rejects a wrap without its explicit member and normalization contract", () => {
+  it("rejects a construct without its explicit member and normalization contract", () => {
     expect(
-      classifyField({ kind: "wrap", target: "#/$defs/Dec" }, { $ref: "ocf://Numeric" }, ctx())
+      classifyField({ kind: "construct", target: "#/$defs/Dec" }, { $ref: "ocf://Numeric" }, ctx())
     ).toMatchObject({ class: "out", reason: "no-destination" });
   });
   it("array(src) → scalar(tgt) is existence-loss (array→scalar)", () => {

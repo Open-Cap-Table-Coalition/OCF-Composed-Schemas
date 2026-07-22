@@ -261,52 +261,57 @@ describe("validateMapping — entry shapes", () => {
     expect(errs.some((m) => m.includes('kind "renamed"'))).toBe(true);
   });
 
-  it("requires string targets for rename/wrap/combine/enum-remap/computed", () => {
+  it("requires string targets for rename/construct/combine/enum-remap/computed", () => {
     const errs = messages(withField({ kind: "rename", target: null }));
     expect(errs.some((m) => m.includes("string target"))).toBe(true);
   });
 
-  it("accepts wrap only with an explicit member and normalization contract", () => {
-    const wrap = {
+  it("accepts construct only with an explicit member and normalization contract", () => {
+    const construct = {
       property: "value",
       normalization: { integer_leading_zeros: "preserve" },
     };
-    expect(messages(withField({ kind: "wrap", target: "#/$defs/Wrap", wrap }))).toEqual([]);
+    expect(messages(withField({ kind: "construct", target: "#/$defs/Wrap", construct }))).toEqual(
+      []
+    );
     expect(
-      messages(withField({ kind: "wrap", target: "#/$defs/Wrap" })).some((m) =>
-        m.includes("kind wrap requires wrap:")
+      messages(withField({ kind: "construct", target: "#/$defs/Wrap" })).some((m) =>
+        m.includes("kind construct requires construct:")
       )
     ).toBe(true);
     expect(
       messages(
         withField({
-          kind: "wrap",
+          kind: "construct",
           target: "#/$defs/Wrap",
-          wrap: { property: "value", normalization: { integer_leading_zeros: "other" } },
+          construct: {
+            property: "value",
+            normalization: { integer_leading_zeros: "other" },
+          },
         })
       ).some((m) => m.includes("must be preserve or strip"))
     ).toBe(true);
     expect(
       messages(
         withField({
-          kind: "wrap",
+          kind: "construct",
           target: "#/$defs/Wrap",
-          wrap: {
+          construct: {
             property: "value",
             normalization: { integer_leading_zeros: "preserve" },
             extra: true,
           },
         })
-      ).some((m) => m.includes("allows only wrap.property and wrap.normalization"))
+      ).some((m) => m.includes("allows only construct.property and construct.normalization"))
     ).toBe(true);
     expect(
       messages(
         withField({
-          kind: "wrap",
+          kind: "construct",
           target: "#/$defs/Thing/properties/name",
-          wrap,
+          construct,
         })
-      ).some((m) => m.includes("kind wrap requires a bare string source"))
+      ).some((m) => m.includes("kind construct requires a bare string source"))
     ).toBe(true);
   });
 

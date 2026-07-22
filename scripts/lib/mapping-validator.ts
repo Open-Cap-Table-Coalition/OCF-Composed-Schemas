@@ -145,7 +145,7 @@ export function collectStepTargets(
 
 export const KIND_VOCABULARY = [
   "rename",
-  "wrap",
+  "construct",
   "select",
   "split",
   "combine",
@@ -156,12 +156,13 @@ export const KIND_VOCABULARY = [
   "TODO",
 ] as const;
 
-export const WRAP_INTEGER_LEADING_ZERO_POLICIES = ["preserve", "strip"] as const;
-export type WrapIntegerLeadingZeroPolicy = typeof WRAP_INTEGER_LEADING_ZERO_POLICIES[number];
+export const CONSTRUCT_INTEGER_LEADING_ZERO_POLICIES = ["preserve", "strip"] as const;
+export type ConstructIntegerLeadingZeroPolicy =
+  typeof CONSTRUCT_INTEGER_LEADING_ZERO_POLICIES[number];
 
-export interface WrapSpec {
+export interface ConstructSpec {
   property: string;
-  integerLeadingZeros: WrapIntegerLeadingZeroPolicy;
+  integerLeadingZeros: ConstructIntegerLeadingZeroPolicy;
 }
 
 export const STATUS_VOCABULARY = ["draft", "partial", "complete", "reviewed"] as const;
@@ -443,12 +444,8 @@ function targetPointerNodes(target: unknown, bundle: unknown): unknown[] {
   });
 }
 
-/** A `wrap` target is a single-property object whose declared member is a string. */
-export function isDeclaredStringWrapperNode(
-  bundle: unknown,
-  node: unknown,
-  property: string
-): boolean {
+/** A `construct` target is a single-property object whose declared member is a string. */
+export function isConstructTargetNode(bundle: unknown, node: unknown, property: string): boolean {
   const target = derefNode(bundle, node);
   const props = schemaProperties(target);
   if (!isPlainObject(target) || target.type !== "object" || !props) return false;
@@ -458,19 +455,22 @@ export function isDeclaredStringWrapperNode(
   return isPlainObject(value) && value.type === "string";
 }
 
-export function readWrapSpec(entry: Record<string, unknown>): WrapSpec | null {
-  const wrap = entry.wrap;
-  if (!isPlainObject(wrap) || typeof wrap.property !== "string") return null;
-  const normalization = wrap.normalization;
+export function readConstructSpec(entry: Record<string, unknown>): ConstructSpec | null {
+  const construct = entry.construct;
+  if (!isPlainObject(construct) || typeof construct.property !== "string") return null;
+  const normalization = construct.normalization;
   if (!isPlainObject(normalization)) return null;
   const policy = normalization.integer_leading_zeros;
   if (
     typeof policy !== "string" ||
-    !WRAP_INTEGER_LEADING_ZERO_POLICIES.includes(policy as WrapIntegerLeadingZeroPolicy)
+    !CONSTRUCT_INTEGER_LEADING_ZERO_POLICIES.includes(policy as ConstructIntegerLeadingZeroPolicy)
   ) {
     return null;
   }
-  return { property: wrap.property, integerLeadingZeros: policy as WrapIntegerLeadingZeroPolicy };
+  return {
+    property: construct.property,
+    integerLeadingZeros: policy as ConstructIntegerLeadingZeroPolicy,
+  };
 }
 
 /**
@@ -502,47 +502,53 @@ function validateTransformSemantics(
     return;
   }
 
-  if (kind === "wrap") {
-    const wrap = entry.wrap;
-    if (!isPlainObject(wrap)) {
+  if (kind === "construct") {
+    const construct = entry.construct;
+    if (!isPlainObject(construct)) {
       err(
         name,
-        "kind wrap requires wrap: { property: string, normalization: { integer_leading_zeros: preserve | strip } }"
+        "kind construct requires construct: { property: string, normalization: { integer_leading_zeros: preserve | strip } }"
       );
       return;
     }
-    const wrapKeys = Object.keys(wrap);
+    const constructKeys = Object.keys(construct);
     if (
-      wrapKeys.length !== 2 ||
-      !wrapKeys.includes("property") ||
-      !wrapKeys.includes("normalization")
+      constructKeys.length !== 2 ||
+      !constructKeys.includes("property") ||
+      !constructKeys.includes("normalization")
     ) {
-      err(name, "kind wrap allows only wrap.property and wrap.normalization");
+      err(name, "kind construct allows only construct.property and construct.normalization");
       return;
     }
-    if (typeof wrap.property !== "string" || wrap.property.trim() === "") {
-      err(name, "kind wrap requires wrap.property: a non-empty target property name");
+    if (typeof construct.property !== "string" || construct.property.trim() === "") {
+      err(name, "kind construct requires construct.property: a non-empty target property name");
       return;
     }
-    if (!isPlainObject(wrap.normalization)) {
-      err(name, "kind wrap requires wrap.normalization.integer_leading_zeros: preserve | strip");
+    if (!isPlainObject(construct.normalization)) {
+      err(
+        name,
+        "kind construct requires construct.normalization.integer_leading_zeros: preserve | strip"
+      );
       return;
     }
-    const normalizationKeys = Object.keys(wrap.normalization);
+    const normalizationKeys = Object.keys(construct.normalization);
     if (normalizationKeys.length !== 1 || normalizationKeys[0] !== "integer_leading_zeros") {
-      err(name, "kind wrap allows only wrap.normalization.integer_leading_zeros: preserve | strip");
+      err(
+        name,
+        "kind construct allows only construct.normalization.integer_leading_zeros: preserve | strip"
+      );
       return;
     }
     if (
-      typeof wrap.normalization.integer_leading_zeros !== "string" ||
-      !WRAP_INTEGER_LEADING_ZERO_POLICIES.includes(
-        wrap.normalization.integer_leading_zeros as WrapIntegerLeadingZeroPolicy
+      typeof construct.normalization.integer_leading_zeros !== "string" ||
+      !CONSTRUCT_INTEGER_LEADING_ZERO_POLICIES.includes(
+        construct.normalization.integer_leading_zeros as ConstructIntegerLeadingZeroPolicy
       )
     ) {
-      err(name, "wrap.normalization.integer_leading_zeros must be preserve or strip");
+      err(name, "construct.normalization.integer_leading_zeros must be preserve or strip");
       return;
     }
-    const spec = readWrapSpec(entry);
+    const spec = readConstructSpec(entry);
     if (!spec) return;
     const source = resolveSourceNode(sourceRaw, registry);
     const targets = targetPointerNodes(entry.target, bundle);
@@ -551,11 +557,11 @@ function validateTransformSemantics(
       !isPlainObject(source) ||
       source.type !== "string" ||
       targets.length !== 1 ||
-      !isDeclaredStringWrapperNode(bundle, targets[0], spec.property)
+      !isConstructTargetNode(bundle, targets[0], spec.property)
     ) {
       err(
         name,
-        `kind wrap requires a bare string source and a target object with exactly one string property named ${spec.property}`
+        `kind construct requires a bare string source and a target object with exactly one string property named ${spec.property}`
       );
     }
     return;
@@ -938,7 +944,7 @@ function unmappableProjection(): Record<string, unknown> {
 }
 
 /** Kinds whose `target:` is a single pointer and so may diverge per variant. */
-const PER_VARIANT_TARGET_KINDS = new Set(["rename", "wrap", "computed", "combine"]);
+const PER_VARIANT_TARGET_KINDS = new Set(["rename", "construct", "computed", "combine"]);
 
 /**
  * A per-variant/per-step target value: null (= unmappable here) or a "#/..."
@@ -1148,7 +1154,7 @@ function validateSharedTargetMaps(
       err(
         field,
         `a per-variant target map is not supported for kind ${kind} ` +
-          "(only rename/wrap/computed/combine; route enum values in variants.fields)"
+          "(only rename/construct/computed/combine; route enum values in variants.fields)"
       );
       for (const label of variantLabels) projected[label]![field] = unmappableProjection();
       continue;

@@ -2,9 +2,9 @@ import { detectEnumValues } from "./enum-detection.js";
 import { Registry } from "./registry.js";
 import {
   derefNode,
-  isDeclaredStringWrapperNode,
+  isConstructTargetNode,
   isPlainObject,
-  readWrapSpec,
+  readConstructSpec,
   resolveJsonPointer,
   sourceUnionBranches,
   targetEnumValuesAt,
@@ -507,16 +507,12 @@ export function classifyField(
     return { class: "out", reason: "existence-loss", detail: `select (${policy})` };
   }
 
-  if (kind === "wrap") {
-    const spec = readWrapSpec(entry);
+  if (kind === "construct") {
+    const spec = readConstructSpec(entry);
     const source = sourceShape(srcRaw, ctx.registry);
     const target = resolved[0]?.node;
-    if (
-      !spec ||
-      !source.isScalar ||
-      !isDeclaredStringWrapperNode(ctx.bundle, target, spec.property)
-    ) {
-      return { class: "out", reason: "no-destination", detail: "invalid wrap shape" };
+    if (!spec || !source.isScalar || !isConstructTargetNode(ctx.bundle, target, spec.property)) {
+      return { class: "out", reason: "no-destination", detail: "invalid construct shape" };
     }
     return { class: "core", loss: "widening", detail: `scalar→${spec.property} wrapper` };
   }

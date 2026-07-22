@@ -54,7 +54,7 @@ Source: [`Vesting.schema.json`](./Vesting.schema.json)
 ## Mapping
 
 ```yaml
-# kind vocabulary: rename | wrap | select | split | combine | enum-remap | computed | unmappable | TODO
+# kind vocabulary: rename | construct | select | split | combine | enum-remap | computed | unmappable | TODO
 status: complete
 
 fields:
@@ -62,9 +62,9 @@ fields:
     kind: rename
     target: "#/$defs/OptionGrantVestingEvent/properties/vestDate"
   amount:
-    kind: wrap
+    kind: construct
     target: "#/$defs/OptionGrantVestingEvent/properties/quantity"
-    wrap:
+    construct:
       property: value
       normalization:
         integer_leading_zeros: strip
@@ -81,4 +81,4 @@ fields:
   | `StockIssuance` | `RestrictedStockAwardVestingEvent` |
   | `WarrantIssuance` | unmappable — Carta has no warrant vesting event |
 
-  Field names (`vestDate`, `quantity`) are identical across the three Carta event types, so the per-field mapping above holds regardless. The `target:` paths above reference `OptionGrantVestingEvent` as a representative; the actual selection happens in the containing OCF object's mapping. The `wrap` block declares the destination member and the required Numeric lexical rule.
+  Field names (`vestDate`, `quantity`) are identical across the three Carta event types, so the per-field mapping above holds regardless. The `target:` paths above reference `OptionGrantVestingEvent` as a representative; the actual selection happens in the containing OCF object's mapping. The `construct` block declares the destination member and the required Numeric lexical rule.

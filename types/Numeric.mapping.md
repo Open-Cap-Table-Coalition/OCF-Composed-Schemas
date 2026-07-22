@@ -40,7 +40,7 @@ Source: [`Numeric.schema.json`](./Numeric.schema.json)
 ## Mapping
 
 ```yaml
-# kind vocabulary: rename | wrap | select | split | combine | enum-remap | computed | unmappable | TODO
+# kind vocabulary: rename | construct | select | split | combine | enum-remap | computed | unmappable | TODO
 status: complete
 
 fields: {}
@@ -56,4 +56,4 @@ fields: {}
 - `#/$defs/Decimal` is the workhorse numeric type across the Carta bundle: 118 properties `$ref` it for share counts and quantities (e.g. `Certificate.quantity`, `CapitalizationTableSummary.fullyDilutedShares`/`.outstandingShares`), and `#/$defs/Money/properties/amount` is itself a `Decimal`. Wherever an OCF object embeds a `Numeric` (e.g. `Monetary.amount`, share quantities, ratios), the per-object mapping should land on the specific `Decimal`-typed property for that field; this type-level mapping records the generic correspondence rather than picking one representative leaf.
 - No semantic value transformation is required beyond the lexical normalization noted above: an OCF `Numeric` string can be written into a Carta `Decimal.value` verbatim except when it carries multi-digit leading zeros (strip them), and any Carta `Decimal.value` that uses scientific notation, a bare leading dot, or more than 10 decimal places needs normalization to round-trip back into OCF's stricter fixed-point pattern. The numeric value itself is preserved in every case.
 
-The field-level DSL records the OCF → Carta direction with `kind: wrap`, `wrap.property: value`, and `wrap.normalization.integer_leading_zeros: strip`. The normalization key and its `preserve`/`strip` semantics are defined centrally in [`mapping-validation.md`](../docs/mapping-validation.md); the field mapping must carry the rule explicitly rather than relying on the target member name or this note.
+The field-level DSL records the OCF → Carta direction with `kind: construct`, `construct.property: value`, and `construct.normalization.integer_leading_zeros: strip`. The normalization key and its `preserve`/`strip` semantics are defined centrally in [`mapping-validation.md`](../docs/mapping-validation.md); the field mapping must carry the rule explicitly rather than relying on the target member name or this note.

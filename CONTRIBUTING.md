@@ -149,22 +149,22 @@ fields:
 
 The name `rename` describes the shape of the relationship, not a promise that the two schemas have identical business semantics. For example, a numeric OCF type may land in a wider Carta decimal type. Document any narrowing or context requirement in a `note:` or the prose below the YAML block.
 
-### `wrap`: a bare scalar into an explicitly declared wrapper member
+### `construct`: construct a target object from a scalar
 
-Use `wrap` when a bare string scalar is written to one explicitly named member of a target object:
+Use `construct` when a bare string scalar is used to construct a target object with one explicitly named member:
 
 ```yaml
 fields:
   percentage:
-    kind: wrap
+    kind: construct
     target: "#/$defs/VestingPeriod/properties/percentage"
-    wrap:
+    construct:
       property: value
       normalization:
         integer_leading_zeros: strip
 ```
 
-The validator checks the source and target shapes plus the closed `wrap` contract: `property` must name the target's sole string member, and `normalization.integer_leading_zeros` must be `preserve` or `strip`. `preserve` copies text unchanged; `strip` removes redundant integer leading zeroes while preserving sign and numeric value. Core treats a valid `wrap` as deterministic and value-preserving.
+The validator checks the source and target shapes plus the closed `construct` contract: `property` must name the target's sole string member, and `normalization.integer_leading_zeros` must be `preserve` or `strip`. `preserve` copies text unchanged; `strip` removes redundant integer leading zeroes while preserving sign and numeric value. Core treats a valid `construct` as deterministic and value-preserving.
 
 ### 3. `union-map`: map the alternatives of a source union
 

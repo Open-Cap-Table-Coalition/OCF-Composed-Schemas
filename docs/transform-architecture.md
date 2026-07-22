@@ -101,7 +101,7 @@ That per-field entry is the atom of the whole system. Its `kind` is the transfor
 | `kind` | what it does | target shape |
 | --- | --- | --- |
 | `rename` | move a shape-compatible value verbatim | one pointer |
-| `wrap` | place a scalar in an explicitly named single-string target member, with an explicit lexical rule | one pointer + `wrap:` |
+| `construct` | construct a single-string target object from a scalar, with an explicitly named member and lexical rule | one pointer + `construct:` |
 | `select` | reduce an array/object to one target under an explicit policy | one pointer + `policy:` |
 | `enum-remap` | rewrite value-by-value | one pointer + a `values:` map |
 | `split` | fan one field to several | ≥2 pointers |

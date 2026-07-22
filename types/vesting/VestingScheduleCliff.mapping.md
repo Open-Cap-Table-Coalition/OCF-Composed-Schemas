@@ -61,7 +61,7 @@ Source: [`VestingScheduleCliff.schema.json`](./VestingScheduleCliff.schema.json)
 ## Mapping
 
 ```yaml
-# kind vocabulary: rename | wrap | select | split | combine | enum-remap | computed | unmappable | TODO
+# kind vocabulary: rename | construct | select | split | combine | enum-remap | computed | unmappable | TODO
 # unmappable reason vocabulary: no-equivalent | excluded-from-snapshot | out-of-scope | ocf-internal
 status: complete
 
@@ -77,9 +77,9 @@ fields:
       MONTHS: MONTH
       YEARS: YEAR
   percentage:
-    kind: wrap
+    kind: construct
     target: "#/$defs/VestingPeriod/properties/cliffPercentage"
-    wrap:
+    construct:
       property: value
       normalization:
         integer_leading_zeros: strip
@@ -89,4 +89,4 @@ fields:
 
 - A `VestingScheduleCliff` lands on Carta's `VestingPeriod` cliff fields: `length`/`period_type`/`percentage` map to `cliffLength`/`cliffLengthUnit`/`cliffPercentage`. This matches the pre-#227 `canonical/vesting` cliff mapping, which pointed the same fields at `VestingPeriod`.
 - `period_type` is an `enum-remap` because OCF's `PeriodType` (`DAYS`/`MONTHS`/`YEARS`) is plural while Carta's `PeriodUnit` (`#/$defs/PeriodUnit`, referenced by `cliffLengthUnit`) is singular (`DAY`/`MONTH`/`YEAR`). The two enums are 1:1, so the remap is total.
-- `percentage` declares the destination member and Numeric lexical rule in its `wrap` block. The pre-#227 canonical mapping computed this from a `numerator`/`denominator` fraction; #129 simplified the cliff share to a single decimal.
+- `percentage` declares the destination member and Numeric lexical rule in its `construct` block. The pre-#227 canonical mapping computed this from a `numerator`/`denominator` fraction; #129 simplified the cliff share to a single decimal.

@@ -79,7 +79,7 @@ classify(entry, src, tgt):           # src/tgt = source & target nodes, resolved
       if any source member maps to null and is not in entry.routed_to:  return out   # partial → out
       return core                                                 # total; bucketing/coarsening OK
 
-  if entry.kind == wrap:                                          # validated scalar → declared wrapper member
+  if entry.kind == construct:                                     # validated scalar → constructed target member
       return core                                                 # deterministic; value-preserving
 
   if entry.kind in {computed, combine, split}:                    # ruling A vs B — see note
