@@ -62,7 +62,7 @@ field-level pipeline: its first step selects one intermediate value, and its sec
 `apply_mapping` step names the reusable mapping file and its Carta target pointers. In a
 polymorphic mapping (below), an entry may also carry a
 **`routed_to:`** map
-(`{ discriminator value → variant label }`) — a *verified round-trip edge*: a value `null`-ed in
+(`{ route property value → variant label }`) — a *verified round-trip edge*: a value `null`-ed in
 this variant because it belongs to another. The validator confirms each named variant actually
 *claims* that value (a real, deterministic route), and `--verbose` renders it as
 `VALUE → routed to "Variant" variant: <that variant's Carta primary_targets>` instead of

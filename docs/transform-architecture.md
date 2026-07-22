@@ -118,17 +118,15 @@ never free-text. Coverage is derived from the source schema and mapping entries;
 the validator output and generated heatmap, not copied into each mapping file. A `status` lifecycle
 (`draft → partial → complete → reviewed`) gates how strict the file must be.
 
-### The three shapes a mapping can take
+### The three mapping forms
 
-Most files are the simple 1:1 case. Two extensions handle the hard cases where OCF and Carta
-disagree on structure:
-
+- **Simple** — a `fields:` map sends one OCF object to one target family.
 - **Polymorphic** — one OCF object fans out to *several* Carta families, selected by one
   `route_by_property:` block. Its `from:` is either `self` or a related record reached through
   `from.via`. Variants are **mutually exclusive** — pick one.
 - **Composite** — one OCF *verb* has no single Carta target and folds into an **ordered set** of
-  Carta transactions, **all emitted**. Orthogonal to variants (which are exclusive), composite
-  steps are additive.
+  Carta transactions, **all emitted**. It is declared alongside a polymorphic block; composite
+  steps are additive while variants remain exclusive.
 
 Polymorphic mappings can also record a **`routed_to:`** edge: when a variant `null`s an enum value
 because it belongs to a *sibling* variant, `routed_to` names that sibling and the validator confirms
@@ -209,8 +207,8 @@ Two invariants are worth calling out because they're what make derivation safe:
   both directions. Add a property to an OCF schema and every `complete` mapping of it fails until
   updated. **The schema is the source of truth, not the mapping's self-report.**
 - **Routing must be total.** In a polymorphic mapping the variants' `when:` sets must *partition*
-  the discriminator enum — pairwise-disjoint, and (when exhaustive) covering every value. No value
-  is claimed twice and none falls through.
+  the route property's enum — pairwise-disjoint, and (when exhaustive) covering every value. No
+  value is claimed twice and none falls through.
 
 ---
 

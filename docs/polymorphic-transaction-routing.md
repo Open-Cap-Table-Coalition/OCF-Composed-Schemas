@@ -6,7 +6,11 @@ Design + as-built notes for extending the `.mapping.md` convention to express ho
 
 ## 1. The problem
 
-OCF encodes instrument identity as a **discriminator field inside one shared transaction type**. Carta encodes it as **dedicated transaction + security families per instrument**. The current convention assumes a 1:1 object correspondence — one OCF schema file maps to one Carta target object via a single `fields:` map — and that assumption is exactly what breaks.
+OCF encodes instrument identity as a **route property inside one shared transaction type** (often
+called a discriminator by the source schema). Carta encodes it as **dedicated transaction +
+security families per instrument**. The current convention assumes a 1:1 object correspondence —
+one OCF schema file maps to one Carta target object via a single `fields:` map — and that
+assumption is exactly what breaks.
 
 ### 1.1 What the current format is
 
@@ -29,18 +33,18 @@ Coverage is a single scalar matched by `/^(\d+)\/(\d+)$/`: numerator = non-`TODO
 | Gap | Concrete instance | Why the format can't express it |
 |---|---|---|
 | **Object-level fan-out by route property** | `EquityCompensationIssuance.compensation_type` ∈ {OPTION, OPTION_NSO, OPTION_ISO, RSU, CSAR, SSAR} routes one OCF tx to 3 Carta families | `enum-remap` rewrites a *field value*; it cannot switch the *target object*. There is one `target` per field and one Carta `$def` per file. |
-| **Cross-record JOIN dependency** | `EquityCompensationExercise` carries only `security_id` — its family lives on the *issuance* record, not on itself | The discriminator is not a property of the record being mapped, so there is no field to hang any kind on. |
+| **Cross-record JOIN dependency** | `EquityCompensationExercise` carries only `security_id` — its family lives on the *issuance* record, not on itself | The route property is not on the record being mapped, so the mapping must declare the relationship. |
 | **Behavioral verb divergence** | The same OCF "exercise" verb becomes `OptionExerciseTransaction` for options, `SarExerciseTransaction` for SARs, but `RsuSettlementTransaction` for RSUs — RSUs *settle*, they do not exercise | A different Carta *transaction type* with a different field set is an object-selection decision, not a field rename; the kind vocabulary has no slot for it. |
 
-### 1.3 The two concrete discriminators (issuance level)
+### 1.3 The two concrete route properties (issuance level)
 
-| OCF transaction | Discriminator | Values | OCF `anyOf` field-coupling |
+| OCF transaction | Route property | Values | OCF `anyOf` field-coupling |
 |---|---|---|---|
 | `EquityCompensationIssuance` | `compensation_type` (**required**) | OPTION, OPTION_NSO, OPTION_ISO, RSU, CSAR, SSAR | OPTION* **require** `exercise_price`; CSAR/SSAR **require** `base_price`; RSU branch adds no constraint. (The `anyOf` only *requires* the opposite price per branch; it never *forbids* a field — both prices remain structurally permitted on every value.) |
 | `StockIssuance` | `issuance_type` (**optional**) | RSA, FOUNDERS_STOCK | none enforced |
 | `ConvertibleIssuance` | `convertible_type` (required) | NOTE, SAFE, CONVERTIBLE_SECURITY | none — single Carta family (the easy contrast case) |
 
-The OCF `anyOf` is not incidental: by *requiring* a different price field per branch it is schema-level evidence that the field set genuinely differs per discriminator value, which is precisely why a single flat `fields:` map cannot be correct for all of them at once. (It is a soft signal, not a hard partition: the `anyOf` only adds `required`s, so an OPTION record may still legally carry `base_price` and an RSU may carry either price. The routing below relies on the *Carta* family shape, not on OCF forbidding anything.)
+The OCF `anyOf` is not incidental: by *requiring* a different price field per branch it is schema-level evidence that the field set genuinely differs per route-property value, which is precisely why a single flat `fields:` map cannot be correct for all of them at once. (It is a soft signal, not a hard partition: the `anyOf` only adds `required`s, so an OPTION record may still legally carry `base_price` and an RSU may carry either price. The routing below relies on the *Carta* family shape, not on OCF forbidding anything.)
 
 ---
 
@@ -48,9 +52,9 @@ The OCF `anyOf` is not incidental: by *requiring* a different price field per br
 
 ### 2.1 Issuance-level routing graph
 
-Each row is `(discriminator value) → (Carta transaction, Carta security object)`. Every Carta type cited is present in the index.
+Each row is `(route property value) → (Carta transaction, Carta security object)`. Every Carta type cited is present in the index.
 
-| OCF tx | Discriminator value | → Carta transaction | → Carta security object |
+| OCF tx | Route property value | → Carta transaction | → Carta security object |
 |---|---|---|---|
 | EquityCompensationIssuance | OPTION / OPTION_NSO / OPTION_ISO | `OptionIssuanceTransaction` | `OptionGrant` |
 | EquityCompensationIssuance | RSU | `RsuIssuanceTransaction` | `RestrictedStockUnit` |
@@ -66,9 +70,9 @@ Notes grounded in the bundle:
 
 ### 2.2 Downstream propagation — the JOIN
 
-The instrument family is fixed at issuance. Every downstream `EquityCompensation*` transaction carries only `security_id` and **no** discriminator (verified per file), so its Carta family is undecidable from the record alone:
+The instrument family is fixed at issuance. Every downstream `EquityCompensation*` transaction carries only `security_id` and **no local route property** (verified per file), so its Carta family is undecidable from the record alone:
 
-| OCF transaction | Fields present | Discriminator? |
+| OCF transaction | Fields present | Local route property? |
 |---|---|---|
 | `EquityCompensationExercise` | security_id, quantity, resulting_security_ids, consideration_text | none |
 | `EquityCompensationCancellation` | security_id, quantity, reason_text, balance_security_id | none |
@@ -108,7 +112,7 @@ The key consequence of §2.2: one OCF verb maps to different Carta *transaction 
 
 ## 3. Per-variant field divergence (the crux)
 
-The discriminator chooses a different transaction `$def` **and** a different security `$def`, so one OCF property lands at a different JSON Pointer per variant — and some OCF properties have a home in one family and none in another. The price fields the OCF `anyOf` *requires* per branch line up with the per-family Carta price slots, corroborating (not proving) the routing.
+The route property chooses a different transaction `$def` **and** a different security `$def`, so one OCF property lands at a different JSON Pointer per variant — and some OCF properties have a home in one family and none in another. The price fields the OCF `anyOf` *requires* per branch line up with the per-family Carta price slots, corroborating (not proving) the routing.
 
 ### 3.1 `EquityCompensationIssuance` field divergence
 
@@ -390,7 +394,7 @@ Validator rules (the keys must **stay in sync** with the variant set):
 | **No unknown keys** — every key is a real variant | `target map key "Rus" is not a variant (have: Option, Rsu, Sar)` |
 | **Each value resolves or is null** | `target for variant "Sar" "#/$defs/X" does not resolve…` (a non-`#/…` value → `…must be a "#/..." pointer or null`) |
 
-`null` = unmappable in that variant (still a covered, non-`TODO` entry, so per-variant `coverage` is unchanged). Map targets are allowed only on `rename`/`computed`/`combine` `shared:` entries — not on `enum-remap` (route enum *values* in `variants.fields`) and not inside a variant's own `fields:` (already variant-specific). Keyed by **variant label**, not discriminator value, so the `Sar` variant — which claims both `CSAR` and `SSAR` — gets one entry, not two. `--verbose` renders each variant's own target (or `✗ unmappable`) beneath the field, so RSU/SAR name their own objects instead of borrowing a representative pointer.
+`null` = unmappable in that variant (still a covered, non-`TODO` entry, so per-variant `coverage` is unchanged). Map targets are allowed only on `rename`/`computed`/`combine` `shared:` entries — not on `enum-remap` (route enum *values* in `variants.fields`) and not inside a variant's own `fields:` (already variant-specific). Keyed by **variant label**, not route property value, so the `Sar` variant — which claims both `CSAR` and `SSAR` — gets one entry, not two. `--verbose` renders each variant's own target (or `✗ unmappable`) beneath the field, so RSU/SAR name their own objects instead of borrowing a representative pointer.
 
 Implemented in `validateSharedTargetMaps` (`scripts/lib/mapping-validator.ts`): it validates the maps once, then projects each into the per-variant effective field map (a `null`/absent value becomes an internal `unmappable` so coverage counts it and the per-field validator does not re-flag it). A string/array/`null` `target:` remains the ordinary uniform-target form.
 
@@ -511,14 +515,14 @@ When `route_by_property` is absent, simple mappings continue through the ordinar
 | **Coverage is per-variant only** | A field mapped in Option but unmappable in RSU has no single coverage number; the scalar `X/N` had to become a map. |
 | **Cross-field precedence** | `compensation_type` and deprecated `option_grant_type` both target `stockOptionType`; the format lists both but cannot say which wins. Importer logic. |
 | **Shared field, divergent *kind*** | Per-variant target maps (§4.8) **solve** the divergent-*home* case — a shared field of uniform kind landing on `OptionGrant` vs `RestrictedStockUnit` now names each directly. The residual: a field whose *kind* differs per variant (e.g. `StockIssuance.issuance_type`: a structural router in RSA but `enum-remap` in default, §3.2) cannot be `shared:` at all — it lives in each variant's `fields:` instead. |
-| **One discriminator axis** | Routing is on a single field. `composite:` (§4.9) adds an orthogonal *additive* step axis (family × step, all steps emitted), but a second mutually-exclusive *discriminant* (type × settlement mode) would still need nested variants — undefined here. |
+| **One route-property axis** | Routing is on a single field. `composite:` (§4.9) adds an orthogonal *additive* step axis (family × step, all steps emitted), but a second mutually-exclusive route axis (type × settlement mode) would still need nested variants — undefined here. |
 | **Lossy collapses are recorded, not repaired** | CSAR vs SSAR collapse; `OPTION` (unspecified) → `OTHER`. Visible as enum-remap values / `no-equivalent`, but lossy by Carta's design. |
 
 ### 6.2 Carta-side import assumptions
 
 The model assumes Carta's importer (a) holds the full issuance set indexed so it can resolve `security_id → compensation_type` (the two-pass requirement), (b) materializes the per-family transaction *and* security object named in `primary_targets`, and (c) reconciles deprecated/overlapping OCF fields itself (e.g. `option_grant_type` vs `compensation_type`). The `.mapping.md` describes *intent*; the importer owns *execution*. These are schema-derived assumptions until an importer-conformance suite pins and verifies them; see [`ocf-core-enrichment.md`](./ocf-core-enrichment.md).
 
-### 6.3 Discriminator values and families with no home
+### 6.3 Route-property values and families with no home
 
 | Item | Status |
 |---|---|
@@ -527,7 +531,7 @@ The model assumes Carta's importer (a) holds the full issuance set indexed so it
 | **`stock_legend_ids`, `share_numbers_issued`** | OCF carries them (the former REQUIRED); no Carta home in either `StockIssuance` variant. |
 | **`early_exercisable`** | Option-only; unmappable for RSU and SAR. |
 | **No-Carta-target verbs** | `EquityCompensationTransfer` (no equity-comp transfer tx), `EquityCompensationRetraction` (no retraction tx anywhere), `EquityCompensationRelease` for non-RSU families — all per-case `unmappable`. |
-| **Phantom / Piu** | Carta-only families (`PhantomIssuanceTransaction`, `PiuIssuanceTransaction`, …). **No OCF discriminator value routes to them.** They are unreachable targets, not gaps in OCF coverage; the format never names them as `primary_targets`. |
+| **Phantom / Piu** | Carta-only families (`PhantomIssuanceTransaction`, `PiuIssuanceTransaction`, …). **No OCF route-property value routes to them.** They are unreachable targets, not gaps in OCF coverage; the format never names them as `primary_targets`. |
 
 ---
 

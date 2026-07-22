@@ -363,7 +363,7 @@ variants:
 
 The validator checks that:
 
-- `field` is an enum-typed source property;
+- `route_by_property.property` is an enum-typed source property;
 - variant `when:` sets are disjoint;
 - `exhaustive: true` means every source enum value is claimed by a variant;
 - each non-null `primary_targets` pointer resolves;
