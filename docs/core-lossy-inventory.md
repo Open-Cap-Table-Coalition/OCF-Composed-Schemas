@@ -39,28 +39,6 @@ flowchart LR
   o0 -->|"primary_contact → email"| t0
 ```
 
-**EquityCompensationIssuance [Option] → Compliance, OptionGrant**
-
-```mermaid
-flowchart LR
-  classDef adm fill:#e6f4ea,stroke:#34a853,color:#0b3d20;
-  classDef notadm fill:#f1f3f4,stroke:#9aa0a6,color:#5f6368,stroke-dasharray:4 3;
-  classDef carta fill:#e8f0fe,stroke:#1a73e8,color:#0d2b66;
-  classDef sink fill:#fce8e6,stroke:#d93025,color:#5c0d06;
-  subgraph SRC["OCF source objects"]
-    direction TB
-    o0["EquityCompensationIssuance [Option]"]:::notadm
-  end
-  subgraph TGT["Carta target objects"]
-    direction TB
-    t0["Compliance"]:::carta
-    t1["OptionGrant"]:::carta
-  end
-  o0 -->|"security_law_exemptions → federalExemption"| t0
-  o0 -->|"termination_exercise_windows → exercisePeriods"| t1
-  o0 -->|"vestings → vestingEvents"| t1
-```
-
 **StockClass → ShareClass, ShareClassRightsAndPreferences**
 
 ```mermaid
@@ -124,7 +102,7 @@ flowchart LR
   o0 -->|"uri → fileId"| t0
 ```
 
-**EquityCompensationIssuance [Rsu] → Compliance, RestrictedStockUnit**
+**EquityCompensationIssuance [Option] → Compliance, OptionGrant**
 
 ```mermaid
 flowchart LR
@@ -134,15 +112,15 @@ flowchart LR
   classDef sink fill:#fce8e6,stroke:#d93025,color:#5c0d06;
   subgraph SRC["OCF source objects"]
     direction TB
-    o0["EquityCompensationIssuance [Rsu]"]:::notadm
+    o0["EquityCompensationIssuance [Option]"]:::notadm
   end
   subgraph TGT["Carta target objects"]
     direction TB
     t0["Compliance"]:::carta
-    t1["RestrictedStockUnit"]:::carta
+    t1["OptionGrant"]:::carta
   end
   o0 -->|"security_law_exemptions → federalExemption"| t0
-  o0 -->|"vestings → vestingEvents"| t1
+  o0 -->|"termination_exercise_windows → exercisePeriods"| t1
 ```
 
 **StockCancellation [Default] → CertificateCancellationTransaction, CertificatePrecededBy**
@@ -265,27 +243,6 @@ flowchart LR
   end
   o0 -->|"balance_security_id → securities"| t0
   o0 -->|"resulting_security_ids → securities"| t0
-```
-
-**StockIssuance [Rsa] → Compliance, RestrictedStockAward**
-
-```mermaid
-flowchart LR
-  classDef adm fill:#e6f4ea,stroke:#34a853,color:#0b3d20;
-  classDef notadm fill:#f1f3f4,stroke:#9aa0a6,color:#5f6368,stroke-dasharray:4 3;
-  classDef carta fill:#e8f0fe,stroke:#1a73e8,color:#0d2b66;
-  classDef sink fill:#fce8e6,stroke:#d93025,color:#5c0d06;
-  subgraph SRC["OCF source objects"]
-    direction TB
-    o0["StockIssuance [Rsa]"]:::notadm
-  end
-  subgraph TGT["Carta target objects"]
-    direction TB
-    t0["Compliance"]:::carta
-    t1["RestrictedStockAward"]:::carta
-  end
-  o0 -->|"security_law_exemptions → federalExemption"| t0
-  o0 -->|"vestings → vestingEvents"| t1
 ```
 
 **StockTransfer [Default] → CertificatePrecededBy**
@@ -442,6 +399,25 @@ flowchart LR
   o0 -->|"resulting_security_ids → securities"| t0
 ```
 
+**EquityCompensationIssuance [Rsu] → Compliance**
+
+```mermaid
+flowchart LR
+  classDef adm fill:#e6f4ea,stroke:#34a853,color:#0b3d20;
+  classDef notadm fill:#f1f3f4,stroke:#9aa0a6,color:#5f6368,stroke-dasharray:4 3;
+  classDef carta fill:#e8f0fe,stroke:#1a73e8,color:#0d2b66;
+  classDef sink fill:#fce8e6,stroke:#d93025,color:#5c0d06;
+  subgraph SRC["OCF source objects"]
+    direction TB
+    o0["EquityCompensationIssuance [Rsu]"]:::notadm
+  end
+  subgraph TGT["Carta target objects"]
+    direction TB
+    t0["Compliance"]:::carta
+  end
+  o0 -->|"security_law_exemptions → federalExemption"| t0
+```
+
 **EquityCompensationIssuance [Sar] → Compliance**
 
 ```mermaid
@@ -510,6 +486,25 @@ flowchart LR
   subgraph SRC["OCF source objects"]
     direction TB
     o0["StockIssuance [Default]"]:::notadm
+  end
+  subgraph TGT["Carta target objects"]
+    direction TB
+    t0["Compliance"]:::carta
+  end
+  o0 -->|"security_law_exemptions → federalExemption"| t0
+```
+
+**StockIssuance [Rsa] → Compliance**
+
+```mermaid
+flowchart LR
+  classDef adm fill:#e6f4ea,stroke:#34a853,color:#0b3d20;
+  classDef notadm fill:#f1f3f4,stroke:#9aa0a6,color:#5f6368,stroke-dasharray:4 3;
+  classDef carta fill:#e8f0fe,stroke:#1a73e8,color:#0d2b66;
+  classDef sink fill:#fce8e6,stroke:#d93025,color:#5c0d06;
+  subgraph SRC["OCF source objects"]
+    direction TB
+    o0["StockIssuance [Rsa]"]:::notadm
   end
   subgraph TGT["Carta target objects"]
     direction TB
@@ -709,7 +704,7 @@ flowchart LR
 ```
 
 
-## A. Lossy home — by OCF object, flowing to Carta (55 (entity,variant,field) rows across 23 objects; 36 OCF-required)
+## A. Lossy home — by OCF object, flowing to Carta (52 (entity,variant,field) rows across 23 objects; 36 OCF-required)
 
 Each field HAS a Carta home but the fold loses fidelity: `existence-loss` = the shape
 collapses (object/array → scalar); `heuristic` = a non-1:1 transform (combine/split/computed).
@@ -763,8 +758,6 @@ is a direct predecessor→`securities` landing.
 | --- | :---: | --- | --- | --- |
 | security_law_exemptions | **yes** | Option, Rsu, Sar | Compliance.federalExemption | heuristic (computed) |
 | termination_exercise_windows | **yes** | Option | OptionGrant.exercisePeriods | existence-loss (select (first_termination_window)) |
-| vestings |  | Option | OptionGrant.vestingEvents | heuristic (items: Vesting drops amount (per type mapping)) |
-| vestings |  | Rsu | RestrictedStockUnit.vestingEvents | heuristic (items: Vesting drops amount (per type mapping)) |
 
 ### EquityCompensationRelease — in Core (admissible)
 
@@ -828,7 +821,6 @@ is a direct predecessor→`securities` landing.
 | field | OCF-req | variant(s) | flows to (Carta) | loss |
 | --- | :---: | --- | --- | --- |
 | security_law_exemptions | **yes** | Rsa, Default | Compliance.federalExemption | heuristic (computed) |
-| vestings |  | Rsa | RestrictedStockAward.vestingEvents | heuristic (items: Vesting drops amount (per type mapping)) |
 
 ### StockPlan — in Core (admissible)
 
@@ -863,7 +855,7 @@ is a direct predecessor→`securities` landing.
 
 | field | OCF-req | variant(s) | flows to (Carta) | loss |
 | --- | :---: | --- | --- | --- |
-| statements | **yes** |  | VestingScheduleTemplate.periods | heuristic (items: VestingStatement drops schedule, event_condition, percentage (per type mapping)) |
+| statements | **yes** |  | VestingScheduleTemplate.periods | heuristic (items: VestingStatement drops schedule, event_condition (per type mapping)) |
 
 ### WarrantCancellation — in Core (admissible)
 
@@ -908,10 +900,7 @@ onto one Carta field — most visibly the reverse-edge lineage collapsing onto `
 - `ConvertibleIssuanceTransaction.valuationCap` ← 1: `ConvertibleIssuance.conversion_triggers`
 - `OptionCancellationTransaction.reason` ← 1: `EquityCompensationCancellation.reason_text [Option]`
 - `OptionGrant.exercisePeriods` ← 1: `EquityCompensationIssuance.termination_exercise_windows [Option]`
-- `OptionGrant.vestingEvents` ← 1: `EquityCompensationIssuance.vestings [Option]`
 - `OptionPoolSummary.shareClassId` ← 1: `StockPlan.stock_class_ids`
-- `RestrictedStockAward.vestingEvents` ← 1: `StockIssuance.vestings [Rsa]`
-- `RestrictedStockUnit.vestingEvents` ← 1: `EquityCompensationIssuance.vestings [Rsu]`
 - `RsaCancellationTransaction.reason` ← 1: `StockCancellation.reason_text [Rsa]`
 - `RsuCancellationTransaction.reason` ← 1: `EquityCompensationCancellation.reason_text [Rsu]`
 - `SarCancellationTransaction.reason` ← 1: `EquityCompensationCancellation.reason_text [Sar]`

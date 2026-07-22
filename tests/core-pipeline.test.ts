@@ -109,17 +109,17 @@ describe("deriveCore (determinism — the drift gate's premise)", () => {
       reason: "heuristic",
     });
     expect(row("EquityCompensationIssuance", "Option", "vestings")?.verdict).toMatchObject({
-      class: "out",
-      reason: "heuristic",
+      class: "core",
+      loss: "direct",
     });
     expect(row("StockIssuance", "Rsa", "vestings")?.verdict).toMatchObject({
-      class: "out",
-      reason: "heuristic",
+      class: "core",
+      loss: "direct",
     });
 
-    // These source fields are required for their entities, so strict Core
-    // cannot admit those entities once the nested loss is visible. Core-Rich
-    // deliberately retains the lossy homes and their original OCF shapes.
+    // VestingTerms still has a lossy statements payload, and the issuance
+    // entities remain blocked by their references to that entity. Core-Rich
+    // deliberately retains those lossy homes and their original OCF shapes.
     for (const entity of ["VestingTerms", "EquityCompensationIssuance", "StockIssuance"]) {
       expect(strict.entities.some((e) => e.entity === entity)).toBe(false);
       expect(rich.entities.some((e) => e.entity === entity)).toBe(true);

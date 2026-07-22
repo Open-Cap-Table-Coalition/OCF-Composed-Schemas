@@ -62,10 +62,8 @@ fields:
     kind: rename
     target: "#/$defs/OptionGrantVestingEvent/properties/vestDate"
   amount:
-    kind: computed
+    kind: rename
     target: "#/$defs/OptionGrantVestingEvent/properties/quantity"
-    transform: |
-      OCF Numeric (bare string, e.g. "10000") -> Carta Decimal (object, e.g. { "value": "10000" }).
 ```
 
 ## Notes / open questions
@@ -79,4 +77,4 @@ fields:
   | `StockIssuance` | `RestrictedStockAwardVestingEvent` |
   | `WarrantIssuance` | unmappable — Carta has no warrant vesting event |
 
-  Field names (`vestDate`, `quantity`) are identical across the three Carta event types, so the per-field mapping above holds regardless. The `target:` paths above reference `OptionGrantVestingEvent` as a representative; the actual selection happens in the containing OCF object's mapping.
+  Field names (`vestDate`, `quantity`) are identical across the three Carta event types, so the per-field mapping above holds regardless. The `target:` paths above reference `OptionGrantVestingEvent` as a representative; the actual selection happens in the containing OCF object's mapping. `amount` is a lossless scalar-wrapper `rename`; as with the other OCF `Numeric` mappings, the importer must apply the lexical canonicalization documented in [`Numeric.mapping.md`](./Numeric.mapping.md) before writing Carta `Decimal.value`.
