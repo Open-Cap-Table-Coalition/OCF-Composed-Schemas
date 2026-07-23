@@ -28,7 +28,7 @@ record(s); `N` means one or more items. `composite` is the one record-level bloc
 | `rename` | Copy a shape-compatible value to a target slot | 1 value → 1 slot | `name` → `ShareClass.fullName` |
 | `construct` | Put a scalar in an explicitly named member of a one-member target object | 1 scalar → 1 object slot | `"0.25"` → `{ value: "0.25" }` |
 | `select` | Reduce an array/object under an explicit policy | 1 aggregate → 1 slot | `addresses[]` → first `address.country` |
-| `split` | Fan one source property out to several target slots | 1 property → N slots | `schedule` → `length` + `lengthUnit` |
+| `split` | Fan one source property out to several target slots, optionally by enum branch | 1 property → N slots | `schedule` → `length` + `lengthUnit` |
 | `combine` | Fan several source properties into one target slot | N properties → 1 slot | `primary_contact` **or** `contact_info` → `email` |
 | `enum-remap` | Map each member of a closed source enum | 1 enum value → 1 enum value | `PREFERRED` → `PREFERRED` |
 | `union-map` | Choose one mapping for the source union branch | 1 union value → 1 branch mapping | `Numeric` branch → `ShareClass.authorizedShareCount` |
@@ -51,7 +51,10 @@ TODO` with the matching target shape (string; `construct` requires its construct
 `union-map`; `null` for
 `unmappable`; literal `TODO` for `TODO`). Coverage is derived from the source schema and effective
 mapping entries; it is not a mapping key and is never hand-maintained. Any entry may carry an
-optional free-text `note:` (a string), rendered under its field in `--verbose`. `rename` is
+optional free-text `note:` (a string), rendered under its field in `--verbose`. A `split` on an
+enum property may also carry `routes:`: a complete map of `source enum value → source field →
+target pointer|null`, which makes paired or multi-field branches explicit and lets `--verbose`
+render the branch as one grouped route. `rename` is
 a lossless, shape-compatible 1:1 copy. `select` reduces an array or structured value to one target
 and requires a non-empty deterministic `policy:`; an optional relative `source:` pointer identifies
 the member path selected from an object or array item. Array-to-scalar `split` entries likewise

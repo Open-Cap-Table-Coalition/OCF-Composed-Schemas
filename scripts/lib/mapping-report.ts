@@ -34,8 +34,99 @@ function asStringOr(value: unknown, fallback: string): string {
   return typeof value === "string" ? value : fallback;
 }
 
+function routeTargetLabel(value: unknown): string {
+  if (typeof value !== "string") return asStringOr(value, "?");
+  const parts = targetPointerParts(value);
+  return parts.object === parts.relative ? parts.object : `${parts.object}.${parts.relative}`;
+}
+
+function routedSplitFields(entry: unknown): Set<string> {
+  if (!isPlainObject(entry) || entry.kind !== "split" || !isPlainObject(entry.routes)) {
+    return new Set();
+  }
+
+  const fields = new Set<string>();
+  for (const branch of Object.values(entry.routes)) {
+    if (!isPlainObject(branch)) continue;
+    for (const field of Object.keys(branch)) fields.add(field);
+  }
+  return fields;
+}
+
+function renderRoutedField(
+  field: string,
+  target: unknown,
+  entry: unknown,
+  expandedFields: Set<string>
+): Tree {
+  if (target === null) {
+    return { label: `${field} ✗ dropped`, children: [] };
+  }
+
+  if (!isPlainObject(entry)) {
+    return { label: `${field} → ${routeTargetLabel(target)}`, children: [] };
+  }
+
+  if (entry.kind === "split") {
+    return { label: `${field} → ${routeTargetLabel(target)}`, children: [] };
+  }
+
+  if (entry.kind === "enum-remap" && expandedFields.has(field)) {
+    return {
+      label: `${field} → ${routeTargetLabel(target)} (enum-remap; same value mapping)`,
+      children: [],
+    };
+  }
+
+  // Reuse the normal field renderer for the routed field's own semantics, such as
+  // enum-remap values or a select policy, while overriding its branch-specific target.
+  expandedFields.add(field);
+  const detail = renderItem(field, { ...entry, target });
+  if (typeof target === "string")
+    detail.label = detail.label.replace(target, routeTargetLabel(target));
+  return itemToTree(detail);
+}
+
+function renderRoutedSplit(
+  name: string,
+  entry: Record<string, unknown>,
+  policy: string,
+  fieldEntries?: Record<string, unknown>
+): Item {
+  const routes = isPlainObject(entry.routes) ? entry.routes : {};
+  const children: Array<string | Tree> = [];
+  const expandedFields = new Set<string>();
+
+  for (const [value, branch] of Object.entries(routes)) {
+    if (branch === null) {
+      children.push(`${value} ✗ dropped`);
+      continue;
+    }
+
+    if (isPlainObject(branch)) {
+      children.push({
+        label: value,
+        children: Object.entries(branch).map(([field, target]) =>
+          renderRoutedField(field, target, fieldEntries?.[field], expandedFields)
+        ),
+      });
+      continue;
+    }
+
+    // Keep the report lenient for malformed or transitional documents; the validator
+    // owns the shape judgment, while the report should still expose what it received.
+    children.push(`${value} → ${routeTargetLabel(branch)}`);
+  }
+
+  return {
+    label: `${name} (split; routes by value${policy})`,
+    children,
+  };
+}
+
 interface RenderContext {
   fieldName?: string;
+  fieldEntries?: Record<string, unknown>;
   sourceSchema?: RawSchema;
   mappingDocuments?: ReadonlyMap<string, MappingReportDocument>;
   mappingPath?: string;
@@ -303,7 +394,9 @@ function renderItem(
     case "split":
       {
         const policy = typeof entry.policy === "string" ? ` · policy: ${entry.policy}` : "";
-        item = !Array.isArray(target)
+        item = isPlainObject(entry.routes)
+          ? renderRoutedSplit(name, entry, policy, context.fieldEntries)
+          : !Array.isArray(target)
           ? { label: `${name} → ? (split${policy})`, children: [] }
           : {
               label: `${name} (split${policy})`,
@@ -857,14 +950,20 @@ export function renderMappingReport(input: MappingReportInput): string {
   const fields = isPlainObject(rawFields) ? rawFields : {};
 
   const items: Item[] = [];
+  const routedFields = new Set<string>();
+  for (const entry of Object.values(fields)) {
+    for (const field of routedSplitFields(entry)) routedFields.add(field);
+  }
   let todoCount = 0;
   for (const [name, entry] of Object.entries(fields)) {
+    if (routedFields.has(name)) continue;
     if (isPlainObject(entry) && entry.kind === "TODO") {
       todoCount++;
       continue;
     }
     items.push(
       renderItem(name, entry, undefined, [], {
+        fieldEntries: fields,
         sourceSchema: input.sourceSchema,
         mappingDocuments: input.mappingDocuments,
       })

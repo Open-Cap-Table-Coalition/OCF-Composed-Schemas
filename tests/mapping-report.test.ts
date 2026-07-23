@@ -83,6 +83,55 @@ describe("renderMappingReport", () => {
     );
   });
 
+  it("renders value-routed splits as grouped multi-field branches", () => {
+    const out = renderMappingReport({
+      file: "types/TerminationWindow.mapping.md",
+      frontmatter: { target_standard: "Carta" },
+      mapping: {
+        status: "complete",
+        coverage: "3/3",
+        fields: {
+          reason: {
+            kind: "split",
+            target: ["#/count", "#/period"],
+            routes: {
+              DEATH: {
+                period: "#/count",
+                period_type: "#/period",
+              },
+              OTHER: {
+                period: "#/count",
+                period_type: "#/period",
+              },
+              GOOD_CAUSE: null,
+            },
+          },
+          period: { kind: "split", target: ["#/count", "#/other"] },
+          period_type: {
+            kind: "enum-remap",
+            target: "#/period",
+            values: { DAYS: "EXERCISE_PERIOD_DAY", MONTHS: "EXERCISE_PERIOD_MONTH" },
+          },
+        },
+      },
+    });
+    expect(out).toBe(
+      [
+        "types/TerminationWindow.mapping.md  complete 3/3 → Carta",
+        "└── reason (split; routes by value)",
+        "    ├── DEATH",
+        "    │   ├── period → #/count",
+        "    │   └── period_type → #/period (enum-remap)",
+        "    │       ├── DAYS → EXERCISE_PERIOD_DAY",
+        "    │       └── MONTHS → EXERCISE_PERIOD_MONTH",
+        "    ├── OTHER",
+        "    │   ├── period → #/count",
+        "    │   └── period_type → #/period (enum-remap; same value mapping)",
+        "    └── GOOD_CAUSE ✗ dropped",
+      ].join("\n")
+    );
+  });
+
   it("renders all-TODO file as header + suffix only", () => {
     const out = renderMappingReport({
       file: "objects/Y.mapping.md",

@@ -403,6 +403,7 @@ function validateFieldMap(
     );
     const sourceEnumValues = detectEnumValues(properties[name], input.registry);
     validateValuesBlock(entry, name, kind, strict, sourceEnumValues, err);
+    validateRoutesBlock(entry, name, kind, sourceEnumValues, fields, input.targetBundle, err);
     if (input.targetBundle !== null) {
       validateEntryTargets(entry, name, kind, strict, sourceEnumValues, input.targetBundle, err);
     }
@@ -1572,6 +1573,89 @@ function validateValuesBlock(
     }
     if (typeof v !== "string") {
       err(name, `values.${key} must be a string, null, or TODO`);
+    }
+  }
+}
+
+/**
+ * Validate a value-routed split. Unlike enum-remap's values map, routes describe
+ * which source fields populate the target branch selected by an enum value. A
+ * branch may therefore carry one target or a coordinated set of targets.
+ */
+function validateRoutesBlock(
+  entry: Record<string, unknown>,
+  name: string,
+  kind: string,
+  sourceEnumValues: string[] | null,
+  fields: Record<string, unknown>,
+  bundle: unknown | null,
+  err: ErrFn
+): void {
+  const routes = entry.routes;
+  if (routes === undefined) return;
+
+  if (kind !== "split") {
+    err(name, "routes: is only valid on split entries");
+    return;
+  }
+  if (sourceEnumValues === null) {
+    err(name, "routes: present but the source property is not enum-typed");
+    return;
+  }
+  if (!isPlainObject(routes)) {
+    err(name, "routes: must be a map of OCF enum value → source field → target pointer");
+    return;
+  }
+
+  for (const key of Object.keys(routes)) {
+    if (!sourceEnumValues.includes(key)) {
+      err(name, `routes key "${key}" is not an OCF enum value of this property`);
+    }
+  }
+  for (const value of sourceEnumValues) {
+    if (!(value in routes)) err(name, `routes map is missing OCF enum value "${value}"`);
+  }
+
+  const declaredTargets = Array.isArray(entry.target)
+    ? entry.target.filter((target): target is string => typeof target === "string")
+    : [];
+
+  for (const [value, rawBranch] of Object.entries(routes)) {
+    if (rawBranch === null) continue;
+    if (!isPlainObject(rawBranch)) {
+      err(name, `routes.${value} must be null or a map of source field → target pointer`);
+      continue;
+    }
+    if (Object.keys(rawBranch).length === 0) {
+      err(name, `routes.${value} must name at least one source field, or use null`);
+      continue;
+    }
+
+    for (const [field, target] of Object.entries(rawBranch)) {
+      if (!(field in fields)) {
+        err(name, `routes.${value}.${field} refers to a source field not present in fields:`);
+      }
+      if (target !== null && typeof target !== "string") {
+        err(name, `routes.${value}.${field} must be a target pointer or null`);
+        continue;
+      }
+      if (target === null) continue;
+      if (!target.startsWith("#/")) {
+        err(name, `routes.${value}.${field} target "${target}" must be a "#/..." JSON pointer`);
+        continue;
+      }
+      if (!declaredTargets.includes(target)) {
+        err(
+          name,
+          `routes.${value}.${field} target "${target}" must also appear in the split target list`
+        );
+      }
+      if (bundle !== null && !resolveJsonPointer(bundle, target).found) {
+        err(
+          name,
+          `routes.${value}.${field} target "${target}" does not resolve in the target bundle`
+        );
+      }
     }
   }
 }
