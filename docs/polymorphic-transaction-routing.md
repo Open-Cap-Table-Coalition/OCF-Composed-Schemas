@@ -252,8 +252,10 @@ entries; `--verbose` reports the derived `X/N` values, and
 | Join declared **and routes counted** | if `route_by_property:` uses `lookup_by`: `key` ∈ source properties; `through.mapping` and `through.on_property` resolve; and the inferred enum is partitioned just like the issuance side |
 
 `--verbose` renders the routing line plus an effective **variant → target object → source field**
-tree. Truly identical shared decisions appear once under `common`; fields whose homes diverge
-are projected into the routed family and grouped beneath the Carta `$defs` object they target.
+tree. Truly identical shared decisions appear once at the bottom under `shared across all variants`;
+each affected variant is annotated with `+N shared` so those rows stay deduplicated without looking
+like another routing case. Fields whose homes diverge are projected into the routed family and grouped
+beneath the Carta `$defs` object they target.
 Composite mappings add a `composite` step between the family and target object, while residual
 unmappable/shared decisions remain visible under `other mappings` or `unmappable`. This keeps the
 CI output auditable without making readers reconstruct the target object from a per-field map.

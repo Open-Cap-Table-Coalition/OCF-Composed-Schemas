@@ -197,7 +197,8 @@ variants' `when:` sets **partition** the routed enum — pairwise disjoint, and 
 each `primary_targets` pointer resolves (and is not the `true` sentinel); each variant's
 `shared:` ∪ `fields:` map is validated and covers every source property. `--verbose` prints the
 routing, each variant's derived coverage, and its target-object-first field routes; identical shared
-decisions are shown once under `common`.
+decisions are shown once at the bottom under `shared across all variants`, with each affected variant
+annotated as `+N shared`.
 
 To review coverage across the whole mapping corpus, run `npm run mapping:coverage`. It writes the
 generated [`mapping-coverage.md`](./mapping-coverage.md) heatmap. CI runs

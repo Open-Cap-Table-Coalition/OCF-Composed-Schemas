@@ -472,11 +472,10 @@ describe("polymorphic mapping — downstream (route_by_property)", () => {
     });
     expect(out).toContain("polymorphic");
     expect(out).toContain("route_by_property: comp_type (self)");
-    expect(out).toContain("common (1)");
-    expect(out).toContain("Option [OPT] (3/3)");
+    expect(out).toContain("Option [OPT] (3/3; +1 shared)");
     expect(out).toContain("OptionGrant");
     expect(out).toContain("exercise_price → exercisePrice (rename)");
-    expect(out).not.toContain("shared (1)");
+    expect(out).toContain("shared across all variants (1; shown once)");
     expect(out).toMatch(/comp_type ✗ unmappable/); // unmappable route shown
     expect(out).not.toMatch(/complete \? →/);
   });

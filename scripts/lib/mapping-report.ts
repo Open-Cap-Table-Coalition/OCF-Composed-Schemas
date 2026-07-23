@@ -783,17 +783,9 @@ export function renderMappingReport(input: MappingReportInput): string {
       effective.set(label, effectiveVariantFields(input.mapping, label, stepIds));
     }
     const common = commonFields(input.mapping, variantLabels, effective, stepIds.length > 0);
+    const commonCount = Object.keys(common).length;
 
     const roots: Tree[] = [{ label: routing, children: [] }];
-    if (Object.keys(common).length > 0) {
-      roots.push({
-        label: `common (${Object.keys(common).length})`,
-        children: targetFields(common, [], variantTargets, {
-          sourceSchema: input.sourceSchema,
-          mappingDocuments: input.mappingDocuments,
-        }),
-      });
-    }
     for (const [label, rawV] of Object.entries(rawVariants)) {
       const v = isPlainObject(rawV) ? rawV : {};
       const fields = effective.get(label) ?? {};
@@ -841,8 +833,19 @@ export function renderMappingReport(input: MappingReportInput): string {
         });
       }
       roots.push({
-        label: `${label}${when} (${coverageLabel})`,
+        label: `${label}${when} (${coverageLabel}${
+          commonCount > 0 ? `; +${commonCount} shared` : ""
+        })`,
         children,
+      });
+    }
+    if (commonCount > 0) {
+      roots.push({
+        label: `shared across all variants (${commonCount}; shown once)`,
+        children: targetFields(common, [], variantTargets, {
+          sourceSchema: input.sourceSchema,
+          mappingDocuments: input.mappingDocuments,
+        }),
       });
     }
     return [`${input.file}  ${status} polymorphic → ${target}`, ...renderTree(roots)].join("\n");
