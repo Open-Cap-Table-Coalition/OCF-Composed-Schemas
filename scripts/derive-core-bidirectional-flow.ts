@@ -13,8 +13,8 @@
  *                  edge); a Carta field is left behind if no mapping ever targets it —
  *                  Carta richness Core (being OCF-shaped) can't hold.
  *
- * One `deriveCore` call; the Carta side uses the corpus's property-level
- * `targetedPointers`. Read-only; writes docs/core-bidirectional-flow.md.
+ * One `deriveCore` call; the Carta side uses the shared inverse-coverage
+ * ledger. Read-only; writes docs/core-bidirectional-flow.md.
  *
  *   npm run core:bidi
  */
@@ -23,8 +23,8 @@ import { writeFile } from "node:fs/promises";
 import { pathToFileURL } from "node:url";
 
 import { deriveCore, Derived, isMember, RICH_PROFILE } from "./lib/core-pipeline.js";
-import { isPlainObject } from "./lib/mapping-validator.js";
 import { BOOKKEEPING, buildTargetIndex } from "./lib/report-helpers.js";
+import { buildInverseCoverage, InverseCoverageLedger } from "./lib/inverse-coverage.js";
 import {
   EntityGroup,
   FlowRow,
@@ -34,13 +34,6 @@ import {
 } from "./lib/report-flow.js";
 
 const OUT_FILE = "docs/core-bidirectional-flow.md";
-
-/** A Carta `$def` is an object type if it has >1 property, or 1 that isn't a scalar `value`. */
-function isObjectType(def: unknown): boolean {
-  if (!isPlainObject(def) || !isPlainObject(def.properties)) return false;
-  const keys = Object.keys(def.properties as Record<string, unknown>);
-  return keys.length > 1 || (keys.length === 1 && keys[0] !== "value");
-}
 
 /** Pure render of docs/core-bidirectional-flow.md from a (rich) derivation — shared by build + check. */
 export function renderBidiDoc(d: Derived): string {
@@ -76,54 +69,33 @@ export function renderBidiDoc(d: Derived): string {
     for (const f of o.lossy) o.dropped.delete(f);
   }
 
-  // --- Carta → Core: which Carta object properties are targeted by a green mapping. ---
-  const targetedSlots = new Set<string>(); // "#/$defs/Obj/properties/prop"
-  const targetedRoots = new Set<string>(); // objects hit only at the root (primary_targets)
-  for (const ptr of d.corpus.targetedPointers) {
-    const slot = /^(#\/\$defs\/[^/]+\/properties\/[^/]+)/.exec(ptr);
-    if (slot) targetedSlots.add(slot[1] as string);
-    else {
-      const root = /^#\/\$defs\/([^/]+)$/.exec(ptr);
-      if (root) targetedRoots.add(root[1] as string);
-    }
-  }
-  // Slots a `defer:` placeholder claims — OCF *has* the data, extraction is just not
-  // built yet. These read as "deferred", not "no OCF source" (empty).
-  const deferredSlots = new Set<string>();
-  for (const ptr of d.corpus.deferredTargets) {
-    const slot = /^(#\/\$defs\/[^/]+\/properties\/[^/]+)/.exec(ptr);
-    if (slot) deferredSlots.add(slot[1] as string);
-  }
-  const cartaDefs = (d.corpus.bundle as { $defs?: Record<string, unknown> }).$defs ?? {};
+  // --- Carta → Core: shared inverse ledger (slots, reusable types, and defs). ---
+  const inverse = buildInverseCoverage(d.corpus);
   interface CartaObj {
-    filled: string[];
+    direct: string[];
+    typeOnly: string[];
+    implicit: string[];
     deferred: string[];
     empty: string[];
   }
   const carta = new Map<string, CartaObj>();
-  const untargetedNames: string[] = [];
-  for (const [name, def] of Object.entries(cartaDefs)) {
-    if (!isObjectType(def)) continue;
-    const props = Object.keys((def as { properties: Record<string, unknown> }).properties);
-    const slot = (p: string) => `#/$defs/${name}/properties/${p}`;
-    const filled = props.filter((p) => targetedSlots.has(slot(p)));
-    const deferred = props.filter((p) => !targetedSlots.has(slot(p)) && deferredSlots.has(slot(p)));
-    const empty = props.filter((p) => !targetedSlots.has(slot(p)) && !deferredSlots.has(slot(p)));
-    if (filled.length === 0 && deferred.length === 0 && !targetedRoots.has(name)) {
-      untargetedNames.push(name); // no field-level mapping targets it — see gap report (b)
-      continue;
+  for (const def of inverse.defs) {
+    const defSlots = inverse.slots.filter((slot) => slot.def === def.name);
+    const direct = defSlots.filter((slot) => slot.status === "direct").map((slot) => slot.property);
+    const typeOnly = defSlots
+      .filter((slot) => slot.status === "type-only")
+      .map((slot) => slot.property);
+    const implicit = defSlots
+      .filter((slot) => slot.status === "implicit")
+      .map((slot) => slot.property);
+    const deferred = defSlots
+      .filter((slot) => slot.status === "deferred")
+      .map((slot) => slot.property);
+    const empty = defSlots.filter((slot) => slot.status === "empty").map((slot) => slot.property);
+    if (direct.length || typeOnly.length || implicit.length || deferred.length || def.directRoot) {
+      carta.set(def.name, { direct, typeOnly, implicit, deferred, empty });
     }
-    carta.set(name, { filled, deferred, empty });
   }
-  // Some untargeted $defs are $ref-reachable from a TARGETED parent, so OCF data still
-  // flows into them via that parent (e.g. the `…VestingEvent` / `…PrecededBy` element
-  // types) — those are NOT "whole concepts OCF lacks". Split the count so the prose
-  // doesn't overstate the OCF-less set.
-  const untargetedObjectCount = untargetedNames.length;
-  const untargetedReachable = untargetedNames.filter((n) =>
-    d.corpus.transitivelyCoveredDefs.has(n)
-  ).length;
-
   // Member (flow-in) fields with their Carta targets, plus the per-object loss
   // lists, for the grouped hub diagrams.
   const targetOf = buildTargetIndex(d.corpus.objects);
@@ -171,16 +143,7 @@ export function renderBidiDoc(d: Derived): string {
     }
   }
 
-  return render(
-    ocf,
-    carta,
-    untargetedObjectCount,
-    untargetedReachable,
-    memberGroups,
-    ocfLost,
-    cartaUnfilled,
-    constFills
-  );
+  return render(ocf, carta, inverse, memberGroups, ocfLost, cartaUnfilled, constFills);
 }
 
 /** Derive (rich profile) and write docs/core-bidirectional-flow.md. */
@@ -198,9 +161,17 @@ function render(
     string,
     { clean: Set<string>; lossy: Set<string>; dropped: Set<string>; admissible: boolean }
   >,
-  carta: Map<string, { filled: string[]; deferred: string[]; empty: string[] }>,
-  untargetedObjects: number,
-  untargetedReachable: number,
+  carta: Map<
+    string,
+    {
+      direct: string[];
+      typeOnly: string[];
+      implicit: string[];
+      deferred: string[];
+      empty: string[];
+    }
+  >,
+  inverse: InverseCoverageLedger,
   memberGroups: EntityGroup[],
   ocfLost: Map<string, string[]>,
   cartaUnfilled: Map<string, string[]>,
@@ -209,7 +180,9 @@ function render(
   const ocfClean = sum([...ocf.values()].map((o) => o.clean.size));
   const ocfLossy = sum([...ocf.values()].map((o) => o.lossy.size));
   const ocfDropped = sum([...ocf.values()].map((o) => o.dropped.size));
-  const cartaFilled = sum([...carta.values()].map((c) => c.filled.length));
+  const cartaDirect = sum([...carta.values()].map((c) => c.direct.length));
+  const cartaTypeOnly = sum([...carta.values()].map((c) => c.typeOnly.length));
+  const cartaImplicit = sum([...carta.values()].map((c) => c.implicit.length));
   const cartaDeferred = sum([...carta.values()].map((c) => c.deferred.length));
   const cartaEmpty = sum([...carta.values()].map((c) => c.empty.length));
 
@@ -233,7 +206,7 @@ function render(
     `  OCF["OCF"]:::in -->|"${ocfClean} clean + ${ocfLossy} lossy"| CORE`,
     `  OCF -.->|"${ocfDropped} left behind"| ocfvoid["⌀ dropped (no Carta home)"]:::out`,
     '  CORE["OCF Core (rich)"]:::core',
-    `  Carta["Carta"]:::in -->|"${cartaFilled} fields"| CORE`,
+    `  Carta["Carta"]:::in -->|"${cartaDirect} direct + ${cartaTypeOnly} type-only + ${cartaImplicit} implicit"| CORE`,
     ...(cartaDeferred
       ? [
           `  Carta -.->|"${cartaDeferred} deferred"| deferbox["⏳ deferred (OCF has it, extraction TODO)"]:::defer`,
@@ -244,14 +217,35 @@ function render(
     "",
     "- **OCF → Core**: a property flows in if it is a Core member (mapped, even lossily); it is",
     "  left behind only if it has **no Carta home** (`no-destination`).",
-    "- **Carta → Core**: a Carta field flows in if some mapping targets it (a Carta doc can fill",
-    `  that Core slot); left behind = a Carta field no mapping targets. Plus **${untargetedObjects}**`,
-    "  object-typed Carta `$defs` get no field-level mapping — of these, " +
-      `**${untargetedReachable}** are \`$ref\`-reachable from a targeted parent (OCF data flows in`,
-    "  via the parent, e.g. the `…VestingEvent` / `…PrecededBy` element types), leaving " +
-      `**${untargetedObjects - untargetedReachable}** untouched: mostly concepts OCF lacks (rollup`,
-    "  summaries, phantom/PIU families) plus a few shared value-types (`Date`, `Jurisdiction`).",
-    "  See gap report b.",
+    "- **Carta → Core**: direct slots are populated by executable object/composite mappings;",
+    "  type-only slots are reusable correspondences whose concrete object context is supplied",
+    "  separately; implicit slots come from deterministic constants. Empty slots are reported",
+    "  separately from unmapped `$defs` so root shape, nested coverage, and semantic type coverage",
+    "  are not conflated.",
+    "",
+    "## Inverse metrics",
+    "",
+    "These counts are mutually descriptive dimensions of the same ledger, not a single loss total.",
+    "",
+    "| Carta-side dimension | count |",
+    "| --- | ---: |",
+    `| Carta \`$defs\` total | ${inverse.metrics.totalDefs} |`,
+    `| object-like Carta \`$defs\` | ${inverse.metrics.objectDefs} |`,
+    `| Carta object slots | ${inverse.metrics.objectSlots} |`,
+    `| defs with direct executable coverage | ${inverse.metrics.directDefs} |`,
+    `| direct executable slots | ${inverse.metrics.directSlots} |`,
+    `| defs with type-only slots | ${inverse.metrics.typeOnlyDefs} |`,
+    `| defs with only type-only coverage | ${inverse.metrics.typeOnlyOnlyDefs} |`,
+    `| type-only slots | ${inverse.metrics.typeOnlySlots} |`,
+    `| implicit constant slots | ${inverse.metrics.implicitSlots} |`,
+    `| deferred slots | ${inverse.metrics.deferredSlots} |`,
+    `| structurally nested-covered defs | ${inverse.metrics.nestedCoveredDefs} |`,
+    `| expected report roll-ups | ${inverse.metrics.reportRollupDefs} |`,
+    `| alternate/unreachable shapes | ${inverse.metrics.alternateDefs} |`,
+    `| vendor-only family candidates | ${inverse.metrics.vendorFamilyDefs} |`,
+    `| workflow/data-shape gap candidates | ${inverse.metrics.workflowGapDefs} |`,
+    `| actionable inverse gap candidates | ${inverse.metrics.actionableGapDefs} |`,
+    `| unresolved role-review candidates | ${inverse.metrics.reviewDefs} |`,
     "",
     "## Hub flow — per related group (what flows in vs is lost, both sides)",
     "",
@@ -289,8 +283,9 @@ function render(
     "",
     "## Carta → Core — per object (which Carta fields OCF fills vs leaves empty)",
     "",
-    "Only Carta objects a green mapping writes into. `filled` = a Core slot a Carta doc can",
-    "populate; `left behind` = Carta capability Core (being OCF-shaped) doesn't represent.",
+    "Only Carta objects with direct, reusable, implicit, or deferred evidence are listed here.",
+    "`direct` = executable object/composite edge; `type-only` = reusable type correspondence;",
+    "`implicit` = fixed deterministic value; `left behind` = an empty slot on this Carta object.",
     "",
     "Caveat: `left behind` is slot-level. Carta denormalizes issuance-time attributes across a",
     "security object and its issuance transaction (`OptionGrant`↔`OptionIssuanceTransaction`,",
@@ -301,8 +296,8 @@ function render(
     "`deferred` = a slot a field's `defer:` placeholder claims: OCF *has* the data, the nested",
     "extraction just isn't built yet (see the ledger's Deferred mappings). Not counted as left behind.",
     "",
-    "| Carta object | fills | deferred | left behind | left-behind fields |",
-    "| --- | ---: | ---: | ---: | --- |"
+    "| Carta object | direct | type-only | implicit | deferred | left behind | left-behind fields |",
+    "| --- | ---: | ---: | ---: | ---: | ---: | --- |"
   );
   for (const [name, c] of [...carta.entries()].sort(
     (a, b) =>
@@ -312,7 +307,7 @@ function render(
   )) {
     const left = c.empty.length ? c.empty.join(", ") : "—";
     lines.push(
-      `| ${name} | ${c.filled.length} | ${c.deferred.length} | ${c.empty.length} | ${left} |`
+      `| ${name} | ${c.direct.length} | ${c.typeOnly.length} | ${c.implicit.length} | ${c.deferred.length} | ${c.empty.length} | ${left} |`
     );
   }
   lines.push("");
