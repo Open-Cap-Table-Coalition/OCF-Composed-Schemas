@@ -251,8 +251,12 @@ entries; `--verbose` reports the derived `X/N` values, and
 | Per-variant coverage | for `complete`/`reviewed`, every source property in `shared:` ∪ `variant.fields` for each variant; the derived numerator counts valid non-`TODO` entries |
 | Join declared **and routes counted** | if `route_by_property:` uses `lookup_by`: `key` ∈ source properties; `through.mapping` and `through.on_property` resolve; and the inferred enum is partitioned just like the issuance side |
 
-`--verbose` renders the routing line plus **each variant's per-field routes** as a nested tree
-(`shared:` shown once), so the routes are auditable in CI output, not just pass/fail.
+`--verbose` renders the routing line plus an effective **variant → target object → source field**
+tree. Truly identical shared decisions appear once under `common`; fields whose homes diverge
+are projected into the routed family and grouped beneath the Carta `$defs` object they target.
+Composite mappings add a `composite` step between the family and target object, while residual
+unmappable/shared decisions remain visible under `other mappings` or `unmappable`. This keeps the
+CI output auditable without making readers reconstruct the target object from a per-field map.
 
 ### 4.6 Minimal parser + validator changes
 
