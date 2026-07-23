@@ -24,9 +24,11 @@ jobs:
         run: |
           mkdir -p ci-artifacts
           set +e
-          npm run mapping:inverse > ci-artifacts/mapping-inverse-report.txt 2>&1
+          npm run --silent mapping:inverse > ci-artifacts/mapping-inverse-report.txt 2>&1
           status=$?
+          echo '```text' >> "$GITHUB_STEP_SUMMARY"
           cat ci-artifacts/mapping-inverse-report.txt >> "$GITHUB_STEP_SUMMARY"
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
           exit "$status"
       - name: Upload inverse mapping report
         if: always()

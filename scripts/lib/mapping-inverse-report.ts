@@ -195,24 +195,18 @@ function sortedTargetFields(
   });
 }
 
-function renderObject(
+function renderMappingTree(
   object: string,
   group: TargetGroup,
-  targetBundle: RawSchema | undefined,
-  prefix: string,
-  connector: "├── " | "└── "
+  targetBundle: RawSchema | undefined
 ): string[] {
-  const hasMappings = group.flows.size > 0;
-  const lines = [`${prefix}${connector}${object}${hasMappings ? "" : " [NO MAPPINGS]"}`];
-  if (!hasMappings) return lines;
-
   const fields = sortedTargetFields(object, group, targetBundle);
-  const childPrefix = prefix + (connector === "└── " ? "    " : "│   ");
+  const lines: string[] = [];
   fields.forEach((field, fieldIndex) => {
     const lastField = fieldIndex === fields.length - 1;
     const flows: InverseFlow[] = group.flows.get(field) ?? [];
-    lines.push(`${childPrefix}${lastField ? "└── " : "├── "}${field}`);
-    const flowPrefix = childPrefix + (lastField ? "    " : "│   ");
+    lines.push(`${lastField ? "└── " : "├── "}${field}`);
+    const flowPrefix = lastField ? "    " : "│   ";
     if (flows.length === 0) {
       lines.push(`${flowPrefix}└── ✗ no mapped OCF source`);
       return;
@@ -226,26 +220,67 @@ function renderObject(
   return lines;
 }
 
-function renderObjectCategory(
-  label: string,
+function boxLine(content: string, innerWidth: number): string {
+  return `│ ${content.padEnd(innerWidth - 2)} │`;
+}
+
+function renderBox(title: string, metadata: string[], body: string[] = []): string[] {
+  const titleText = ` ${title} `;
+  const innerWidth =
+    Math.max(
+      titleText.length,
+      ...metadata.map((line) => line.length),
+      ...body.map((line) => line.length)
+    ) + 2;
+  const lines = [
+    `╭${titleText}${"─".repeat(innerWidth - titleText.length)}╮`,
+    ...metadata.map((line) => boxLine(line, innerWidth)),
+  ];
+  if (body.length > 0) {
+    lines.push(`├${"─".repeat(innerWidth)}┤`);
+    lines.push(...body.map((line) => boxLine(line, innerWidth)));
+  }
+  lines.push(`╰${"─".repeat(innerWidth)}╯`);
+  return lines;
+}
+
+function flowCount(group: TargetGroup): number {
+  return [...group.flows.values()].reduce((count, flows) => count + flows.length, 0);
+}
+
+function renderObjectPanel(
+  object: string,
+  group: TargetGroup,
+  targetBundle: RawSchema | undefined
+): string[] {
+  const hasMappings = group.flows.size > 0;
+  const fields = sortedTargetFields(object, group, targetBundle);
+  const unmappedProperties = hasMappings
+    ? fields.filter((field) => (group.flows.get(field) ?? []).length === 0).length
+    : 0;
+  const metadata = [
+    `name: ${object}`,
+    `id: "#/$defs/${object}"`,
+    `status: ${hasMappings ? (unmappedProperties > 0 ? "PARTIAL" : "MAPPED") : "NO MAPPINGS"}`,
+    `incoming_mappings: ${flowCount(group)}`,
+  ];
+  if (hasMappings) metadata.push(`unmapped_properties: ${unmappedProperties}`);
+  const body = hasMappings ? renderMappingTree(object, group, targetBundle) : ["(empty mapping)"];
+  return renderBox(`Carta object: ${object}`, metadata, body);
+}
+
+function renderSection(
+  title: string,
   objects: string[],
   groups: Map<string, TargetGroup>,
-  targetBundle: RawSchema | undefined,
-  prefix: string,
-  connector: "├── " | "└── "
+  targetBundle: RawSchema | undefined
 ): string[] {
-  const lines = [`${prefix}${connector}${label} (${objects.length})`];
-  const childPrefix = prefix + (connector === "└── " ? "    " : "│   ");
+  const lines = [`${title} (${objects.length})`];
   objects.forEach((object, index) => {
     lines.push(
-      ...renderObject(
-        object,
-        groups.get(object) ?? { object, flows: new Map() },
-        targetBundle,
-        childPrefix,
-        index === objects.length - 1 ? "└── " : "├── "
-      )
+      ...renderObjectPanel(object, groups.get(object) ?? { object, flows: new Map() }, targetBundle)
     );
+    if (index < objects.length - 1) lines.push("");
   });
   return lines;
 }
@@ -259,7 +294,13 @@ export function renderMappingInverseReport(options: MappingInverseReportOptions)
     ? [options.targetObject].filter((object) => groups.has(object) || bundleObjects.has(object))
     : [...new Set([...groups.keys(), ...bundleObjects])].sort();
 
-  const lines = [`Carta inverse mapping report (${options.documents.size} source documents)`];
+  const mappedTargets = selected.filter((object) => (groups.get(object)?.flows.size ?? 0) > 0);
+  const unmappedObjects = selected.filter((object) => (groups.get(object)?.flows.size ?? 0) === 0);
+  const lines = renderBox("Carta inverse mapping report", [
+    `source_documents: ${options.documents.size}`,
+    `mapped_targets: ${mappedTargets.length}`,
+    `unmapped_objects: ${unmappedObjects.length}`,
+  ]);
   if (options.targetObject) {
     if (selected.length === 0) {
       lines.push("└── no target flows found");
@@ -267,46 +308,33 @@ export function renderMappingInverseReport(options: MappingInverseReportOptions)
     }
     const object = selected[0]!;
     lines.push(
-      ...renderObject(
+      "",
+      ...renderObjectPanel(
         object,
         groups.get(object) ?? { object, flows: new Map() },
-        options.targetBundle,
-        "",
-        "└── "
+        options.targetBundle
       )
     );
     return lines.join("\n");
   }
 
-  const mappedTargets = selected.filter((object) => (groups.get(object)?.flows.size ?? 0) > 0);
-  const unmappedObjects = selected.filter((object) => (groups.get(object)?.flows.size ?? 0) === 0);
-  const categories = [mappedTargets.length > 0, unmappedObjects.length > 0].filter(Boolean).length;
-  let categoryIndex = 0;
   if (mappedTargets.length > 0) {
-    categoryIndex++;
     lines.push(
-      ...renderObjectCategory(
-        "Carta targets with mappings",
-        mappedTargets,
-        groups,
-        options.targetBundle,
-        "",
-        categoryIndex === categories ? "└── " : "├── "
-      )
+      "",
+      ...renderSection("Carta targets with mappings", mappedTargets, groups, options.targetBundle)
     );
   }
   if (unmappedObjects.length > 0) {
     lines.push(
-      ...renderObjectCategory(
+      "",
+      ...renderSection(
         "Carta objects with no mappings",
         unmappedObjects,
         groups,
-        options.targetBundle,
-        "",
-        "└── "
+        options.targetBundle
       )
     );
   }
-  if (selected.length === 0) lines.push("└── no target flows found");
+  if (selected.length === 0) lines.push("", "(no target flows found)");
   return lines.join("\n");
 }

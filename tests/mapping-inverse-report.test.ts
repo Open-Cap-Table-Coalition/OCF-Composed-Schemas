@@ -51,7 +51,8 @@ describe("renderMappingInverseReport", () => {
       targetObject: "ConvertibleNote",
     });
 
-    expect(out).toContain("Carta inverse mapping report (2 source documents)");
+    expect(out).toContain("source_documents: 2");
+    expect(out).toContain('id: "#/$defs/ConvertibleNote"');
     expect(out).toContain("types/SAFE.mapping.md :: discount (rename)");
     expect(out).toContain("types/Note.mapping.md :: conversion_discount (rename)");
     expect(out).toContain("priceCap");
@@ -103,8 +104,9 @@ describe("renderMappingInverseReport", () => {
     });
 
     expect(out).toContain("Carta objects with no mappings (2)");
-    expect(out).toContain("EmptyObject [NO MAPPINGS]");
-    expect(out).toContain("EmptyWithProperties [NO MAPPINGS]");
+    expect(out).toContain("name: EmptyObject");
+    expect(out).toContain("name: EmptyWithProperties");
+    expect(out).toContain("status: NO MAPPINGS");
     expect(out).not.toContain("✗ no mapped OCF source");
   });
 });

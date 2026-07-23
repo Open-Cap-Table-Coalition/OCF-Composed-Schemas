@@ -112,7 +112,8 @@ describe("validate-mappings CLI (temp tree)", () => {
   it("prints a target-first inverse report", async () => {
     await writeFile(path.join(root, "objects", "Thing.mapping.md"), mappingDoc({}));
     const { stdout } = await runCli(root, ["--inverse", "--target-object", "Thing"]);
-    expect(stdout).toContain("Carta inverse mapping report (1 source documents)");
+    expect(stdout).toContain("source_documents: 1");
+    expect(stdout).toContain('id: "#/$defs/Thing"');
     expect(stdout).toContain("objects/Thing.mapping.md :: name (rename)");
     expect(stdout).toMatch(/OK: checked 1 mapping file\(s\), 0 errors/);
   });
@@ -120,7 +121,8 @@ describe("validate-mappings CLI (temp tree)", () => {
   it("includes Carta objects with no incoming mappings in an unfiltered inverse report", async () => {
     await writeFile(path.join(root, "objects", "Thing.mapping.md"), mappingDoc({}));
     const { stdout } = await runCli(root, ["--inverse"]);
-    expect(stdout).toContain("EmptyObject [NO MAPPINGS]");
+    expect(stdout).toContain("name: EmptyObject");
+    expect(stdout).toContain("status: NO MAPPINGS");
     expect(stdout).toContain("Carta objects with no mappings (1)");
   });
 
