@@ -106,6 +106,34 @@ const REGISTRY: Registry = new Map([
   ["test://color-enum", { $id: "test://color-enum", enum: ["RED", "BLUE"] }],
 ]);
 
+const ROUTED_SOURCE_SCHEMA: RawSchema = {
+  $id: "test://routed-window",
+  properties: {
+    reason: { $ref: "test://reason-enum" },
+    period: { type: "integer" },
+    period_type: { $ref: "test://period-enum" },
+  },
+};
+
+const ROUTED_REGISTRY: Registry = new Map([
+  ["test://reason-enum", { $id: "test://reason-enum", enum: ["DEATH", "OTHER", "GOOD_CAUSE"] }],
+  ["test://period-enum", { $id: "test://period-enum", enum: ["DAYS", "MONTHS"] }],
+]);
+
+const ROUTED_BUNDLE = {
+  $defs: {
+    ExercisePeriods: {
+      type: "object",
+      properties: {
+        count: { type: "integer" },
+        period: { $ref: "#/$defs/Period" },
+        other: { type: "integer" },
+      },
+    },
+    Period: { type: "string", enum: ["EXERCISE_PERIOD_DAY", "EXERCISE_PERIOD_MONTH"] },
+  },
+};
+
 function frontmatter(over: Record<string, unknown> = {}): Record<string, unknown> {
   return {
     ocf_schema_id: "test://thing",
@@ -360,6 +388,51 @@ describe("validateMapping — entry shapes", () => {
         })
       )
     ).toEqual([]);
+  });
+
+  it("accepts paired multi-field routes on an enum split", () => {
+    const input = makeInput({
+      sourceSchema: ROUTED_SOURCE_SCHEMA,
+      registry: ROUTED_REGISTRY,
+      targetBundle: ROUTED_BUNDLE,
+      mapping: {
+        status: "complete",
+        fields: {
+          reason: {
+            kind: "split",
+            target: [
+              "#/$defs/ExercisePeriods/properties/count",
+              "#/$defs/ExercisePeriods/properties/period",
+            ],
+            routes: {
+              DEATH: {
+                period: "#/$defs/ExercisePeriods/properties/count",
+                period_type: "#/$defs/ExercisePeriods/properties/period",
+              },
+              OTHER: {
+                period: "#/$defs/ExercisePeriods/properties/count",
+                period_type: "#/$defs/ExercisePeriods/properties/period",
+              },
+              GOOD_CAUSE: null,
+            },
+          },
+          period: {
+            kind: "split",
+            target: [
+              "#/$defs/ExercisePeriods/properties/count",
+              "#/$defs/ExercisePeriods/properties/other",
+            ],
+          },
+          period_type: {
+            kind: "enum-remap",
+            target: "#/$defs/Period",
+            values: { DAYS: "EXERCISE_PERIOD_DAY", MONTHS: "EXERCISE_PERIOD_MONTH" },
+          },
+        },
+      },
+    });
+
+    expect(messages(input)).toEqual([]);
   });
 
   it("rejects an unregistered policy", () => {

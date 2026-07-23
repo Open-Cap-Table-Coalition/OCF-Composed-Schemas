@@ -79,14 +79,26 @@ fields:
       - "#/$defs/ExercisePeriods/properties/disabilityExercisePeriod"
       - "#/$defs/ExercisePeriods/properties/retirementExerciseCount"
       - "#/$defs/ExercisePeriods/properties/retirementExercisePeriod"
-    values:
-      VOLUNTARY_OTHER: "#/$defs/ExercisePeriods/properties/voluntaryTerminationCount"
+    routes:
+      VOLUNTARY_OTHER:
+        period: "#/$defs/ExercisePeriods/properties/voluntaryTerminationCount"
+        period_type: "#/$defs/ExercisePeriods/properties/voluntaryTerminationPeriod"
       VOLUNTARY_GOOD_CAUSE: null
-      VOLUNTARY_RETIREMENT: "#/$defs/ExercisePeriods/properties/retirementExerciseCount"
-      INVOLUNTARY_OTHER: "#/$defs/ExercisePeriods/properties/involuntaryTerminationCount"
-      INVOLUNTARY_DEATH: "#/$defs/ExercisePeriods/properties/deathExerciseCount"
-      INVOLUNTARY_DISABILITY: "#/$defs/ExercisePeriods/properties/disabilityExerciseCount"
-      INVOLUNTARY_WITH_CAUSE: "#/$defs/ExercisePeriods/properties/involuntaryTerminationCauseCount"
+      VOLUNTARY_RETIREMENT:
+        period: "#/$defs/ExercisePeriods/properties/retirementExerciseCount"
+        period_type: "#/$defs/ExercisePeriods/properties/retirementExercisePeriod"
+      INVOLUNTARY_OTHER:
+        period: "#/$defs/ExercisePeriods/properties/involuntaryTerminationCount"
+        period_type: "#/$defs/ExercisePeriods/properties/involuntaryTerminationPeriod"
+      INVOLUNTARY_DEATH:
+        period: "#/$defs/ExercisePeriods/properties/deathExerciseCount"
+        period_type: "#/$defs/ExercisePeriods/properties/deathExercisePeriod"
+      INVOLUNTARY_DISABILITY:
+        period: "#/$defs/ExercisePeriods/properties/disabilityExerciseCount"
+        period_type: "#/$defs/ExercisePeriods/properties/disabilityExercisePeriod"
+      INVOLUNTARY_WITH_CAUSE:
+        period: "#/$defs/ExercisePeriods/properties/involuntaryTerminationCauseCount"
+        period_type: "#/$defs/ExercisePeriods/properties/involuntaryTerminationCausePeriod"
   period:
     kind: split
     target:
@@ -123,8 +135,8 @@ fields:
   `…Count`; `period_type` fills that pair's `…Period`.
 - **`reason` (split + discriminator).** Modeled as a `split` because the single OCF value
   governs *which* Carta count/period pair is populated — both halves of the chosen pair.
-  The `values:` map records the OCF→Carta reason correspondence (anchored on each pair's
-  `…Count`; the parallel `…Period` is implied):
+  The `routes:` map records the complete OCF→Carta branch, naming the source field that
+  populates each member of the selected pair:
   - `VOLUNTARY_OTHER` → `voluntaryTermination*` (Carta's generic voluntary bucket).
   - `VOLUNTARY_RETIREMENT` → `retirementExercise*`.
   - `INVOLUNTARY_OTHER` → `involuntaryTermination*` (Carta's generic involuntary bucket).
@@ -154,4 +166,4 @@ fields:
   emitting Carta.
 - **Mapping completeness.** All three source properties have a home, with no
   unmappable entries; the only genuine loss is the `VOLUNTARY_GOOD_CAUSE` reason value, noted
-  above as `null` in the `reason` values map.
+  above as `null` in the `reason` routes map.
