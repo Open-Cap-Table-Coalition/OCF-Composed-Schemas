@@ -326,7 +326,7 @@ describe("routed_to: (verified round-trip edges)", () => {
         coverage: { Option: "1/1", Rsu: "1/1" },
       },
     });
-    expect(out).toContain('RSU → routed to "Rsu" variant: #/$defs/RsuTx');
+    expect(out).toContain('RSU → routed to "Rsu" variant: RsuTx');
     expect(out).not.toMatch(/RSU ✗ dropped/);
   });
 });
@@ -403,7 +403,7 @@ describe("per-variant target maps (divergent shared targets)", () => {
     expect(errs.some((s) => /per-variant target map.*only valid on shared/i.test(s))).toBe(true);
   });
 
-  it("renders each variant's target (or ✗) under the shared field in the verbose report", () => {
+  it("renders effective mappings under each variant's target object", () => {
     const out = renderMappingReport({
       file: "f.mapping.md",
       frontmatter: { target_standard: "Carta" },
@@ -423,8 +423,12 @@ describe("per-variant target maps (divergent shared targets)", () => {
         coverage: { Option: "1/1", Rsu: "1/1" },
       },
     });
-    expect(out).toContain("Option → #/$defs/OptionTx/properties/quantity");
-    expect(out).toContain("Rsu ✗ unmappable");
+    expect(out).toContain("Option [OPT] (1/1)");
+    expect(out).toContain("└── OptionTx\n│       └── quantity → quantity (rename)");
+    expect(out).toContain("Rsu [RSU] (1/1)");
+    expect(out).toContain("RsuTx");
+    expect(out).toContain("quantity ✗ unmappable");
+    expect(out).not.toContain("shared");
     expect(out).not.toMatch(/quantity → \? \(rename\)/);
   });
 });
@@ -468,11 +472,10 @@ describe("polymorphic mapping — downstream (route_by_property)", () => {
     });
     expect(out).toContain("polymorphic");
     expect(out).toContain("route_by_property: comp_type (self)");
-    expect(out).toContain("shared (1)"); // shared fields shown once
-    expect(out).toContain("Option (3/3)");
-    expect(out).toContain("#/$defs/OptionGrant"); // variant primary_target
-    // a per-variant route line, rendered with the same grammar as simple mappings:
-    expect(out).toContain("exercise_price → #/$defs/OptionTx/properties/exercisePrice (rename)");
+    expect(out).toContain("Option [OPT] (3/3; +1 shared)");
+    expect(out).toContain("OptionGrant");
+    expect(out).toContain("exercise_price → exercisePrice (rename)");
+    expect(out).toContain("shared across all variants (1; shown once)");
     expect(out).toMatch(/comp_type ✗ unmappable/); // unmappable route shown
     expect(out).not.toMatch(/complete \? →/);
   });
@@ -641,6 +644,20 @@ describe("composite: (one OCF transaction → an ordered set of Carta steps)", (
 
   it("accepts a valid composite mapping (per-family step targets + const + per-step field map)", () => {
     expect(messages(cinput())).toEqual([]);
+  });
+
+  it("renders composite mappings as family → step → target object", () => {
+    const out = renderMappingReport({
+      file: "objects/transactions/transfer/EC.mapping.md",
+      frontmatter: { target_standard: "Carta" },
+      mapping: compositeMapping(),
+    });
+    expect(out).toContain("Option [OPT] (1/1)");
+    expect(out).toContain("composite (2 steps, all emitted)");
+    expect(out).toContain("CancelTx");
+    expect(out).toContain("IssueTx");
+    expect(out).toContain("security_id → quantity (rename)");
+    expect(out).not.toContain("shared (1)");
   });
 
   it("rejects a composite step whose target does not resolve", () => {

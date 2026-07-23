@@ -1,6 +1,7 @@
 import { RawSchema } from "./registry.js";
 import { deriveMappingCoverage, formatCoverage } from "./mapping-coverage.js";
 import { getTransformPolicy } from "./mapping-policies.js";
+import { compositeStepIds, isStepKeyedTarget } from "./mapping-validator.js";
 
 /**
  * Pure renderer for the `--verbose` mapping report. Given a parsed mapping
@@ -387,17 +388,333 @@ function renderTree(nodes: Tree[], prefix = ""): string[] {
   return out;
 }
 
-function fieldTrees(
-  fields: unknown,
-  routeTargets?: Record<string, string[]>,
-  stepIds: string[] = [],
-  context: RenderContext = {}
+interface TargetField {
+  name: string;
+  entry: unknown;
+  pointers: string[];
+}
+
+function unescapePointerToken(value: string): string {
+  return value.replace(/~1/g, "/").replace(/~0/g, "~");
+}
+
+/** Identify the Carta `$defs` object and shorten a field pointer for display. */
+function targetPointerParts(pointer: string): { object: string; relative: string } {
+  const match = pointer.match(/^#\/\$defs\/([^/]+)(?:\/(.*))?$/);
+  if (!match) return { object: pointer || "?", relative: pointer || "?" };
+
+  const object = unescapePointerToken(match[1]!);
+  const remainder = match[2] ?? "";
+  const relative = remainder.replace(/^properties\//, "") || object;
+  return { object, relative };
+}
+
+function targetObjectName(pointer: unknown): string {
+  return typeof pointer === "string" ? targetPointerParts(pointer).object : "?";
+}
+
+function targetPointers(entry: unknown): string[] {
+  if (!isPlainObject(entry)) return [];
+
+  if (entry.kind === "union-map" && Array.isArray(entry.cases)) {
+    const pointers: string[] = [];
+    for (const rawCase of entry.cases) {
+      if (!isPlainObject(rawCase) || !isPlainObject(rawCase.mapping)) continue;
+      for (const pointer of targetPointers(rawCase.mapping)) {
+        if (!pointers.includes(pointer)) pointers.push(pointer);
+      }
+    }
+    return pointers;
+  }
+
+  if (entry.kind === "sequential_transform" && Array.isArray(entry.steps)) {
+    const pointers: string[] = [];
+    for (const step of entry.steps) {
+      if (!isPlainObject(step) || !Array.isArray(step.targets)) continue;
+      for (const pointer of step.targets) {
+        if (typeof pointer === "string" && pointer.startsWith("#/")) {
+          if (!pointers.includes(pointer)) pointers.push(pointer);
+        }
+      }
+    }
+    return pointers;
+  }
+
+  const target = entry.target;
+  if (typeof target === "string") return target.startsWith("#/") ? [target] : [];
+  if (Array.isArray(target)) {
+    return target.filter(
+      (pointer): pointer is string => typeof pointer === "string" && pointer.startsWith("#/")
+    );
+  }
+  return [];
+}
+
+function targetEntryForPointers(entry: unknown, pointers: string[]): unknown {
+  if (!isPlainObject(entry) || pointers.length === 0) return entry;
+  if (entry.kind === "union-map" || entry.kind === "sequential_transform") return entry;
+
+  if (Array.isArray(entry.target)) return { ...entry, target: pointers };
+  if (typeof entry.target === "string") {
+    return { ...entry, target: pointers[0] };
+  }
+  return entry;
+}
+
+function displayTargetEntry(entry: unknown, pointers: string[]): unknown {
+  const projected = targetEntryForPointers(entry, pointers);
+  if (!isPlainObject(projected)) return projected;
+  if (projected.kind === "union-map" || projected.kind === "sequential_transform") {
+    return projected;
+  }
+
+  const displayPointer = (pointer: unknown): string =>
+    typeof pointer === "string" ? targetPointerParts(pointer).relative : asStringOr(pointer, "?");
+  if (typeof projected.target === "string") {
+    return { ...projected, target: displayPointer(projected.target) };
+  }
+  if (Array.isArray(projected.target)) {
+    return { ...projected, target: projected.target.map(displayPointer) };
+  }
+  return projected;
+}
+
+function projectVariantEntry(entry: unknown, variant: string, stepIds: string[]): unknown {
+  if (!isPlainObject(entry) || !isPlainObject(entry.target)) return entry;
+
+  const target = entry.target;
+  if (isStepKeyedTarget(target, stepIds)) {
+    const projected: Record<string, unknown> = {};
+    for (const step of stepIds) {
+      const value = target[step];
+      projected[step] = isPlainObject(value) ? (variant in value ? value[variant] : null) : value;
+    }
+    return { ...entry, target: projected };
+  }
+
+  const projected = variant in target ? target[variant] : null;
+  if (
+    projected === null &&
+    typeof entry.kind === "string" &&
+    entry.kind !== "unmappable" &&
+    entry.kind !== "TODO"
+  ) {
+    return { ...entry, kind: "unmappable", target: null };
+  }
+  return { ...entry, target: projected };
+}
+
+function effectiveVariantFields(
+  mapping: Record<string, unknown>,
+  variant: string,
+  stepIds: string[]
+): Record<string, unknown> {
+  const fields: Record<string, unknown> = {};
+  const shared = isPlainObject(mapping.shared) ? mapping.shared : {};
+  for (const [name, entry] of Object.entries(shared)) {
+    fields[name] = projectVariantEntry(entry, variant, stepIds);
+  }
+
+  const rawVariant = isPlainObject(mapping.variants) ? mapping.variants[variant] : undefined;
+  const variantFields =
+    isPlainObject(rawVariant) && isPlainObject(rawVariant.fields) ? rawVariant.fields : {};
+  Object.assign(fields, variantFields);
+  return fields;
+}
+
+function entriesEqual(left: unknown, right: unknown): boolean {
+  return JSON.stringify(left) === JSON.stringify(right);
+}
+
+function commonFields(
+  mapping: Record<string, unknown>,
+  variants: string[],
+  effective: Map<string, Record<string, unknown>>,
+  composite: boolean
+): Record<string, unknown> {
+  if (composite || variants.length === 0 || !isPlainObject(mapping.shared)) return {};
+
+  const out: Record<string, unknown> = {};
+  for (const field of Object.keys(mapping.shared)) {
+    const first = effective.get(variants[0]!)?.[field];
+    if (variants.every((variant) => entriesEqual(effective.get(variant)?.[field], first))) {
+      out[field] = first;
+    }
+  }
+  return out;
+}
+
+function targetFields(
+  fields: Record<string, unknown>,
+  declaredTargets: string[],
+  routeTargets: Record<string, string[]>,
+  context: RenderContext
 ): Tree[] {
-  return isPlainObject(fields)
-    ? Object.entries(fields).map(([name, entry]) =>
-        itemToTree(renderItem(name, entry, routeTargets, stepIds, context))
-      )
-    : [];
+  const groups = new Map<string, { label: string; fields: TargetField[] }>();
+  for (const pointer of declaredTargets) {
+    const object = targetObjectName(pointer);
+    if (!groups.has(object)) groups.set(object, { label: object, fields: [] });
+  }
+
+  const unmappable: TargetField[] = [];
+  const todo: TargetField[] = [];
+  const unresolved: TargetField[] = [];
+
+  for (const [name, entry] of Object.entries(fields)) {
+    const pointers = targetPointers(entry);
+    if (pointers.length === 0) {
+      const item = { name, entry, pointers };
+      if (isPlainObject(entry) && entry.kind === "TODO") todo.push(item);
+      else if (isPlainObject(entry) && entry.kind === "unmappable") unmappable.push(item);
+      else unresolved.push(item);
+      continue;
+    }
+
+    const byObject = new Map<string, string[]>();
+    for (const pointer of pointers) {
+      const object = targetObjectName(pointer);
+      const objectPointers = byObject.get(object) ?? [];
+      objectPointers.push(pointer);
+      byObject.set(object, objectPointers);
+    }
+    for (const [object, objectPointers] of byObject) {
+      const group = groups.get(object) ?? { label: object, fields: [] };
+      group.fields.push({ name, entry, pointers: objectPointers });
+      groups.set(object, group);
+    }
+  }
+
+  const trees: Tree[] = [];
+  for (const group of groups.values()) {
+    trees.push({
+      label: group.label,
+      children: group.fields.map(({ name, entry, pointers }) =>
+        itemToTree(renderItem(name, displayTargetEntry(entry, pointers), routeTargets, [], context))
+      ),
+    });
+  }
+
+  const addSpecial = (label: string, items: TargetField[]) => {
+    if (items.length === 0) return;
+    trees.push({
+      label,
+      children: items.map(({ name, entry }) =>
+        itemToTree(renderItem(name, entry, routeTargets, [], context))
+      ),
+    });
+  };
+  addSpecial("unmappable", unmappable);
+  addSpecial("TODO", todo);
+  addSpecial("unresolved target", unresolved);
+  return trees;
+}
+
+function compositeTargetForVariant(step: unknown, variant: string): string[] {
+  if (!isPlainObject(step)) return [];
+  const target = step.target;
+  if (typeof target === "string") return [target];
+  if (Array.isArray(target))
+    return target.filter((value): value is string => typeof value === "string");
+  if (!isPlainObject(target)) return [];
+  const selected = target[variant];
+  if (typeof selected === "string") return [selected];
+  if (Array.isArray(selected))
+    return selected.filter((value): value is string => typeof value === "string");
+  return [];
+}
+
+function compositeFields(
+  fields: Record<string, unknown>,
+  variant: string,
+  step: string
+): Record<string, unknown> {
+  const out: Record<string, unknown> = {};
+  for (const [name, entry] of Object.entries(fields)) {
+    if (!isPlainObject(entry) || !isPlainObject(entry.target)) continue;
+    const target = entry.target[step];
+    if (typeof target === "string" || Array.isArray(target)) {
+      out[name] = { ...entry, target };
+      continue;
+    }
+    if (isPlainObject(target)) {
+      const selected = variant in target ? target[variant] : null;
+      if (typeof selected === "string" || Array.isArray(selected)) {
+        out[name] = { ...entry, target: selected };
+      }
+    }
+  }
+  return out;
+}
+
+function compositeStepPointers(fields: Record<string, unknown>, stepIds: string[]): Set<string> {
+  const used = new Set<string>();
+  for (const [name, entry] of Object.entries(fields)) {
+    if (!isPlainObject(entry) || !isPlainObject(entry.target)) continue;
+    if (!isStepKeyedTarget(entry.target, stepIds)) continue;
+    for (const step of stepIds) {
+      const value = entry.target[step];
+      if (typeof value === "string" && value.startsWith("#/")) used.add(name);
+      if (
+        Array.isArray(value) &&
+        value.some((pointer) => typeof pointer === "string" && pointer.startsWith("#/"))
+      ) {
+        used.add(name);
+      }
+    }
+  }
+  return used;
+}
+
+function compositeResidualFields(
+  fields: Record<string, unknown>,
+  stepIds: string[]
+): Record<string, unknown> {
+  const used = compositeStepPointers(fields, stepIds);
+  const out: Record<string, unknown> = {};
+  for (const [name, entry] of Object.entries(fields)) {
+    if (used.has(name)) continue;
+    if (
+      isPlainObject(entry) &&
+      isPlainObject(entry.target) &&
+      isStepKeyedTarget(entry.target, stepIds)
+    ) {
+      out[name] = entry.kind === "TODO" ? entry : { ...entry, kind: "unmappable", target: null };
+    } else {
+      out[name] = entry;
+    }
+  }
+  return out;
+}
+
+function compositeTrees(
+  fields: Record<string, unknown>,
+  variant: string,
+  variantLabels: string[],
+  composite: Record<string, unknown>[],
+  routeTargets: Record<string, string[]>,
+  context: RenderContext
+): Tree[] {
+  const trees: Tree[] = [];
+  for (const step of composite) {
+    const stepName = asStringOr(step.step, "?");
+    const stepFields = compositeFields(fields, variant, stepName);
+    const declared = compositeTargetForVariant(step, variant);
+    const children = targetFields(stepFields, declared, routeTargets, context);
+    if (isPlainObject(step.const)) {
+      const isVariantMap = Object.keys(step.const).some((key) => variantLabels.includes(key));
+      const value = isVariantMap ? step.const[variant] : step.const;
+      if (value !== undefined)
+        children.push({ label: `const: ${JSON.stringify(value)}`, children: [] });
+    }
+    trees.push({ label: stepName, children });
+  }
+  return trees;
+}
+
+function variantWhenLabel(rawVariant: unknown): string {
+  if (!isPlainObject(rawVariant) || !Array.isArray(rawVariant.when)) return "";
+  const values = rawVariant.when.map((value) => String(value)).join(", ");
+  return values ? ` [${values}]` : "";
 }
 
 export function renderMappingReport(input: MappingReportInput): string {
@@ -410,9 +727,10 @@ export function renderMappingReport(input: MappingReportInput): string {
     : asStringOr(input.mapping.coverage, "?");
   const target = asStringOr(input.frontmatter.target_standard, "?");
 
-  // Polymorphic mappings (route_by_property + variants) carry no
-  // top-level fields; render the routing plus each variant's per-field routes
-  // (shared fields shown once).
+  // Polymorphic mappings (route_by_property + variants) carry no top-level fields.
+  // Render the effective mapping target-first: route family → target object →
+  // source fields. The YAML remains shared/variant-oriented; this is the
+  // reader-facing projection of that same data.
   const rawVariants = input.mapping.variants;
   if (isPlainObject(rawVariants)) {
     const rbp = input.mapping.route_by_property;
@@ -441,61 +759,90 @@ export function renderMappingReport(input: MappingReportInput): string {
       ? input.mapping.coverage
       : {};
 
-    // variant label → its primary_targets, so routed_to edges can name the
-    // actual Carta destination ("routed to Rsu variant: RsuIssuanceTransaction").
+    const variantLabels = Object.keys(rawVariants);
+
+    // variant label → its primary target object names, so routed_to edges can
+    // name the actual Carta destination without repeating full JSON pointers.
     const variantTargets: Record<string, string[]> = {};
     for (const [label, rawV] of Object.entries(rawVariants)) {
       const pts =
         isPlainObject(rawV) && Array.isArray(rawV.primary_targets) ? rawV.primary_targets : [];
-      variantTargets[label] = pts.filter((p): p is string => typeof p === "string");
+      variantTargets[label] = pts
+        .filter((p): p is string => typeof p === "string")
+        .map((pointer) => targetObjectName(pointer));
     }
 
-    // composite: a transaction folding into an ordered SET of Carta transactions
-    // (all emitted). Render the steps and the Carta object each lands on, and key
-    // the shared/variant per-step field maps off the step ids.
+    // Project shared target maps into each variant before rendering. This is the
+    // same effective field set the validator uses for coverage, but organized by
+    // target object instead of by the YAML's shared/variants declaration shape.
     const composite = Array.isArray(input.mapping.composite) ? input.mapping.composite : [];
-    const stepIds = composite
-      .filter(isPlainObject)
-      .map((s) => s.step)
-      .filter((x): x is string => typeof x === "string");
+    const compositeSteps = composite.filter(isPlainObject);
+    const stepIds = compositeStepIds(input.mapping);
+    const effective = new Map<string, Record<string, unknown>>();
+    for (const label of variantLabels) {
+      effective.set(label, effectiveVariantFields(input.mapping, label, stepIds));
+    }
+    const common = commonFields(input.mapping, variantLabels, effective, stepIds.length > 0);
+    const commonCount = Object.keys(common).length;
 
     const roots: Tree[] = [{ label: routing, children: [] }];
-    if (composite.length > 0) {
-      roots.push({
-        label: `composite (${composite.length} step${
-          composite.length === 1 ? "" : "s"
-        }, all emitted)`,
-        children: composite.filter(isPlainObject).map((s) => {
-          const tgt = s.target;
-          const targetLines = isPlainObject(tgt)
-            ? Object.entries(tgt).map(([fam, ptr]) => `${fam} → ${asStringOr(ptr, "?")}`)
-            : [`→ ${asStringOr(tgt, "?")}`];
-          if (isPlainObject(s.const)) targetLines.push(`const: ${JSON.stringify(s.const)}`);
-          return {
-            label: asStringOr(s.step, "?"),
-            children: targetLines.map((l) => ({ label: l, children: [] })),
-          };
-        }),
-      });
-    }
-    const shared = input.mapping.shared;
-    if (isPlainObject(shared) && Object.keys(shared).length > 0) {
-      roots.push({
-        label: `shared (${Object.keys(shared).length})`,
-        children: fieldTrees(shared, variantTargets, stepIds, {
-          sourceSchema: input.sourceSchema,
-          mappingDocuments: input.mappingDocuments,
-        }),
-      });
-    }
     for (const [label, rawV] of Object.entries(rawVariants)) {
       const v = isPlainObject(rawV) ? rawV : {};
-      const targets = Array.isArray(v.primary_targets)
-        ? ` → ${(v.primary_targets as unknown[]).map((p) => asStringOr(p, "?")).join(", ")}`
-        : "";
+      const fields = effective.get(label) ?? {};
+      const visibleFields = Object.fromEntries(
+        Object.entries(fields).filter(([field]) => !(field in common))
+      );
+      const coverageLabel = asStringOr(coverageMap[label], "?");
+      const when = variantWhenLabel(v);
+      let children: Tree[];
+      if (stepIds.length > 0) {
+        const compositeChildren = compositeTrees(
+          visibleFields,
+          label,
+          variantLabels,
+          compositeSteps,
+          variantTargets,
+          {
+            sourceSchema: input.sourceSchema,
+            mappingDocuments: input.mappingDocuments,
+          }
+        );
+        const residualFields = compositeResidualFields(visibleFields, stepIds);
+        const residualTrees = targetFields(residualFields, [], variantTargets, {
+          sourceSchema: input.sourceSchema,
+          mappingDocuments: input.mappingDocuments,
+        });
+        children = [
+          {
+            label: `composite (${compositeSteps.length} step${
+              compositeSteps.length === 1 ? "" : "s"
+            }, all emitted)`,
+            children: compositeChildren,
+          },
+        ];
+        if (residualTrees.length > 0) {
+          children.push({ label: "other mappings", children: residualTrees });
+        }
+      } else {
+        const primaryTargets = Array.isArray(v.primary_targets)
+          ? v.primary_targets.filter((p): p is string => typeof p === "string")
+          : [];
+        children = targetFields(visibleFields, primaryTargets, variantTargets, {
+          sourceSchema: input.sourceSchema,
+          mappingDocuments: input.mappingDocuments,
+        });
+      }
       roots.push({
-        label: `${label} (${asStringOr(coverageMap[label], "?")})${targets}`,
-        children: fieldTrees(v.fields, variantTargets, stepIds, {
+        label: `${label}${when} (${coverageLabel}${
+          commonCount > 0 ? `; +${commonCount} shared` : ""
+        })`,
+        children,
+      });
+    }
+    if (commonCount > 0) {
+      roots.push({
+        label: `shared across all variants (${commonCount}; shown once)`,
+        children: targetFields(common, [], variantTargets, {
           sourceSchema: input.sourceSchema,
           mappingDocuments: input.mappingDocuments,
         }),

@@ -188,15 +188,17 @@ entry (none missing) and no key may name a non-existent variant. Each value is a
 pointer (not the `true` sentinel) or `null` (= unmappable in that variant; still counts as a
 covered, non-`TODO` entry). Map targets are allowed only on `rename` / `computed` / `combine`
 `shared:` entries — not on `enum-remap` (route enum values in `variants.fields`) and not inside a
-variant's own `fields:`. `--verbose` prints each variant's target (or `✗ unmappable`) beneath the
-field.
+variant's own `fields:`. `--verbose` projects these effective targets beneath the routed variant
+and groups them by Carta target object.
 
 **Checks (in addition to the per-field rules above):** the route property is enum-typed; the
 variants' `when:` sets **partition** the routed enum — pairwise disjoint, and with
 `exhaustive: true` every enum value is claimed by some variant (handled or explicitly unroutable);
 each `primary_targets` pointer resolves (and is not the `true` sentinel); each variant's
 `shared:` ∪ `fields:` map is validated and covers every source property. `--verbose` prints the
-routing and each variant's derived coverage and per-field routes.
+routing, each variant's derived coverage, and its target-object-first field routes; identical shared
+decisions are shown once at the bottom under `shared across all variants`, with each affected variant
+annotated as `+N shared`.
 
 To review coverage across the whole mapping corpus, run `npm run mapping:coverage`. It writes the
 generated [`mapping-coverage.md`](./mapping-coverage.md) heatmap. CI runs
