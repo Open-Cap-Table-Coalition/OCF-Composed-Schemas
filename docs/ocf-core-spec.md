@@ -123,7 +123,7 @@ chains; the bundle is self-contained, so resolution is closed. Enum membership u
 
 ### 2.2 Polymorphic entities — classify per variant
 
-The corpus already encodes polymorphism (`discriminator` / `shared` / `variants` / `primary_targets` /
+The corpus already encodes polymorphism (`route_by_property` / `shared` / `variants` / `primary_targets` /
 per-variant `target` maps / `routed_to`; see `docs/polymorphic-transaction-routing.md`). The
 classifier consumes it as-is: a `shared` field with a per-variant `target` map is resolved **once per
 variant** (one row per `(entity, variant, field)`); a null target for a variant ⇒ `out` for that
@@ -131,7 +131,7 @@ variant only; an `enum-remap` member sent to `null` but listed in `routed_to: { 
 **not** unmapped — it round-trips in the named sibling variant, so it doesn't make the map partial.
 That is why `EquityCompensationIssuance`'s Option-variant `compensation_type` (`{ OPTION_NSO: NSO,
 OPTION_ISO: ISO, OPTION: OTHER }`, with `RSU/CSAR/SSAR` routed to `Rsu`/`Sar`) is **total → `core`**.
-Downstream transactions routed by `route_by_security` (no local discriminator; a two-pass JOIN on the
+Downstream transactions routed by `route_by_property` (the route property comes from a two-pass JOIN on the
 issuance) classify against the variant the join selects.
 
 ### 2.3 The type inspector (the one piece of new code)
@@ -330,7 +330,7 @@ part of the spec):
   nothing, so `id` alone closes the FK; `legal_name` is the minimum for a *useful* snapshot). The one
   uncomfortable R5 gap is **`StockClass.votes_per_share`** — OCF-*required* yet homeless in Carta; not
   fold-required, so it drops out of the projection and a folded doc silently loses voting rights.
-- **The downstream verbs are all green now, but green ≠ admissible.** Every `route_by_security:` verb
+- **The downstream verbs are all green now, but green ≠ admissible.** Every `route_by_property:` verb
   (`EquityCompensation{Exercise,Cancellation,Release,Retraction,Acceptance,Transfer,Repricing}` and the
   convertible/warrant/stock cancellations) is a complete mapping; whether it enters Core is decided by
   §3, not by mapping status. Those that land a real payload are in (e.g. `ConvertibleCancellation`,

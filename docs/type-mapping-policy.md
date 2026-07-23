@@ -16,7 +16,7 @@ OCF schemas come in two shapes, and they are mapped differently:
   `StockIssuance`. These map **at the object level**: by default each property maps
   directly to the corresponding field of the analogous target object (or is
   `unmappable`). A *transaction* need not be a flat 1:1 object map, though: it may
-  fan out **polymorphically** by a discriminator into per-instrument target families
+  fan out **polymorphically** via `route_by_property` into per-instrument target families
   (mutually exclusive `variants:`), or fold as a **composite** into an ordered set of
   target transactions (all emitted). Either way the routing stays at the object level,
   so the three-bucket test below still does **not** apply to objects/transactions
@@ -89,8 +89,9 @@ that it is dropped). **Never invent a "representative" inline target.**
 | `Name` | inlined as `fullName` on 3+ objects | `Stakeholder.name` → `Stakeholder.fullName`; `ContactInfo.name` → `PointOfContact.userFullName` |
 | `ObjectReference` | every `*Id` is a bare string | resolved per consuming object |
 
-The discriminator vs bucket 1 is **cardinality of homes**: one unambiguous home → bucket 1;
-two-or-more unrelated homes → bucket 2.
+The distinction from bucket 1 is **cardinality of homes**: one unambiguous home → bucket 1;
+two-or-more unrelated homes → bucket 2. This is an object-level routing question, separate from
+whether a reusable OCF type belongs in bucket 1.
 
 ### Bucket 3 — absent (the target lacks the concept)
 
@@ -118,7 +119,7 @@ Once a field is `unmappable`, pick the most accurate reason
 ## See also
 
 - [`polymorphic-transaction-routing.md`](./polymorphic-transaction-routing.md) —
-  `discriminator:` / `route_by_security:` / `composite:` routing for transactions.
+  `route_by_property:` / `composite:` routing for transactions.
 - [`ocf-core-goal.md`](./ocf-core-goal.md) and [`ocf-core-spec.md`](./ocf-core-spec.md) —
   how these mapping decisions (and `unmappable` / loss verdicts) feed OCF Core (strict vs
   rich) membership.

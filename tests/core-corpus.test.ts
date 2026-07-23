@@ -13,7 +13,7 @@ describe("variantFieldMaps", () => {
 
   it("merges shared ∪ per-variant-target projection ∪ variant fields", () => {
     const m = variantFieldMaps({
-      discriminator: { field: "x", exhaustive: true },
+      route_by_property: { on_property: "x", exhaustive: true },
       shared: {
         s1: { kind: "rename", target: "#/uniform" },
         sm: { kind: "rename", target: { V1: "#/a", V2: null } },
@@ -39,7 +39,15 @@ describe("variantFieldMaps", () => {
 
   it("projects a composite per-step target map onto ALL its step targets per family", () => {
     const m = variantFieldMaps({
-      route_by_security: { via: "security_id", resolve: "x" },
+      route_by_property: {
+        lookup_by: {
+          key: "security_id",
+          through: {
+            mapping: "../issuance/EquityComp.mapping.md",
+            on_property: "x",
+          },
+        },
+      },
       composite: [
         { step: "cancel", target: {} },
         { step: "issue", target: {} },

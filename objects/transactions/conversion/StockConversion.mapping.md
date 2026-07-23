@@ -107,7 +107,7 @@ Source: [`StockConversion.schema.json`](./StockConversion.schema.json)
 
 ```yaml
 # kind vocabulary: rename | select | split | combine | enum-remap | computed | unmappable | TODO
-# routing: route_by_security (downstream join). A stock conversion carries only
+# routing: route_by_property (downstream join). A stock conversion carries only
 # security_id and NO discriminator, so the source security's family is fixed at
 # issuance: join security_id back to the StockIssuance and read its issuance_type
 # (RSA vs FOUNDERS_STOCK / absent). See docs/polymorphic-transaction-routing.md §2.2.
@@ -120,11 +120,12 @@ Source: [`StockConversion.schema.json`](./StockConversion.schema.json)
 # against the same enum its siblings (issuance/cancellation) partition.
 status: complete
 
-route_by_security:
-  via: security_id
-  resolve: issuance_type
-  resolve_enum: "https://raw.githubusercontent.com/Open-Cap-Table-Coalition/Open-Cap-Format-OCF/main/schema/enums/StockIssuanceType.schema.json"
-  source_mapping: ../issuance/StockIssuance.mapping.md
+route_by_property:
+  lookup_by:
+    key: security_id
+    through:
+      mapping: ../issuance/StockIssuance.mapping.md
+      on_property: issuance_type
   exhaustive: true
 
 # shared: every source property. There is no Carta conversion *transaction* home in
@@ -172,7 +173,7 @@ variants:
   resolve `issuance_type` by joining `security_id` back to the `StockIssuance`
   (RSA → `RestrictedStockAward` family; FOUNDERS_STOCK / absent → plain `Certificate`),
   the two-pass requirement in docs/polymorphic-transaction-routing.md §2.2. The
-  `route_by_security:` block declares that join and partitions the
+  `route_by_property:` block declares that join and partitions the
   `StockIssuanceType` enum (`{RSA, FOUNDERS_STOCK}`) exactly, just as the sibling
   `StockIssuance` mapping does at issuance time.
 - **The conversion *event* is unmappable — Carta has no stock-conversion transaction
@@ -204,7 +205,7 @@ variants:
 - **The event fields have no home.** `date` and `quantity_converted` would each only
   land on the *synthesised* cancel/issue Carta records that no conversion `$def` owns,
   so they have no conversion-level Carta target (`no-equivalent`). `security_id` is the
-  `route_by_security.via` join key — it routes the family, it is not itself a stored
+  `route_by_property.lookup_by.key` join key — it routes the family, it is not itself a stored
   Carta field (`ocf-internal`). `id` is OCF's own object identifier and `object_type`
   is the fixed discriminator const `TX_STOCK_CONVERSION` (Carta types transactions
   positionally and has no conversion discriminator at all) — both `ocf-internal`.

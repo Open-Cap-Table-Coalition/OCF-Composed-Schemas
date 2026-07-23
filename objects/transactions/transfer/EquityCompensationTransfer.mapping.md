@@ -117,7 +117,7 @@ Source: [`EquityCompensationTransfer.schema.json`](./EquityCompensationTransfer.
 
 ```yaml
 # kind vocabulary: rename | select | split | combine | enum-remap | computed | unmappable | TODO
-# routing: route_by_security (downstream join). This transfer carries only
+# routing: route_by_property (downstream join). This transfer carries only
 # security_id and NO discriminator, so the equity-compensation family
 # (Option/Rsu/Sar) is undecidable from the record alone: it is resolved by
 # joining security_id back to the EquityCompensationIssuance and reading that
@@ -126,11 +126,12 @@ Source: [`EquityCompensationTransfer.schema.json`](./EquityCompensationTransfer.
 # is unmappable. See docs/polymorphic-transaction-routing.md §2.2/§4.3.
 status: complete
 
-route_by_security:
-  via: security_id
-  resolve: compensation_type
-  resolve_enum: "https://raw.githubusercontent.com/Open-Cap-Table-Coalition/Open-Cap-Format-OCF/main/schema/enums/CompensationType.schema.json"
-  source_mapping: ../issuance/EquityCompensationIssuance.mapping.md
+route_by_property:
+  lookup_by:
+    key: security_id
+    through:
+      mapping: ../issuance/EquityCompensationIssuance.mapping.md
+      on_property: compensation_type
   exhaustive: true
 
 # shared: every source property. Carta defines exactly one transfer transaction
@@ -205,7 +206,7 @@ variants:
   resulting-security analogues, but on the warrant track exclusively; with no
   equity-comp transfer object in any family, none of these has a destination.
   All `no-equivalent`.
-- **`security_id`** is the join key (`route_by_security.via`); it routes the
+- **`security_id`** is the join key (`route_by_property.lookup_by.key`); it routes the
   family rather than being a stored Carta field, so it is `ocf-internal`.
 - **`object_type` (`TX_PLAN_SECURITY_TRANSFER` | `TX_EQUITY_COMPENSATION_TRANSFER`),
   `id`, `comments`** are OCF scaffolding — the object-type discriminator (legacy

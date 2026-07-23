@@ -238,8 +238,7 @@ export interface Corpus {
 export function variantFieldMaps(
   mapping: Record<string, unknown>
 ): Map<string, Record<string, unknown>> {
-  const polymorphic =
-    isPlainObject(mapping.discriminator) || isPlainObject(mapping.route_by_security);
+  const polymorphic = isPlainObject(mapping.route_by_property);
   if (!polymorphic) {
     const fields = isPlainObject(mapping.fields) ? mapping.fields : {};
     return new Map([["—", fields as Record<string, unknown>]]);

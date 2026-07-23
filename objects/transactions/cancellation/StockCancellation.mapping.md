@@ -103,7 +103,7 @@ Source: [`StockCancellation.schema.json`](./StockCancellation.schema.json)
 
 ```yaml
 # kind vocabulary: rename | select | split | combine | enum-remap | computed | unmappable | TODO
-# routing: route_by_security (downstream join). This cancellation carries only
+# routing: route_by_property (downstream join). This cancellation carries only
 # security_id and NO discriminator, so the Carta cancellation family
 # (Rsa vs Certificate) is undecidable from the record alone: it is resolved by
 # joining security_id back to the StockIssuance and reading that issuance's
@@ -112,11 +112,12 @@ Source: [`StockCancellation.schema.json`](./StockCancellation.schema.json)
 # docs/polymorphic-transaction-routing.md §2.2/§4.3.
 status: complete
 
-route_by_security:
-  via: security_id
-  resolve: issuance_type
-  resolve_enum: "https://raw.githubusercontent.com/Open-Cap-Table-Coalition/Open-Cap-Format-OCF/main/schema/enums/StockIssuanceType.schema.json"
-  source_mapping: ../issuance/StockIssuance.mapping.md
+route_by_property:
+  lookup_by:
+    key: security_id
+    through:
+      mapping: ../issuance/StockIssuance.mapping.md
+      on_property: issuance_type
   exhaustive: true
 
 # shared: every source property. date/quantity land on a different Carta
@@ -173,7 +174,7 @@ variants:
   discriminator, only `security_id`, so an importer must resolve `issuance_type` from
   the joined `StockIssuance` first (the two-pass requirement, §2.2). Routing an RSA
   cancel into the Certificate family would be the bug-#219 misroute; the
-  `route_by_security` join prevents it.
+  `route_by_property` join prevents it.
 - **`date` / `quantity`** are the mappable tx-level fields; each lands on the resolved
   family's cancellation tx (`effectiveDatetime` / `quantity`) via a per-variant target
   map. **Granularity to flag:** OCF `date` is a calendar date and Carta
@@ -186,7 +187,7 @@ variants:
   prose. It lands on the resolved family's cancellation tx `reason` via a per-variant
   target map, mirroring `date`/`quantity` — and matching the `ConvertibleCancellation`
   / `WarrantCancellation` siblings, which map the identical field the same way.
-- **`security_id`** is the join key (`route_by_security.via`); it routes the family,
+- **`security_id`** is the join key (`route_by_property.lookup_by.key`); it routes the family,
   it is not itself a stored Carta field.
 - **`balance_security_id` round-trips as lineage (kind `computed`).** The remainder
   security minted by a partial cancellation is itself a stock security —

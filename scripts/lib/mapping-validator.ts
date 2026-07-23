@@ -1,3 +1,4 @@
+import path from "node:path";
 import jsonpointer from "jsonpointer";
 import { detectEnumValues } from "./enum-detection.js";
 import { getTransformPolicy, PolicyHostKind, registeredPolicyNames } from "./mapping-policies.js";
@@ -57,6 +58,15 @@ export function targetEnumValuesAt(bundle: unknown, node: unknown, depth = 0): s
 
 export function isPlainObject(v: unknown): v is Record<string, unknown> {
   return typeof v === "object" && v !== null && !Array.isArray(v);
+}
+
+/** Resolve a mapping reference relative to the mapping that declares it. */
+export function resolveMappingReference(mappingFile: string, reference: string): string {
+  const normalizedFile = mappingFile.replaceAll("\\", "/");
+  const normalizedReference = reference.replaceAll("\\", "/");
+  return path.posix.normalize(
+    path.posix.join(path.posix.dirname(normalizedFile), normalizedReference)
+  );
 }
 
 /**
@@ -225,6 +235,8 @@ export interface ValidateInput {
   targetBundle: unknown | null;
   /** Mapping paths available for sequential_transform apply_mapping steps. */
   mappingFiles?: Set<string>;
+  /** Repo-relative mapping path → sibling source schema, for lookup_by route inference. */
+  mappingSourceSchemas?: Map<string, RawSchema>;
 }
 
 export interface ValidateOptions {
@@ -283,27 +295,34 @@ export function validateMapping(input: ValidateInput, opts: ValidateOptions): Va
   }
   const strict = blockStatus === "complete" || blockStatus === "reviewed";
 
-  // Polymorphic dispatch: a `discriminator:` block (issuance-time routing) or a
-  // `route_by_security:` block (downstream join routing) selects the per-instrument
-  // Carta family. With neither, this is a plain single-target mapping and the legacy
-  // path below runs unchanged (full backward compatibility).
-  if (
-    isPlainObject(input.mapping.discriminator) ||
-    isPlainObject(input.mapping.route_by_security)
-  ) {
+  // Polymorphic dispatch has one public form: route_by_property. It either reads
+  // a local property (`on_property`) or performs an explicit keyed lookup
+  // (`lookup_by`). Older routing keys are deliberately rejected; this DSL is
+  // not maintaining compatibility aliases.
+  const obsoleteRoutingKeys = ["discriminator", "route_by_security"].filter(
+    (key) => key in input.mapping
+  );
+  if (obsoleteRoutingKeys.length > 0) {
+    err(
+      null,
+      `unsupported routing key(s) ${obsoleteRoutingKeys.join(", ")}; use route_by_property`
+    );
+  }
+  if ("route_by_property" in input.mapping) {
+    if (!isPlainObject(input.mapping.route_by_property)) {
+      err(null, 'mapping block "route_by_property" must be a map');
+      return errors;
+    }
     validatePolymorphicMapping(input, strict, opts, err);
     return errors;
   }
 
   // composite: (a transaction folding into an ordered set of Carta steps) is only
-  // meaningful alongside a route_by_security/discriminator + variants block, which
+  // meaningful alongside a route_by_property + variants block, which
   // supplies the family axis its per-step target maps key into. A bare composite
   // (no variants) is not yet supported — flag it rather than silently ignore it.
   if (Array.isArray(input.mapping.composite)) {
-    err(
-      null,
-      "composite: is only supported alongside a route_by_security or discriminator + variants block"
-    );
+    err(null, "composite: is only supported alongside a route_by_property + variants block");
   }
 
   // fields: with no entries parses as null (property-less schemas) — treat as {}.
@@ -795,14 +814,14 @@ function validateUnionMapEntry(
 }
 
 /**
- * Validate a polymorphic mapping: a `discriminator:` (issuance-time routing) or
- * `route_by_security:` (downstream join routing) block plus a `variants:` map
- * whose `when:` value sets partition the routed enum. Each variant carries its
- * own `primary_targets:` (the Carta family roots) and a `shared:`-merged field
- * map, validated per variant. Derived coverage is reported separately. The routed
- * enum is the discriminator property's enum (issuance) or `resolve_enum`
- * (downstream); `exhaustive` requires every enum value to be claimed by a
- * variant (mappable or explicitly unroutable).
+ * Validate a polymorphic mapping: one `route_by_property:` block plus a
+ * `variants:` map whose `when:` value sets partition the routed enum. The route
+ * is either a local `on_property` or an explicit keyed `lookup_by` whose
+ * `through.on_property` is read from the looked-up record. Each variant carries
+ * its own `primary_targets:` (the Carta family roots) and a `shared:`-merged
+ * field map, validated per variant. Derived coverage is reported separately;
+ * `exhaustive` requires every enum value to be claimed by a variant (mappable or
+ * explicitly unroutable).
  */
 function validatePolymorphicMapping(
   input: ValidateInput,
@@ -818,53 +837,101 @@ function validatePolymorphicMapping(
   let enumValues: string[] | null = null;
   let exhaustive = false;
   let enumDeclared = false;
-  if (isPlainObject(mapping.discriminator)) {
-    const disc = mapping.discriminator;
-    exhaustive = disc.exhaustive === true;
-    const field = disc.field;
-    if (typeof field !== "string" || !(field in properties)) {
-      err(null, `discriminator.field "${String(field)}" is not a property of the source schema`);
+  const route = mapping.route_by_property as Record<string, unknown>;
+  exhaustive = route.exhaustive === true;
+
+  const removedRouteFields = ["property", "from", "enum"].filter((key) => key in route);
+  if (removedRouteFields.length > 0) {
+    err(
+      null,
+      `unsupported route_by_property field(s) ${removedRouteFields.join(
+        ", "
+      )}; use on_property or lookup_by`
+    );
+  }
+
+  const onProperty = route.on_property;
+  const lookupBy = route.lookup_by;
+  if (lookupBy === undefined) {
+    if (typeof onProperty !== "string" || onProperty.length === 0) {
+      err(null, 'route_by_property requires a non-empty "on_property"');
+    } else if (!(onProperty in properties)) {
+      err(
+        null,
+        `route_by_property.on_property "${String(
+          onProperty
+        )}" is not a property of the source schema`
+      );
     } else {
       enumDeclared = true;
-      enumValues = detectEnumValues(properties[field], input.registry);
+      enumValues = detectEnumValues(properties[onProperty], input.registry);
       if (enumValues === null) {
         err(
           null,
-          `discriminator.field "${field}" is not enum-typed; a discriminator must route on an enum`
+          `route_by_property.on_property "${onProperty}" is not enum-typed; a route property must route on an enum`
         );
       }
     }
-  } else if (isPlainObject(mapping.route_by_security)) {
-    const rbs = mapping.route_by_security;
-    exhaustive = rbs.exhaustive === true;
-    if (typeof rbs.via !== "string" || !(rbs.via in properties)) {
+  } else if (isPlainObject(lookupBy)) {
+    if (onProperty !== undefined) {
+      err(null, 'route_by_property cannot declare both "on_property" and "lookup_by"');
+    }
+    const key = lookupBy.key;
+    const through = lookupBy.through;
+    if (typeof key !== "string" || key.length === 0 || !(key in properties)) {
       err(
         null,
-        `route_by_security.via "${String(rbs.via)}" is not a property of the source schema`
+        `route_by_property.lookup_by.key "${String(key)}" is not a property of the source schema`
       );
     }
-    if (typeof rbs.resolve !== "string" || rbs.resolve.length === 0) {
-      err(
-        null,
-        'route_by_security requires a non-empty "resolve" (the discriminator field on the joined issuance)'
-      );
-    }
-    if (typeof rbs.source_mapping !== "string" || rbs.source_mapping.length === 0) {
-      err(
-        null,
-        'route_by_security requires a non-empty "source_mapping" (the issuance mapping it joins to)'
-      );
-    }
-    if (typeof rbs.resolve_enum === "string") {
-      enumDeclared = true;
-      enumValues = detectEnumValues({ $ref: rbs.resolve_enum }, input.registry);
-      if (enumValues === null) {
-        err(
-          null,
-          `route_by_security.resolve_enum "${rbs.resolve_enum}" did not resolve to an enum in the registry`
-        );
+    if (!isPlainObject(through)) {
+      err(null, 'route_by_property.lookup_by requires a "through" map');
+    } else {
+      const relatedMapping = through.mapping;
+      const relatedProperty = through.on_property;
+      if (typeof relatedMapping !== "string" || relatedMapping.length === 0) {
+        err(null, "route_by_property.lookup_by.through.mapping must be a non-empty mapping path");
+      }
+      if (typeof relatedProperty !== "string" || relatedProperty.length === 0) {
+        err(null, 'route_by_property.lookup_by.through requires a non-empty "on_property"');
+      }
+
+      if (typeof relatedMapping === "string" && relatedMapping.length > 0) {
+        const resolvedMapping = resolveMappingReference(input.file, relatedMapping);
+        if (input.mappingFiles && !input.mappingFiles.has(resolvedMapping)) {
+          err(
+            null,
+            `route_by_property.lookup_by.through.mapping "${relatedMapping}" resolves to missing mapping "${resolvedMapping}"`
+          );
+        }
+        const relatedSource = input.mappingSourceSchemas?.get(resolvedMapping);
+        if (!relatedSource) {
+          err(
+            null,
+            `route_by_property.lookup_by.through.mapping "${relatedMapping}" has no resolvable sibling source schema`
+          );
+        } else if (typeof relatedProperty === "string" && relatedProperty.length > 0) {
+          const relatedProperties = (relatedSource.properties ?? {}) as Record<string, unknown>;
+          if (!(relatedProperty in relatedProperties)) {
+            err(
+              null,
+              `route_by_property.lookup_by.through.on_property "${relatedProperty}" is not a property of the looked-up source schema`
+            );
+          } else {
+            enumDeclared = true;
+            enumValues = detectEnumValues(relatedProperties[relatedProperty], input.registry);
+            if (enumValues === null) {
+              err(
+                null,
+                `route_by_property.lookup_by.through.on_property "${relatedProperty}" is not enum-typed; a route property must route on an enum`
+              );
+            }
+          }
+        }
       }
     }
+  } else {
+    err(null, "route_by_property.lookup_by must be a map");
   }
 
   // 2. variants: + shared:
@@ -913,7 +980,7 @@ function validatePolymorphicMapping(
     }
     const when = rawV.when;
     if (!Array.isArray(when) || when.length === 0 || !when.every((w) => typeof w === "string")) {
-      err(null, `variant "${label}" requires a non-empty "when" array of discriminator values`);
+      err(null, `variant "${label}" requires a non-empty "when" array of route property values`);
       continue;
     }
     for (const w of when as string[]) (claimedBy[w] ??= []).push(label);
@@ -922,7 +989,7 @@ function validatePolymorphicMapping(
     if (labels.length > 1) {
       err(
         null,
-        `discriminator value "${val}" is claimed by more than one variant (${labels.join(", ")})`
+        `route property value "${val}" is claimed by more than one variant (${labels.join(", ")})`
       );
     }
   }
@@ -945,7 +1012,7 @@ function validatePolymorphicMapping(
   } else if (exhaustive && !enumDeclared) {
     err(
       null,
-      "exhaustive routing requires a resolvable enum (discriminator.field or route_by_security.resolve_enum)"
+      "exhaustive routing requires a resolvable enum (route_by_property.on_property or route_by_property.lookup_by.through.on_property)"
     );
   }
 
@@ -1431,17 +1498,17 @@ function validateEntryShape(
   }
 
   // Optional free-text annotation (valid on any kind) — used to record corner
-  // cases, e.g. that a discriminator value dropped in this variant has a real
+  // cases, e.g. that a route property value dropped in this variant has a real
   // home in another variant (the round-trip is preserved, not lost).
   if (entry.note !== undefined && typeof entry.note !== "string") {
     err(name, "note: must be a string");
   }
 
-  // routed_to: a structured, machine-checkable round-trip edge { discriminator
+  // routed_to: a structured, machine-checkable round-trip edge { route property
   // value → variant label }. Shape only here; the polymorphic path verifies the
   // named variants actually claim the values.
   if (entry.routed_to !== undefined && !isPlainObject(entry.routed_to)) {
-    err(name, "routed_to: must be a map of discriminator value → variant label");
+    err(name, "routed_to: must be a map of route property value → variant label");
   }
 
   // defer: a placeholder recording that a complex field carries MORE mappable

@@ -113,7 +113,7 @@ Source: [`StockTransfer.schema.json`](./StockTransfer.schema.json)
 
 ```yaml
 # kind vocabulary: rename | select | split | combine | enum-remap | computed | unmappable | TODO
-# routing: route_by_security (downstream join) resolves the stock FAMILY. A
+# routing: route_by_property (downstream join) resolves the stock FAMILY. A
 # StockTransfer carries only security_id and NO discriminator, so the family (RSA
 # vs founders/plain stock) is undecidable from the record alone: it is resolved by
 # joining security_id back to the StockIssuance and reading that issuance's
@@ -128,11 +128,12 @@ Source: [`StockTransfer.schema.json`](./StockTransfer.schema.json)
 # Rsa*). See docs/polymorphic-transaction-routing.md §2.2/§4.3/§4.9.
 status: complete
 
-route_by_security:
-  via: security_id
-  resolve: issuance_type
-  resolve_enum: "https://raw.githubusercontent.com/Open-Cap-Table-Coalition/Open-Cap-Format-OCF/main/schema/enums/StockIssuanceType.schema.json"
-  source_mapping: ../issuance/StockIssuance.mapping.md
+route_by_property:
+  lookup_by:
+    key: security_id
+    through:
+      mapping: ../issuance/StockIssuance.mapping.md
+      on_property: issuance_type
   exhaustive: true
 
 # composite: the two Carta transactions a stock transfer folds into, in order.
@@ -235,7 +236,7 @@ variants:
   Because `quantity` is a real payload landing (not just lineage), the §3 non-degeneracy
   gate is satisfied and StockTransfer becomes Core-admissible — previously it landed only
   lineage references and was held out with `no-payload`.
-- **Family and step are orthogonal axes.** `route_by_security` resolves the stock *family*
+- **Family and step are orthogonal axes.** `route_by_property` resolves the stock *family*
   (RSA vs founders/plain stock — mutually exclusive), while `composite` decomposes the
   *event* into ordered steps (both emitted). The step targets diverge by family: the
   Certificate family uses `Certificate{Cancellation,Issuance}Transaction`, the RSA family
@@ -273,7 +274,7 @@ variants:
       resulting/balance security's `precededBy.securities` (see above). (Carta's tx-level
       `WarrantTransferTransaction.resultingSecurityId` is single-valued and warrant-only, so
       it is not the target here.)
-    - `security_id`: the join key (`route_by_security.via`) that routes the family; it is not
+    - `security_id`: the join key (`route_by_property.lookup_by.key`) that routes the family; it is not
       itself a stored Carta field on the transfer event — `ocf-internal`. (The transferred-in
       lineage is captured by `resulting_security_ids` above.)
     - `object_type` (const `TX_STOCK_TRANSFER`): the OCF discriminator for the transfer

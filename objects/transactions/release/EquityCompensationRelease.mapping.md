@@ -123,7 +123,7 @@ Source: [`EquityCompensationRelease.schema.json`](./EquityCompensationRelease.sc
 
 ```yaml
 # kind vocabulary: rename | select | split | combine | enum-remap | computed | unmappable | TODO
-# routing: route_by_security (downstream join). This release carries only
+# routing: route_by_property (downstream join). This release carries only
 # security_id and NO discriminator, so the equity-comp family is undecidable from
 # the record alone: it is resolved by joining security_id back to the
 # EquityCompensationIssuance and reading that issuance's compensation_type.
@@ -132,11 +132,12 @@ Source: [`EquityCompensationRelease.schema.json`](./EquityCompensationRelease.sc
 # docs/polymorphic-transaction-routing.md §2.2/§4.3.
 status: complete
 
-route_by_security:
-  via: security_id
-  resolve: compensation_type
-  resolve_enum: "https://raw.githubusercontent.com/Open-Cap-Table-Coalition/Open-Cap-Format-OCF/main/schema/enums/CompensationType.schema.json"
-  source_mapping: ../issuance/EquityCompensationIssuance.mapping.md
+route_by_property:
+  lookup_by:
+    key: security_id
+    through:
+      mapping: ../issuance/EquityCompensationIssuance.mapping.md
+      on_property: compensation_type
   exhaustive: true
 
 # shared: every source property. Fields whose Carta home differs by family carry
@@ -208,7 +209,7 @@ variants:
   only `security_id`. An importer must first resolve `compensation_type` from the joined
   `EquityCompensationIssuance` (the two-pass requirement,
   docs/polymorphic-transaction-routing.md §2.2), then route. `security_id` is the
-  `route_by_security.via` join key, not a stored Carta field.
+  `route_by_property.lookup_by.key` join key, not a stored Carta field.
 - **Only RSUs release.** "Release" here means a vested equity-comp security settling
   into shares. Carta models this *only* as RSU settlement — there is no
   `…ReleaseTransaction` for options or SARs — so the **Option** and **Sar** variants

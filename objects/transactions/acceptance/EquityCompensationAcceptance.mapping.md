@@ -91,7 +91,7 @@ Source: [`EquityCompensationAcceptance.schema.json`](./EquityCompensationAccepta
 
 ```yaml
 # kind vocabulary: rename | select | split | combine | enum-remap | computed | unmappable | TODO
-# routing: route_by_security (downstream join). Acceptance is NOT a Carta transaction;
+# routing: route_by_property (downstream join). Acceptance is NOT a Carta transaction;
 # it sets a stakeholderAcceptanceDate on the security object. The record carries only
 # security_id and NO discriminator, so the family (Option/Rsu/Sar) is undecidable from
 # the record alone: it is resolved by joining security_id back to the
@@ -99,11 +99,12 @@ Source: [`EquityCompensationAcceptance.schema.json`](./EquityCompensationAccepta
 # See docs/polymorphic-transaction-routing.md §2.2/§4.3.
 status: complete
 
-route_by_security:
-  via: security_id
-  resolve: compensation_type
-  resolve_enum: "https://raw.githubusercontent.com/Open-Cap-Table-Coalition/Open-Cap-Format-OCF/main/schema/enums/CompensationType.schema.json"
-  source_mapping: ../issuance/EquityCompensationIssuance.mapping.md
+route_by_property:
+  lookup_by:
+    key: security_id
+    through:
+      mapping: ../issuance/EquityCompensationIssuance.mapping.md
+      on_property: compensation_type
   exhaustive: true
 
 # shared: every source property. `date` lands on the resolved family's security object
@@ -162,7 +163,7 @@ variants:
 - **Sar has no home (`primary_targets: null`).** CSAR/SSAR have no Carta security object
   with a `stakeholderAcceptanceDate` (there is no SAR grant object to set the field on),
   so the entire family is unmappable here and `date`'s `Sar` target is `null`.
-- **`security_id`** is the join key (`route_by_security.via`); it routes the family by
+- **`security_id`** is the join key (`route_by_property.lookup_by.key`); it routes the family by
   resolving to the issuance's `compensation_type`, it is not itself a stored Carta field
   on the accepted security — marked `ocf-internal`.
 - **`id`, `object_type`, `comments`: OCF scaffolding.** `id` is OCF's identifier for the

@@ -90,18 +90,19 @@ Source: [`EquityCompensationRepricing.schema.json`](./EquityCompensationRepricin
 
 ```yaml
 # kind vocabulary: rename | select | split | combine | enum-remap | computed | unmappable | TODO
-# routing: route_by_security (downstream join). This repricing carries only
+# routing: route_by_property (downstream join). This repricing carries only
 # security_id and NO discriminator, so the price-bearing family
 # (Option/Sar/Rsu) is undecidable from the record alone: it is resolved by
 # joining security_id back to the EquityCompensationIssuance and reading that
 # issuance's compensation_type. See docs/polymorphic-transaction-routing.md §2.2/§4.3.
 status: complete
 
-route_by_security:
-  via: security_id
-  resolve: compensation_type
-  resolve_enum: "https://raw.githubusercontent.com/Open-Cap-Table-Coalition/Open-Cap-Format-OCF/main/schema/enums/CompensationType.schema.json"
-  source_mapping: ../issuance/EquityCompensationIssuance.mapping.md
+route_by_property:
+  lookup_by:
+    key: security_id
+    through:
+      mapping: ../issuance/EquityCompensationIssuance.mapping.md
+      on_property: compensation_type
   exhaustive: true
 
 # shared: every source property. Carta has no repricing transaction; a repricing
@@ -162,6 +163,6 @@ variants:
 - **`date` has no home.** Because Carta records the strike as a single static value with
   no repricing event, there is no Carta repricing transaction and therefore no
   event-date slot to carry the *when* of the price change; `date` is `no-equivalent`.
-- **`security_id`** is the join key (`route_by_security.via`); it routes the family and
+- **`security_id`** is the join key (`route_by_property.lookup_by.key`); it routes the family and
   is not itself a stored Carta field. **`id`/`object_type`** are OCF object scaffolding
   (`ocf-internal`) and **`comments`** has no Carta slot (`no-equivalent`).
