@@ -17,6 +17,15 @@ derived coverage stays reviewable, and enum remaps are checked value-by-value.
   tree (field → target, split fan-outs, enum value remaps, unmappable reasons, TODO counts, and —
   when present — a `composite (N steps, all emitted)` node listing each step's Carta target(s) and
   any fixed `const:` fills).
+- `--inverse` prints a repository-wide target-first report in addition to validation. It aggregates
+  every executable target pointer by Carta `$defs` object and property, including polymorphic
+  variants and composite steps. Use `--inverse --target-object ConvertibleNote` to focus the report
+  on one Carta object. Unfiltered reports include every object-shaped Carta `$defs`, marking objects
+  with no incoming mapping as `[NO MAPPINGS]`; target properties with no mapped OCF source are also
+  shown explicitly.
+- CI runs the equivalent `npm run mapping:inverse` command on every pull request and push to `main`.
+  The generated report is added to the GitHub Actions job summary and uploaded as the
+  `mapping-inverse-report` artifact, including when another mapping check fails.
 
 ## DSL operator reference
 

@@ -9,12 +9,15 @@ import { loadRegistry, RawSchema } from "./lib/registry.js";
 import { parseMappingDocument, MappingParseError } from "./lib/mapping-parser.js";
 import { validateMapping, ValidationError, TARGET_BUNDLES } from "./lib/mapping-validator.js";
 import { MappingReportDocument, renderMappingReport } from "./lib/mapping-report.js";
+import { renderMappingInverseReport } from "./lib/mapping-inverse-report.js";
 
 const MAPPING_DIRS = ["objects", "types"] as const;
 
 interface Args {
   filter?: string;
   verbose: boolean;
+  inverse: boolean;
+  targetObject?: string;
 }
 
 async function collectMappingFiles(repoRoot: string): Promise<string[]> {
@@ -74,7 +77,7 @@ async function main(argv: Args): Promise<number> {
   // Verbose reports may expand an apply_mapping reference into the referenced
   // mapping's effective fields. Preload the report index without changing the
   // validator's normal error handling for the selected --filter set.
-  if (argv.verbose) {
+  if (argv.verbose || argv.inverse) {
     for (const rel of all) {
       try {
         const parsed = parseMappingDocument(await readFile(path.join(repoRoot, rel), "utf8"), rel);
@@ -87,6 +90,30 @@ async function main(argv: Args): Promise<number> {
         // The selected file's parse/schema error is still reported below.
       }
     }
+  }
+
+  if (argv.inverse) {
+    const bundleRel = TARGET_BUNDLES.Carta;
+    if (!bundleRel) {
+      console.error("Failed to load target bundle: no Carta bundle is configured");
+      return 1;
+    }
+    let targetBundle: RawSchema;
+    try {
+      targetBundle = JSON.parse(
+        await readFile(path.join(repoRoot, bundleRel), "utf8")
+      ) as RawSchema;
+    } catch (err) {
+      console.error(`Failed to load target bundle ${bundleRel}: ${(err as Error).message}`);
+      return 1;
+    }
+    console.log(
+      renderMappingInverseReport({
+        documents: mappingDocuments,
+        targetBundle,
+        targetObject: argv.targetObject,
+      }) + "\n"
+    );
   }
 
   for (const rel of files) {
@@ -232,6 +259,15 @@ const parsed = yargs(hideBin(process.argv))
     default: false,
     describe: "Print per-file progress",
   })
+  .option("inverse", {
+    type: "boolean",
+    default: false,
+    describe: "Print a repository-wide target-first mapping report",
+  })
+  .option("target-object", {
+    type: "string",
+    describe: "Restrict --inverse to one Carta $defs object, e.g. ConvertibleNote",
+  })
   .strict()
   .help()
   .parseSync();
@@ -239,6 +275,8 @@ const parsed = yargs(hideBin(process.argv))
 const argv: Args = {
   filter: typeof parsed.filter === "string" ? parsed.filter : undefined,
   verbose: Boolean(parsed.verbose),
+  inverse: Boolean(parsed.inverse),
+  targetObject: typeof parsed.targetObject === "string" ? parsed.targetObject : undefined,
 };
 
 main(argv).then(
