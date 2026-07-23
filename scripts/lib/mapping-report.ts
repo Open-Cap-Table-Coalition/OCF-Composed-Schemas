@@ -492,7 +492,7 @@ function unescapePointerToken(value: string): string {
 }
 
 /** Identify the Carta `$defs` object and shorten a field pointer for display. */
-function targetPointerParts(pointer: string): { object: string; relative: string } {
+export function targetPointerParts(pointer: string): { object: string; relative: string } {
   const match = pointer.match(/^#\/\$defs\/([^/]+)(?:\/(.*))?$/);
   if (!match) return { object: pointer || "?", relative: pointer || "?" };
 
@@ -502,11 +502,12 @@ function targetPointerParts(pointer: string): { object: string; relative: string
   return { object, relative };
 }
 
-function targetObjectName(pointer: unknown): string {
+export function targetObjectName(pointer: unknown): string {
   return typeof pointer === "string" ? targetPointerParts(pointer).object : "?";
 }
 
-function targetPointers(entry: unknown): string[] {
+/** Extract every Carta JSON pointer declared by one mapping entry. */
+export function targetPointers(entry: unknown): string[] {
   if (!isPlainObject(entry)) return [];
 
   if (entry.kind === "union-map" && Array.isArray(entry.cases)) {
@@ -597,7 +598,7 @@ function projectVariantEntry(entry: unknown, variant: string, stepIds: string[])
   return { ...entry, target: projected };
 }
 
-function effectiveVariantFields(
+export function effectiveVariantFields(
   mapping: Record<string, unknown>,
   variant: string,
   stepIds: string[]
@@ -619,7 +620,7 @@ function entriesEqual(left: unknown, right: unknown): boolean {
   return JSON.stringify(left) === JSON.stringify(right);
 }
 
-function commonFields(
+export function commonFields(
   mapping: Record<string, unknown>,
   variants: string[],
   effective: Map<string, Record<string, unknown>>,
@@ -716,7 +717,7 @@ function compositeTargetForVariant(step: unknown, variant: string): string[] {
   return [];
 }
 
-function compositeFields(
+export function compositeFields(
   fields: Record<string, unknown>,
   variant: string,
   step: string
