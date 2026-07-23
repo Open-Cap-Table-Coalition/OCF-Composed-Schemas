@@ -102,9 +102,9 @@ describe("renderMappingInverseReport", () => {
       },
     });
 
+    expect(out).toContain("Carta objects with no mappings (2)");
     expect(out).toContain("EmptyObject [NO MAPPINGS]");
     expect(out).toContain("EmptyWithProperties [NO MAPPINGS]");
-    expect(out).toContain("EmptyWithProperties");
-    expect(out).toContain("✗ no mapped OCF source");
+    expect(out).not.toContain("✗ no mapped OCF source");
   });
 });

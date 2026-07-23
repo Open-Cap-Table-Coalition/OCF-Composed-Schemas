@@ -181,19 +181,73 @@ function flowLabel(flow: InverseFlow): string {
   return `${flow.file} :: ${flow.sourceField}${context} (${flow.kind})`;
 }
 
-function renderTree(nodes: Array<{ label: string; children?: string[] }>, prefix = ""): string[] {
-  const out: string[] = [];
-  nodes.forEach((node, index) => {
-    const last = index === nodes.length - 1;
-    out.push(`${prefix}${last ? "└── " : "├── "}${node.label}`);
-    if (node.children) {
-      node.children.forEach((child, childIndex) => {
-        const childLast = childIndex === node.children!.length - 1;
-        out.push(`${prefix}${last ? "    " : "│   "}${childLast ? "└── " : "├── "}${child}`);
-      });
-    }
+function sortedTargetFields(
+  object: string,
+  group: TargetGroup,
+  targetBundle: RawSchema | undefined
+): string[] {
+  const fields = new Set(targetProperties(targetBundle, object));
+  for (const field of group.flows.keys()) fields.add(field);
+  return [...fields].sort((left, right) => {
+    if (left === "(object route)") return -1;
+    if (right === "(object route)") return 1;
+    return left.localeCompare(right);
   });
-  return out;
+}
+
+function renderObject(
+  object: string,
+  group: TargetGroup,
+  targetBundle: RawSchema | undefined,
+  prefix: string,
+  connector: "├── " | "└── "
+): string[] {
+  const hasMappings = group.flows.size > 0;
+  const lines = [`${prefix}${connector}${object}${hasMappings ? "" : " [NO MAPPINGS]"}`];
+  if (!hasMappings) return lines;
+
+  const fields = sortedTargetFields(object, group, targetBundle);
+  const childPrefix = prefix + (connector === "└── " ? "    " : "│   ");
+  fields.forEach((field, fieldIndex) => {
+    const lastField = fieldIndex === fields.length - 1;
+    const flows: InverseFlow[] = group.flows.get(field) ?? [];
+    lines.push(`${childPrefix}${lastField ? "└── " : "├── "}${field}`);
+    const flowPrefix = childPrefix + (lastField ? "    " : "│   ");
+    if (flows.length === 0) {
+      lines.push(`${flowPrefix}└── ✗ no mapped OCF source`);
+      return;
+    }
+    flows.sort((left, right) => flowLabel(left).localeCompare(flowLabel(right)));
+    flows.forEach((flow, flowIndex) => {
+      const lastFlow = flowIndex === flows.length - 1;
+      lines.push(`${flowPrefix}${lastFlow ? "└── " : "├── "}${flowLabel(flow)}`);
+    });
+  });
+  return lines;
+}
+
+function renderObjectCategory(
+  label: string,
+  objects: string[],
+  groups: Map<string, TargetGroup>,
+  targetBundle: RawSchema | undefined,
+  prefix: string,
+  connector: "├── " | "└── "
+): string[] {
+  const lines = [`${prefix}${connector}${label} (${objects.length})`];
+  const childPrefix = prefix + (connector === "└── " ? "    " : "│   ");
+  objects.forEach((object, index) => {
+    lines.push(
+      ...renderObject(
+        object,
+        groups.get(object) ?? { object, flows: new Map() },
+        targetBundle,
+        childPrefix,
+        index === objects.length - 1 ? "└── " : "├── "
+      )
+    );
+  });
+  return lines;
 }
 
 export function renderMappingInverseReport(options: MappingInverseReportOptions): string {
@@ -206,47 +260,53 @@ export function renderMappingInverseReport(options: MappingInverseReportOptions)
     : [...new Set([...groups.keys(), ...bundleObjects])].sort();
 
   const lines = [`Carta inverse mapping report (${options.documents.size} source documents)`];
-  for (const object of selected) {
-    const group = groups.get(object) ?? { object, flows: new Map() };
-    const hasMappings = group.flows.size > 0;
-    const properties = new Set(targetProperties(options.targetBundle, object));
-    for (const field of group.flows.keys()) {
-      if (field !== "(object route)") properties.add(field);
+  if (options.targetObject) {
+    if (selected.length === 0) {
+      lines.push("└── no target flows found");
+      return lines.join("\n");
     }
-
+    const object = selected[0]!;
     lines.push(
-      ...renderTree(
-        [{ label: `${object}${hasMappings ? "" : " [NO MAPPINGS]"}`, children: [] }],
-        ""
+      ...renderObject(
+        object,
+        groups.get(object) ?? { object, flows: new Map() },
+        options.targetBundle,
+        "",
+        "└── "
       )
     );
-    const fields: string[] = [...properties].sort((left, right) => {
-      if (left === "(object route)") return -1;
-      if (right === "(object route)") return 1;
-      return left.localeCompare(right);
-    });
-    if (fields.length === 0 && !hasMappings) {
-      lines.push("    └── ✗ no mapped OCF source");
-    }
-    fields.forEach((field, fieldIndex) => {
-      const lastField = fieldIndex === fields.length - 1;
-      const fieldPrefix = lastField ? "    └── " : "    ├── ";
-      const flows: InverseFlow[] = group.flows.get(field) ?? [];
-      lines.push(`${fieldPrefix}${field}`);
-      if (flows.length === 0) {
-        lines.push(`    ${lastField ? "    " : "│   "}└── ✗ no mapped OCF source`);
-        return;
-      }
-      flows.sort((left, right) => flowLabel(left).localeCompare(flowLabel(right)));
-      flows.forEach((flow, flowIndex) => {
-        const lastFlow = flowIndex === flows.length - 1;
-        lines.push(
-          `    ${lastField ? "    " : "│   "}${lastFlow ? "└── " : "├── "}${flowLabel(flow)}`
-        );
-      });
-    });
+    return lines.join("\n");
   }
 
+  const mappedTargets = selected.filter((object) => (groups.get(object)?.flows.size ?? 0) > 0);
+  const unmappedObjects = selected.filter((object) => (groups.get(object)?.flows.size ?? 0) === 0);
+  const categories = [mappedTargets.length > 0, unmappedObjects.length > 0].filter(Boolean).length;
+  let categoryIndex = 0;
+  if (mappedTargets.length > 0) {
+    categoryIndex++;
+    lines.push(
+      ...renderObjectCategory(
+        "Carta targets with mappings",
+        mappedTargets,
+        groups,
+        options.targetBundle,
+        "",
+        categoryIndex === categories ? "└── " : "├── "
+      )
+    );
+  }
+  if (unmappedObjects.length > 0) {
+    lines.push(
+      ...renderObjectCategory(
+        "Carta objects with no mappings",
+        unmappedObjects,
+        groups,
+        options.targetBundle,
+        "",
+        "└── "
+      )
+    );
+  }
   if (selected.length === 0) lines.push("└── no target flows found");
   return lines.join("\n");
 }

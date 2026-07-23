@@ -121,7 +121,7 @@ describe("validate-mappings CLI (temp tree)", () => {
     await writeFile(path.join(root, "objects", "Thing.mapping.md"), mappingDoc({}));
     const { stdout } = await runCli(root, ["--inverse"]);
     expect(stdout).toContain("EmptyObject [NO MAPPINGS]");
-    expect(stdout).toContain("✗ no mapped OCF source");
+    expect(stdout).toContain("Carta objects with no mappings (1)");
   });
 
   it("exits 1 and reports field-level errors on a broken mapping", async () => {
