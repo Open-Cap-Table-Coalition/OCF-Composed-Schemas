@@ -122,11 +122,11 @@ Source: [`EquityCompensationExercise.schema.json`](./EquityCompensationExercise.
 status: complete
 
 route_by_property:
-  property: compensation_type
-  from:
-    via: security_id
-    mapping: ../issuance/EquityCompensationIssuance.mapping.md
-  enum: "https://raw.githubusercontent.com/Open-Cap-Table-Coalition/Open-Cap-Format-OCF/main/schema/enums/CompensationType.schema.json"
+  lookup_by:
+    key: security_id
+    through:
+      mapping: ../issuance/EquityCompensationIssuance.mapping.md
+      on_property: compensation_type
   exhaustive: true
 
 # shared: fields whose Carta home differs by family carry a per-variant target map
@@ -209,7 +209,7 @@ variants:
     convenience pointer (a single id), whereas `precededBy.securities` carries the full
     set, so in any snapshot the complete lineage forest stays traceable. (Cash-settled
     SARs settle to `cashAcquired` and produce no resulting security.)
-- **`security_id`** is the join key (`route_by_property.from.via`); it routes the family,
+- **`security_id`** is the join key (`route_by_property.lookup_by.key`); it routes the family,
   it is not itself a stored Carta field. Carta's exercise transactions hold no
   reference to the source grant — that linkage is structural (the exercise sits under
   its grant), not a leaf property — so `security_id` is `ocf-internal` here.

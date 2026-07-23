@@ -119,11 +119,11 @@ Source: [`StockReissuance.schema.json`](./StockReissuance.schema.json)
 status: complete
 
 route_by_property:
-  property: issuance_type
-  from:
-    via: security_id
-    mapping: ../issuance/StockIssuance.mapping.md
-  enum: "https://raw.githubusercontent.com/Open-Cap-Table-Coalition/Open-Cap-Format-OCF/main/schema/enums/StockIssuanceType.schema.json"
+  lookup_by:
+    key: security_id
+    through:
+      mapping: ../issuance/StockIssuance.mapping.md
+      on_property: issuance_type
   exhaustive: true
 
 # shared: every source property. The reissuance event itself is unmappable in both
@@ -170,7 +170,7 @@ variants:
   that record their origin in `precededBy.securities`, so `resulting_security_ids`
   still round-trips losslessly via computed lineage. See
   docs/polymorphic-transaction-routing.md §4.3.
-- **`security_id`** is the join key (`route_by_property.from.via`); it routes the family,
+- **`security_id`** is the join key (`route_by_property.lookup_by.key`); it routes the family,
   it is not itself a stored Carta field — hence `ocf-internal`, not a rename.
 - **No transaction-level endpoint.** Carta has no stock-reissuance transaction (the
   `CertificatePrecededByReason` set is share-reserve / option-exercised /

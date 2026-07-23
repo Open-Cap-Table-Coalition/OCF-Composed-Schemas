@@ -189,8 +189,7 @@ Source: [`StockIssuance.schema.json`](./StockIssuance.schema.json)
 status: complete
 
 route_by_property:
-  property: issuance_type
-  from: self
+  on_property: issuance_type
   exhaustive: true
 
 shared:

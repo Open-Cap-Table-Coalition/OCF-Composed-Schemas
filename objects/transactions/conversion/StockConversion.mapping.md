@@ -121,11 +121,11 @@ Source: [`StockConversion.schema.json`](./StockConversion.schema.json)
 status: complete
 
 route_by_property:
-  property: issuance_type
-  from:
-    via: security_id
-    mapping: ../issuance/StockIssuance.mapping.md
-  enum: "https://raw.githubusercontent.com/Open-Cap-Table-Coalition/Open-Cap-Format-OCF/main/schema/enums/StockIssuanceType.schema.json"
+  lookup_by:
+    key: security_id
+    through:
+      mapping: ../issuance/StockIssuance.mapping.md
+      on_property: issuance_type
   exhaustive: true
 
 # shared: every source property. There is no Carta conversion *transaction* home in
@@ -205,7 +205,7 @@ variants:
 - **The event fields have no home.** `date` and `quantity_converted` would each only
   land on the *synthesised* cancel/issue Carta records that no conversion `$def` owns,
   so they have no conversion-level Carta target (`no-equivalent`). `security_id` is the
-  `route_by_property.from.via` join key — it routes the family, it is not itself a stored
+  `route_by_property.lookup_by.key` join key — it routes the family, it is not itself a stored
   Carta field (`ocf-internal`). `id` is OCF's own object identifier and `object_type`
   is the fixed discriminator const `TX_STOCK_CONVERSION` (Carta types transactions
   positionally and has no conversion discriminator at all) — both `ocf-internal`.

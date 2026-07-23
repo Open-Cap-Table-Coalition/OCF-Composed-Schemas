@@ -129,11 +129,11 @@ Source: [`StockTransfer.schema.json`](./StockTransfer.schema.json)
 status: complete
 
 route_by_property:
-  property: issuance_type
-  from:
-    via: security_id
-    mapping: ../issuance/StockIssuance.mapping.md
-  enum: "https://raw.githubusercontent.com/Open-Cap-Table-Coalition/Open-Cap-Format-OCF/main/schema/enums/StockIssuanceType.schema.json"
+  lookup_by:
+    key: security_id
+    through:
+      mapping: ../issuance/StockIssuance.mapping.md
+      on_property: issuance_type
   exhaustive: true
 
 # composite: the two Carta transactions a stock transfer folds into, in order.
@@ -274,7 +274,7 @@ variants:
       resulting/balance security's `precededBy.securities` (see above). (Carta's tx-level
       `WarrantTransferTransaction.resultingSecurityId` is single-valued and warrant-only, so
       it is not the target here.)
-    - `security_id`: the join key (`route_by_property.from.via`) that routes the family; it is not
+    - `security_id`: the join key (`route_by_property.lookup_by.key`) that routes the family; it is not
       itself a stored Carta field on the transfer event — `ocf-internal`. (The transferred-in
       lineage is captured by `resulting_security_ids` above.)
     - `object_type` (const `TX_STOCK_TRANSFER`): the OCF discriminator for the transfer

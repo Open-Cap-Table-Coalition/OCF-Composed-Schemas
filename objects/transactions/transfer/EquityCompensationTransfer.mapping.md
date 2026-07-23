@@ -127,11 +127,11 @@ Source: [`EquityCompensationTransfer.schema.json`](./EquityCompensationTransfer.
 status: complete
 
 route_by_property:
-  property: compensation_type
-  from:
-    via: security_id
-    mapping: ../issuance/EquityCompensationIssuance.mapping.md
-  enum: "https://raw.githubusercontent.com/Open-Cap-Table-Coalition/Open-Cap-Format-OCF/main/schema/enums/CompensationType.schema.json"
+  lookup_by:
+    key: security_id
+    through:
+      mapping: ../issuance/EquityCompensationIssuance.mapping.md
+      on_property: compensation_type
   exhaustive: true
 
 # shared: every source property. Carta defines exactly one transfer transaction
@@ -206,7 +206,7 @@ variants:
   resulting-security analogues, but on the warrant track exclusively; with no
   equity-comp transfer object in any family, none of these has a destination.
   All `no-equivalent`.
-- **`security_id`** is the join key (`route_by_property.from.via`); it routes the
+- **`security_id`** is the join key (`route_by_property.lookup_by.key`); it routes the
   family rather than being a stored Carta field, so it is `ocf-internal`.
 - **`object_type` (`TX_PLAN_SECURITY_TRANSFER` | `TX_EQUITY_COMPENSATION_TRANSFER`),
   `id`, `comments`** are OCF scaffolding — the object-type discriminator (legacy

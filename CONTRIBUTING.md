@@ -324,12 +324,11 @@ OCF sometimes puts several instrument families behind one transaction schema, wh
 
 ### Local routing with `route_by_property`
 
-When the route property is on the source object, declare `from: self`:
+When the route property is on the source object, declare it with `on_property`:
 
 ```yaml
 route_by_property:
-  property: compensation_type
-  from: self
+  on_property: compensation_type
   exhaustive: true
 
 shared:
@@ -363,7 +362,7 @@ variants:
 
 The validator checks that:
 
-- `route_by_property.property` is an enum-typed source property;
+- `route_by_property.on_property` is an enum-typed source property;
 - variant `when:` sets are disjoint;
 - `exhaustive: true` means every source enum value is claimed by a variant;
 - each non-null `primary_targets` pointer resolves;
@@ -386,11 +385,11 @@ Downstream records often carry only a foreign key; their target family is fixed 
 
 ```yaml
 route_by_property:
-  property: compensation_type
-  from:
-    via: security_id
-    mapping: ../issuance/EquityCompensationIssuance.mapping.md
-  enum: "https://raw.githubusercontent.com/Open-Cap-Table-Coalition/Open-Cap-Format-OCF/main/schema/enums/CompensationType.schema.json"
+  lookup_by:
+    key: security_id
+    through:
+      mapping: ../issuance/EquityCompensationIssuance.mapping.md
+      on_property: compensation_type
   exhaustive: true
 
 variants:
@@ -410,7 +409,11 @@ variants:
     fields: {}
 ```
 
-`from.via` is the foreign key on the current record. `property` is the routed property on the related record. `from.mapping` identifies that record's mapping. The validator can check the declaration's shape and enum coverage, but a runtime converter still has to resolve the actual IDs in an input package. Use `from: self` when the routed property belongs to the current record.
+`lookup_by.key` is the key property on the current record. `lookup_by.through.mapping` identifies the
+related record, and `lookup_by.through.on_property` is the property read from that record. The
+validator infers the route enum from that mapping and property; a runtime converter still has to
+resolve the actual IDs in an input package. Use `on_property` directly when the route property
+belongs to the current record.
 
 ### Composite folds
 

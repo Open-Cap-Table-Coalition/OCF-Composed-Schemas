@@ -417,10 +417,17 @@ export function renderMappingReport(input: MappingReportInput): string {
   if (isPlainObject(rawVariants)) {
     const rbp = input.mapping.route_by_property;
     const routeByPropertyLabel = (route: Record<string, unknown>): string => {
-      const from = route.from;
-      if (from === "self") return `route_by_property: ${asStringOr(route.property, "?")} (self)`;
-      const via = isPlainObject(from) ? asStringOr(from.via, "?") : "?";
-      return `route_by_property: ${asStringOr(route.property, "?")} (via ${via})`;
+      if (typeof route.on_property === "string") {
+        return `route_by_property: ${route.on_property} (self)`;
+      }
+      const lookupBy = route.lookup_by;
+      if (isPlainObject(lookupBy)) {
+        const key = asStringOr(lookupBy.key, "?");
+        const through = lookupBy.through;
+        const property = isPlainObject(through) ? asStringOr(through.on_property, "?") : "?";
+        return `route_by_property: ${property} (lookup by ${key})`;
+      }
+      return "route_by_property: ?";
     };
     const routing = isPlainObject(rbp) ? routeByPropertyLabel(rbp) : "variants";
     const coverageMap = derivedCoverage?.variants

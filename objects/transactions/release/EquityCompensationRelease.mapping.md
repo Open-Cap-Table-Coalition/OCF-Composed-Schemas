@@ -133,11 +133,11 @@ Source: [`EquityCompensationRelease.schema.json`](./EquityCompensationRelease.sc
 status: complete
 
 route_by_property:
-  property: compensation_type
-  from:
-    via: security_id
-    mapping: ../issuance/EquityCompensationIssuance.mapping.md
-  enum: "https://raw.githubusercontent.com/Open-Cap-Table-Coalition/Open-Cap-Format-OCF/main/schema/enums/CompensationType.schema.json"
+  lookup_by:
+    key: security_id
+    through:
+      mapping: ../issuance/EquityCompensationIssuance.mapping.md
+      on_property: compensation_type
   exhaustive: true
 
 # shared: every source property. Fields whose Carta home differs by family carry
@@ -209,7 +209,7 @@ variants:
   only `security_id`. An importer must first resolve `compensation_type` from the joined
   `EquityCompensationIssuance` (the two-pass requirement,
   docs/polymorphic-transaction-routing.md §2.2), then route. `security_id` is the
-  `route_by_property.from.via` join key, not a stored Carta field.
+  `route_by_property.lookup_by.key` join key, not a stored Carta field.
 - **Only RSUs release.** "Release" here means a vested equity-comp security settling
   into shares. Carta models this *only* as RSU settlement — there is no
   `…ReleaseTransaction` for options or SARs — so the **Option** and **Sar** variants

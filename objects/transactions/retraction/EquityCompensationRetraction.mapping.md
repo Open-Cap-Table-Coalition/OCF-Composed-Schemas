@@ -107,16 +107,16 @@ Source: [`EquityCompensationRetraction.schema.json`](./EquityCompensationRetract
 status: complete
 
 route_by_property:
-  property: compensation_type
-  from:
-    via: security_id
-    mapping: ../issuance/EquityCompensationIssuance.mapping.md
-  enum: "https://raw.githubusercontent.com/Open-Cap-Table-Coalition/Open-Cap-Format-OCF/main/schema/enums/CompensationType.schema.json"
+  lookup_by:
+    key: security_id
+    through:
+      mapping: ../issuance/EquityCompensationIssuance.mapping.md
+      on_property: compensation_type
   exhaustive: true
 
 # shared: every source property. There is no per-variant target map here because
 # every field is unmappable in every family — Carta has no retraction tx to host
-# any of them. security_id is the join key (route_by_property.from.via).
+# any of them. security_id is the join key (route_by_property.lookup_by.key).
 shared:
   id:          { kind: unmappable, target: null, reason: ocf-internal }
   comments:    { kind: unmappable, target: null, reason: no-equivalent }
@@ -162,7 +162,7 @@ variants:
   concept for "this previously-entered transaction is being retracted/void." Searching the
   pinned bundle (`target-schema/Carta.schema.json`) for `retract` / `Retraction` returns
   nothing — so `primary_targets` is `null` for every variant and 0 of 6 fields map.
-- **`security_id`** is the join key (`route_by_property.from.via`); it routes the family, it is
+- **`security_id`** is the join key (`route_by_property.lookup_by.key`); it routes the family, it is
   not itself a stored Carta field. `ocf-internal`.
 - **`reason_text` has no home.** OCF free-text reason for the retraction. The only
   `reason`-bearing fields in Carta are the per-cancellation enums (`OptionCancellationReason`,

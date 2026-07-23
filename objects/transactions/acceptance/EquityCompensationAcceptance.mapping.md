@@ -100,11 +100,11 @@ Source: [`EquityCompensationAcceptance.schema.json`](./EquityCompensationAccepta
 status: complete
 
 route_by_property:
-  property: compensation_type
-  from:
-    via: security_id
-    mapping: ../issuance/EquityCompensationIssuance.mapping.md
-  enum: "https://raw.githubusercontent.com/Open-Cap-Table-Coalition/Open-Cap-Format-OCF/main/schema/enums/CompensationType.schema.json"
+  lookup_by:
+    key: security_id
+    through:
+      mapping: ../issuance/EquityCompensationIssuance.mapping.md
+      on_property: compensation_type
   exhaustive: true
 
 # shared: every source property. `date` lands on the resolved family's security object
@@ -163,7 +163,7 @@ variants:
 - **Sar has no home (`primary_targets: null`).** CSAR/SSAR have no Carta security object
   with a `stakeholderAcceptanceDate` (there is no SAR grant object to set the field on),
   so the entire family is unmappable here and `date`'s `Sar` target is `null`.
-- **`security_id`** is the join key (`route_by_property.from.via`); it routes the family by
+- **`security_id`** is the join key (`route_by_property.lookup_by.key`); it routes the family by
   resolving to the issuance's `compensation_type`, it is not itself a stored Carta field
   on the accepted security — marked `ocf-internal`.
 - **`id`, `object_type`, `comments`: OCF scaffolding.** `id` is OCF's identifier for the

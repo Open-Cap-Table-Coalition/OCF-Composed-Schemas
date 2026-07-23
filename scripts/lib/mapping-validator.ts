@@ -1,3 +1,4 @@
+import path from "node:path";
 import jsonpointer from "jsonpointer";
 import { detectEnumValues } from "./enum-detection.js";
 import { getTransformPolicy, PolicyHostKind, registeredPolicyNames } from "./mapping-policies.js";
@@ -57,6 +58,15 @@ export function targetEnumValuesAt(bundle: unknown, node: unknown, depth = 0): s
 
 export function isPlainObject(v: unknown): v is Record<string, unknown> {
   return typeof v === "object" && v !== null && !Array.isArray(v);
+}
+
+/** Resolve a mapping reference relative to the mapping that declares it. */
+export function resolveMappingReference(mappingFile: string, reference: string): string {
+  const normalizedFile = mappingFile.replaceAll("\\", "/");
+  const normalizedReference = reference.replaceAll("\\", "/");
+  return path.posix.normalize(
+    path.posix.join(path.posix.dirname(normalizedFile), normalizedReference)
+  );
 }
 
 /**
@@ -225,6 +235,8 @@ export interface ValidateInput {
   targetBundle: unknown | null;
   /** Mapping paths available for sequential_transform apply_mapping steps. */
   mappingFiles?: Set<string>;
+  /** Repo-relative mapping path → sibling source schema, for lookup_by route inference. */
+  mappingSourceSchemas?: Map<string, RawSchema>;
 }
 
 export interface ValidateOptions {
@@ -283,10 +295,10 @@ export function validateMapping(input: ValidateInput, opts: ValidateOptions): Va
   }
   const strict = blockStatus === "complete" || blockStatus === "reviewed";
 
-  // Polymorphic dispatch has one public form: route_by_property. The property
-  // may come from this record (`from: self`) or from a related record reached
-  // through `from.via`. Older routing keys are deliberately rejected; this DSL
-  // is not maintaining compatibility aliases.
+  // Polymorphic dispatch has one public form: route_by_property. It either reads
+  // a local property (`on_property`) or performs an explicit keyed lookup
+  // (`lookup_by`). Older routing keys are deliberately rejected; this DSL is
+  // not maintaining compatibility aliases.
   const obsoleteRoutingKeys = ["discriminator", "route_by_security"].filter(
     (key) => key in input.mapping
   );
@@ -803,12 +815,13 @@ function validateUnionMapEntry(
 
 /**
  * Validate a polymorphic mapping: one `route_by_property:` block plus a
- * `variants:` map whose `when:` value sets partition the routed enum. The routed
- * property may belong to this record (`from: self`) or to a related record reached
- * through `from.via`. Each variant carries its own `primary_targets:` (the Carta
- * family roots) and a `shared:`-merged field map, validated per variant. Derived
- * coverage is reported separately; `exhaustive` requires every enum value to be
- * claimed by a variant (mappable or explicitly unroutable).
+ * `variants:` map whose `when:` value sets partition the routed enum. The route
+ * is either a local `on_property` or an explicit keyed `lookup_by` whose
+ * `through.on_property` is read from the looked-up record. Each variant carries
+ * its own `primary_targets:` (the Carta family roots) and a `shared:`-merged
+ * field map, validated per variant. Derived coverage is reported separately;
+ * `exhaustive` requires every enum value to be claimed by a variant (mappable or
+ * explicitly unroutable).
  */
 function validatePolymorphicMapping(
   input: ValidateInput,
@@ -827,53 +840,98 @@ function validatePolymorphicMapping(
   const route = mapping.route_by_property as Record<string, unknown>;
   exhaustive = route.exhaustive === true;
 
-  const property = route.property;
-  const from = route.from;
-  if (typeof property !== "string" || property.length === 0) {
-    err(null, 'route_by_property requires a non-empty "property"');
+  const removedRouteFields = ["property", "from", "enum"].filter((key) => key in route);
+  if (removedRouteFields.length > 0) {
+    err(
+      null,
+      `unsupported route_by_property field(s) ${removedRouteFields.join(
+        ", "
+      )}; use on_property or lookup_by`
+    );
   }
 
-  if (from === "self") {
-    if (typeof property !== "string" || !(property in properties)) {
+  const onProperty = route.on_property;
+  const lookupBy = route.lookup_by;
+  if (lookupBy === undefined) {
+    if (typeof onProperty !== "string" || onProperty.length === 0) {
+      err(null, 'route_by_property requires a non-empty "on_property"');
+    } else if (!(onProperty in properties)) {
       err(
         null,
-        `route_by_property.property "${String(property)}" is not a property of the source schema`
+        `route_by_property.on_property "${String(
+          onProperty
+        )}" is not a property of the source schema`
       );
     } else {
       enumDeclared = true;
-      enumValues = detectEnumValues(properties[property], input.registry);
+      enumValues = detectEnumValues(properties[onProperty], input.registry);
       if (enumValues === null) {
         err(
           null,
-          `route_by_property.property "${property}" is not enum-typed; a route property must route on an enum`
+          `route_by_property.on_property "${onProperty}" is not enum-typed; a route property must route on an enum`
         );
       }
     }
-  } else if (isPlainObject(from)) {
-    const via = from.via;
-    const relatedMapping = from.mapping;
-    if (typeof via !== "string" || !(via in properties)) {
+  } else if (isPlainObject(lookupBy)) {
+    if (onProperty !== undefined) {
+      err(null, 'route_by_property cannot declare both "on_property" and "lookup_by"');
+    }
+    const key = lookupBy.key;
+    const through = lookupBy.through;
+    if (typeof key !== "string" || key.length === 0 || !(key in properties)) {
       err(
         null,
-        `route_by_property.from.via "${String(via)}" is not a property of the source schema`
+        `route_by_property.lookup_by.key "${String(key)}" is not a property of the source schema`
       );
     }
-    if (typeof relatedMapping !== "string" || relatedMapping.length === 0) {
-      err(
-        null,
-        "route_by_property.from.mapping must be a non-empty mapping path for the related record"
-      );
-    }
-    const enumRef = route.enum;
-    if (typeof enumRef === "string") {
-      enumDeclared = true;
-      enumValues = detectEnumValues({ $ref: enumRef }, input.registry);
-      if (enumValues === null) {
-        err(null, `route_by_property.enum "${enumRef}" did not resolve to an enum in the registry`);
+    if (!isPlainObject(through)) {
+      err(null, 'route_by_property.lookup_by requires a "through" map');
+    } else {
+      const relatedMapping = through.mapping;
+      const relatedProperty = through.on_property;
+      if (typeof relatedMapping !== "string" || relatedMapping.length === 0) {
+        err(null, "route_by_property.lookup_by.through.mapping must be a non-empty mapping path");
+      }
+      if (typeof relatedProperty !== "string" || relatedProperty.length === 0) {
+        err(null, 'route_by_property.lookup_by.through requires a non-empty "on_property"');
+      }
+
+      if (typeof relatedMapping === "string" && relatedMapping.length > 0) {
+        const resolvedMapping = resolveMappingReference(input.file, relatedMapping);
+        if (input.mappingFiles && !input.mappingFiles.has(resolvedMapping)) {
+          err(
+            null,
+            `route_by_property.lookup_by.through.mapping "${relatedMapping}" resolves to missing mapping "${resolvedMapping}"`
+          );
+        }
+        const relatedSource = input.mappingSourceSchemas?.get(resolvedMapping);
+        if (!relatedSource) {
+          err(
+            null,
+            `route_by_property.lookup_by.through.mapping "${relatedMapping}" has no resolvable sibling source schema`
+          );
+        } else if (typeof relatedProperty === "string" && relatedProperty.length > 0) {
+          const relatedProperties = (relatedSource.properties ?? {}) as Record<string, unknown>;
+          if (!(relatedProperty in relatedProperties)) {
+            err(
+              null,
+              `route_by_property.lookup_by.through.on_property "${relatedProperty}" is not a property of the looked-up source schema`
+            );
+          } else {
+            enumDeclared = true;
+            enumValues = detectEnumValues(relatedProperties[relatedProperty], input.registry);
+            if (enumValues === null) {
+              err(
+                null,
+                `route_by_property.lookup_by.through.on_property "${relatedProperty}" is not enum-typed; a route property must route on an enum`
+              );
+            }
+          }
+        }
       }
     }
   } else {
-    err(null, 'route_by_property.from must be "self" or a map with "via" and "mapping"');
+    err(null, "route_by_property.lookup_by must be a map");
   }
 
   // 2. variants: + shared:
@@ -954,7 +1012,7 @@ function validatePolymorphicMapping(
   } else if (exhaustive && !enumDeclared) {
     err(
       null,
-      "exhaustive routing requires a resolvable enum (route_by_property.property or route_by_property.enum)"
+      "exhaustive routing requires a resolvable enum (route_by_property.on_property or route_by_property.lookup_by.through.on_property)"
     );
   }
 

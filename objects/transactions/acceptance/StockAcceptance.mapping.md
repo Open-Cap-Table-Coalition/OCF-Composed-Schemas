@@ -97,11 +97,11 @@ Source: [`StockAcceptance.schema.json`](./StockAcceptance.schema.json)
 status: complete
 
 route_by_property:
-  property: issuance_type
-  from:
-    via: security_id
-    mapping: ../issuance/StockIssuance.mapping.md
-  enum: "https://raw.githubusercontent.com/Open-Cap-Table-Coalition/Open-Cap-Format-OCF/main/schema/enums/StockIssuanceType.schema.json"
+  lookup_by:
+    key: security_id
+    through:
+      mapping: ../issuance/StockIssuance.mapping.md
+      on_property: issuance_type
   exhaustive: true
 
 # shared: every source property. `date` is the only mappable field and its Carta
@@ -151,7 +151,7 @@ variants:
   no `StockAcceptanceTransaction` and no generic acceptance transaction, so there is
   nowhere to record a founders'-stock acceptance — `primary_targets: null` and
   `date → null` for this variant.
-- **`security_id`** is the join key (`route_by_property.from.via`); it routes the family,
+- **`security_id`** is the join key (`route_by_property.lookup_by.key`); it routes the family,
   it is not itself a stored Carta field on the resolved security.
 - **`id`, `comments`, `object_type` → unmappable.** Standard OCF object scaffolding:
   `id` is OCF's own object identifier (Carta assigns server-side ids) and

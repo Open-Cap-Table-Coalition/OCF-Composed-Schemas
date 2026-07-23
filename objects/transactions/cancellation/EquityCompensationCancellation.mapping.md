@@ -115,11 +115,11 @@ Source: [`EquityCompensationCancellation.schema.json`](./EquityCompensationCance
 status: complete
 
 route_by_property:
-  property: compensation_type
-  from:
-    via: security_id
-    mapping: ../issuance/EquityCompensationIssuance.mapping.md
-  enum: "https://raw.githubusercontent.com/Open-Cap-Table-Coalition/Open-Cap-Format-OCF/main/schema/enums/CompensationType.schema.json"
+  lookup_by:
+    key: security_id
+    through:
+      mapping: ../issuance/EquityCompensationIssuance.mapping.md
+      on_property: compensation_type
   exhaustive: true
 
 # shared: fields whose Carta home differs by family carry a per-variant target map
@@ -189,7 +189,7 @@ variants:
   bucket and dropping the prose. It lands on the family's cancellation tx `reason` via
   a per-variant target map, mirroring `date`/`quantity` — and matching the
   `ConvertibleCancellation` / `WarrantCancellation` siblings.
-- **`security_id`** is the join key (`route_by_property.from.via`); it routes the family,
+- **`security_id`** is the join key (`route_by_property.lookup_by.key`); it routes the family,
   it is not itself a stored Carta field. **`balance_security_id`** (partial-cancel
   remainder) has no Carta equivalent on any cancellation tx.
 - **Lineage asymmetry — why `balance_security_id` stays unmappable here.** A partial

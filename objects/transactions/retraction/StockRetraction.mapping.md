@@ -103,11 +103,11 @@ Source: [`StockRetraction.schema.json`](./StockRetraction.schema.json)
 status: complete
 
 route_by_property:
-  property: issuance_type
-  from:
-    via: security_id
-    mapping: ../issuance/StockIssuance.mapping.md
-  enum: "https://raw.githubusercontent.com/Open-Cap-Table-Coalition/Open-Cap-Format-OCF/main/schema/enums/StockIssuanceType.schema.json"
+  lookup_by:
+    key: security_id
+    through:
+      mapping: ../issuance/StockIssuance.mapping.md
+      on_property: issuance_type
   exhaustive: true
 
 # shared: every source property. All six are unmappable in BOTH families (there is
@@ -156,7 +156,7 @@ variants:
   retraction is dropped entirely on import; the faithful behavior is *not replaying*
   the retracted transaction in the first place.
 - Per-field justification (all six unmappable in both families):
-    - `security_id`: the `route_by_property.from.via` join key. It routes the family back to
+    - `security_id`: the `route_by_property.lookup_by.key` join key. It routes the family back to
       the issuance; it is not itself a stored Carta field on any retraction tx (none
       exists). `ocf-internal`.
     - `reason_text`: free-text reason for the retraction. Carta has no free-text reason

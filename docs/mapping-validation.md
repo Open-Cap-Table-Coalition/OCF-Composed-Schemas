@@ -132,8 +132,7 @@ record or to a related record:
 
 ```yaml
 route_by_property:
-  property: compensation_type
-  from: self
+  on_property: compensation_type
   exhaustive: true
 shared: { <field>: <entry> }            # fields identical across variants (validated once per variant)
 variants:
@@ -143,22 +142,25 @@ variants:
     fields: { <field>: <entry> }        # same entry grammar as a simple mapping
 ```
 
-For a related record, `from` declares the relationship (the validator checks its shape, not its
-runtime resolution):
+For a related record, `lookup_by` declares the relationship (the validator checks its shape and
+the referenced source property):
 
 ```yaml
 route_by_property:
-  property: compensation_type      # property on the related record
-  from:
-    via: security_id                # FK property on THIS schema
-    mapping: ../issuance/EquityCompensationIssuance.mapping.md
-  enum: "<registry $id>"           # the enum the routes must cover
+  lookup_by:
+    key: security_id                # key property on THIS schema
+    through:
+      mapping: ../issuance/EquityCompensationIssuance.mapping.md
+      on_property: compensation_type # property on the looked-up record
   exhaustive: true
 variants: { ... }                  # as above
 ```
 
-`from: self` is the only local form; joined routing uses `from.via` plus `from.mapping`. The same
-construct therefore covers local and cross-record polymorphism without a security-specific key.
+`on_property` is the local form. `lookup_by` makes a cross-record lookup explicit: `key` is the
+property on the current record, `through.mapping` identifies the looked-up record, and
+`through.on_property` is the route property read from it. The validator infers the enum from that
+mapping/property pair, so no separate enum URL is needed. The same construct covers local and
+cross-record polymorphism without a security-specific key.
 
 **Per-variant target maps.** A `shared:` field is common to every variant, but its Carta *home*
 may differ by variant (e.g. `quantity` lands on `OptionIssuanceTransaction` for options but
@@ -216,9 +218,11 @@ and an optional per-family `const:` map of fixed Carta values the step always ca
 
 ```yaml
 route_by_property:                                                     # family axis (required)
-  property: issuance_type
-  from: { via: security_id, mapping: ../issuance/StockIssuance.mapping.md }
-  enum: ".../enums/StockIssuanceType.schema.json"
+  lookup_by:
+    key: security_id
+    through:
+      mapping: ../issuance/StockIssuance.mapping.md
+      on_property: issuance_type
 
 composite:                                     # ordered steps, ALL emitted
   - step: cancel

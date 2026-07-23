@@ -117,11 +117,11 @@ Source: [`StockRepurchase.schema.json`](./StockRepurchase.schema.json)
 status: complete
 
 route_by_property:
-  property: issuance_type
-  from:
-    via: security_id
-    mapping: ../issuance/StockIssuance.mapping.md
-  enum: "https://raw.githubusercontent.com/Open-Cap-Table-Coalition/Open-Cap-Format-OCF/main/schema/enums/StockIssuanceType.schema.json"
+  lookup_by:
+    key: security_id
+    through:
+      mapping: ../issuance/StockIssuance.mapping.md
+      on_property: issuance_type
   exhaustive: true
 
 # shared: every source property. Carta has no repurchase transaction in either
@@ -181,7 +181,7 @@ variants:
   question below.) Because the entire family is unmappable, every field — including the
   ones that would have homes on a cancellation tx (`date`, `quantity`) — is
   `no-equivalent` here.
-- **`security_id`** is the join key (`route_by_property.from.via`); it routes the family by
+- **`security_id`** is the join key (`route_by_property.lookup_by.key`); it routes the family by
   joining back to the issuance, it is not itself a stored Carta field, so it is
   `ocf-internal`.
 - **`price` / `consideration_text` have no home.** OCF records the repurchase price

@@ -201,8 +201,7 @@ Source: [`EquityCompensationIssuance.schema.json`](./EquityCompensationIssuance.
 status: complete
 
 route_by_property:
-  property: compensation_type
-  from: self
+  on_property: compensation_type
   exhaustive: true
 
 shared:

@@ -113,11 +113,11 @@ Source: [`StockCancellation.schema.json`](./StockCancellation.schema.json)
 status: complete
 
 route_by_property:
-  property: issuance_type
-  from:
-    via: security_id
-    mapping: ../issuance/StockIssuance.mapping.md
-  enum: "https://raw.githubusercontent.com/Open-Cap-Table-Coalition/Open-Cap-Format-OCF/main/schema/enums/StockIssuanceType.schema.json"
+  lookup_by:
+    key: security_id
+    through:
+      mapping: ../issuance/StockIssuance.mapping.md
+      on_property: issuance_type
   exhaustive: true
 
 # shared: every source property. date/quantity land on a different Carta
@@ -187,7 +187,7 @@ variants:
   prose. It lands on the resolved family's cancellation tx `reason` via a per-variant
   target map, mirroring `date`/`quantity` — and matching the `ConvertibleCancellation`
   / `WarrantCancellation` siblings, which map the identical field the same way.
-- **`security_id`** is the join key (`route_by_property.from.via`); it routes the family,
+- **`security_id`** is the join key (`route_by_property.lookup_by.key`); it routes the family,
   it is not itself a stored Carta field.
 - **`balance_security_id` round-trips as lineage (kind `computed`).** The remainder
   security minted by a partial cancellation is itself a stock security —

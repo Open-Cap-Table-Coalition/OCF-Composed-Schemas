@@ -122,8 +122,8 @@ the validator output and generated heatmap, not copied into each mapping file. A
 
 - **Simple** — a `fields:` map sends one OCF object to one target family.
 - **Polymorphic** — one OCF object fans out to *several* Carta families, selected by one
-  `route_by_property:` block. Its `from:` is either `self` or a related record reached through
-  `from.via`. Variants are **mutually exclusive** — pick one.
+  `route_by_property:` block. It uses `on_property` for a local route or `lookup_by` for an
+  explicit keyed lookup through another mapping. Variants are **mutually exclusive** — pick one.
 - **Composite** — one OCF *verb* has no single Carta target and folds into an **ordered set** of
   Carta transactions, **all emitted**. It is declared alongside a polymorphic block; composite
   steps are additive while variants remain exclusive.

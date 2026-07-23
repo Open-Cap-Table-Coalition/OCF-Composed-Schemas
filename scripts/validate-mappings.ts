@@ -53,6 +53,18 @@ async function main(argv: Args): Promise<number> {
 
   const all = await collectMappingFiles(repoRoot);
   const mappingFiles = new Set(all);
+  const mappingSourceSchemas = new Map<string, RawSchema>();
+  for (const rel of all) {
+    const schemaRel = rel.replace(/\.mapping\.md$/, ".schema.json");
+    try {
+      mappingSourceSchemas.set(
+        rel,
+        JSON.parse(await readFile(path.join(repoRoot, schemaRel), "utf8")) as RawSchema
+      );
+    } catch {
+      // The selected file's sibling-schema error is reported in the main pass below.
+    }
+  }
   const files = argv.filter ? all.filter((rel) => minimatch(rel, argv.filter as string)) : all;
 
   const bundleCache = new Map<string, unknown>();
@@ -160,6 +172,7 @@ async function main(argv: Args): Promise<number> {
           registry,
           targetBundle,
           mappingFiles,
+          mappingSourceSchemas,
         },
         { requireUnmappableReason: true }
       )

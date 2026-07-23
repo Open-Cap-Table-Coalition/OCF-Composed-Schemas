@@ -177,8 +177,7 @@ single-family shape.
 
 ```yaml
 route_by_property:
-  property: compensation_type  # must be an enum property of the selected record
-  from: self                   # use a related-record map for join-dependent routing
+  on_property: compensation_type  # enum property on this record
   exhaustive: true             # every route property value must be claimed by some variant
 variants:
   Option:
@@ -192,7 +191,8 @@ shared:                                        # fields identical across all var
   stakeholder_id: { kind: rename, target: "#/$defs/OptionGrant/properties/stakeholderId" }
 ```
 
-- `route_by_property.property` — the routing property. With `from: self`, the validator asserts it is an enum-typed source property via `detectEnumValues`.
+- `route_by_property.on_property` — the local routing property. The validator asserts it is an enum-typed source property via `detectEnumValues`.
+- `route_by_property.lookup_by` — the joined routing form. `key` is a property on the current record; `through.mapping` identifies the related mapping; and `through.on_property` is the enum property read from the looked-up record.
 - `variants.<label>.when` — the enum values this variant claims. Across all variants these must **partition** the source enum (pairwise disjoint; with `exhaustive: true`, every value claimed).
 - `variants.<label>.primary_targets` — the family roots (a list, because one OCF record fans out to a transaction *and* a security object). Each must resolve. For families with no security `$def` (SAR) the list holds only the transaction.
 - `variants.<label>.fields` — a complete field map for that variant, using the *exact* existing entry grammar.
@@ -204,11 +204,11 @@ shared:                                        # fields identical across all var
 # Example: EquityCompensationCancellation — the one downstream verb where all three
 # families have a real Carta tx, so it shows the grammar without a verb-divergence caveat.
 route_by_property:
-  property: compensation_type                          # property on the joined issuance
-  from:
-    via: security_id                                    # FK on THIS transaction
-    mapping: ../issuance/EquityCompensationIssuance.mapping.md
-  enum: ".../enums/CompensationType.schema.json"      # registry $id of that enum, so routes are counted
+  lookup_by:
+    key: security_id                                    # key on THIS transaction
+    through:
+      mapping: ../issuance/EquityCompensationIssuance.mapping.md
+      on_property: compensation_type                    # property on the joined issuance
   exhaustive: true                                    # every CompensationType value must be routed (or unmappable)
 variants:
   Option: { when: [OPTION, OPTION_NSO, OPTION_ISO], primary_targets: ["#/$defs/OptionCancellationTransaction"], fields: { ... } }
@@ -216,9 +216,9 @@ variants:
   Sar:    { when: [CSAR, SSAR], primary_targets: ["#/$defs/SarCancellationTransaction"], fields: { ... } }
 ```
 
-For *Exercise* and *Release* the same grammar applies but some variants resolve to `unmappable` (RSUs settle rather than exercise; options/SARs do not release — §2.3). The same `route_by_property:` block also supports local routing with `from: self`.
+For *Exercise* and *Release* the same grammar applies but some variants resolve to `unmappable` (RSUs settle rather than exercise; options/SARs do not release — §2.3). The same `route_by_property:` block supports local routing with `on_property` or joined routing with `lookup_by`.
 
-`route_by_property:` declares "this mapping is **join-dependent**; an importer must resolve `property` from the related record first." The validator checks structure **and counts the routes**: `from.via` is a source property; `property`/`from.mapping` are present; and given `enum` (a registry `$id`) the variants' `when:` sets must **partition that enum** — with `exhaustive: true`, every value is routed or explicitly marked unroutable, exactly like the issuance side. It deliberately does not *execute* the join (a real foreign-key's resolvability is unprovable from static text).
+`lookup_by` declares "this mapping is **join-dependent**; an importer must use the current record's `key` to find the related record, then read `through.on_property`." The validator checks structure **and counts the routes**: `lookup_by.key` is a source property; `through.mapping` and `through.on_property` resolve to a source schema property; and that property's enum must be partitioned by the variants' `when:` sets — with `exhaustive: true`, every value is routed or explicitly marked unroutable, exactly like the issuance side. It deliberately does not *execute* the join (a real foreign-key's resolvability is unprovable from static text).
 
 ### 4.4 Unmappable route property values
 
@@ -244,12 +244,12 @@ entries; `--verbose` reports the derived `X/N` values, and
 
 | Check | Mechanism (existing → extended) |
 |---|---|
-| Route property is enum-typed | with `from: self`, `detectEnumValues(properties[route_by_property.property], registry)` is non-null |
+| Route property is enum-typed | with `on_property`, `detectEnumValues(properties[route_by_property.on_property], registry)` is non-null; with `lookup_by`, the same check runs on `through.on_property` in `through.mapping` |
 | Variants partition the enum | union of `when` lists == source enum set, pairwise disjoint; `exhaustive` ⇒ no missing value (mirrors the values-completeness loop, validator ll. 340–342) |
 | `primary_targets` resolve | `resolveJsonPointer` + `derefNode`; reject `true` exactly as `validateEntryTargets` does today |
 | Per-variant field targets | run `validateEntryShape` / `validateValuesBlock` / `validateEntryTargets` **once per variant's `fields:`** — zero new target logic |
 | Per-variant coverage | for `complete`/`reviewed`, every source property in `shared:` ∪ `variant.fields` for each variant; the derived numerator counts valid non-`TODO` entries |
-| Join declared **and routes counted** | if `route_by_property:` is joined: `from.via` ∈ source properties; `property`/`from.mapping` non-empty; and given `enum` (a registry `$id`) the variants partition that enum just like the issuance side |
+| Join declared **and routes counted** | if `route_by_property:` uses `lookup_by`: `key` ∈ source properties; `through.mapping` and `through.on_property` resolve; and the inferred enum is partitioned just like the issuance side |
 
 `--verbose` renders the routing line plus **each variant's per-field routes** as a nested tree
 (`shared:` shown once), so the routes are auditable in CI output, not just pass/fail.
@@ -276,8 +276,7 @@ The proposed `## Mapping` block. Targets verified: `OptionIssuanceTransaction` h
 status: complete
 
 route_by_property:
-  property: compensation_type
-  from: self
+  on_property: compensation_type
   exhaustive: true
 
 shared:
@@ -406,9 +405,11 @@ Some OCF transactions have **no single Carta target** because Carta records ledg
 
 ```yaml
 route_by_property:                                                       # family axis
-  property: issuance_type
-  from: { via: security_id, mapping: ../issuance/StockIssuance.mapping.md }
-  enum: ".../enums/StockIssuanceType.schema.json"
+  lookup_by:
+    key: security_id
+    through:
+      mapping: ../issuance/StockIssuance.mapping.md
+      on_property: issuance_type
 
 composite:                                   # ordered steps, ALL emitted
   - step: cancel
