@@ -484,6 +484,10 @@
                 "type": "string",
                 "pattern": "^[+-]?[0-9]+(\\.[0-9]{1,10})?$",
                 "description": "Quantity of non-monetary security units cancelled"
+              },
+              "security_id": {
+                "type": "string",
+                "description": "Identifier for the security (stock, plan security, warrant, or convertible) by which it can be referenced by other transaction objects. N…"
               }
             },
             "required": [

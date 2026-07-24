@@ -593,26 +593,6 @@ flowchart LR
   o0 -->|"security_id"| sink
 ```
 
-**WarrantCancellation**
-
-```mermaid
-flowchart LR
-  classDef adm fill:#e6f4ea,stroke:#34a853,color:#0b3d20;
-  classDef notadm fill:#f1f3f4,stroke:#9aa0a6,color:#5f6368,stroke-dasharray:4 3;
-  classDef carta fill:#e8f0fe,stroke:#1a73e8,color:#0d2b66;
-  classDef sink fill:#fce8e6,stroke:#d93025,color:#5c0d06;
-  subgraph SRC["OCF source objects"]
-    direction TB
-    o0["WarrantCancellation"]:::adm
-  end
-  subgraph TGT["Carta target objects"]
-    direction TB
-    sink["⌀ no Carta home"]:::sink
-  end
-  o0 -->|"balance_security_id"| sink
-  o0 -->|"security_id"| sink
-```
-
 **ConvertibleCancellation**
 
 ```mermaid
@@ -706,6 +686,25 @@ flowchart LR
     sink["⌀ no Carta home"]:::sink
   end
   o0 -->|"date"| sink
+```
+
+**WarrantCancellation**
+
+```mermaid
+flowchart LR
+  classDef adm fill:#e6f4ea,stroke:#34a853,color:#0b3d20;
+  classDef notadm fill:#f1f3f4,stroke:#9aa0a6,color:#5f6368,stroke-dasharray:4 3;
+  classDef carta fill:#e8f0fe,stroke:#1a73e8,color:#0d2b66;
+  classDef sink fill:#fce8e6,stroke:#d93025,color:#5c0d06;
+  subgraph SRC["OCF source objects"]
+    direction TB
+    o0["WarrantCancellation"]:::adm
+  end
+  subgraph TGT["Carta target objects"]
+    direction TB
+    sink["⌀ no Carta home"]:::sink
+  end
+  o0 -->|"balance_security_id"| sink
 ```
 
 
@@ -874,7 +873,6 @@ flowchart LR
 
 ### WarrantCancellation
 - balance_security_id: no-destination — kind unmappable
-- **security_id** (OCF-required): no-destination — kind unmappable
 
 ### WarrantIssuance
 - board_approval_date: no-destination — kind unmappable
@@ -892,7 +890,7 @@ flowchart LR
 ## (b) Carta inverse coverage by object definition
 
 The inverse ledger separates executable slot coverage, reusable type mappings,
-structural `$ref` reachability, deferred extraction, expected derived objects,
+schema-backed structural child-container coverage, deferred extraction, expected derived objects,
 curated value-type roles, alternate/unreachable shapes, and actionable gap candidates.
 A missing root target is therefore not automatically a missing concept.
 
@@ -903,7 +901,7 @@ A missing root target is therefore not automatically a missing concept.
 3. **86** are object-shaped definitions.
 4. Of those **86**, **54** are support definitions, not standalone objects (**53** nested objects + **1** object-shaped value type), leaving **32** standalone mapping candidates.
 5. **60** support definitions are excluded from standalone mapping: **54** object-shaped support definitions + **6** scalar support types.
-6. We have mapping evidence for **15**: **0** fully mapped and **15** partially mapped (**14** direct executable, **1** type-only, **0** deferred).
+6. We have mapping evidence for **15**: **1** fully mapped and **14** partially mapped (**14** direct executable, **1** type-only, **0** deferred).
 7. **17** standalone candidates have no mapping evidence yet; their inventory role tells us whether that is expected or actionable (**12** report/read-model roll-ups, **2** alternate shapes, **1** CARTA-specific families without OCF sources, **1** workflow/data gaps, **1** actionable gaps, **0** requiring review).
 
 **Checks:** 139 = 53 non-object + 86 object-shaped; 53 = 47 scalar enum + 6 scalar support; 32 = 15 + 17; 86 = 32 + 54.
@@ -920,7 +918,8 @@ A missing root target is therefore not automatically a missing concept.
 | reusable type-only slots | 34 |
 | implicit constant slots | 3 |
 | deferred slots | 4 |
-| empty slots | 401 |
+| structural child-container slots | 6 |
+| empty slots | 395 |
 
 ### Supporting CARTA definitions excluded from standalone mapping targets (60)
 

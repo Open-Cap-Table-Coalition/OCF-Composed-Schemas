@@ -234,7 +234,7 @@ export function renderGapReport(d: Derived): string {
   lines.push("## (b) Carta inverse coverage by object definition", "");
   lines.push(
     "The inverse ledger separates executable slot coverage, reusable type mappings,",
-    "structural `$ref` reachability, deferred extraction, expected derived objects,",
+    "schema-backed structural child-container coverage, deferred extraction, expected derived objects,",
     "curated value-type roles, alternate/unreachable shapes, and actionable gap candidates.",
     "A missing root target is therefore not automatically a missing concept.",
     "",
@@ -262,6 +262,7 @@ export function renderGapReport(d: Derived): string {
     `| reusable type-only slots | ${inverse.metrics.typeOnlySlots} |`,
     `| implicit constant slots | ${inverse.metrics.implicitSlots} |`,
     `| deferred slots | ${inverse.metrics.deferredSlots} |`,
+    `| structural child-container slots | ${inverse.metrics.structuralSlots} |`,
     `| empty slots | ${inverse.metrics.emptySlots} |`,
     ""
   );

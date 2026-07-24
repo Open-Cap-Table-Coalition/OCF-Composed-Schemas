@@ -35,6 +35,7 @@ export interface MappingInverseReportOptions {
 function edgeSourceField(edge: MappingEdge): string {
   if (edge.field) return edge.field;
   if (edge.detail === "primary_targets") return "(primary target)";
+  if (edge.scope === "structural") return `(contains ${edge.detail ?? "child object"})`;
   if (edge.scope === "composite") return "(composite step)";
   if (edge.scope === "constant") return "(constant)";
   return "(target route)";
@@ -109,6 +110,7 @@ function addEdge(
 function buildGroups(inverse: InverseCoverageLedger): Map<string, TargetGroup> {
   const groups = new Map<string, TargetGroup>();
   for (const edge of inverse.edges) addEdge(groups, edge, inverse);
+  for (const edge of inverse.structuralEdges ?? []) addEdge(groups, edge, inverse);
   return groups;
 }
 
