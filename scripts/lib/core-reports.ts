@@ -226,6 +226,9 @@ export function renderGapReport(d: Derived): string {
 
   const story = inverseCoverageStory(inverse);
   const roleCounts = inverse.metrics.definitionRoleCounts;
+  const otherNonObjectText = story.otherNonObjectDefs
+    ? ` + **${story.otherNonObjectDefs}** other non-object definitions`
+    : "";
 
   lines.push("## (b) Carta inverse coverage by object definition", "");
   lines.push(
@@ -237,14 +240,14 @@ export function renderGapReport(d: Derived): string {
     "### CARTA inverse coverage: the simple story",
     "",
     `1. Carta defines **${story.totalDefs}** total definitions.`,
-    `2. **${story.scalarValueTypeDefs}** curated scalar support types are not standalone mapping targets.`,
+    `2. **${story.nonObjectDefs}** are non-object definitions: **${story.scalarEnumDefs}** scalar enum definitions (field vocabularies) + **${story.scalarValueTypeDefs}** curated scalar support types; neither is a standalone mapping target.`,
     `3. **${story.objectDefs}** are object-shaped definitions.`,
     `4. Of those **${story.objectDefs}**, **${story.nonEntityObjectDefs}** are support definitions, not standalone objects (**${roleCounts["nested-obj"]}** nested objects + **${roleCounts["value-type"]}** object-shaped value type), leaving **${story.standaloneCandidateDefs}** standalone mapping candidates.`,
     `5. **${story.nonEntityDefs}** support definitions are excluded from standalone mapping: **${story.nonEntityObjectDefs}** object-shaped support definitions + **${story.scalarValueTypeDefs}** scalar support types.`,
     `6. We have mapping evidence for **${story.mappedDefs}**: **${story.fullyMappedDefs}** fully mapped and **${story.partiallyMappedDefs}** partially mapped (**${roleCounts.direct}** direct executable, **${roleCounts["type-only"]}** type-only, **${roleCounts.deferred}** deferred).`,
     `7. **${story.unmappedCandidateDefs}** standalone candidates have no mapping evidence yet; their inventory role tells us whether that is expected or actionable (**${roleCounts["report-rollup"]}** report/read-model roll-ups, **${roleCounts.alternate}** alternate shapes, **${roleCounts["vendor-family"]}** CARTA-specific families without OCF sources, **${roleCounts["workflow-gap"]}** workflow/data gaps, **${roleCounts.gap}** actionable gaps, **${roleCounts.review}** requiring review).`,
     "",
-    `**Checks:** ${story.standaloneCandidateDefs} = ${story.mappedDefs} + ${story.unmappedCandidateDefs}; ${story.objectDefs} = ${story.standaloneCandidateDefs} + ${story.nonEntityObjectDefs}.`,
+    `**Checks:** ${story.totalDefs} = ${story.nonObjectDefs} non-object + ${story.objectDefs} object-shaped; ${story.nonObjectDefs} = ${story.scalarEnumDefs} scalar enum + ${story.scalarValueTypeDefs} scalar support${otherNonObjectText}; ${story.standaloneCandidateDefs} = ${story.mappedDefs} + ${story.unmappedCandidateDefs}; ${story.objectDefs} = ${story.standaloneCandidateDefs} + ${story.nonEntityObjectDefs}.`,
     "",
     "### Technical slot diagnostics",
     "",

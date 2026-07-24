@@ -644,14 +644,14 @@ A missing root target is therefore not automatically a missing concept.
 ### CARTA inverse coverage: the simple story
 
 1. Carta defines **139** total definitions.
-2. **6** curated scalar support types are not standalone mapping targets.
+2. **53** are non-object definitions: **47** scalar enum definitions (field vocabularies) + **6** curated scalar support types; neither is a standalone mapping target.
 3. **86** are object-shaped definitions.
 4. Of those **86**, **54** are support definitions, not standalone objects (**53** nested objects + **1** object-shaped value type), leaving **32** standalone mapping candidates.
 5. **60** support definitions are excluded from standalone mapping: **54** object-shaped support definitions + **6** scalar support types.
 6. We have mapping evidence for **15**: **0** fully mapped and **15** partially mapped (**14** direct executable, **1** type-only, **0** deferred).
 7. **17** standalone candidates have no mapping evidence yet; their inventory role tells us whether that is expected or actionable (**12** report/read-model roll-ups, **2** alternate shapes, **1** CARTA-specific families without OCF sources, **1** workflow/data gaps, **1** actionable gaps, **0** requiring review).
 
-**Checks:** 32 = 15 + 17; 86 = 32 + 54.
+**Checks:** 139 = 53 non-object + 86 object-shaped; 53 = 47 scalar enum + 6 scalar support; 32 = 15 + 17; 86 = 32 + 54.
 
 ### Technical slot diagnostics
 

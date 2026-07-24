@@ -245,11 +245,15 @@ function renderSection(
 function renderCoverageStory(inverse: InverseCoverageLedger): string[] {
   const story = inverseCoverageStory(inverse);
   const counts = inverse.metrics.definitionRoleCounts;
+  const otherNonObjectText = story.otherNonObjectDefs
+    ? ` + ${story.otherNonObjectDefs} other non-object definitions`
+    : "";
   return [
     "",
     "Simple story",
     `  1. Carta defines ${story.totalDefs} total definitions.`,
-    `  2. ${story.scalarValueTypeDefs} curated scalar support types are not standalone mapping targets.`,
+    `  2. ${story.nonObjectDefs} are non-object definitions:`,
+    `       ${story.scalarEnumDefs} scalar enum definitions (field vocabularies) + ${story.scalarValueTypeDefs} curated scalar support types; neither is a standalone mapping target.`,
     `  3. ${story.objectDefs} are object-shaped definitions.`,
     `  4. Of those ${story.objectDefs}:`,
     `       ${story.nonEntityObjectDefs} are support definitions, not standalone objects (${counts["nested-obj"]} nested objects + ${counts["value-type"]} object-shaped value type).`,
@@ -262,7 +266,7 @@ function renderCoverageStory(inverse: InverseCoverageLedger): string[] {
     `       ${counts["report-rollup"]} report/read-model roll-ups, ${counts.alternate} alternate shapes,`,
     `       ${counts["vendor-family"]} CARTA-specific families without OCF sources, ${counts["workflow-gap"]} workflow/data gaps,`,
     `       ${counts.gap} actionable gaps, ${counts.review} requiring review.`,
-    `  Check: ${story.standaloneCandidateDefs} = ${story.mappedDefs} + ${story.unmappedCandidateDefs}; ${story.objectDefs} = ${story.standaloneCandidateDefs} + ${story.nonEntityObjectDefs}.`,
+    `  Check: ${story.totalDefs} = ${story.nonObjectDefs} non-object + ${story.objectDefs} object-shaped; ${story.nonObjectDefs} = ${story.scalarEnumDefs} scalar enum + ${story.scalarValueTypeDefs} scalar support${otherNonObjectText}; ${story.standaloneCandidateDefs} = ${story.mappedDefs} + ${story.unmappedCandidateDefs}; ${story.objectDefs} = ${story.standaloneCandidateDefs} + ${story.nonEntityObjectDefs}.`,
   ];
 }
 

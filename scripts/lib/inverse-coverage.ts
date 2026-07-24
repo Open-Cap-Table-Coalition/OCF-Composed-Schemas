@@ -129,6 +129,12 @@ export interface InverseCoverageMetrics {
 export interface InverseCoverageStory {
   /** All Carta `$defs` in the schema bundle, including scalar and support definitions. */
   totalDefs: number;
+  /** Definitions without an object-shaped properties payload. */
+  nonObjectDefs: number;
+  /** Non-object definitions that provide scalar enum/value vocabularies. */
+  scalarEnumDefs: number;
+  /** Non-object definitions not covered by the named scalar buckets. */
+  otherNonObjectDefs: number;
   /** Definitions with an object-shaped `properties` payload. */
   objectDefs: number;
   /** Object-shaped definitions that are standalone mapping candidates. */
@@ -202,13 +208,21 @@ export function inverseCoverageStory(inverse: InverseCoverageLedger): InverseCov
     counts.gap +
     counts.review;
   const nonEntityDefs = inverse.excludedRoleRows.length;
+  const nonObjectDefs = inverse.metrics.totalDefs - inverse.metrics.objectDefs;
   const scalarValueTypeDefs = Math.max(
     0,
     inverse.metrics.curatedValueTypeEntries - inverse.metrics.valueTypeDefs
   );
+  const scalarEnumDefs = [...inverse.schema.defs.values()].filter(
+    (info) => !info.isObjectLike && Array.isArray(info.def.enum)
+  ).length;
+  const otherNonObjectDefs = Math.max(0, nonObjectDefs - scalarEnumDefs - scalarValueTypeDefs);
   const mappedRows = inverse.defs.filter(isInverseMappedDefinition);
   return {
     totalDefs: inverse.metrics.totalDefs,
+    nonObjectDefs,
+    scalarEnumDefs,
+    otherNonObjectDefs,
     objectDefs: inverse.metrics.objectDefs,
     standaloneCandidateDefs: inverse.metrics.objectDefs - nonEntityObjectDefs,
     mappedDefs,
