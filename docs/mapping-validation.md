@@ -9,7 +9,8 @@ derived coverage stays reviewable, and enum remaps are checked value-by-value.
 ## How it works
 
 - `scripts/lib/mapping-parser.ts` extracts the frontmatter and the single ` ```yaml ` block under
-  `## Mapping` and parses both with the `yaml` package (duplicate keys are a parse error).
+  `## Mapping` and parses both with the `yaml` package (duplicate keys are a parse error). It
+  also parses the optional auditable checklist questions in `## Notes / open questions`.
 - `scripts/lib/mapping-validator.ts` is pure rules: `validateMapping(parsed, sourceSchema,
   registry, targetBundle) → ValidationError[]`.
 - `scripts/validate-mappings.ts` is the CLI walker (`--filter <glob>`, `--verbose`); errors are
@@ -32,6 +33,33 @@ derived coverage stays reviewable, and enum remaps are checked value-by-value.
   generated Core reports, then uploads the object-panel view as a CI artifact.
   The generated report is added to the GitHub Actions job summary and uploaded as the
   `mapping-inverse-report` artifact, including when another mapping check fails.
+
+### Auditable mapping questions
+
+Questions are ordinary GitHub task-list items, with fixed metadata underneath so CI can validate
+them and the inverse report can project open questions onto the related Carta property:
+
+```md
+- [ ] `security_id`: Why does this source identifier map to Carta `securityId`?
+  - Asked by: @alice
+  - Answer: Pending confirmation from the OCF owners.
+  - Answered by: —
+
+- [x] `security_id`: Should the target identifier be preserved?
+  - Asked by: @alice
+  - Answer: No; Carta generates its own identifier.
+  - Answered by: @bob
+```
+
+The property path is optional for mapping-level questions. Dotted paths such as
+`vesting[].ratio` and JSON-pointer-like paths such as `/vesting/ratio` are accepted; the
+top-level segment must exist in the sibling source schema. Every question must have non-empty
+`Asked by`, `Answer`, and `Answered by` metadata. An open question may use `—` (or another
+explicit placeholder) for `Answered by`; a checked question must name the answerer. The answer
+and audit metadata remain in the mapping Markdown after the question is checked, while
+`--inverse` renders only unchecked questions beneath the matching target property. Malformed
+question headers, metadata, answers, or property paths fail mapping validation and therefore fail
+CI.
 
 ## DSL operator reference
 

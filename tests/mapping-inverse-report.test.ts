@@ -127,6 +127,60 @@ describe("renderMappingInverseReport", () => {
     expect(out.match(/:: discount \[shared\] \(rename\)/g)).toHaveLength(1);
   });
 
+  it("renders only open questions beneath the related target property", () => {
+    const inverse = ledger(
+      {
+        ConvertibleNote: {
+          properties: { discountPercentage: {} },
+        },
+      },
+      [
+        fieldEdge(
+          "types/SAFE.mapping.md",
+          "SAFE",
+          "discount",
+          "#/$defs/ConvertibleNote/properties/discountPercentage"
+        ),
+      ]
+    );
+    const out = renderMappingInverseReport({
+      inverse,
+      targetObject: "ConvertibleNote",
+      mappingDocuments: new Map([
+        [
+          "types/SAFE.mapping.md",
+          {
+            questions: [
+              {
+                property: "discount",
+                question: "Should this discount be preserved exactly?",
+                askedBy: "@alice",
+                answer: "Pending confirmation.",
+                answeredBy: null,
+                answered: false,
+                line: 12,
+              },
+              {
+                property: "discount",
+                question: "This answered question must not appear.",
+                askedBy: "@alice",
+                answer: "Yes.",
+                answeredBy: "@bob",
+                answered: true,
+                line: 18,
+              },
+            ],
+          },
+        ],
+      ]),
+    });
+
+    expect(out).toContain("discountPercentage");
+    expect(out).toContain("? open question: Should this discount be preserved exactly?");
+    expect(out).toContain("asked by @alice");
+    expect(out).not.toContain("This answered question must not appear.");
+  });
+
   it("includes only object-like definitions requiring role follow-up", () => {
     const inverse = ledger(
       {

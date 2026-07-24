@@ -1,25 +1,42 @@
 import { parse } from "yaml";
+import {
+  MappingQuestion,
+  MappingQuestionParseError,
+  parseMappingQuestions,
+} from "./mapping-questions.js";
 
 export class MappingParseError extends Error {}
 
 export interface ParsedMapping {
   frontmatter: Record<string, unknown>;
   mapping: Record<string, unknown>;
+  questions: MappingQuestion[];
 }
 
 /**
  * Extract and YAML-parse a .mapping.md document's frontmatter and the single
  * ```yaml block under its `## Mapping` heading. Throws MappingParseError with
  * the file path in the message on any structural or YAML syntax problem.
- * No semantic validation happens here.
+ * Mapping semantic validation happens separately; question structure is parsed
+ * here because it is part of the Markdown document format.
  */
 export function parseMappingDocument(markdown: string, filePath: string): ParsedMapping {
+  let questions: MappingQuestion[];
+  try {
+    questions = parseMappingQuestions(markdown);
+  } catch (err) {
+    if (err instanceof MappingQuestionParseError) {
+      throw new MappingParseError(`${filePath}: questions: ${err.message}`);
+    }
+    throw err;
+  }
   return {
     frontmatter: parseYamlObject(
       extractFrontmatter(markdown, filePath),
       `${filePath}: frontmatter`
     ),
     mapping: parseYamlObject(extractMappingYaml(markdown, filePath), `${filePath}: mapping block`),
+    questions,
   };
 }
 

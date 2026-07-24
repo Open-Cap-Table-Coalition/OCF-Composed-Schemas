@@ -3,6 +3,8 @@ import jsonpointer from "jsonpointer";
 import { detectEnumValues } from "./enum-detection.js";
 import { getTransformPolicy, PolicyHostKind, registeredPolicyNames } from "./mapping-policies.js";
 import { RawSchema, Registry } from "./registry.js";
+import { isValidQuestionPropertyPath, questionPropertyRoot } from "./mapping-questions.js";
+import type { MappingQuestion } from "./mapping-questions.js";
 
 export interface PointerResult {
   found: boolean;
@@ -237,6 +239,8 @@ export interface ValidateInput {
   mappingFiles?: Set<string>;
   /** Repo-relative mapping path → sibling source schema, for lookup_by route inference. */
   mappingSourceSchemas?: Map<string, RawSchema>;
+  /** Auditable Markdown checklist questions attached to this mapping document. */
+  questions?: readonly MappingQuestion[];
 }
 
 export interface ValidateOptions {
@@ -295,6 +299,12 @@ export function validateMapping(input: ValidateInput, opts: ValidateOptions): Va
   }
   const strict = blockStatus === "complete" || blockStatus === "reviewed";
 
+  validateQuestionProperties(
+    input.questions ?? [],
+    (input.sourceSchema.properties ?? {}) as Record<string, unknown>,
+    err
+  );
+
   // Polymorphic dispatch has one public form: route_by_property. It either reads
   // a local property (`on_property`) or performs an explicit keyed lookup
   // (`lookup_by`). Older routing keys are deliberately rejected; this DSL is
@@ -340,6 +350,28 @@ export function validateMapping(input: ValidateInput, opts: ValidateOptions): Va
   validateFieldMap(fields, properties, strict, opts, input, err);
 
   return errors;
+}
+
+function validateQuestionProperties(
+  questions: readonly MappingQuestion[],
+  properties: Record<string, unknown>,
+  err: ErrFn
+): void {
+  questions.forEach((question, index) => {
+    if (question.property === null) return;
+    const field = `questions[${index}]`;
+    if (!isValidQuestionPropertyPath(question.property)) {
+      err(field, `property path "${question.property}" is not a valid dotted or JSON-pointer path`);
+      return;
+    }
+    const root = questionPropertyRoot(question.property);
+    if (!(root in properties)) {
+      err(
+        field,
+        `property path "${question.property}" does not start with a source schema property`
+      );
+    }
+  });
 }
 
 function isStatus(v: unknown): v is typeof STATUS_VOCABULARY[number] {

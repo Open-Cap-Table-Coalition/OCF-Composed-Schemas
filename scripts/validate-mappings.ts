@@ -104,6 +104,7 @@ async function main(argv: Args): Promise<number> {
           sourceDocuments: mappingDocuments.size,
           greenDocuments: corpus.greenDocuments.size,
           targetObject: argv.targetObject,
+          mappingDocuments,
         }) + "\n"
       );
     } catch (err) {
@@ -196,6 +197,7 @@ async function main(argv: Args): Promise<number> {
           targetBundle,
           mappingFiles,
           mappingSourceSchemas,
+          questions: parsed.questions,
         },
         { requireUnmappableReason: true }
       )
