@@ -180,24 +180,25 @@ function renderInverseCoverageStory(
     "### CARTA object-definition coverage story",
     "",
     `The ${story.objectDefs} object-like Carta definitions are partitioned into three mutually exclusive buckets:`,
-    "mapped by OCF evidence, intentionally not inverse gaps, and requiring role follow-up.",
+    "mapped by OCF evidence, non-entity object definitions, and requiring role follow-up.",
     "The accounting check makes the denominator explicit; slot counts above are a separate diagnostic dimension.",
     "",
     "| coverage bucket | count | breakdown |",
     "| --- | ---: | --- |",
     `| mapped by OCF evidence | ${story.mappedDefs} | direct ${counts.direct} + type-only ${counts["type-only"]} + deferred ${counts.deferred} |`,
-    `| intentionally not inverse gaps | ${story.nonGapDefs} | nested-covered ${counts["nested-covered"]} + value-type object ${counts["value-type"]} |`,
+    `| non-entity object definitions | ${story.nonEntityObjectDefs} | nested-covered ${counts["nested-covered"]} + value-type object ${counts["value-type"]} |`,
     `| require role follow-up | ${story.followUpDefs} | report roll-up ${counts["report-rollup"]} + alternate ${counts.alternate} + vendor ${counts["vendor-family"]} + workflow ${counts["workflow-gap"]} + actionable ${counts.gap} + review ${counts.review} |`,
-    `| **total object-like definitions** | **${story.objectDefs}** | **${story.mappedDefs} + ${story.nonGapDefs} + ${story.followUpDefs}** |`,
+    `| **total object-like definitions** | **${story.objectDefs}** | **${story.mappedDefs} + ${story.nonEntityObjectDefs} + ${story.followUpDefs}** |`,
     "",
-    `### CARTA objects and value types intentionally excluded from inverse gap candidates (${excludedDefinitions.length})`,
+    `### CARTA objects/types intentionally excluded from entity-level inverse coverage (${excludedDefinitions.length})`,
     "",
     `${
       excludedDefinitions.filter((row) => row.role === "nested-covered").length
     } nested CARTA objects and ${
       excludedDefinitions.filter((row) => row.role === "value-type").length
     } curated value-type entries are intentionally not gaps.`,
-    "Value-type entries include scalar wrappers outside the object-like definition denominator.",
+    `${story.scalarValueTypeDefs} scalar wrappers are outside the object-like definition denominator; ${counts["value-type"]} value-type definition is object-like.`,
+    "These definitions are not entity-level inverse gaps; their mapping/type evidence remains valid.",
     "The nested-parent column names the Carta object(s) that provide their coverage.",
     "",
   ];

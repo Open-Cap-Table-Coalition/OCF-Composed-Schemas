@@ -56,9 +56,11 @@ describe("Carta inverse coverage", () => {
 
     expect(inverseCoverageStory(inverse)).toEqual({
       mappedDefs: 45,
-      nonGapDefs: 10,
       followUpDefs: 31,
       objectDefs: 86,
+      nonEntityDefs: 16,
+      nonEntityObjectDefs: 10,
+      scalarValueTypeDefs: 6,
     });
   });
 

@@ -38,7 +38,7 @@ describe("core reports (the markdown drift gate's premise)", () => {
     expect(report).toContain("### CARTA object-definition coverage story");
     expect(report).toContain("| **total object-like definitions** | **86** | **45 + 10 + 31** |");
     expect(report).toContain(
-      "### CARTA objects and value types intentionally excluded from inverse gap candidates (16)"
+      "### CARTA objects/types intentionally excluded from entity-level inverse coverage (16)"
     );
     expect(report).not.toContain("### Object-definition role accounting");
   });

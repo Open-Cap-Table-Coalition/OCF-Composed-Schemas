@@ -60,20 +60,21 @@ These counts are mutually descriptive dimensions of the same ledger, not a singl
 ### CARTA object-definition coverage story
 
 The 86 object-like Carta definitions are partitioned into three mutually exclusive buckets:
-mapped by OCF evidence, intentionally not inverse gaps, and requiring role follow-up.
+mapped by OCF evidence, non-entity object definitions, and requiring role follow-up.
 The accounting check makes the denominator explicit; slot counts above are a separate diagnostic dimension.
 
 | coverage bucket | count | breakdown |
 | --- | ---: | --- |
 | mapped by OCF evidence | 45 | direct 39 + type-only 6 + deferred 0 |
-| intentionally not inverse gaps | 10 | nested-covered 9 + value-type object 1 |
+| non-entity object definitions | 10 | nested-covered 9 + value-type object 1 |
 | require role follow-up | 31 | report roll-up 17 + alternate 3 + vendor 6 + workflow 4 + actionable 1 + review 0 |
 | **total object-like definitions** | **86** | **45 + 10 + 31** |
 
-### CARTA objects and value types intentionally excluded from inverse gap candidates (16)
+### CARTA objects/types intentionally excluded from entity-level inverse coverage (16)
 
 9 nested CARTA objects and 7 curated value-type entries are intentionally not gaps.
-Value-type entries include scalar wrappers outside the object-like definition denominator.
+6 scalar wrappers are outside the object-like definition denominator; 1 value-type definition is object-like.
+These definitions are not entity-level inverse gaps; their mapping/type evidence remains valid.
 The nested-parent column names the Carta object(s) that provide their coverage.
 
 | role | Carta `$def` | covered through | reason |

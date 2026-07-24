@@ -9,7 +9,11 @@
  */
 import { Derived } from "./core-pipeline.js";
 import { BOOKKEEPING, buildTargetIndex } from "./report-helpers.js";
-import { buildInverseCoverage, inverseCoverageStory } from "./inverse-coverage.js";
+import {
+  buildInverseCoverage,
+  inverseCoverageStory,
+  isInverseNonEntityDefinition,
+} from "./inverse-coverage.js";
 import {
   FlowRow,
   byObjectTables,
@@ -257,28 +261,29 @@ export function renderGapReport(d: Derived): string {
     "### CARTA object-definition coverage story",
     "",
     `The ${story.objectDefs} object-like Carta definitions are partitioned into three mutually exclusive buckets:`,
-    "mapped by OCF evidence, intentionally not inverse gaps, and requiring role follow-up.",
+    "mapped by OCF evidence, non-entity object definitions, and requiring role follow-up.",
     "The accounting check makes the denominator explicit; slot counts above are a separate diagnostic dimension.",
     "",
     "| coverage bucket | count | breakdown |",
     "| --- | ---: | --- |",
     `| mapped by OCF evidence | ${story.mappedDefs} | direct ${roleCounts.direct} + type-only ${roleCounts["type-only"]} + deferred ${roleCounts.deferred} |`,
-    `| intentionally not inverse gaps | ${story.nonGapDefs} | nested-covered ${roleCounts["nested-covered"]} + value-type object ${roleCounts["value-type"]} |`,
+    `| non-entity object definitions | ${story.nonEntityObjectDefs} | nested-covered ${roleCounts["nested-covered"]} + value-type object ${roleCounts["value-type"]} |`,
     `| require role follow-up | ${story.followUpDefs} | report roll-up ${roleCounts["report-rollup"]} + alternate ${roleCounts.alternate} + vendor ${roleCounts["vendor-family"]} + workflow ${roleCounts["workflow-gap"]} + actionable ${roleCounts.gap} + review ${roleCounts.review} |`,
-    `| **total object-like definitions** | **${story.objectDefs}** | **${story.mappedDefs} + ${story.nonGapDefs} + ${story.followUpDefs}** |`,
+    `| **total object-like definitions** | **${story.objectDefs}** | **${story.mappedDefs} + ${story.nonEntityObjectDefs} + ${story.followUpDefs}** |`,
     ""
   );
 
   const excludedDefinitions = inverse.excludedRoleRows;
   lines.push(
-    `### CARTA objects and value types intentionally excluded from inverse gap candidates (${excludedDefinitions.length})`,
+    `### CARTA objects/types intentionally excluded from entity-level inverse coverage (${excludedDefinitions.length})`,
     "",
     `${
       excludedDefinitions.filter((row) => row.role === "nested-covered").length
     } nested CARTA objects and ${
       excludedDefinitions.filter((row) => row.role === "value-type").length
     } curated value-type entries are intentionally not gaps.`,
-    "Value-type entries include scalar wrappers outside the object-like definition denominator.",
+    `${story.scalarValueTypeDefs} scalar wrappers are outside the object-like definition denominator; ${roleCounts["value-type"]} value-type definition is object-like.`,
+    "These definitions are not entity-level inverse gaps; their mapping/type evidence remains valid.",
     "The nested-parent column names the Carta object(s) that provide their coverage.",
     "",
     "| role | Carta `$def` | covered through | reason |",
@@ -290,7 +295,8 @@ export function renderGapReport(d: Derived): string {
 
   const rawUntargeted = inverse.defs.filter(
     (row) =>
-      !["direct", "type-only", "deferred", "value-type", "nested-covered"].includes(row.status)
+      !["direct", "type-only", "deferred"].includes(row.status) &&
+      !isInverseNonEntityDefinition(row)
   );
   lines.push(
     `### Definitions requiring role follow-up (${rawUntargeted.length})`,

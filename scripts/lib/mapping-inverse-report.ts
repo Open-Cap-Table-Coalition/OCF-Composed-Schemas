@@ -253,7 +253,7 @@ function renderCoverageStory(inverse: InverseCoverageLedger): string[] {
     `    direct executable: ${counts.direct}`,
     `    type-only: ${counts["type-only"]}`,
     `    deferred: ${counts.deferred}`,
-    `  Intentionally not inverse gaps: ${story.nonGapDefs}`,
+    `  Non-entity object definitions (not inverse gaps): ${story.nonEntityObjectDefs}`,
     `    nested-covered: ${counts["nested-covered"]}`,
     `    value-type / non-target object: ${counts["value-type"]}`,
     `  Require role follow-up: ${story.followUpDefs}`,
@@ -263,7 +263,7 @@ function renderCoverageStory(inverse: InverseCoverageLedger): string[] {
     `    workflow/data gap: ${counts["workflow-gap"]}`,
     `    actionable gap: ${counts.gap}`,
     `    review required: ${counts.review}`,
-    `  Accounting check: ${story.mappedDefs} + ${story.nonGapDefs} + ${story.followUpDefs} = ${story.objectDefs}`,
+    `  Accounting check: ${story.mappedDefs} + ${story.nonEntityObjectDefs} + ${story.followUpDefs} = ${story.objectDefs}`,
   ];
 }
 
@@ -276,9 +276,9 @@ function renderExcludedRows(
   const scalarValueTypes = Math.max(0, valueTypes - inverse.metrics.valueTypeDefs);
   const lines = [
     "",
-    `CARTA objects and value types intentionally excluded from inverse gap candidates (${rows.length})`,
+    `CARTA objects/types intentionally excluded from entity-level inverse coverage (${rows.length})`,
     `  ${nested} nested CARTA objects + ${valueTypes} curated value-type entries (${scalarValueTypes} scalar wrappers, ${inverse.metrics.valueTypeDefs} object-like value type).`,
-    "  Nested objects are covered through their directly mapped parent(s); value types are reusable non-entities.",
+    `  These ${rows.length} definitions are not entity-level inverse gaps; their mapping/type evidence remains valid.`,
   ];
   for (const row of rows) {
     lines.push(`  - ${row.role}: #/$defs/${row.name} — ${row.coveredThrough}`);
@@ -310,9 +310,9 @@ export function renderMappingInverseReport(options: MappingInverseReportOptions)
     `green_carta_documents: ${greenDocuments}`,
     `carta_object_defs: ${story.objectDefs}`,
     `mapped_object_defs: ${story.mappedDefs}`,
-    `non_gap_object_defs: ${story.nonGapDefs}`,
+    `non_entity_object_defs: ${story.nonEntityObjectDefs}`,
     `follow_up_object_defs: ${story.followUpDefs}`,
-    `excluded_gap_entries: ${excluded.length}`,
+    `excluded_non_entity_defs: ${story.nonEntityDefs}`,
   ]);
 
   lines.push(...renderCoverageStory(inverse), ...renderExcludedRows(excluded, inverse));
@@ -326,7 +326,7 @@ export function renderMappingInverseReport(options: MappingInverseReportOptions)
     if (row.status === "value-type" || row.status === "nested-covered") {
       lines.push(
         "",
-        `Carta definition ${options.targetObject} is intentionally excluded from inverse gap candidates (${row.status}).`
+        `Carta definition ${options.targetObject} is intentionally excluded from entity-level inverse coverage (${row.status}).`
       );
     }
     lines.push(

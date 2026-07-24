@@ -125,7 +125,7 @@ describe("renderMappingInverseReport", () => {
     const out = renderMappingInverseReport({ inverse });
 
     expect(out).toContain("Carta definitions requiring role follow-up (2)");
-    expect(out).toContain("CARTA objects and value types intentionally excluded");
+    expect(out).toContain("CARTA objects/types intentionally excluded");
     expect(out).toContain("name: EmptyObject");
     expect(out).toContain("name: EmptyWithProperties");
     expect(out).toContain("status: NO MAPPINGS");
