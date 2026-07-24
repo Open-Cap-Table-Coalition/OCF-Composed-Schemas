@@ -29,6 +29,7 @@ function mappingDoc(over: {
   coverage?: string;
   fieldsYaml?: string;
   standard?: string;
+  notes?: string;
 }): string {
   const status = over.status ?? "complete";
   const coverage = over.coverage ?? "1/1";
@@ -65,7 +66,7 @@ function mappingDoc(over: {
     "",
     "## Notes / open questions",
     "",
-    "- ",
+    ...(over.notes ?? "- ").split("\n"),
     "",
   ].join("\n");
 }
@@ -118,6 +119,23 @@ describe("validate-mappings CLI (temp tree)", () => {
     expect(stdout).toContain('id: "#/$defs/Thing"');
     expect(stdout).toContain("objects/Thing.mapping.md :: name (rename)");
     expect(stdout).toMatch(/OK: checked 1 mapping file\(s\), 0 errors/);
+  });
+
+  it("projects an open property question into the inverse report", async () => {
+    await writeFile(
+      path.join(root, "objects", "Thing.mapping.md"),
+      mappingDoc({
+        notes: [
+          "- [ ] `name`: Is this target semantically equivalent?",
+          "  - Asked by: @alice",
+          "  - Answer: Pending confirmation.",
+          "  - Answered by: —",
+        ].join("\n"),
+      })
+    );
+    const { stdout } = await runCli(root, ["--inverse", "--target-object", "Thing"]);
+    expect(stdout).toContain("? open question: Is this target semantically equivalent?");
+    expect(stdout).toContain("asked by @alice");
   });
 
   it("includes Carta objects with no incoming mappings in an unfiltered inverse report", async () => {
@@ -194,6 +212,23 @@ describe("validate-mappings CLI (temp tree)", () => {
     const err = (await runCli(root).catch((e) => e)) as { code: number; stderr: string };
     expect(err.code).toBe(1);
     expect(err.stderr).toContain("require a reason");
+  });
+
+  it("fails CI when a question answer is malformed", async () => {
+    await writeFile(
+      path.join(root, "objects", "Thing.mapping.md"),
+      mappingDoc({
+        notes: [
+          "- [ ] `name`: Is the target semantically equivalent?",
+          "  - Asked by: @alice",
+          "  - Answer: pending",
+          "  - Answered by: —",
+        ].join("\n"),
+      })
+    );
+    const err = (await runCli(root).catch((e) => e)) as { code: number; stderr: string };
+    expect(err.code).toBe(1);
+    expect(err.stderr).toContain("Answer must contain an answer or provisional answer");
   });
 });
 

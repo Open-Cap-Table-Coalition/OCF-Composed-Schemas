@@ -2,6 +2,7 @@ import { RawSchema } from "./registry.js";
 import { deriveMappingCoverage, formatCoverage } from "./mapping-coverage.js";
 import { getTransformPolicy } from "./mapping-policies.js";
 import { compositeStepIds, isStepKeyedTarget } from "./mapping-validator.js";
+import type { MappingQuestion } from "./mapping-questions.js";
 
 /**
  * Pure renderer for the `--verbose` mapping report. Given a parsed mapping
@@ -23,6 +24,7 @@ export interface MappingReportInput {
 export interface MappingReportDocument {
   frontmatter: Record<string, unknown>;
   mapping: Record<string, unknown>;
+  questions?: MappingQuestion[];
   sourceSchema?: RawSchema;
 }
 

@@ -138,6 +138,8 @@ export function renderMappingMarkdown(input: RenderInput): string {
     "",
     "## Notes / open questions",
     "",
+    "<!-- Optional checklist questions use: - [ ] `property.path`: question + Asked by / Answer / Answered by metadata. -->",
+    "",
     "- ",
     "",
   ];

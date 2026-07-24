@@ -8,6 +8,8 @@ import {
 } from "./inverse-coverage.js";
 import { MappingEdge } from "./core-corpus.js";
 import { targetPointerParts } from "./mapping-report.js";
+import { questionPropertyRoot } from "./mapping-questions.js";
+import type { MappingQuestion } from "./mapping-questions.js";
 
 interface InverseFlow {
   file: string;
@@ -30,6 +32,12 @@ export interface MappingInverseReportOptions {
   /** Number of green Carta mapping documents in the repository. */
   greenDocuments?: number;
   targetObject?: string;
+  /** Parsed mapping documents, used to attach open questions to inverse flows. */
+  mappingDocuments?: ReadonlyMap<string, MappingQuestionDocument>;
+}
+
+interface MappingQuestionDocument {
+  questions?: readonly MappingQuestion[];
 }
 
 function edgeSourceField(edge: MappingEdge): string {
@@ -55,6 +63,47 @@ function edgeContext(edge: MappingEdge): string | undefined {
 function flowLabel(flow: InverseFlow): string {
   const context = flow.context ? ` [${flow.context}]` : "";
   return `${flow.file} :: ${flow.sourceField}${context} (${flow.kind})`;
+}
+
+interface ReportQuestion {
+  file: string;
+  question: MappingQuestion;
+}
+
+function questionMatchesSourceField(question: MappingQuestion, sourceField: string): boolean {
+  if (question.property === null) return false;
+  const path = question.property;
+  if (path.startsWith("/")) return questionPropertyRoot(path) === sourceField;
+  return (
+    path === sourceField ||
+    path.startsWith(`${sourceField}.`) ||
+    path.startsWith(`${sourceField}[]`)
+  );
+}
+
+function openQuestionsForFlows(
+  flows: readonly InverseFlow[],
+  mappingDocuments: ReadonlyMap<string, MappingQuestionDocument> | undefined,
+  predicate: (question: MappingQuestion, flow: InverseFlow) => boolean
+): ReportQuestion[] {
+  if (!mappingDocuments) return [];
+  const found = new Map<string, ReportQuestion>();
+  for (const flow of flows) {
+    const questions = mappingDocuments.get(flow.file)?.questions ?? [];
+    for (const question of questions) {
+      if (question.answered || !predicate(question, flow)) continue;
+      const key = `${flow.file}:${question.line}`;
+      if (!found.has(key)) found.set(key, { file: flow.file, question });
+    }
+  }
+  return [...found.values()].sort(
+    (left, right) => left.file.localeCompare(right.file) || left.question.line - right.question.line
+  );
+}
+
+function questionLabel(reportQuestion: ReportQuestion): string {
+  const { file, question } = reportQuestion;
+  return `? open question: ${question.question} [asked by ${question.askedBy}; answer: ${question.answer}; ${file}]`;
 }
 
 function sameFlow(left: InverseFlow, right: InverseFlow): boolean {
@@ -154,15 +203,34 @@ function sortedTargetFields(
 function renderMappingTree(
   object: string,
   group: TargetGroup,
-  inverse: InverseCoverageLedger
+  inverse: InverseCoverageLedger,
+  mappingDocuments?: ReadonlyMap<string, MappingQuestionDocument>
 ): string[] {
   const fields = sortedTargetFields(object, group, inverse);
+  const allFlows = [...group.flows.values()].flat();
+  const mappingQuestions = openQuestionsForFlows(
+    allFlows,
+    mappingDocuments,
+    (question) => question.property === null
+  );
+  const renderedFields = mappingQuestions.length > 0 ? [...fields, "(mapping questions)"] : fields;
   const lines: string[] = [];
-  fields.forEach((field, fieldIndex) => {
-    const lastField = fieldIndex === fields.length - 1;
+  renderedFields.forEach((field, fieldIndex) => {
+    const lastField = fieldIndex === renderedFields.length - 1;
     const flows = group.flows.get(field) ?? [];
     lines.push(`${lastField ? "└── " : "├── "}${field}`);
     const flowPrefix = lastField ? "    " : "│   ";
+
+    if (field === "(mapping questions)") {
+      mappingQuestions.forEach((reportQuestion, questionIndex) => {
+        const lastQuestion = questionIndex === mappingQuestions.length - 1;
+        lines.push(
+          `${flowPrefix}${lastQuestion ? "└── " : "├── "}${questionLabel(reportQuestion)}`
+        );
+      });
+      return;
+    }
+
     if (flows.length === 0) {
       lines.push(`${flowPrefix}└── ✗ no mapped OCF source`);
       return;
@@ -171,6 +239,16 @@ function renderMappingTree(
     flows.forEach((flow, flowIndex) => {
       const lastFlow = flowIndex === flows.length - 1;
       lines.push(`${flowPrefix}${lastFlow ? "└── " : "├── "}${flowLabel(flow)}`);
+    });
+    const propertyQuestions = openQuestionsForFlows(
+      flows,
+      mappingDocuments,
+      (question, flow) =>
+        question.property !== null && questionMatchesSourceField(question, flow.sourceField)
+    );
+    propertyQuestions.forEach((reportQuestion, questionIndex) => {
+      const lastQuestion = questionIndex === propertyQuestions.length - 1;
+      lines.push(`${flowPrefix}${lastQuestion ? "└── " : "├── "}${questionLabel(reportQuestion)}`);
     });
   });
   return lines;
@@ -207,7 +285,8 @@ function flowCount(group: TargetGroup): number {
 function renderObjectPanel(
   row: CartaDefCoverage,
   group: TargetGroup,
-  inverse: InverseCoverageLedger
+  inverse: InverseCoverageLedger,
+  mappingDocuments?: ReadonlyMap<string, MappingQuestionDocument>
 ): string[] {
   const hasMappings = group.flows.size > 0;
   const fields = sortedTargetFields(row.name, group, inverse);
@@ -221,7 +300,9 @@ function renderObjectPanel(
   ];
   if (hasMappings) metadata.push(`unmapped_properties: ${unmappedProperties}`);
   if (!hasMappings && row.reason) metadata.push(`reason: ${row.reason}`);
-  const body = hasMappings ? renderMappingTree(row.name, group, inverse) : ["(empty mapping)"];
+  const body = hasMappings
+    ? renderMappingTree(row.name, group, inverse, mappingDocuments)
+    : ["(empty mapping)"];
   return renderBox(`Carta object: ${row.name}`, metadata, body);
 }
 
@@ -229,7 +310,8 @@ function renderSection(
   title: string,
   rows: CartaDefCoverage[],
   groups: Map<string, TargetGroup>,
-  inverse: InverseCoverageLedger
+  inverse: InverseCoverageLedger,
+  mappingDocuments?: ReadonlyMap<string, MappingQuestionDocument>
 ): string[] {
   const lines = [`${title} (${rows.length})`];
   rows.forEach((row, index) => {
@@ -237,7 +319,8 @@ function renderSection(
       ...renderObjectPanel(
         row,
         groups.get(row.name) ?? { object: row.name, flows: new Map() },
-        inverse
+        inverse,
+        mappingDocuments
       )
     );
     if (index < rows.length - 1) lines.push("");
@@ -387,7 +470,8 @@ export function renderMappingInverseReport(options: MappingInverseReportOptions)
       ...renderObjectPanel(
         row,
         groups.get(row.name) ?? { object: row.name, flows: new Map() },
-        inverse
+        inverse,
+        options.mappingDocuments
       )
     );
     return lines.join("\n");
@@ -396,7 +480,13 @@ export function renderMappingInverseReport(options: MappingInverseReportOptions)
   if (mapped.length > 0) {
     lines.push(
       "",
-      ...renderSection("Standalone Carta targets with mapping evidence", mapped, groups, inverse)
+      ...renderSection(
+        "Standalone Carta targets with mapping evidence",
+        mapped,
+        groups,
+        inverse,
+        options.mappingDocuments
+      )
     );
   }
   if (followUp.length > 0) {
@@ -406,7 +496,8 @@ export function renderMappingInverseReport(options: MappingInverseReportOptions)
         "Standalone candidates requiring inventory detail",
         followUp,
         groups,
-        inverse
+        inverse,
+        options.mappingDocuments
       )
     );
   }
