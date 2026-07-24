@@ -2,8 +2,7 @@ import {
   CartaDefCoverage,
   InverseCoverageLedger,
   InverseExcludedRoleRow,
-  CARTA_DEF_STATUS_LABELS,
-  CARTA_DEF_STATUS_ORDER,
+  inverseCoverageStory,
 } from "./inverse-coverage.js";
 import { MappingEdge } from "./core-corpus.js";
 import { targetPointerParts } from "./mapping-report.js";
@@ -244,22 +243,42 @@ function renderSection(
   return lines;
 }
 
-function renderRoleAccounting(inverse: InverseCoverageLedger): string[] {
+function renderCoverageStory(inverse: InverseCoverageLedger): string[] {
+  const story = inverseCoverageStory(inverse);
+  const counts = inverse.metrics.definitionRoleCounts;
   return [
     "",
-    `Object-definition role accounting (${inverse.metrics.objectDefs} object-like Carta definitions)`,
-    ...CARTA_DEF_STATUS_ORDER.map(
-      (status) =>
-        `  ${CARTA_DEF_STATUS_LABELS[status]}: ${inverse.metrics.definitionRoleCounts[status]}`
-    ),
+    `Coverage story (${story.objectDefs} CARTA object-like definitions)`,
+    `  Mapped by OCF evidence: ${story.mappedDefs}`,
+    `    direct executable: ${counts.direct}`,
+    `    type-only: ${counts["type-only"]}`,
+    `    deferred: ${counts.deferred}`,
+    `  Intentionally not inverse gaps: ${story.nonGapDefs}`,
+    `    nested-covered: ${counts["nested-covered"]}`,
+    `    value-type / non-target object: ${counts["value-type"]}`,
+    `  Require role follow-up: ${story.followUpDefs}`,
+    `    report roll-up: ${counts["report-rollup"]}`,
+    `    alternate shape: ${counts.alternate}`,
+    `    vendor family: ${counts["vendor-family"]}`,
+    `    workflow/data gap: ${counts["workflow-gap"]}`,
+    `    actionable gap: ${counts.gap}`,
+    `    review required: ${counts.review}`,
+    `  Accounting check: ${story.mappedDefs} + ${story.nonGapDefs} + ${story.followUpDefs} = ${story.objectDefs}`,
   ];
 }
 
-function renderExcludedRows(rows: InverseExcludedRoleRow[]): string[] {
+function renderExcludedRows(
+  rows: InverseExcludedRoleRow[],
+  inverse: InverseCoverageLedger
+): string[] {
+  const nested = rows.filter((row) => row.role === "nested-covered").length;
+  const valueTypes = rows.filter((row) => row.role === "value-type").length;
+  const scalarValueTypes = Math.max(0, valueTypes - inverse.metrics.valueTypeDefs);
   const lines = [
     "",
-    `Intentionally excluded from inverse gap candidates (${rows.length})`,
-    "  Value types are reusable non-entities; nested types are covered through their directly mapped Carta parent(s).",
+    `CARTA objects and value types intentionally excluded from inverse gap candidates (${rows.length})`,
+    `  ${nested} nested CARTA objects + ${valueTypes} curated value-type entries (${scalarValueTypes} scalar wrappers, ${inverse.metrics.valueTypeDefs} object-like value type).`,
+    "  Nested objects are covered through their directly mapped parent(s); value types are reusable non-entities.",
   ];
   for (const row of rows) {
     lines.push(`  - ${row.role}: #/$defs/${row.name} — ${row.coveredThrough}`);
@@ -280,6 +299,7 @@ export function renderMappingInverseReport(options: MappingInverseReportOptions)
   const allObjects = targetObjectNames(inverse);
   const mapped = mappedDefinitions(inverse);
   const followUp = followUpDefinitions(inverse);
+  const story = inverseCoverageStory(inverse);
   const excluded = inverse.excludedRoleRows;
   const sourceDocuments =
     options.sourceDocuments ?? new Set(inverse.edges.map((edge) => edge.rel)).size;
@@ -288,13 +308,14 @@ export function renderMappingInverseReport(options: MappingInverseReportOptions)
   const lines = renderBox("Carta inverse coverage report", [
     `source_documents: ${sourceDocuments}`,
     `green_carta_documents: ${greenDocuments}`,
-    `object_like_defs: ${inverse.metrics.objectDefs}`,
-    `mapped_targets: ${mapped.length}`,
-    `follow_up_defs: ${followUp.length}`,
-    `excluded_defs: ${excluded.length}`,
+    `carta_object_defs: ${story.objectDefs}`,
+    `mapped_object_defs: ${story.mappedDefs}`,
+    `non_gap_object_defs: ${story.nonGapDefs}`,
+    `follow_up_object_defs: ${story.followUpDefs}`,
+    `excluded_gap_entries: ${excluded.length}`,
   ]);
 
-  lines.push(...renderRoleAccounting(inverse), ...renderExcludedRows(excluded));
+  lines.push(...renderCoverageStory(inverse), ...renderExcludedRows(excluded, inverse));
 
   if (options.targetObject) {
     const row = rowForTarget(inverse, options.targetObject);

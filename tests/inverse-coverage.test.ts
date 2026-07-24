@@ -1,5 +1,5 @@
 import { loadGreenCorpus } from "../scripts/lib/core-corpus.js";
-import { buildInverseCoverage } from "../scripts/lib/inverse-coverage.js";
+import { buildInverseCoverage, inverseCoverageStory } from "../scripts/lib/inverse-coverage.js";
 
 describe("Carta inverse coverage", () => {
   it("keeps slot evidence and definition roles in separate dimensions", async () => {
@@ -52,6 +52,13 @@ describe("Carta inverse coverage", () => {
     expect(excluded.find((row) => row.name === "VestingSchedule")).toMatchObject({
       role: "nested-covered",
       coveredThrough: "OptionGrant, RestrictedStockAward, RestrictedStockUnit",
+    });
+
+    expect(inverseCoverageStory(inverse)).toEqual({
+      mappedDefs: 45,
+      nonGapDefs: 10,
+      followUpDefs: 31,
+      objectDefs: 86,
     });
   });
 

@@ -919,31 +919,23 @@ A missing root target is therefore not automatically a missing concept.
 | actionable inverse gap candidates | 11 |
 | unresolved role-review candidates | 0 |
 
-### Object-definition role accounting
+### CARTA object-definition coverage story
 
-Primary definition role is mutually exclusive and accounts for every object-like Carta definition.
-Slot-level evidence can overlap: for example, a direct definition may also contain deferred or
-type-only slots.
+The 86 object-like Carta definitions are partitioned into three mutually exclusive buckets:
+mapped by OCF evidence, intentionally not inverse gaps, and requiring role follow-up.
+The accounting check makes the denominator explicit; slot counts above are a separate diagnostic dimension.
 
-| primary role | object-like defs |
-| --- | ---: |
-| direct executable | 39 |
-| type-only | 6 |
-| deferred | 0 |
-| nested-covered | 9 |
-| value-type / non-target | 1 |
-| report roll-up | 17 |
-| alternate shape | 3 |
-| vendor family | 6 |
-| workflow/data gap | 4 |
-| actionable gap | 1 |
-| review required | 0 |
-| **total** | **86** |
+| coverage bucket | count | breakdown |
+| --- | ---: | --- |
+| mapped by OCF evidence | 45 | direct 39 + type-only 6 + deferred 0 |
+| intentionally not inverse gaps | 10 | nested-covered 9 + value-type object 1 |
+| require role follow-up | 31 | report roll-up 17 + alternate 3 + vendor 6 + workflow 4 + actionable 1 + review 0 |
+| **total object-like definitions** | **86** | **45 + 10 + 31** |
 
-### Intentionally excluded from inverse gap candidates (16)
+### CARTA objects and value types intentionally excluded from inverse gap candidates (16)
 
-Value types are reusable non-entities; nested types are covered through a directly mapped
-Carta parent. They remain in the role accounting above, but are not inverse gaps.
+9 nested CARTA objects and 7 curated value-type entries are intentionally not gaps.
+Value-type entries include scalar wrappers outside the object-like definition denominator.
 The nested-parent column names the Carta object(s) that provide their coverage.
 
 | role | Carta `$def` | covered through | reason |

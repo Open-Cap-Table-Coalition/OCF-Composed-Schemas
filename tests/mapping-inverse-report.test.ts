@@ -65,6 +65,8 @@ describe("renderMappingInverseReport", () => {
     });
 
     expect(out).toContain("source_documents: 2");
+    expect(out).toContain("mapped_object_defs: 1");
+    expect(out).toContain("Accounting check: 1 + 0 + 0 = 1");
     expect(out).toContain('id: "#/$defs/ConvertibleNote"');
     expect(out).toContain("types/SAFE.mapping.md :: discount (rename)");
     expect(out).toContain("types/Note.mapping.md :: conversion_discount (rename)");
@@ -123,6 +125,7 @@ describe("renderMappingInverseReport", () => {
     const out = renderMappingInverseReport({ inverse });
 
     expect(out).toContain("Carta definitions requiring role follow-up (2)");
+    expect(out).toContain("CARTA objects and value types intentionally excluded");
     expect(out).toContain("name: EmptyObject");
     expect(out).toContain("name: EmptyWithProperties");
     expect(out).toContain("status: NO MAPPINGS");

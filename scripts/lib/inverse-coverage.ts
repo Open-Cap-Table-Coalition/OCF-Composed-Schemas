@@ -126,6 +126,17 @@ export interface InverseCoverageMetrics {
   reviewDefs: number;
 }
 
+export interface InverseCoverageStory {
+  /** Object-like definitions with executable, type-only, or deferred evidence. */
+  mappedDefs: number;
+  /** Object-like definitions that are covered structurally or are non-target value objects. */
+  nonGapDefs: number;
+  /** Object-like definitions that remain in the role-follow-up set. */
+  followUpDefs: number;
+  /** The denominator for all three buckets above. */
+  objectDefs: number;
+}
+
 export interface InverseCoverageLedger {
   schema: CartaSchemaIndex;
   edges: MappingEdge[];
@@ -143,6 +154,26 @@ export interface InverseExcludedRoleRow {
   name: string;
   coveredThrough: string;
   reason: string;
+}
+
+/**
+ * Collapse the mutually exclusive primary roles into the three-bucket story
+ * used by human-facing reports. These buckets intentionally sum to the
+ * object-like definition denominator; slot counts and curated scalar policy
+ * entries live in separate dimensions.
+ */
+export function inverseCoverageStory(inverse: InverseCoverageLedger): InverseCoverageStory {
+  const counts = inverse.metrics.definitionRoleCounts;
+  const mappedDefs = counts.direct + counts["type-only"] + counts.deferred;
+  const nonGapDefs = counts["nested-covered"] + counts["value-type"];
+  const followUpDefs =
+    counts["report-rollup"] +
+    counts.alternate +
+    counts["vendor-family"] +
+    counts["workflow-gap"] +
+    counts.gap +
+    counts.review;
+  return { mappedDefs, nonGapDefs, followUpDefs, objectDefs: inverse.metrics.objectDefs };
 }
 
 export function isCartaObjectLike(def: unknown): boolean {

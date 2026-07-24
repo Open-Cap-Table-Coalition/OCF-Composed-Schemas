@@ -9,11 +9,7 @@
  */
 import { Derived } from "./core-pipeline.js";
 import { BOOKKEEPING, buildTargetIndex } from "./report-helpers.js";
-import {
-  buildInverseCoverage,
-  CARTA_DEF_STATUS_LABELS,
-  CARTA_DEF_STATUS_ORDER,
-} from "./inverse-coverage.js";
+import { buildInverseCoverage, inverseCoverageStory } from "./inverse-coverage.js";
 import {
   FlowRow,
   byObjectTables,
@@ -255,29 +251,34 @@ export function renderGapReport(d: Derived): string {
     ""
   );
 
+  const story = inverseCoverageStory(inverse);
+  const roleCounts = inverse.metrics.definitionRoleCounts;
   lines.push(
-    "### Object-definition role accounting",
+    "### CARTA object-definition coverage story",
     "",
-    "Primary definition role is mutually exclusive and accounts for every object-like Carta definition.",
-    "Slot-level evidence can overlap: for example, a direct definition may also contain deferred or",
-    "type-only slots.",
+    `The ${story.objectDefs} object-like Carta definitions are partitioned into three mutually exclusive buckets:`,
+    "mapped by OCF evidence, intentionally not inverse gaps, and requiring role follow-up.",
+    "The accounting check makes the denominator explicit; slot counts above are a separate diagnostic dimension.",
     "",
-    "| primary role | object-like defs |",
-    "| --- | ---: |",
-    ...CARTA_DEF_STATUS_ORDER.map(
-      (status) =>
-        `| ${CARTA_DEF_STATUS_LABELS[status]} | ${inverse.metrics.definitionRoleCounts[status]} |`
-    ),
-    `| **total** | **${inverse.metrics.objectDefs}** |`,
+    "| coverage bucket | count | breakdown |",
+    "| --- | ---: | --- |",
+    `| mapped by OCF evidence | ${story.mappedDefs} | direct ${roleCounts.direct} + type-only ${roleCounts["type-only"]} + deferred ${roleCounts.deferred} |`,
+    `| intentionally not inverse gaps | ${story.nonGapDefs} | nested-covered ${roleCounts["nested-covered"]} + value-type object ${roleCounts["value-type"]} |`,
+    `| require role follow-up | ${story.followUpDefs} | report roll-up ${roleCounts["report-rollup"]} + alternate ${roleCounts.alternate} + vendor ${roleCounts["vendor-family"]} + workflow ${roleCounts["workflow-gap"]} + actionable ${roleCounts.gap} + review ${roleCounts.review} |`,
+    `| **total object-like definitions** | **${story.objectDefs}** | **${story.mappedDefs} + ${story.nonGapDefs} + ${story.followUpDefs}** |`,
     ""
   );
 
   const excludedDefinitions = inverse.excludedRoleRows;
   lines.push(
-    `### Intentionally excluded from inverse gap candidates (${excludedDefinitions.length})`,
+    `### CARTA objects and value types intentionally excluded from inverse gap candidates (${excludedDefinitions.length})`,
     "",
-    "Value types are reusable non-entities; nested types are covered through a directly mapped",
-    "Carta parent. They remain in the role accounting above, but are not inverse gaps.",
+    `${
+      excludedDefinitions.filter((row) => row.role === "nested-covered").length
+    } nested CARTA objects and ${
+      excludedDefinitions.filter((row) => row.role === "value-type").length
+    } curated value-type entries are intentionally not gaps.`,
+    "Value-type entries include scalar wrappers outside the object-like definition denominator.",
     "The nested-parent column names the Carta object(s) that provide their coverage.",
     "",
     "| role | Carta `$def` | covered through | reason |",
