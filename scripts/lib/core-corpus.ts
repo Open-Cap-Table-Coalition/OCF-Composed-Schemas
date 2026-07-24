@@ -256,6 +256,8 @@ export interface Corpus {
   transitivelyCoveredDefs: Set<string>;
   /** Normalized target evidence retained for inverse-coverage metrics and reports. */
   mappingEdges: MappingEdge[];
+  /** Parseable mapping documents with green status and Carta as target standard. */
+  greenDocuments: Set<string>;
   skipped: string[];
 }
 
@@ -728,6 +730,7 @@ export async function loadGreenCorpus(repoRoot: string): Promise<Corpus> {
   const targetedDefs = new Set<string>();
   const targetedPointers = new Set<string>();
   const mappingEdges: MappingEdge[] = [];
+  const greenDocuments = new Set<string>();
   const skipped: string[] = [];
 
   const files = await collectMappingFiles(repoRoot);
@@ -756,6 +759,7 @@ export async function loadGreenCorpus(repoRoot: string): Promise<Corpus> {
   // Pass 1 — type library + harvest all target pointers (for the gap report).
   for (const { rel, frontmatter, mapping } of parsed) {
     if (!isGreenCarta(frontmatter, mapping)) continue;
+    greenDocuments.add(rel);
     mappingEdges.push(...mappingEdgesOf(rel, frontmatter, mapping));
     for (const fm of variantFieldMaps(mapping).values()) {
       for (const entry of Object.values(fm)) {
@@ -892,6 +896,7 @@ export async function loadGreenCorpus(repoRoot: string): Promise<Corpus> {
     targetedPointers,
     transitivelyCoveredDefs,
     mappingEdges: uniqueEdges,
+    greenDocuments,
     skipped,
   };
 }

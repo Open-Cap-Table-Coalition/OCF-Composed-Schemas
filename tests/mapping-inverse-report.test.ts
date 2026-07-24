@@ -1,53 +1,66 @@
-import { MappingReportDocument } from "../scripts/lib/mapping-report.js";
+import { Corpus, MappingEdge } from "../scripts/lib/core-corpus.js";
+import { buildInverseCoverage, InverseCoverageLedger } from "../scripts/lib/inverse-coverage.js";
 import { renderMappingInverseReport } from "../scripts/lib/mapping-inverse-report.js";
 
-function document(mapping: Record<string, unknown>, file: string): [string, MappingReportDocument] {
-  return [
-    file,
-    {
-      frontmatter: { target_standard: "Carta" },
-      mapping,
-    },
-  ];
+function ledger(
+  defs: Record<string, Record<string, unknown>>,
+  edges: MappingEdge[]
+): InverseCoverageLedger {
+  const corpus = {
+    bundle: { $defs: defs },
+    coveragePolicy: { cartaDefs: new Map() },
+    mappingEdges: edges,
+    objects: [],
+  } as unknown as Corpus;
+  return buildInverseCoverage(corpus);
+}
+
+function fieldEdge(
+  file: string,
+  source: string,
+  field: string,
+  target: string,
+  variant = "—"
+): MappingEdge {
+  return {
+    rel: file,
+    sourceKind: "type",
+    source,
+    variant,
+    field,
+    scope: "type",
+    target,
+    kind: "rename",
+  };
 }
 
 describe("renderMappingInverseReport", () => {
-  it("aggregates source fields into target properties and shows unmapped target properties", () => {
-    const out = renderMappingInverseReport({
-      documents: new Map([
-        document(
-          {
-            fields: {
-              discount: {
-                kind: "rename",
-                target: "#/$defs/ConvertibleNote/properties/discountPercentage",
-              },
-            },
-          },
-          "types/SAFE.mapping.md"
-        ),
-        document(
-          {
-            fields: {
-              conversion_discount: {
-                kind: "rename",
-                target: "#/$defs/ConvertibleNote/properties/discountPercentage",
-              },
-            },
-          },
-          "types/Note.mapping.md"
-        ),
-      ]),
-      targetBundle: {
-        $defs: {
-          ConvertibleNote: {
-            properties: {
-              discountPercentage: {},
-              priceCap: {},
-            },
-          },
+  it("renders ledger edges into target properties and shows unmapped target properties", () => {
+    const inverse = ledger(
+      {
+        ConvertibleNote: {
+          properties: { discountPercentage: {}, priceCap: {} },
         },
       },
+      [
+        fieldEdge(
+          "types/SAFE.mapping.md",
+          "SAFE",
+          "discount",
+          "#/$defs/ConvertibleNote/properties/discountPercentage"
+        ),
+        fieldEdge(
+          "types/Note.mapping.md",
+          "Note",
+          "conversion_discount",
+          "#/$defs/ConvertibleNote/properties/discountPercentage"
+        ),
+      ]
+    );
+
+    const out = renderMappingInverseReport({
+      inverse,
+      sourceDocuments: 2,
       targetObject: "ConvertibleNote",
     });
 
@@ -59,54 +72,61 @@ describe("renderMappingInverseReport", () => {
     expect(out).toContain("✗ no mapped OCF source");
   });
 
-  it("projects shared and variant target maps without duplicating shared flows", () => {
-    const out = renderMappingInverseReport({
-      documents: new Map([
-        document(
-          {
-            variants: {
-              Note: {
-                when: ["NOTE"],
-                fields: {
-                  cap: { kind: "rename", target: "#/$defs/ConvertibleNote/properties/priceCap" },
-                },
-              },
-              Safe: { when: ["SAFE"], fields: {} },
-            },
-            shared: {
-              discount: {
-                kind: "rename",
-                target: "#/$defs/ConvertibleNote/properties/discountPercentage",
-              },
-            },
-          },
-          "objects/ConvertibleIssuance.mapping.md"
+  it("uses ledger variants without duplicating the same source edge", () => {
+    const inverse = ledger(
+      {
+        ConvertibleNote: {
+          properties: { discountPercentage: {}, priceCap: {} },
+        },
+      },
+      [
+        fieldEdge(
+          "objects/ConvertibleIssuance.mapping.md",
+          "ConvertibleIssuance",
+          "discount",
+          "#/$defs/ConvertibleNote/properties/discountPercentage",
+          "Note"
         ),
-      ]),
-      targetObject: "ConvertibleNote",
-    });
+        fieldEdge(
+          "objects/ConvertibleIssuance.mapping.md",
+          "ConvertibleIssuance",
+          "discount",
+          "#/$defs/ConvertibleNote/properties/discountPercentage",
+          "Safe"
+        ),
+        fieldEdge(
+          "objects/ConvertibleIssuance.mapping.md",
+          "ConvertibleIssuance",
+          "cap",
+          "#/$defs/ConvertibleNote/properties/priceCap",
+          "Note"
+        ),
+      ]
+    );
+
+    const out = renderMappingInverseReport({ inverse, targetObject: "ConvertibleNote" });
 
     expect(out).toContain("objects/ConvertibleIssuance.mapping.md :: discount [shared] (rename)");
     expect(out).toContain("objects/ConvertibleIssuance.mapping.md :: cap [Note] (rename)");
-    expect(out).not.toContain("discount [Note]");
-    expect(out).not.toContain("discount [Safe]");
+    expect(out.match(/:: discount \[shared\] \(rename\)/g)).toHaveLength(1);
   });
 
-  it("includes object definitions with no incoming mappings", () => {
-    const out = renderMappingInverseReport({
-      documents: new Map(),
-      targetBundle: {
-        $defs: {
-          EmptyObject: { type: "object", properties: {} },
-          EmptyWithProperties: { type: "object", properties: { id: {} } },
-        },
+  it("includes only object-like definitions requiring role follow-up", () => {
+    const inverse = ledger(
+      {
+        EmptyObject: { type: "object", properties: { id: {}, kind: {} } },
+        EmptyWithProperties: { type: "object", properties: { id: {} } },
       },
-    });
+      []
+    );
 
-    expect(out).toContain("Carta objects with no mappings (2)");
+    const out = renderMappingInverseReport({ inverse });
+
+    expect(out).toContain("Carta definitions requiring role follow-up (2)");
     expect(out).toContain("name: EmptyObject");
     expect(out).toContain("name: EmptyWithProperties");
     expect(out).toContain("status: NO MAPPINGS");
+    expect(out).not.toContain("Carta objects with no mappings");
     expect(out).not.toContain("✗ no mapped OCF source");
   });
 });

@@ -13,7 +13,6 @@ import {
   buildInverseCoverage,
   CARTA_DEF_STATUS_LABELS,
   CARTA_DEF_STATUS_ORDER,
-  excludedInverseRoleRows,
 } from "./inverse-coverage.js";
 import {
   FlowRow,
@@ -273,7 +272,7 @@ export function renderGapReport(d: Derived): string {
     ""
   );
 
-  const excludedDefinitions = excludedInverseRoleRows(d.corpus, inverse);
+  const excludedDefinitions = inverse.excludedRoleRows;
   lines.push(
     `### Intentionally excluded from inverse gap candidates (${excludedDefinitions.length})`,
     "",

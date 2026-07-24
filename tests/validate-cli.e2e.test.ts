@@ -74,6 +74,7 @@ async function makeTree(): Promise<string> {
   const root = await mkdtemp(path.join(tmpdir(), "ocf-validate-"));
   await mkdir(path.join(root, "objects"), { recursive: true });
   await mkdir(path.join(root, "target-schema"), { recursive: true });
+  await mkdir(path.join(root, "core"), { recursive: true });
   await writeFile(
     path.join(root, "objects", "Thing.schema.json"),
     JSON.stringify({
@@ -83,6 +84,7 @@ async function makeTree(): Promise<string> {
     })
   );
   await writeFile(path.join(root, "target-schema", "Carta.schema.json"), JSON.stringify(BUNDLE));
+  await writeFile(path.join(root, "core", "inverse-coverage-policy.yml"), "carta_defs: {}\n");
   return root;
 }
 
@@ -123,7 +125,7 @@ describe("validate-mappings CLI (temp tree)", () => {
     const { stdout } = await runCli(root, ["--inverse"]);
     expect(stdout).toContain("name: EmptyObject");
     expect(stdout).toContain("status: NO MAPPINGS");
-    expect(stdout).toContain("Carta objects with no mappings (1)");
+    expect(stdout).toContain("Carta definitions requiring role follow-up (1)");
   });
 
   it("exits 1 and reports field-level errors on a broken mapping", async () => {

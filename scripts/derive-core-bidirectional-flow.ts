@@ -28,7 +28,6 @@ import {
   buildInverseCoverage,
   CARTA_DEF_STATUS_LABELS,
   CARTA_DEF_STATUS_ORDER,
-  excludedInverseRoleRows,
   InverseExcludedRoleRow,
   InverseCoverageLedger,
 } from "./lib/inverse-coverage.js";
@@ -154,7 +153,7 @@ export function renderBidiDoc(d: Derived): string {
     ocf,
     carta,
     inverse,
-    excludedInverseRoleRows(d.corpus, inverse),
+    inverse.excludedRoleRows,
     memberGroups,
     ocfLost,
     cartaUnfilled,

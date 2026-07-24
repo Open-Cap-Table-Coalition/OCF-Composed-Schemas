@@ -7,7 +7,7 @@
  * keeps those dimensions separate so every report can render the same ledger.
  */
 import { Corpus, GreenObject, MappingEdge } from "./core-corpus.js";
-import { CartaCoverageRole, CartaCoveragePolicyEntry } from "./coverage-policy.js";
+import { CartaCoverageRole, CartaCoveragePolicyEntry, CoveragePolicy } from "./coverage-policy.js";
 import { isPlainObject } from "./mapping-validator.js";
 
 export type CartaDefDisposition = CartaCoverageRole | "review";
@@ -133,6 +133,7 @@ export interface InverseCoverageLedger {
   defs: CartaDefCoverage[];
   typeCorrespondences: TypeCorrespondence[];
   metrics: InverseCoverageMetrics;
+  excludedRoleRows: InverseExcludedRoleRow[];
   /** Object-like Carta defs needing role review or follow-up after policy exclusions. */
   candidates: CartaDefCoverage[];
 }
@@ -500,15 +501,19 @@ export function buildInverseCoverage(corpus: Corpus): InverseCoverageLedger {
     reviewDefs: countStatus("review"),
   };
 
-  return {
+  const typeCorrespondences = buildTypeCorrespondences(corpus, schema, edges);
+  const ledger: InverseCoverageLedger = {
     schema,
     edges,
     slots,
     defs: defRows.sort((a, b) => a.name.localeCompare(b.name)),
-    typeCorrespondences: buildTypeCorrespondences(corpus, schema, edges),
+    typeCorrespondences,
     metrics,
+    excludedRoleRows: [],
     candidates: candidates.sort((a, b) => a.name.localeCompare(b.name)),
   };
+  ledger.excludedRoleRows = excludedInverseRoleRows(corpus.coveragePolicy, ledger);
+  return ledger;
 }
 
 /**
@@ -517,11 +522,11 @@ export function buildInverseCoverage(corpus: Corpus): InverseCoverageLedger {
  * nested rows name the directly mapped Carta parents that structurally cover them.
  */
 export function excludedInverseRoleRows(
-  corpus: Corpus,
+  policy: CoveragePolicy,
   inverse: InverseCoverageLedger
 ): InverseExcludedRoleRow[] {
   const rows: InverseExcludedRoleRow[] = [];
-  for (const [name, entry] of [...corpus.coveragePolicy.cartaDefs.entries()]
+  for (const [name, entry] of [...policy.cartaDefs.entries()]
     .filter(([, policy]) => policy.role === "value-type")
     .sort(([a], [b]) => a.localeCompare(b))) {
     const correspondence = inverse.typeCorrespondences
