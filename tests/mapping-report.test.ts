@@ -19,6 +19,26 @@ describe("renderMappingReport", () => {
     expect(out).toBe("types/Derived.mapping.md  partial 1/2 → Carta\n└── a → #/a (rename)");
   });
 
+  it("renders deliberate target replication instead of hiding the list", () => {
+    const out = renderMappingReport({
+      file: "objects/Identity.mapping.md",
+      frontmatter: { target_standard: "Carta" },
+      mapping: {
+        status: "complete",
+        coverage: "1/1",
+        fields: {
+          security_id: {
+            kind: "rename",
+            target: ["#/$defs/Parent/securityId", "#/$defs/Security/securityId"],
+          },
+        },
+      },
+    });
+    expect(out).toBe(
+      "objects/Identity.mapping.md  complete 1/1 → Carta\n└── security_id → #/$defs/Parent/securityId + #/$defs/Security/securityId (rename)"
+    );
+  });
+
   it("renders the full worked example exactly", () => {
     const out = renderMappingReport({
       file: "objects/Stakeholder.mapping.md",

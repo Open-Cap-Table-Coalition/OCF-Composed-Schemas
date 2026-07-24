@@ -300,9 +300,11 @@ export function variantFieldMaps(
               : { ...entry, target: targets.length === 1 ? targets[0] : targets };
         } else {
           const val =
-            label in map && typeof map[label] === "string" ? (map[label] as string) : null;
+            label in map && (typeof map[label] === "string" || Array.isArray(map[label]))
+              ? map[label]
+              : null;
           projected[label]![field] =
-            typeof val === "string"
+            typeof val === "string" || Array.isArray(val)
               ? { ...entry, target: val }
               : { kind: "unmappable", target: null, reason: "no-equivalent" };
         }

@@ -130,13 +130,18 @@ route_by_property:
   exhaustive: true
 
 # shared: fields whose Carta home differs by family carry a per-variant target map
-# { Option/Rsu/Sar: pointer }. Rsu is null on every routed field — an OCF exercise
+# { Option/Rsu/Sar: pointer or pointer list }. Rsu is null on every routed field — an OCF exercise
 # against an RSU has no Carta exercise transaction to land on.
 shared:
   id:                 { kind: unmappable, target: null, reason: ocf-internal }
   comments:           { kind: unmappable, target: null, reason: no-equivalent }
   object_type:        { kind: unmappable, target: null, reason: no-equivalent }
-  security_id:        { kind: unmappable, target: null, reason: ocf-internal }
+  security_id:
+    kind: rename
+    target:
+      Option: "#/$defs/OptionTransactionItem/properties/securityId"
+      Sar:    "#/$defs/SarTransactionItem/properties/securityId"
+      Rsu:    null
   consideration_text: { kind: unmappable, target: null, reason: no-equivalent }
   date:
     kind: rename
@@ -163,6 +168,7 @@ variants:
     when: [OPTION, OPTION_NSO, OPTION_ISO]
     primary_targets:
       - "#/$defs/OptionExerciseTransaction"
+      - "#/$defs/OptionTransactionItem"
     fields: {}
 
   Rsu:
@@ -174,6 +180,7 @@ variants:
     when: [CSAR, SSAR]
     primary_targets:
       - "#/$defs/SarExerciseTransaction"
+      - "#/$defs/SarTransactionItem"
     fields: {}
 
  ```
@@ -209,10 +216,11 @@ variants:
     convenience pointer (a single id), whereas `precededBy.securities` carries the full
     set, so in any snapshot the complete lineage forest stays traceable. (Cash-settled
     SARs settle to `cashAcquired` and produce no resulting security.)
-- **`security_id`** is the join key (`route_by_property.lookup_by.key`); it routes the family,
-  it is not itself a stored Carta field. Carta's exercise transactions hold no
-  reference to the source grant — that linkage is structural (the exercise sits under
-  its grant), not a leaf property — so `security_id` is `ocf-internal` here.
+- **`security_id`** is the join key (`route_by_property.lookup_by.key`) and, for the valid Option
+  and SAR routes, is also copied to the resolved parent `*TransactionItem.securityId`. That parent
+  anchor is what places the exercise inside `exercises[]`; the exercise leaf itself still holds no
+  source-grant reference. The RSU route remains null because RSUs settle via Release rather than
+  Exercise.
 - **`consideration_text` has no home.** OCF stores free text describing consideration;
   the nearest Carta concept is `exerciseMethod`, a constrained enum describing *how*
   the exercise was funded (CASH / CASHLESS / …), not a free-text description — free

@@ -34,7 +34,14 @@ function asStringOr(value: unknown, fallback: string): string {
   return typeof value === "string" ? value : fallback;
 }
 
+/** Render a scalar or deliberately replicated target list for a reader-facing report. */
+function targetLabel(value: unknown): string {
+  if (Array.isArray(value)) return value.map((target) => targetLabel(target)).join(" + ");
+  return asStringOr(value, "?");
+}
+
 function routeTargetLabel(value: unknown): string {
+  if (Array.isArray(value)) return value.map((target) => routeTargetLabel(target)).join(" + ");
   if (typeof value !== "string") return asStringOr(value, "?");
   const parts = targetPointerParts(value);
   return parts.object === parts.relative ? parts.object : `${parts.object}.${parts.relative}`;
@@ -335,9 +342,9 @@ function renderItem(
             else if (isPlainObject(sv))
               for (const [fam, ptr] of Object.entries(sv))
                 children.push(
-                  ptr === null ? `${step} · ${fam} ✗` : `${step} · ${fam} → ${asStringOr(ptr, "?")}`
+                  ptr === null ? `${step} · ${fam} ✗` : `${step} · ${fam} → ${targetLabel(ptr)}`
                 );
-            else children.push(`${step} → ${asStringOr(sv, "?")}`);
+            else children.push(`${step} → ${targetLabel(sv)}`);
           }
           item = { label: `${name} (${kind} · per step)`, children };
         } else {
@@ -346,14 +353,14 @@ function renderItem(
           item = {
             label: `${name} (${kind} · per variant)`,
             children: Object.entries(target).map(([variant, ptr]) =>
-              ptr === null ? `${variant} ✗ unmappable` : `${variant} → ${asStringOr(ptr, "?")}`
+              ptr === null ? `${variant} ✗ unmappable` : `${variant} → ${targetLabel(ptr)}`
             ),
           };
         }
       } else {
         const policy =
           kind === "select" && typeof entry.policy === "string" ? ` · ${entry.policy}` : "";
-        item = { label: `${name} → ${asStringOr(target, "?")} (${kind}${policy})`, children: [] };
+        item = { label: `${name} → ${targetLabel(target)} (${kind}${policy})`, children: [] };
       }
       break;
 

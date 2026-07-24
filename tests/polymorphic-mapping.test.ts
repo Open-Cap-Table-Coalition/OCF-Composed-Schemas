@@ -10,7 +10,10 @@ const BUNDLE = {
       type: "object",
       properties: { quantity: { type: "number" }, exercisePrice: { type: "string" } },
     },
-    OptionGrant: { type: "object", properties: { stakeholderId: { type: "string" } } },
+    OptionGrant: {
+      type: "object",
+      properties: { stakeholderId: { type: "string" }, quantity: { type: "number" } },
+    },
     RsuTx: { type: "object", properties: { quantity: { type: "number" } } },
     Excluded: true,
   },
@@ -374,7 +377,15 @@ describe("per-variant target maps (divergent shared targets)", () => {
   it("rejects a per-variant target value that is neither a pointer nor null", () => {
     const m = withSharedQuantity({ Option: "#/$defs/OptionTx/properties/quantity", Rsu: 42 });
     const errs = messages(input({ mapping: m }));
-    expect(errs.some((s) => /quantity/.test(s) && /pointer or null/i.test(s))).toBe(true);
+    expect(errs.some((s) => /quantity/.test(s) && /pointer.*list.*null/i.test(s))).toBe(true);
+  });
+
+  it("accepts a per-variant list of targets for deliberate field replication", () => {
+    const m = withSharedQuantity({
+      Option: ["#/$defs/OptionTx/properties/quantity", "#/$defs/OptionGrant/properties/quantity"],
+      Rsu: "#/$defs/RsuTx/properties/quantity",
+    });
+    expect(messages(input({ mapping: m }))).toEqual([]);
   });
 
   it("accepts null for a variant (field unmappable in that variant only)", () => {

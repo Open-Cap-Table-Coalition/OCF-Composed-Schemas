@@ -22,17 +22,17 @@ mapping lives in `X`. The core/payload counts are the wrapper's own (only
 | EquityCompensationAcceptance | Option | 1 | 0 | ✗ | no-payload |
 | EquityCompensationAcceptance | Rsu | 1 | 0 | ✗ | no-payload |
 | EquityCompensationAcceptance | Sar | 0 | 0 | ✗ | no-payload |
-| EquityCompensationCancellation | Option | 3 | 2 | ✓ | — |
-| EquityCompensationCancellation | Rsu | 3 | 2 | ✓ | — |
-| EquityCompensationCancellation | Sar | 3 | 2 | ✓ | — |
-| EquityCompensationExercise | Option | 3 | 1 | ✓ | — |
+| EquityCompensationCancellation | Option | 4 | 2 | ✓ | — |
+| EquityCompensationCancellation | Rsu | 4 | 2 | ✓ | — |
+| EquityCompensationCancellation | Sar | 4 | 2 | ✓ | — |
+| EquityCompensationExercise | Option | 4 | 1 | ✓ | — |
 | EquityCompensationExercise | Rsu | 0 | 0 | ✗ | no-payload |
-| EquityCompensationExercise | Sar | 3 | 1 | ✓ | — |
+| EquityCompensationExercise | Sar | 4 | 1 | ✓ | — |
 | EquityCompensationIssuance | Option | 18 | 11 | ✓ | — |
 | EquityCompensationIssuance | Rsu | 12 | 5 | ✓ | — |
-| EquityCompensationIssuance | Sar | 8 | 4 | ✓ | — |
+| EquityCompensationIssuance | Sar | 11 | 4 | ✓ | — |
 | EquityCompensationRelease | Option | 0 | 0 | ✗ | no-payload |
-| EquityCompensationRelease | Rsu | 5 | 3 | ✓ | — |
+| EquityCompensationRelease | Rsu | 6 | 3 | ✓ | — |
 | EquityCompensationRelease | Sar | 0 | 0 | ✗ | no-payload |
 | EquityCompensationRepricing | Option | 1 | 1 | ✓ | — |
 | EquityCompensationRepricing | Rsu | 0 | 0 | ✗ | no-payload |
@@ -58,8 +58,8 @@ mapping lives in `X`. The core/payload counts are the wrapper's own (only
 | StakeholderStatusChangeEvent | — | 1 | 0 | ✗ | no-payload |
 | StockAcceptance | Default | 0 | 0 | ✗ | no-payload |
 | StockAcceptance | Rsa | 1 | 0 | ✗ | no-payload |
-| StockCancellation | Default | 4 | 2 | ✓ | — |
-| StockCancellation | Rsa | 4 | 2 | ✓ | — |
+| StockCancellation | Default | 5 | 2 | ✓ | — |
+| StockCancellation | Rsa | 5 | 2 | ✓ | — |
 | StockClass | — | 10 | 10 | ✓ | — |
 | StockClassAuthorizedSharesAdjustment | — | 2 | 1 | ✓ | — |
 | StockClassConversionRatioAdjustment | — | 2 | 1 | ✓ | — |
@@ -281,24 +281,24 @@ in the coverage report.
 | EquityCompensationCancellation | Option | id | out | no-destination | kind unmappable |
 | EquityCompensationCancellation | Option | comments | out | no-destination | kind unmappable |
 | EquityCompensationCancellation | Option | object_type | out | no-destination | kind unmappable |
-| EquityCompensationCancellation | Option | security_id | out | no-destination | kind unmappable |
 | EquityCompensationCancellation | Option | balance_security_id | out | no-destination | kind unmappable |
+| EquityCompensationCancellation | Option | security_id | core | direct |  |
 | EquityCompensationCancellation | Option | reason_text | out | heuristic | kind computed |
 | EquityCompensationCancellation | Option | date | core | widening |  |
 | EquityCompensationCancellation | Option | quantity | core | widening |  |
 | EquityCompensationCancellation | Rsu | id | out | no-destination | kind unmappable |
 | EquityCompensationCancellation | Rsu | comments | out | no-destination | kind unmappable |
 | EquityCompensationCancellation | Rsu | object_type | out | no-destination | kind unmappable |
-| EquityCompensationCancellation | Rsu | security_id | out | no-destination | kind unmappable |
 | EquityCompensationCancellation | Rsu | balance_security_id | out | no-destination | kind unmappable |
+| EquityCompensationCancellation | Rsu | security_id | core | direct |  |
 | EquityCompensationCancellation | Rsu | reason_text | out | heuristic | kind computed |
 | EquityCompensationCancellation | Rsu | date | core | widening |  |
 | EquityCompensationCancellation | Rsu | quantity | core | widening |  |
 | EquityCompensationCancellation | Sar | id | out | no-destination | kind unmappable |
 | EquityCompensationCancellation | Sar | comments | out | no-destination | kind unmappable |
 | EquityCompensationCancellation | Sar | object_type | out | no-destination | kind unmappable |
-| EquityCompensationCancellation | Sar | security_id | out | no-destination | kind unmappable |
 | EquityCompensationCancellation | Sar | balance_security_id | out | no-destination | kind unmappable |
+| EquityCompensationCancellation | Sar | security_id | core | direct |  |
 | EquityCompensationCancellation | Sar | reason_text | out | heuristic | kind computed |
 | EquityCompensationCancellation | Sar | date | core | widening |  |
 | EquityCompensationCancellation | Sar | quantity | core | widening |  |
@@ -306,7 +306,7 @@ in the coverage report.
 | StockCancellation | Rsa | id | out | no-destination | kind unmappable |
 | StockCancellation | Rsa | comments | out | no-destination | kind unmappable |
 | StockCancellation | Rsa | object_type | out | no-destination | kind unmappable |
-| StockCancellation | Rsa | security_id | out | no-destination | kind unmappable |
+| StockCancellation | Rsa | security_id | core | direct |  |
 | StockCancellation | Rsa | reason_text | out | heuristic | kind computed |
 | StockCancellation | Rsa | balance_security_id | out | heuristic | kind computed; ⚑ possible reverse-edge (ruling B) — target is an array; confirm lossless lineage |
 | StockCancellation | Rsa | date | core | widening |  |
@@ -314,7 +314,7 @@ in the coverage report.
 | StockCancellation | Default | id | out | no-destination | kind unmappable |
 | StockCancellation | Default | comments | out | no-destination | kind unmappable |
 | StockCancellation | Default | object_type | out | no-destination | kind unmappable |
-| StockCancellation | Default | security_id | out | no-destination | kind unmappable |
+| StockCancellation | Default | security_id | core | direct |  |
 | StockCancellation | Default | reason_text | out | heuristic | kind computed |
 | StockCancellation | Default | balance_security_id | out | heuristic | kind computed; ⚑ possible reverse-edge (ruling B) — target is an array; confirm lossless lineage |
 | StockCancellation | Default | date | core | widening |  |
@@ -384,24 +384,24 @@ in the coverage report.
 | EquityCompensationExercise | Option | id | out | no-destination | kind unmappable |
 | EquityCompensationExercise | Option | comments | out | no-destination | kind unmappable |
 | EquityCompensationExercise | Option | object_type | out | no-destination | kind unmappable |
-| EquityCompensationExercise | Option | security_id | out | no-destination | kind unmappable |
 | EquityCompensationExercise | Option | consideration_text | out | no-destination | kind unmappable |
+| EquityCompensationExercise | Option | security_id | core | direct |  |
 | EquityCompensationExercise | Option | date | core | widening |  |
 | EquityCompensationExercise | Option | quantity | core | widening |  |
 | EquityCompensationExercise | Option | resulting_security_ids | out | heuristic | kind computed; ⚑ possible reverse-edge (ruling B) — target is an array; confirm lossless lineage |
 | EquityCompensationExercise  | Rsu | id | out | no-destination | kind unmappable |
 | EquityCompensationExercise  | Rsu | comments | out | no-destination | kind unmappable |
 | EquityCompensationExercise  | Rsu | object_type | out | no-destination | kind unmappable |
-| EquityCompensationExercise  | Rsu | security_id | out | no-destination | kind unmappable |
 | EquityCompensationExercise  | Rsu | consideration_text | out | no-destination | kind unmappable |
+| EquityCompensationExercise  | Rsu | security_id | out | no-destination | kind unmappable |
 | EquityCompensationExercise  | Rsu | date | out | no-destination | kind unmappable |
 | EquityCompensationExercise  | Rsu | quantity | out | no-destination | kind unmappable |
 | EquityCompensationExercise  | Rsu | resulting_security_ids | out | no-destination | kind unmappable |
 | EquityCompensationExercise | Sar | id | out | no-destination | kind unmappable |
 | EquityCompensationExercise | Sar | comments | out | no-destination | kind unmappable |
 | EquityCompensationExercise | Sar | object_type | out | no-destination | kind unmappable |
-| EquityCompensationExercise | Sar | security_id | out | no-destination | kind unmappable |
 | EquityCompensationExercise | Sar | consideration_text | out | no-destination | kind unmappable |
+| EquityCompensationExercise | Sar | security_id | core | direct |  |
 | EquityCompensationExercise | Sar | date | core | widening |  |
 | EquityCompensationExercise | Sar | quantity | core | widening |  |
 | EquityCompensationExercise | Sar | resulting_security_ids | out | heuristic | kind computed; ⚑ possible reverse-edge (ruling B) — target is an array; confirm lossless lineage |
@@ -485,9 +485,9 @@ in the coverage report.
 | EquityCompensationIssuance | Sar | consideration_text | out | no-destination | kind unmappable |
 | EquityCompensationIssuance | Sar | security_law_exemptions | out | heuristic | kind computed |
 | EquityCompensationIssuance | Sar | date | core | widening |  |
-| EquityCompensationIssuance | Sar | security_id | out | no-destination | kind unmappable |
-| EquityCompensationIssuance | Sar | custom_id | out | no-destination | kind unmappable |
-| EquityCompensationIssuance | Sar | stakeholder_id | out | no-destination | kind unmappable |
+| EquityCompensationIssuance | Sar | security_id | core | direct |  |
+| EquityCompensationIssuance | Sar | custom_id | core | direct |  |
+| EquityCompensationIssuance | Sar | stakeholder_id | core | direct |  |
 | EquityCompensationIssuance | Sar | board_approval_date | out | no-destination | kind unmappable |
 | EquityCompensationIssuance | Sar | stock_plan_id | core | direct |  |
 | EquityCompensationIssuance | Sar | stock_class_id | core | direct |  |
@@ -583,8 +583,8 @@ in the coverage report.
 | EquityCompensationRelease | Rsu | id | out | no-destination | kind unmappable |
 | EquityCompensationRelease | Rsu | comments | out | no-destination | kind unmappable |
 | EquityCompensationRelease | Rsu | object_type | out | no-destination | kind unmappable |
-| EquityCompensationRelease | Rsu | security_id | out | no-destination | kind unmappable |
 | EquityCompensationRelease | Rsu | consideration_text | out | no-destination | kind unmappable |
+| EquityCompensationRelease | Rsu | security_id | core | direct |  |
 | EquityCompensationRelease | Rsu | date | core | widening |  |
 | EquityCompensationRelease | Rsu | settlement_date | core | widening |  |
 | EquityCompensationRelease | Rsu | release_price | core | direct |  |
@@ -593,8 +593,8 @@ in the coverage report.
 | EquityCompensationRelease  | Option | id | out | no-destination | kind unmappable |
 | EquityCompensationRelease  | Option | comments | out | no-destination | kind unmappable |
 | EquityCompensationRelease  | Option | object_type | out | no-destination | kind unmappable |
-| EquityCompensationRelease  | Option | security_id | out | no-destination | kind unmappable |
 | EquityCompensationRelease  | Option | consideration_text | out | no-destination | kind unmappable |
+| EquityCompensationRelease  | Option | security_id | out | no-destination | kind unmappable |
 | EquityCompensationRelease  | Option | date | out | no-destination | kind unmappable |
 | EquityCompensationRelease  | Option | settlement_date | out | no-destination | kind unmappable |
 | EquityCompensationRelease  | Option | release_price | out | no-destination | kind unmappable |
@@ -603,8 +603,8 @@ in the coverage report.
 | EquityCompensationRelease  | Sar | id | out | no-destination | kind unmappable |
 | EquityCompensationRelease  | Sar | comments | out | no-destination | kind unmappable |
 | EquityCompensationRelease  | Sar | object_type | out | no-destination | kind unmappable |
-| EquityCompensationRelease  | Sar | security_id | out | no-destination | kind unmappable |
 | EquityCompensationRelease  | Sar | consideration_text | out | no-destination | kind unmappable |
+| EquityCompensationRelease  | Sar | security_id | out | no-destination | kind unmappable |
 | EquityCompensationRelease  | Sar | date | out | no-destination | kind unmappable |
 | EquityCompensationRelease  | Sar | settlement_date | out | no-destination | kind unmappable |
 | EquityCompensationRelease  | Sar | release_price | out | no-destination | kind unmappable |

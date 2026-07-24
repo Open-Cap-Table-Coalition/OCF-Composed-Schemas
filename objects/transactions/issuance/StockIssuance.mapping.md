@@ -184,7 +184,7 @@ Source: [`StockIssuance.schema.json`](./StockIssuance.schema.json)
 # routing: route_by_property (local) — issuance_type routes an RSA to Carta's
 # RestrictedStockAward family; FOUNDERS_STOCK / absent is a plain Certificate.
 # shared: fields common to both variants. A field whose Carta home differs by
-# variant carries a per-variant target map { Rsa/Default: pointer }; the validator
+# variant carries a per-variant target map { Rsa/Default: pointer or pointer list }; the validator
 # enforces the keys stay in sync with the variant set.
 status: complete
 
@@ -204,18 +204,30 @@ shared:
   security_id:
     kind: rename
     target:
-      Rsa:     "#/$defs/RestrictedStockAward/properties/securityId"
-      Default: "#/$defs/Certificate/properties/securityId"
+      Rsa:
+        - "#/$defs/RsaTransactionItem/properties/securityId"
+        - "#/$defs/RestrictedStockAward/properties/securityId"
+      Default:
+        - "#/$defs/CertificateTransactionItem/properties/securityId"
+        - "#/$defs/Certificate/properties/securityId"
   custom_id:
     kind: rename
     target:
-      Rsa:     "#/$defs/RestrictedStockAward/properties/securityLabel"
-      Default: "#/$defs/Certificate/properties/securityLabel"
+      Rsa:
+        - "#/$defs/RsaTransactionItem/properties/securityLabel"
+        - "#/$defs/RestrictedStockAward/properties/securityLabel"
+      Default:
+        - "#/$defs/CertificateTransactionItem/properties/securityLabel"
+        - "#/$defs/Certificate/properties/securityLabel"
   stakeholder_id:
     kind: rename
     target:
-      Rsa:     "#/$defs/RestrictedStockAward/properties/stakeholderId"
-      Default: "#/$defs/Certificate/properties/stakeholderId"
+      Rsa:
+        - "#/$defs/RsaTransactionItem/properties/stakeholderId"
+        - "#/$defs/RestrictedStockAward/properties/stakeholderId"
+      Default:
+        - "#/$defs/CertificateTransactionItem/properties/stakeholderId"
+        - "#/$defs/Certificate/properties/stakeholderId"
   stockholder_approval_date: { kind: unmappable, target: null, reason: no-equivalent }
   consideration_text:        { kind: unmappable, target: null, reason: no-equivalent }
   security_law_exemptions:
@@ -250,6 +262,7 @@ variants:
     when: [RSA]
     primary_targets:
       - "#/$defs/RsaIssuanceTransaction"
+      - "#/$defs/RsaTransactionItem"
       - "#/$defs/RestrictedStockAward"
     fields:
       board_approval_date: { kind: rename, target: "#/$defs/RestrictedStockAward/properties/boardApprovalDate" }
@@ -262,6 +275,7 @@ variants:
     when: [FOUNDERS_STOCK]
     primary_targets:
       - "#/$defs/CertificateIssuanceTransaction"
+      - "#/$defs/CertificateTransactionItem"
       - "#/$defs/Certificate"
     fields:
       board_approval_date: { kind: unmappable, target: null, reason: no-equivalent }
@@ -287,8 +301,9 @@ variants:
   `issuance_type: RSA` (actually-issued stock with a repurchase/forfeiture right) — see
   [`docs/type-mapping-policy.md`](../../../docs/type-mapping-policy.md). Carta promotes it to a
   dedicated `RestrictedStockAward` security. This mapping routes `RSA` → `RsaIssuanceTransaction` +
-  `RestrictedStockAward`; everything else (`FOUNDERS_STOCK`, and `issuance_type` **absent**, which
-  the importer treats as the `Default` route) → `CertificateIssuanceTransaction` + `Certificate`.
+  `RsaTransactionItem` + `RestrictedStockAward`; everything else (`FOUNDERS_STOCK`, and
+  `issuance_type` **absent**, which the importer treats as the `Default` route) →
+  `CertificateIssuanceTransaction` + `CertificateTransactionItem` + `Certificate`.
   See [`docs/polymorphic-transaction-routing.md`](../../../docs/polymorphic-transaction-routing.md).
 - **Per-variant divergence.** `board_approval_date` and `vestings` (explicit event array) exist on
   `RestrictedStockAward` but **not** on `Certificate` (which carries only

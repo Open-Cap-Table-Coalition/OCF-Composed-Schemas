@@ -1151,6 +1151,23 @@ function pointerResolves(
   return true;
 }
 
+function pointersResolve(
+  value: unknown,
+  bundle: unknown | null,
+  field: string | null,
+  ctx: string,
+  err: ErrFn
+): boolean {
+  const values = Array.isArray(value) ? value : [value];
+  if (values.length === 0 || !values.every((item) => typeof item === "string")) {
+    err(field, `${ctx} must be a "#/..." pointer, a list of pointers, or null`);
+    return false;
+  }
+  return values.every((item, index) =>
+    pointerResolves(item, bundle, field, values.length > 1 ? `${ctx}[${index}]` : ctx, err)
+  );
+}
+
 /**
  * Validate the optional `composite:` block — an ordered list of Carta transaction
  * steps a single OCF transaction folds into (all emitted, unlike variants which
@@ -1299,11 +1316,11 @@ function validateConstFills(
 
 /**
  * Validate per-variant target maps on `shared:` entries. A shared field whose
- * Carta home differs by variant carries `target: { <variantLabel>: pointer|null }`
+ * Carta home differs by variant carries `target: { <variantLabel>: pointer(s)|null }`
  * instead of a single pointer — so RSU/SAR fields name their own objects instead
  * of borrowing a representative family's. The map's keys must stay in sync with
  * the variant set (every variant present, none unknown); each value is a resolving
- * `#/...` pointer or `null` (= unmappable in that variant). Returns the set of
+ * `#/...` pointer(s) or `null` (= unmappable in that variant). Returns the set of
  * fields that used a map and, per variant, the projected scalar-target entry to
  * splice into that variant's effective field map.
  */
@@ -1391,14 +1408,16 @@ function validateSharedTargetMaps(
       if (!(label in map)) err(field, `target map is missing variant "${label}"`);
     }
 
-    // Each value: null (= unmappable here) or a resolving "#/..." pointer.
+    // Each value: null (= unmappable here), a resolving "#/..." pointer, or a
+    // list of resolving pointers when one source field is deliberately copied
+    // to multiple Carta objects.
     for (const label of variantLabels) {
       const val = label in map ? map[label] : null;
       if (val === null) {
         projected[label]![field] = unmappableProjection();
         continue;
       }
-      projected[label]![field] = pointerResolves(
+      projected[label]![field] = pointersResolve(
         val,
         bundle,
         field,
@@ -1436,10 +1455,17 @@ function validateEntryShape(
   const target = entry.target;
   switch (kind) {
     case "rename":
-    case "select":
     case "combine":
-    case "enum-remap":
     case "computed":
+      if (
+        typeof target !== "string" &&
+        !(Array.isArray(target) && target.length > 0 && target.every((t) => typeof t === "string"))
+      ) {
+        err(name, `kind ${kind} requires a string target or a non-empty list of string targets`);
+      }
+      break;
+    case "select":
+    case "enum-remap":
       if (typeof target !== "string") err(name, `kind ${kind} requires a string target`);
       break;
     case "sequential_transform":
@@ -1671,7 +1697,10 @@ function validateEntryTargets(
 ): void {
   const target = entry.target;
   const pointers: string[] = [];
-  if (kind === "split" && Array.isArray(target)) {
+  if (
+    (kind === "split" || kind === "rename" || kind === "combine" || kind === "computed") &&
+    Array.isArray(target)
+  ) {
     for (const t of target) if (typeof t === "string") pointers.push(t);
   } else if (typeof target === "string" && target !== "TODO") {
     pointers.push(target);
