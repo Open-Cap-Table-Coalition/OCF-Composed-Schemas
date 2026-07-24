@@ -38,10 +38,10 @@ describe("core reports (the markdown drift gate's premise)", () => {
     expect(report).toContain("### CARTA inverse coverage: the simple story");
     expect(report).toContain("4. That leaves **32** standalone mapping candidates.");
     expect(report).toContain(
-      "5. We have mapping evidence for **15**: **0** fully mapped and **15** partially mapped."
+      "7. We have mapping evidence for **15**: **0** fully mapped and **15** partially mapped."
     );
     expect(report).toContain(
-      "6. **17** standalone candidates have no mapping evidence yet; their inventory role tells us whether that is expected or actionable."
+      "8. **17** standalone candidates have no mapping evidence yet; their inventory role tells us whether that is expected or actionable."
     );
     expect(report).toContain(
       "### Supporting CARTA definitions excluded from standalone mapping targets (60)"

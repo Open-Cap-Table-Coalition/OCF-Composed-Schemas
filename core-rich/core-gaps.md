@@ -923,10 +923,12 @@ A missing root target is therefore not automatically a missing concept.
 
 1. Carta defines **139** total definitions.
 2. **86** of them are object-shaped.
-3. **54** object-shaped support definitions (**53** nested objects + **1** object-shaped value type) plus **6** scalar support types are packaging pieces, not standalone objects.
+3. Of those **86**, **54** are support definitions, not standalone objects (**53** nested objects + **1** object-shaped value type).
 4. That leaves **32** standalone mapping candidates.
-5. We have mapping evidence for **15**: **0** fully mapped and **15** partially mapped.
-6. **17** standalone candidates have no mapping evidence yet; their inventory role tells us whether that is expected or actionable.
+5. Separately, **6** scalar support types are also excluded; they are outside the **86** object-shaped definitions.
+6. Total support definitions excluded: **60**.
+7. We have mapping evidence for **15**: **0** fully mapped and **15** partially mapped.
+8. **17** standalone candidates have no mapping evidence yet; their inventory role tells us whether that is expected or actionable.
 
 **Checks:** 32 = 15 + 17; 86 = 32 + 54.
 

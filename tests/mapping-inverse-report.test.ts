@@ -66,7 +66,9 @@ describe("renderMappingInverseReport", () => {
 
     expect(out).toContain("source_documents: 2");
     expect(out).toContain("mapped_targets: 1");
-    expect(out).toContain("1 have OCF mapping evidence: 0 fully mapped, 1 partially mapped.");
+    expect(out).toContain(
+      "5. 1 standalone candidates have OCF mapping evidence (0 fully mapped, 1 partially mapped)."
+    );
     expect(out).toContain('id: "#/$defs/ConvertibleNote"');
     expect(out).toContain("types/SAFE.mapping.md :: discount (rename)");
     expect(out).toContain("types/Note.mapping.md :: conversion_discount (rename)");
