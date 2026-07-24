@@ -74,6 +74,23 @@ fields:
     reason: no-equivalent
 ```
 
+## Ask a mapping question
+
+Use a link below to open a prefilled GitHub issue. The issue can be copied into the auditable checklist in `## Notes / open questions`.
+
+<details>
+<summary>Open a prefilled issue for a property</summary>
+
+<!-- mapping-question-links:start -->
+| Source property | Action |
+| --- | --- |
+| _(mapping-level)_ | [💬 Ask a question](https://github.com/Open-Cap-Table-Coalition/OCF-Composed-Schemas/issues/new?template=mapping-question.yml&mapping_file=types%2FName.mapping.md&source_url=https%3A%2F%2Fgithub.com%2FOpen-Cap-Table-Coalition%2FOCF-Composed-Schemas%2Fblob%2Fmain%2Ftypes%2FName.mapping.md&title=%5BMapping+question%5D+Name) |
+| `legal_name` | [💬 Ask a question](https://github.com/Open-Cap-Table-Coalition/OCF-Composed-Schemas/issues/new?template=mapping-question.yml&mapping_file=types%2FName.mapping.md&source_url=https%3A%2F%2Fgithub.com%2FOpen-Cap-Table-Coalition%2FOCF-Composed-Schemas%2Fblob%2Fmain%2Ftypes%2FName.mapping.md&title=%5BMapping+question%5D+Name+%2F+legal_name&property_path=legal_name) |
+| `first_name` | [💬 Ask a question](https://github.com/Open-Cap-Table-Coalition/OCF-Composed-Schemas/issues/new?template=mapping-question.yml&mapping_file=types%2FName.mapping.md&source_url=https%3A%2F%2Fgithub.com%2FOpen-Cap-Table-Coalition%2FOCF-Composed-Schemas%2Fblob%2Fmain%2Ftypes%2FName.mapping.md&title=%5BMapping+question%5D+Name+%2F+first_name&property_path=first_name) |
+| `last_name` | [💬 Ask a question](https://github.com/Open-Cap-Table-Coalition/OCF-Composed-Schemas/issues/new?template=mapping-question.yml&mapping_file=types%2FName.mapping.md&source_url=https%3A%2F%2Fgithub.com%2FOpen-Cap-Table-Coalition%2FOCF-Composed-Schemas%2Fblob%2Fmain%2Ftypes%2FName.mapping.md&title=%5BMapping+question%5D+Name+%2F+last_name&property_path=last_name) |
+</details>
+<!-- mapping-question-links:end -->
+
 ## Notes / open questions
 
 - **Why this whole type is unmappable, not just the components.** Carta does not model a reusable "name" type — it inlines a single flat name string per entity (`Stakeholder.fullName`, `Issuer.legalName`, `Corporation.legalName`, `PointOfContact.userFullName`). Because there is no Carta `Name` type, there is **no well-posed single type-level target** for OCF's `Name`: which flat-string field receives the value depends on which OCF *object* nested the `Name`, so the mapping belongs at the object level, not here. (Contrast `types/Monetary.mapping.md`, where Carta *does* have a `Money` type and the type→type mapping is well-posed.)

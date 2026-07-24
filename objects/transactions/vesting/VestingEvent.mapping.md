@@ -102,6 +102,25 @@ fields:
     reason: no-equivalent
 ```
 
+## Ask a mapping question
+
+Use a link below to open a prefilled GitHub issue. The issue can be copied into the auditable checklist in `## Notes / open questions`.
+
+<details>
+<summary>Open a prefilled issue for a property</summary>
+
+<!-- mapping-question-links:start -->
+| Source property | Action |
+| --- | --- |
+| _(mapping-level)_ | [💬 Ask a question](https://github.com/Open-Cap-Table-Coalition/OCF-Composed-Schemas/issues/new?template=mapping-question.yml&mapping_file=objects%2Ftransactions%2Fvesting%2FVestingEvent.mapping.md&source_url=https%3A%2F%2Fgithub.com%2FOpen-Cap-Table-Coalition%2FOCF-Composed-Schemas%2Fblob%2Fmain%2Fobjects%2Ftransactions%2Fvesting%2FVestingEvent.mapping.md&title=%5BMapping+question%5D+VestingEvent) |
+| `id` | [💬 Ask a question](https://github.com/Open-Cap-Table-Coalition/OCF-Composed-Schemas/issues/new?template=mapping-question.yml&mapping_file=objects%2Ftransactions%2Fvesting%2FVestingEvent.mapping.md&source_url=https%3A%2F%2Fgithub.com%2FOpen-Cap-Table-Coalition%2FOCF-Composed-Schemas%2Fblob%2Fmain%2Fobjects%2Ftransactions%2Fvesting%2FVestingEvent.mapping.md&title=%5BMapping+question%5D+VestingEvent+%2F+id&property_path=id) |
+| `object_type` | [💬 Ask a question](https://github.com/Open-Cap-Table-Coalition/OCF-Composed-Schemas/issues/new?template=mapping-question.yml&mapping_file=objects%2Ftransactions%2Fvesting%2FVestingEvent.mapping.md&source_url=https%3A%2F%2Fgithub.com%2FOpen-Cap-Table-Coalition%2FOCF-Composed-Schemas%2Fblob%2Fmain%2Fobjects%2Ftransactions%2Fvesting%2FVestingEvent.mapping.md&title=%5BMapping+question%5D+VestingEvent+%2F+object_type&property_path=object_type) |
+| `date` | [💬 Ask a question](https://github.com/Open-Cap-Table-Coalition/OCF-Composed-Schemas/issues/new?template=mapping-question.yml&mapping_file=objects%2Ftransactions%2Fvesting%2FVestingEvent.mapping.md&source_url=https%3A%2F%2Fgithub.com%2FOpen-Cap-Table-Coalition%2FOCF-Composed-Schemas%2Fblob%2Fmain%2Fobjects%2Ftransactions%2Fvesting%2FVestingEvent.mapping.md&title=%5BMapping+question%5D+VestingEvent+%2F+date&property_path=date) |
+| `security_id` | [💬 Ask a question](https://github.com/Open-Cap-Table-Coalition/OCF-Composed-Schemas/issues/new?template=mapping-question.yml&mapping_file=objects%2Ftransactions%2Fvesting%2FVestingEvent.mapping.md&source_url=https%3A%2F%2Fgithub.com%2FOpen-Cap-Table-Coalition%2FOCF-Composed-Schemas%2Fblob%2Fmain%2Fobjects%2Ftransactions%2Fvesting%2FVestingEvent.mapping.md&title=%5BMapping+question%5D+VestingEvent+%2F+security_id&property_path=security_id) |
+| `event_id` | [💬 Ask a question](https://github.com/Open-Cap-Table-Coalition/OCF-Composed-Schemas/issues/new?template=mapping-question.yml&mapping_file=objects%2Ftransactions%2Fvesting%2FVestingEvent.mapping.md&source_url=https%3A%2F%2Fgithub.com%2FOpen-Cap-Table-Coalition%2FOCF-Composed-Schemas%2Fblob%2Fmain%2Fobjects%2Ftransactions%2Fvesting%2FVestingEvent.mapping.md&title=%5BMapping+question%5D+VestingEvent+%2F+event_id&property_path=event_id) |
+</details>
+<!-- mapping-question-links:end -->
+
 ## Notes / open questions
 
 > Note: rebased onto the 1.2.1-unstable (#227) shape. `TX_VESTING_EVENT` is now the named-event dispatcher — its properties are `id`, `object_type`, `date`, `security_id`, `event_id`. `vesting_condition_id` is gone (the old DAG-condition reference); the event is now keyed by a named `event_id` that matches the `event_condition` on a VestingStatement. `comments` is no longer a property. The all-unmappable determination below carries over to the new shape.

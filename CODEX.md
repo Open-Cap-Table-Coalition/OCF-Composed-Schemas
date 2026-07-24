@@ -27,6 +27,8 @@ Rules:
 - Keep answered questions in the mapping Markdown for the GitHub audit trail. The inverse report
   intentionally shows only unchecked questions, beneath the Carta property reached by the
   related mapping edge. Mapping-level questions appear under `(mapping questions)`.
+- Use the generated `Ask a mapping question` links on mapping pages to open the prefilled GitHub
+  issue form. Do not hand-edit that generated block; refresh it with `npm run mapping:question-links`.
 - Do not hand-edit generated reports. Add or answer the question in the upstream mapping file,
   then regenerate or rerun the report.
 - Malformed question headers, metadata, answers, or property paths are CI errors.
@@ -35,6 +37,7 @@ After changing mapping questions or their parser/reporting behavior, run:
 
 ```bash
 npm run mapping:validate
+npm run mapping:question-links
 npm run mapping:inverse
 npm run typecheck
 npm run lint

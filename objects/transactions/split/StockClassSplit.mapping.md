@@ -121,6 +121,26 @@ fields:
     reason: no-equivalent
 ```
 
+## Ask a mapping question
+
+Use a link below to open a prefilled GitHub issue. The issue can be copied into the auditable checklist in `## Notes / open questions`.
+
+<details>
+<summary>Open a prefilled issue for a property</summary>
+
+<!-- mapping-question-links:start -->
+| Source property | Action |
+| --- | --- |
+| _(mapping-level)_ | [💬 Ask a question](https://github.com/Open-Cap-Table-Coalition/OCF-Composed-Schemas/issues/new?template=mapping-question.yml&mapping_file=objects%2Ftransactions%2Fsplit%2FStockClassSplit.mapping.md&source_url=https%3A%2F%2Fgithub.com%2FOpen-Cap-Table-Coalition%2FOCF-Composed-Schemas%2Fblob%2Fmain%2Fobjects%2Ftransactions%2Fsplit%2FStockClassSplit.mapping.md&title=%5BMapping+question%5D+StockClassSplit) |
+| `id` | [💬 Ask a question](https://github.com/Open-Cap-Table-Coalition/OCF-Composed-Schemas/issues/new?template=mapping-question.yml&mapping_file=objects%2Ftransactions%2Fsplit%2FStockClassSplit.mapping.md&source_url=https%3A%2F%2Fgithub.com%2FOpen-Cap-Table-Coalition%2FOCF-Composed-Schemas%2Fblob%2Fmain%2Fobjects%2Ftransactions%2Fsplit%2FStockClassSplit.mapping.md&title=%5BMapping+question%5D+StockClassSplit+%2F+id&property_path=id) |
+| `comments` | [💬 Ask a question](https://github.com/Open-Cap-Table-Coalition/OCF-Composed-Schemas/issues/new?template=mapping-question.yml&mapping_file=objects%2Ftransactions%2Fsplit%2FStockClassSplit.mapping.md&source_url=https%3A%2F%2Fgithub.com%2FOpen-Cap-Table-Coalition%2FOCF-Composed-Schemas%2Fblob%2Fmain%2Fobjects%2Ftransactions%2Fsplit%2FStockClassSplit.mapping.md&title=%5BMapping+question%5D+StockClassSplit+%2F+comments&property_path=comments) |
+| `object_type` | [💬 Ask a question](https://github.com/Open-Cap-Table-Coalition/OCF-Composed-Schemas/issues/new?template=mapping-question.yml&mapping_file=objects%2Ftransactions%2Fsplit%2FStockClassSplit.mapping.md&source_url=https%3A%2F%2Fgithub.com%2FOpen-Cap-Table-Coalition%2FOCF-Composed-Schemas%2Fblob%2Fmain%2Fobjects%2Ftransactions%2Fsplit%2FStockClassSplit.mapping.md&title=%5BMapping+question%5D+StockClassSplit+%2F+object_type&property_path=object_type) |
+| `date` | [💬 Ask a question](https://github.com/Open-Cap-Table-Coalition/OCF-Composed-Schemas/issues/new?template=mapping-question.yml&mapping_file=objects%2Ftransactions%2Fsplit%2FStockClassSplit.mapping.md&source_url=https%3A%2F%2Fgithub.com%2FOpen-Cap-Table-Coalition%2FOCF-Composed-Schemas%2Fblob%2Fmain%2Fobjects%2Ftransactions%2Fsplit%2FStockClassSplit.mapping.md&title=%5BMapping+question%5D+StockClassSplit+%2F+date&property_path=date) |
+| `stock_class_id` | [💬 Ask a question](https://github.com/Open-Cap-Table-Coalition/OCF-Composed-Schemas/issues/new?template=mapping-question.yml&mapping_file=objects%2Ftransactions%2Fsplit%2FStockClassSplit.mapping.md&source_url=https%3A%2F%2Fgithub.com%2FOpen-Cap-Table-Coalition%2FOCF-Composed-Schemas%2Fblob%2Fmain%2Fobjects%2Ftransactions%2Fsplit%2FStockClassSplit.mapping.md&title=%5BMapping+question%5D+StockClassSplit+%2F+stock_class_id&property_path=stock_class_id) |
+| `split_ratio` | [💬 Ask a question](https://github.com/Open-Cap-Table-Coalition/OCF-Composed-Schemas/issues/new?template=mapping-question.yml&mapping_file=objects%2Ftransactions%2Fsplit%2FStockClassSplit.mapping.md&source_url=https%3A%2F%2Fgithub.com%2FOpen-Cap-Table-Coalition%2FOCF-Composed-Schemas%2Fblob%2Fmain%2Fobjects%2Ftransactions%2Fsplit%2FStockClassSplit.mapping.md&title=%5BMapping+question%5D+StockClassSplit+%2F+split_ratio&property_path=split_ratio) |
+</details>
+<!-- mapping-question-links:end -->
+
 ## Notes / open questions
 
 - **Carta has no stock-split (or any share-adjustment) transaction, so the whole object is unmappable.** A grep for `split` / `Split` across the pinned bundle (`target-schema/Carta.schema.json`) and the `/tmp/carta-index.json` def index returns only `OptionGrant.isoNsoSplit` (a boolean about the $100K ISO/NSO tax split — unrelated) and the prose word "split" inside the `PreferredShareClassDetails` description. A grep for `ratio` / `Ratio` returns only `ShareClassRightsAndPreferences.conversionRatio`. Carta's transaction surface is the closed `{Certificate,Convertible,Option,Phantom,Piu,Rsa,Rsu,Sar,Warrant}{Issuance,Cancellation,Exercise,…}Transaction` family — every member is an issuance, exercise, settlement, transfer, or cancellation of a single security. None models a recapitalization event that rewrites the share counts/par of an entire stock class.

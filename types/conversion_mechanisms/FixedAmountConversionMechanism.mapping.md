@@ -74,6 +74,22 @@ fields:
     reason: no-equivalent
 ```
 
+## Ask a mapping question
+
+Use a link below to open a prefilled GitHub issue. The issue can be copied into the auditable checklist in `## Notes / open questions`.
+
+<details>
+<summary>Open a prefilled issue for a property</summary>
+
+<!-- mapping-question-links:start -->
+| Source property | Action |
+| --- | --- |
+| _(mapping-level)_ | [💬 Ask a question](https://github.com/Open-Cap-Table-Coalition/OCF-Composed-Schemas/issues/new?template=mapping-question.yml&mapping_file=types%2Fconversion_mechanisms%2FFixedAmountConversionMechanism.mapping.md&source_url=https%3A%2F%2Fgithub.com%2FOpen-Cap-Table-Coalition%2FOCF-Composed-Schemas%2Fblob%2Fmain%2Ftypes%2Fconversion_mechanisms%2FFixedAmountConversionMechanism.mapping.md&title=%5BMapping+question%5D+FixedAmountConversionMechanism) |
+| `type` | [💬 Ask a question](https://github.com/Open-Cap-Table-Coalition/OCF-Composed-Schemas/issues/new?template=mapping-question.yml&mapping_file=types%2Fconversion_mechanisms%2FFixedAmountConversionMechanism.mapping.md&source_url=https%3A%2F%2Fgithub.com%2FOpen-Cap-Table-Coalition%2FOCF-Composed-Schemas%2Fblob%2Fmain%2Ftypes%2Fconversion_mechanisms%2FFixedAmountConversionMechanism.mapping.md&title=%5BMapping+question%5D+FixedAmountConversionMechanism+%2F+type&property_path=type) |
+| `converts_to_quantity` | [💬 Ask a question](https://github.com/Open-Cap-Table-Coalition/OCF-Composed-Schemas/issues/new?template=mapping-question.yml&mapping_file=types%2Fconversion_mechanisms%2FFixedAmountConversionMechanism.mapping.md&source_url=https%3A%2F%2Fgithub.com%2FOpen-Cap-Table-Coalition%2FOCF-Composed-Schemas%2Fblob%2Fmain%2Ftypes%2Fconversion_mechanisms%2FFixedAmountConversionMechanism.mapping.md&title=%5BMapping+question%5D+FixedAmountConversionMechanism+%2F+converts_to_quantity&property_path=converts_to_quantity) |
+</details>
+<!-- mapping-question-links:end -->
+
 ## Notes / open questions
 
 - **Bucket 3 (absent).** `FixedAmountConversionMechanism` is one of OCF's conversion-mechanism variants — it states, as a forward-looking *term* of a convertible/warrant conversion right, that the security converts into a **fixed absolute number of target stock-class shares** (`converts_to_quantity`), independent of price, ratio, valuation, or principal. Carta has no analogous reusable type and, more importantly, **no field anywhere that records a conversion mechanism's declared fixed-share-count term.** Carta models convertible/warrant conversion economics only as *price/ratio/valuation* terms and records *realized* quantities only after an event. So both fields are unmappable. (Contrast `types/Ratio.mapping.md`, which is bucket 1 only because Carta *does* expose a single clear term-level home, `ShareClassRightsAndPreferences.conversionRatio`; there is no equivalent landing spot for a fixed absolute quantity, so this mechanism falls through to bucket 3.)

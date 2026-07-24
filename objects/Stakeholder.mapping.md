@@ -220,6 +220,33 @@ fields:
     reason: no-equivalent
 ```
 
+## Ask a mapping question
+
+Use a link below to open a prefilled GitHub issue. The issue can be copied into the auditable checklist in `## Notes / open questions`.
+
+<details>
+<summary>Open a prefilled issue for a property</summary>
+
+<!-- mapping-question-links:start -->
+| Source property | Action |
+| --- | --- |
+| _(mapping-level)_ | [💬 Ask a question](https://github.com/Open-Cap-Table-Coalition/OCF-Composed-Schemas/issues/new?template=mapping-question.yml&mapping_file=objects%2FStakeholder.mapping.md&source_url=https%3A%2F%2Fgithub.com%2FOpen-Cap-Table-Coalition%2FOCF-Composed-Schemas%2Fblob%2Fmain%2Fobjects%2FStakeholder.mapping.md&title=%5BMapping+question%5D+Stakeholder) |
+| `id` | [💬 Ask a question](https://github.com/Open-Cap-Table-Coalition/OCF-Composed-Schemas/issues/new?template=mapping-question.yml&mapping_file=objects%2FStakeholder.mapping.md&source_url=https%3A%2F%2Fgithub.com%2FOpen-Cap-Table-Coalition%2FOCF-Composed-Schemas%2Fblob%2Fmain%2Fobjects%2FStakeholder.mapping.md&title=%5BMapping+question%5D+Stakeholder+%2F+id&property_path=id) |
+| `comments` | [💬 Ask a question](https://github.com/Open-Cap-Table-Coalition/OCF-Composed-Schemas/issues/new?template=mapping-question.yml&mapping_file=objects%2FStakeholder.mapping.md&source_url=https%3A%2F%2Fgithub.com%2FOpen-Cap-Table-Coalition%2FOCF-Composed-Schemas%2Fblob%2Fmain%2Fobjects%2FStakeholder.mapping.md&title=%5BMapping+question%5D+Stakeholder+%2F+comments&property_path=comments) |
+| `object_type` | [💬 Ask a question](https://github.com/Open-Cap-Table-Coalition/OCF-Composed-Schemas/issues/new?template=mapping-question.yml&mapping_file=objects%2FStakeholder.mapping.md&source_url=https%3A%2F%2Fgithub.com%2FOpen-Cap-Table-Coalition%2FOCF-Composed-Schemas%2Fblob%2Fmain%2Fobjects%2FStakeholder.mapping.md&title=%5BMapping+question%5D+Stakeholder+%2F+object_type&property_path=object_type) |
+| `name` | [💬 Ask a question](https://github.com/Open-Cap-Table-Coalition/OCF-Composed-Schemas/issues/new?template=mapping-question.yml&mapping_file=objects%2FStakeholder.mapping.md&source_url=https%3A%2F%2Fgithub.com%2FOpen-Cap-Table-Coalition%2FOCF-Composed-Schemas%2Fblob%2Fmain%2Fobjects%2FStakeholder.mapping.md&title=%5BMapping+question%5D+Stakeholder+%2F+name&property_path=name) |
+| `stakeholder_type` | [💬 Ask a question](https://github.com/Open-Cap-Table-Coalition/OCF-Composed-Schemas/issues/new?template=mapping-question.yml&mapping_file=objects%2FStakeholder.mapping.md&source_url=https%3A%2F%2Fgithub.com%2FOpen-Cap-Table-Coalition%2FOCF-Composed-Schemas%2Fblob%2Fmain%2Fobjects%2FStakeholder.mapping.md&title=%5BMapping+question%5D+Stakeholder+%2F+stakeholder_type&property_path=stakeholder_type) |
+| `issuer_assigned_id` | [💬 Ask a question](https://github.com/Open-Cap-Table-Coalition/OCF-Composed-Schemas/issues/new?template=mapping-question.yml&mapping_file=objects%2FStakeholder.mapping.md&source_url=https%3A%2F%2Fgithub.com%2FOpen-Cap-Table-Coalition%2FOCF-Composed-Schemas%2Fblob%2Fmain%2Fobjects%2FStakeholder.mapping.md&title=%5BMapping+question%5D+Stakeholder+%2F+issuer_assigned_id&property_path=issuer_assigned_id) |
+| `current_relationship` | [💬 Ask a question](https://github.com/Open-Cap-Table-Coalition/OCF-Composed-Schemas/issues/new?template=mapping-question.yml&mapping_file=objects%2FStakeholder.mapping.md&source_url=https%3A%2F%2Fgithub.com%2FOpen-Cap-Table-Coalition%2FOCF-Composed-Schemas%2Fblob%2Fmain%2Fobjects%2FStakeholder.mapping.md&title=%5BMapping+question%5D+Stakeholder+%2F+current_relationship&property_path=current_relationship) |
+| `current_relationships` | [💬 Ask a question](https://github.com/Open-Cap-Table-Coalition/OCF-Composed-Schemas/issues/new?template=mapping-question.yml&mapping_file=objects%2FStakeholder.mapping.md&source_url=https%3A%2F%2Fgithub.com%2FOpen-Cap-Table-Coalition%2FOCF-Composed-Schemas%2Fblob%2Fmain%2Fobjects%2FStakeholder.mapping.md&title=%5BMapping+question%5D+Stakeholder+%2F+current_relationships&property_path=current_relationships) |
+| `current_status` | [💬 Ask a question](https://github.com/Open-Cap-Table-Coalition/OCF-Composed-Schemas/issues/new?template=mapping-question.yml&mapping_file=objects%2FStakeholder.mapping.md&source_url=https%3A%2F%2Fgithub.com%2FOpen-Cap-Table-Coalition%2FOCF-Composed-Schemas%2Fblob%2Fmain%2Fobjects%2FStakeholder.mapping.md&title=%5BMapping+question%5D+Stakeholder+%2F+current_status&property_path=current_status) |
+| `primary_contact` | [💬 Ask a question](https://github.com/Open-Cap-Table-Coalition/OCF-Composed-Schemas/issues/new?template=mapping-question.yml&mapping_file=objects%2FStakeholder.mapping.md&source_url=https%3A%2F%2Fgithub.com%2FOpen-Cap-Table-Coalition%2FOCF-Composed-Schemas%2Fblob%2Fmain%2Fobjects%2FStakeholder.mapping.md&title=%5BMapping+question%5D+Stakeholder+%2F+primary_contact&property_path=primary_contact) |
+| `contact_info` | [💬 Ask a question](https://github.com/Open-Cap-Table-Coalition/OCF-Composed-Schemas/issues/new?template=mapping-question.yml&mapping_file=objects%2FStakeholder.mapping.md&source_url=https%3A%2F%2Fgithub.com%2FOpen-Cap-Table-Coalition%2FOCF-Composed-Schemas%2Fblob%2Fmain%2Fobjects%2FStakeholder.mapping.md&title=%5BMapping+question%5D+Stakeholder+%2F+contact_info&property_path=contact_info) |
+| `addresses` | [💬 Ask a question](https://github.com/Open-Cap-Table-Coalition/OCF-Composed-Schemas/issues/new?template=mapping-question.yml&mapping_file=objects%2FStakeholder.mapping.md&source_url=https%3A%2F%2Fgithub.com%2FOpen-Cap-Table-Coalition%2FOCF-Composed-Schemas%2Fblob%2Fmain%2Fobjects%2FStakeholder.mapping.md&title=%5BMapping+question%5D+Stakeholder+%2F+addresses&property_path=addresses) |
+| `tax_ids` | [💬 Ask a question](https://github.com/Open-Cap-Table-Coalition/OCF-Composed-Schemas/issues/new?template=mapping-question.yml&mapping_file=objects%2FStakeholder.mapping.md&source_url=https%3A%2F%2Fgithub.com%2FOpen-Cap-Table-Coalition%2FOCF-Composed-Schemas%2Fblob%2Fmain%2Fobjects%2FStakeholder.mapping.md&title=%5BMapping+question%5D+Stakeholder+%2F+tax_ids&property_path=tax_ids) |
+</details>
+<!-- mapping-question-links:end -->
+
 ## Notes / open questions
 
 - `name` → `fullName`: OCF `name` is a structured `Name` (required `legal_name`, optional `first_name`/`last_name`); Carta `fullName` is a flat string. The mapping explicitly selects `/legal_name` under policy `legal_name`; `first_name`/`last_name` have no Carta slot and are dropped.

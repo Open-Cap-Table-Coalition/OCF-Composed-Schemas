@@ -176,6 +176,30 @@ fields:
     policy: first_stock_class_id
 ```
 
+## Ask a mapping question
+
+Use a link below to open a prefilled GitHub issue. The issue can be copied into the auditable checklist in `## Notes / open questions`.
+
+<details>
+<summary>Open a prefilled issue for a property</summary>
+
+<!-- mapping-question-links:start -->
+| Source property | Action |
+| --- | --- |
+| _(mapping-level)_ | [💬 Ask a question](https://github.com/Open-Cap-Table-Coalition/OCF-Composed-Schemas/issues/new?template=mapping-question.yml&mapping_file=objects%2FStockPlan.mapping.md&source_url=https%3A%2F%2Fgithub.com%2FOpen-Cap-Table-Coalition%2FOCF-Composed-Schemas%2Fblob%2Fmain%2Fobjects%2FStockPlan.mapping.md&title=%5BMapping+question%5D+StockPlan) |
+| `id` | [💬 Ask a question](https://github.com/Open-Cap-Table-Coalition/OCF-Composed-Schemas/issues/new?template=mapping-question.yml&mapping_file=objects%2FStockPlan.mapping.md&source_url=https%3A%2F%2Fgithub.com%2FOpen-Cap-Table-Coalition%2FOCF-Composed-Schemas%2Fblob%2Fmain%2Fobjects%2FStockPlan.mapping.md&title=%5BMapping+question%5D+StockPlan+%2F+id&property_path=id) |
+| `comments` | [💬 Ask a question](https://github.com/Open-Cap-Table-Coalition/OCF-Composed-Schemas/issues/new?template=mapping-question.yml&mapping_file=objects%2FStockPlan.mapping.md&source_url=https%3A%2F%2Fgithub.com%2FOpen-Cap-Table-Coalition%2FOCF-Composed-Schemas%2Fblob%2Fmain%2Fobjects%2FStockPlan.mapping.md&title=%5BMapping+question%5D+StockPlan+%2F+comments&property_path=comments) |
+| `object_type` | [💬 Ask a question](https://github.com/Open-Cap-Table-Coalition/OCF-Composed-Schemas/issues/new?template=mapping-question.yml&mapping_file=objects%2FStockPlan.mapping.md&source_url=https%3A%2F%2Fgithub.com%2FOpen-Cap-Table-Coalition%2FOCF-Composed-Schemas%2Fblob%2Fmain%2Fobjects%2FStockPlan.mapping.md&title=%5BMapping+question%5D+StockPlan+%2F+object_type&property_path=object_type) |
+| `plan_name` | [💬 Ask a question](https://github.com/Open-Cap-Table-Coalition/OCF-Composed-Schemas/issues/new?template=mapping-question.yml&mapping_file=objects%2FStockPlan.mapping.md&source_url=https%3A%2F%2Fgithub.com%2FOpen-Cap-Table-Coalition%2FOCF-Composed-Schemas%2Fblob%2Fmain%2Fobjects%2FStockPlan.mapping.md&title=%5BMapping+question%5D+StockPlan+%2F+plan_name&property_path=plan_name) |
+| `board_approval_date` | [💬 Ask a question](https://github.com/Open-Cap-Table-Coalition/OCF-Composed-Schemas/issues/new?template=mapping-question.yml&mapping_file=objects%2FStockPlan.mapping.md&source_url=https%3A%2F%2Fgithub.com%2FOpen-Cap-Table-Coalition%2FOCF-Composed-Schemas%2Fblob%2Fmain%2Fobjects%2FStockPlan.mapping.md&title=%5BMapping+question%5D+StockPlan+%2F+board_approval_date&property_path=board_approval_date) |
+| `stockholder_approval_date` | [💬 Ask a question](https://github.com/Open-Cap-Table-Coalition/OCF-Composed-Schemas/issues/new?template=mapping-question.yml&mapping_file=objects%2FStockPlan.mapping.md&source_url=https%3A%2F%2Fgithub.com%2FOpen-Cap-Table-Coalition%2FOCF-Composed-Schemas%2Fblob%2Fmain%2Fobjects%2FStockPlan.mapping.md&title=%5BMapping+question%5D+StockPlan+%2F+stockholder_approval_date&property_path=stockholder_approval_date) |
+| `initial_shares_reserved` | [💬 Ask a question](https://github.com/Open-Cap-Table-Coalition/OCF-Composed-Schemas/issues/new?template=mapping-question.yml&mapping_file=objects%2FStockPlan.mapping.md&source_url=https%3A%2F%2Fgithub.com%2FOpen-Cap-Table-Coalition%2FOCF-Composed-Schemas%2Fblob%2Fmain%2Fobjects%2FStockPlan.mapping.md&title=%5BMapping+question%5D+StockPlan+%2F+initial_shares_reserved&property_path=initial_shares_reserved) |
+| `default_cancellation_behavior` | [💬 Ask a question](https://github.com/Open-Cap-Table-Coalition/OCF-Composed-Schemas/issues/new?template=mapping-question.yml&mapping_file=objects%2FStockPlan.mapping.md&source_url=https%3A%2F%2Fgithub.com%2FOpen-Cap-Table-Coalition%2FOCF-Composed-Schemas%2Fblob%2Fmain%2Fobjects%2FStockPlan.mapping.md&title=%5BMapping+question%5D+StockPlan+%2F+default_cancellation_behavior&property_path=default_cancellation_behavior) |
+| `stock_class_id` | [💬 Ask a question](https://github.com/Open-Cap-Table-Coalition/OCF-Composed-Schemas/issues/new?template=mapping-question.yml&mapping_file=objects%2FStockPlan.mapping.md&source_url=https%3A%2F%2Fgithub.com%2FOpen-Cap-Table-Coalition%2FOCF-Composed-Schemas%2Fblob%2Fmain%2Fobjects%2FStockPlan.mapping.md&title=%5BMapping+question%5D+StockPlan+%2F+stock_class_id&property_path=stock_class_id) |
+| `stock_class_ids` | [💬 Ask a question](https://github.com/Open-Cap-Table-Coalition/OCF-Composed-Schemas/issues/new?template=mapping-question.yml&mapping_file=objects%2FStockPlan.mapping.md&source_url=https%3A%2F%2Fgithub.com%2FOpen-Cap-Table-Coalition%2FOCF-Composed-Schemas%2Fblob%2Fmain%2Fobjects%2FStockPlan.mapping.md&title=%5BMapping+question%5D+StockPlan+%2F+stock_class_ids&property_path=stock_class_ids) |
+</details>
+<!-- mapping-question-links:end -->
+
 ## Notes / open questions
 
 - **Target object.** OCF `StockPlan` is the equity-incentive pool that options/RSUs/RSAs are issued from. Carta models this concept as `OptionPoolSummary` ("Option pool summary."), the only Carta `$def` that carries the option-pool identity (`optionPoolId`), its name, its backing share class, and an authorized-shares count. The plan *name* itself is also denormalized onto every award as `OptionGrant.equityIncentivePlanName` / `RestrictedStockAward.equityIncentivePlanName` / `RestrictedStockUnit.equityIncentivePlanName` ("The name of the equity incentive plan (i.e., option plan) ..."), confirming that an OCF StockPlan = a Carta option pool. `StakeholderOptionPoolSummary` is the same concept narrowed to one stakeholder and has no `authorizedShares`/`name`-vs-plan distinction beyond `OptionPoolSummary`, so the full `OptionPoolSummary` is the correct object-level target.

@@ -59,6 +59,21 @@ fields:
       TX_PLAN_SECURITY_RELEASE: null
 ```
 
+## Ask a mapping question
+
+Use a link below to open a prefilled GitHub issue. The issue can be copied into the auditable checklist in `## Notes / open questions`.
+
+<details>
+<summary>Open a prefilled issue for a property</summary>
+
+<!-- mapping-question-links:start -->
+| Source property | Action |
+| --- | --- |
+| _(mapping-level)_ | [💬 Ask a question](https://github.com/Open-Cap-Table-Coalition/OCF-Composed-Schemas/issues/new?template=mapping-question.yml&mapping_file=objects%2Ftransactions%2Frelease%2FPlanSecurityRelease.mapping.md&source_url=https%3A%2F%2Fgithub.com%2FOpen-Cap-Table-Coalition%2FOCF-Composed-Schemas%2Fblob%2Fmain%2Fobjects%2Ftransactions%2Frelease%2FPlanSecurityRelease.mapping.md&title=%5BMapping+question%5D+PlanSecurityRelease) |
+| `object_type` | [💬 Ask a question](https://github.com/Open-Cap-Table-Coalition/OCF-Composed-Schemas/issues/new?template=mapping-question.yml&mapping_file=objects%2Ftransactions%2Frelease%2FPlanSecurityRelease.mapping.md&source_url=https%3A%2F%2Fgithub.com%2FOpen-Cap-Table-Coalition%2FOCF-Composed-Schemas%2Fblob%2Fmain%2Fobjects%2Ftransactions%2Frelease%2FPlanSecurityRelease.mapping.md&title=%5BMapping+question%5D+PlanSecurityRelease+%2F+object_type&property_path=object_type) |
+</details>
+<!-- mapping-question-links:end -->
+
 ## Notes / open questions
 
 - **This is a thin compatibility wrapper, not a distinct transaction.** `PlanSecurityRelease` exists only to preserve the legacy `TX_PLAN_SECURITY_RELEASE` discriminator. Its sibling `.schema.json` `allOf`-composes `EquityCompensationRelease` and then re-declares exactly one property locally — `object_type`, narrowed from the shared `enum [TX_PLAN_SECURITY_RELEASE, TX_EQUITY_COMPENSATION_RELEASE]` down to the `const "TX_PLAN_SECURITY_RELEASE"`. The validator counts source properties from the literal `properties` block of the sibling schema (it does not flatten `allOf`), so the only in-scope field here is `object_type` (N = 1). The substantive economic mapping for an equity-compensation release — `date`, `security_id`, `settlement_date`, `release_price`, `quantity`, `consideration_text`, `resulting_security_ids`, plus the inherited `id`/`comments` — lives in the inherited base and is handled in `EquityCompensationRelease.mapping.md`; this wrapper file deliberately maps only its own one field. This is the release-side twin of the gold precedent `objects/transactions/issuance/PlanSecurityIssuance.mapping.md`.

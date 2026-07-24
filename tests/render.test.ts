@@ -175,6 +175,8 @@ describe("renderMappingMarkdown", () => {
     expect(out).toContain('"$id": "https://example/StockIssuance.schema.json"');
     expect(out).toContain("</details>");
     expect(out).toContain("## Mapping");
+    expect(out).toContain("## Ask a mapping question");
+    expect(out).toContain("property_path=id");
     expect(out).not.toContain("coverage:");
     expect(out).toContain("      TX_STOCK_ISSUANCE: TODO");
     expect(out).toContain("## Notes / open questions");

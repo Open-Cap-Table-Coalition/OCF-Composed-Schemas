@@ -34,6 +34,20 @@ derived coverage stays reviewable, and enum remaps are checked value-by-value.
   The generated report is added to the GitHub Actions job summary and uploaded as the
   `mapping-inverse-report` artifact, including when another mapping check fails.
 
+Each mapping page also contains a generated **Ask a mapping question** table with a prefilled
+GitHub issue-form link for every source property. The links pass the mapping file, property path,
+source page, and issue title into `.github/ISSUE_TEMPLATE/mapping-question.yml`. The generated
+block is marked with HTML comments and can be refreshed without touching the hand-authored YAML
+mapping or notes:
+
+```bash
+npm run mapping:question-links
+npm run mapping:question-links -- --check
+```
+
+Issue templates are read from the repository's default branch, so these links become active after
+the template lands on `main`.
+
 ### Auditable mapping questions
 
 Questions are ordinary GitHub task-list items, with fixed metadata underneath so CI can validate

@@ -94,6 +94,24 @@ fields:
     reason: no-equivalent
 ```
 
+## Ask a mapping question
+
+Use a link below to open a prefilled GitHub issue. The issue can be copied into the auditable checklist in `## Notes / open questions`.
+
+<details>
+<summary>Open a prefilled issue for a property</summary>
+
+<!-- mapping-question-links:start -->
+| Source property | Action |
+| --- | --- |
+| _(mapping-level)_ | [💬 Ask a question](https://github.com/Open-Cap-Table-Coalition/OCF-Composed-Schemas/issues/new?template=mapping-question.yml&mapping_file=types%2Fconversion_rights%2FStockClassConversionRight.mapping.md&source_url=https%3A%2F%2Fgithub.com%2FOpen-Cap-Table-Coalition%2FOCF-Composed-Schemas%2Fblob%2Fmain%2Ftypes%2Fconversion_rights%2FStockClassConversionRight.mapping.md&title=%5BMapping+question%5D+StockClassConversionRight) |
+| `type` | [💬 Ask a question](https://github.com/Open-Cap-Table-Coalition/OCF-Composed-Schemas/issues/new?template=mapping-question.yml&mapping_file=types%2Fconversion_rights%2FStockClassConversionRight.mapping.md&source_url=https%3A%2F%2Fgithub.com%2FOpen-Cap-Table-Coalition%2FOCF-Composed-Schemas%2Fblob%2Fmain%2Ftypes%2Fconversion_rights%2FStockClassConversionRight.mapping.md&title=%5BMapping+question%5D+StockClassConversionRight+%2F+type&property_path=type) |
+| `conversion_mechanism` | [💬 Ask a question](https://github.com/Open-Cap-Table-Coalition/OCF-Composed-Schemas/issues/new?template=mapping-question.yml&mapping_file=types%2Fconversion_rights%2FStockClassConversionRight.mapping.md&source_url=https%3A%2F%2Fgithub.com%2FOpen-Cap-Table-Coalition%2FOCF-Composed-Schemas%2Fblob%2Fmain%2Ftypes%2Fconversion_rights%2FStockClassConversionRight.mapping.md&title=%5BMapping+question%5D+StockClassConversionRight+%2F+conversion_mechanism&property_path=conversion_mechanism) |
+| `converts_to_future_round` | [💬 Ask a question](https://github.com/Open-Cap-Table-Coalition/OCF-Composed-Schemas/issues/new?template=mapping-question.yml&mapping_file=types%2Fconversion_rights%2FStockClassConversionRight.mapping.md&source_url=https%3A%2F%2Fgithub.com%2FOpen-Cap-Table-Coalition%2FOCF-Composed-Schemas%2Fblob%2Fmain%2Ftypes%2Fconversion_rights%2FStockClassConversionRight.mapping.md&title=%5BMapping+question%5D+StockClassConversionRight+%2F+converts_to_future_round&property_path=converts_to_future_round) |
+| `converts_to_stock_class_id` | [💬 Ask a question](https://github.com/Open-Cap-Table-Coalition/OCF-Composed-Schemas/issues/new?template=mapping-question.yml&mapping_file=types%2Fconversion_rights%2FStockClassConversionRight.mapping.md&source_url=https%3A%2F%2Fgithub.com%2FOpen-Cap-Table-Coalition%2FOCF-Composed-Schemas%2Fblob%2Fmain%2Ftypes%2Fconversion_rights%2FStockClassConversionRight.mapping.md&title=%5BMapping+question%5D+StockClassConversionRight+%2F+converts_to_stock_class_id&property_path=converts_to_stock_class_id) |
+</details>
+<!-- mapping-question-links:end -->
+
 ## Notes / open questions
 
 - **Bucket 1 (type-to-type, with one clear Carta home).** A stock-class conversion right describes how one preferred share class converts into another (typically Common). Carta models exactly this concept on `#/$defs/ShareClassRightsAndPreferences` (the preferred share class's rights/preferences block, reachable via `PreferredShareClassDetails.rightsAndPreferences`), which carries `conversionRatio` (Decimal), `conversionPrice` (Money), `originalIssuePrice`, `multiplier`, `participating`, and `participationCap`. That structure is the unambiguous destination for the economic terms of this OCF type, so the economic payload is mapped there and only the genuinely-absent structural fields are marked unmappable.

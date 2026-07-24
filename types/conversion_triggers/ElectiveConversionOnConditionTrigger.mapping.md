@@ -126,6 +126,26 @@ fields:
     reason: no-equivalent
 ```
 
+## Ask a mapping question
+
+Use a link below to open a prefilled GitHub issue. The issue can be copied into the auditable checklist in `## Notes / open questions`.
+
+<details>
+<summary>Open a prefilled issue for a property</summary>
+
+<!-- mapping-question-links:start -->
+| Source property | Action |
+| --- | --- |
+| _(mapping-level)_ | [💬 Ask a question](https://github.com/Open-Cap-Table-Coalition/OCF-Composed-Schemas/issues/new?template=mapping-question.yml&mapping_file=types%2Fconversion_triggers%2FElectiveConversionOnConditionTrigger.mapping.md&source_url=https%3A%2F%2Fgithub.com%2FOpen-Cap-Table-Coalition%2FOCF-Composed-Schemas%2Fblob%2Fmain%2Ftypes%2Fconversion_triggers%2FElectiveConversionOnConditionTrigger.mapping.md&title=%5BMapping+question%5D+ElectiveConversionOnConditionTrigger) |
+| `type` | [💬 Ask a question](https://github.com/Open-Cap-Table-Coalition/OCF-Composed-Schemas/issues/new?template=mapping-question.yml&mapping_file=types%2Fconversion_triggers%2FElectiveConversionOnConditionTrigger.mapping.md&source_url=https%3A%2F%2Fgithub.com%2FOpen-Cap-Table-Coalition%2FOCF-Composed-Schemas%2Fblob%2Fmain%2Ftypes%2Fconversion_triggers%2FElectiveConversionOnConditionTrigger.mapping.md&title=%5BMapping+question%5D+ElectiveConversionOnConditionTrigger+%2F+type&property_path=type) |
+| `trigger_id` | [💬 Ask a question](https://github.com/Open-Cap-Table-Coalition/OCF-Composed-Schemas/issues/new?template=mapping-question.yml&mapping_file=types%2Fconversion_triggers%2FElectiveConversionOnConditionTrigger.mapping.md&source_url=https%3A%2F%2Fgithub.com%2FOpen-Cap-Table-Coalition%2FOCF-Composed-Schemas%2Fblob%2Fmain%2Ftypes%2Fconversion_triggers%2FElectiveConversionOnConditionTrigger.mapping.md&title=%5BMapping+question%5D+ElectiveConversionOnConditionTrigger+%2F+trigger_id&property_path=trigger_id) |
+| `nickname` | [💬 Ask a question](https://github.com/Open-Cap-Table-Coalition/OCF-Composed-Schemas/issues/new?template=mapping-question.yml&mapping_file=types%2Fconversion_triggers%2FElectiveConversionOnConditionTrigger.mapping.md&source_url=https%3A%2F%2Fgithub.com%2FOpen-Cap-Table-Coalition%2FOCF-Composed-Schemas%2Fblob%2Fmain%2Ftypes%2Fconversion_triggers%2FElectiveConversionOnConditionTrigger.mapping.md&title=%5BMapping+question%5D+ElectiveConversionOnConditionTrigger+%2F+nickname&property_path=nickname) |
+| `trigger_description` | [💬 Ask a question](https://github.com/Open-Cap-Table-Coalition/OCF-Composed-Schemas/issues/new?template=mapping-question.yml&mapping_file=types%2Fconversion_triggers%2FElectiveConversionOnConditionTrigger.mapping.md&source_url=https%3A%2F%2Fgithub.com%2FOpen-Cap-Table-Coalition%2FOCF-Composed-Schemas%2Fblob%2Fmain%2Ftypes%2Fconversion_triggers%2FElectiveConversionOnConditionTrigger.mapping.md&title=%5BMapping+question%5D+ElectiveConversionOnConditionTrigger+%2F+trigger_description&property_path=trigger_description) |
+| `conversion_right` | [💬 Ask a question](https://github.com/Open-Cap-Table-Coalition/OCF-Composed-Schemas/issues/new?template=mapping-question.yml&mapping_file=types%2Fconversion_triggers%2FElectiveConversionOnConditionTrigger.mapping.md&source_url=https%3A%2F%2Fgithub.com%2FOpen-Cap-Table-Coalition%2FOCF-Composed-Schemas%2Fblob%2Fmain%2Ftypes%2Fconversion_triggers%2FElectiveConversionOnConditionTrigger.mapping.md&title=%5BMapping+question%5D+ElectiveConversionOnConditionTrigger+%2F+conversion_right&property_path=conversion_right) |
+| `trigger_condition` | [💬 Ask a question](https://github.com/Open-Cap-Table-Coalition/OCF-Composed-Schemas/issues/new?template=mapping-question.yml&mapping_file=types%2Fconversion_triggers%2FElectiveConversionOnConditionTrigger.mapping.md&source_url=https%3A%2F%2Fgithub.com%2FOpen-Cap-Table-Coalition%2FOCF-Composed-Schemas%2Fblob%2Fmain%2Ftypes%2Fconversion_triggers%2FElectiveConversionOnConditionTrigger.mapping.md&title=%5BMapping+question%5D+ElectiveConversionOnConditionTrigger+%2F+trigger_condition&property_path=trigger_condition) |
+</details>
+<!-- mapping-question-links:end -->
+
 ## Notes / open questions
 
 - **Bucket 3 (absent).** `ElectiveConversionOnConditionTrigger` is one of OCF's six `ConversionTrigger` variants — a structural/event-logic node that says *when and how* a convertible may convert (here: an **elective** right the holder may exercise once a stated **condition** is fulfilled). Carta does **not** model the OCF conversion-trigger concept as a reusable `$def`: there is no Carta type, object, or sub-structure corresponding to a conversion **trigger** (no trigger-kind discriminator, no AND/OR / EARLIER_OF / LATER_OF event logic, no per-trigger id, no per-trigger free-text labels, and no field for the legal trigger condition). The only `trigger`-named node in the pinned bundle is the scalar `conversionTrigger` Money field (see below), which is a dollar threshold, not the OCF trigger object. Carta records convertible *terms* on `ConvertibleNote` / `ConvertibleIssuanceTransaction`, not OCF's trigger state machine, so every property here is `unmappable`. This is the exact structural twin of `AutomaticConversionOnConditionTrigger` (same six properties, same `trigger_condition`); only the `type` discriminator differs (`ELECTIVE_ON_CONDITION` vs `AUTOMATIC_ON_CONDITION`), so both classify identically.

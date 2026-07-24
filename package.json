@@ -11,6 +11,7 @@
     "mapping:skeleton": "node --loader ts-node/esm --no-warnings ./scripts/generate-mapping-skeletons.ts",
     "mapping:validate": "node --loader ts-node/esm --no-warnings ./scripts/validate-mappings.ts",
     "mapping:inverse": "node --loader ts-node/esm --no-warnings ./scripts/validate-mappings.ts --inverse",
+    "mapping:question-links": "node --loader ts-node/esm --no-warnings ./scripts/update-mapping-question-links.ts",
     "mapping:coverage": "node --loader ts-node/esm --no-warnings ./scripts/derive-mapping-coverage.ts",
     "mapping:coverage:check": "node --loader ts-node/esm --no-warnings ./scripts/derive-mapping-coverage.ts --check",
     "mapping:references": "node --loader ts-node/esm --no-warnings ./scripts/derive-reference-sites.ts",

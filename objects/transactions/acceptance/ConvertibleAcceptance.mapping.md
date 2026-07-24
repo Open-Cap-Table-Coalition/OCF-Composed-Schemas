@@ -112,6 +112,25 @@ fields:
     reason: no-equivalent
 ```
 
+## Ask a mapping question
+
+Use a link below to open a prefilled GitHub issue. The issue can be copied into the auditable checklist in `## Notes / open questions`.
+
+<details>
+<summary>Open a prefilled issue for a property</summary>
+
+<!-- mapping-question-links:start -->
+| Source property | Action |
+| --- | --- |
+| _(mapping-level)_ | [💬 Ask a question](https://github.com/Open-Cap-Table-Coalition/OCF-Composed-Schemas/issues/new?template=mapping-question.yml&mapping_file=objects%2Ftransactions%2Facceptance%2FConvertibleAcceptance.mapping.md&source_url=https%3A%2F%2Fgithub.com%2FOpen-Cap-Table-Coalition%2FOCF-Composed-Schemas%2Fblob%2Fmain%2Fobjects%2Ftransactions%2Facceptance%2FConvertibleAcceptance.mapping.md&title=%5BMapping+question%5D+ConvertibleAcceptance) |
+| `id` | [💬 Ask a question](https://github.com/Open-Cap-Table-Coalition/OCF-Composed-Schemas/issues/new?template=mapping-question.yml&mapping_file=objects%2Ftransactions%2Facceptance%2FConvertibleAcceptance.mapping.md&source_url=https%3A%2F%2Fgithub.com%2FOpen-Cap-Table-Coalition%2FOCF-Composed-Schemas%2Fblob%2Fmain%2Fobjects%2Ftransactions%2Facceptance%2FConvertibleAcceptance.mapping.md&title=%5BMapping+question%5D+ConvertibleAcceptance+%2F+id&property_path=id) |
+| `comments` | [💬 Ask a question](https://github.com/Open-Cap-Table-Coalition/OCF-Composed-Schemas/issues/new?template=mapping-question.yml&mapping_file=objects%2Ftransactions%2Facceptance%2FConvertibleAcceptance.mapping.md&source_url=https%3A%2F%2Fgithub.com%2FOpen-Cap-Table-Coalition%2FOCF-Composed-Schemas%2Fblob%2Fmain%2Fobjects%2Ftransactions%2Facceptance%2FConvertibleAcceptance.mapping.md&title=%5BMapping+question%5D+ConvertibleAcceptance+%2F+comments&property_path=comments) |
+| `object_type` | [💬 Ask a question](https://github.com/Open-Cap-Table-Coalition/OCF-Composed-Schemas/issues/new?template=mapping-question.yml&mapping_file=objects%2Ftransactions%2Facceptance%2FConvertibleAcceptance.mapping.md&source_url=https%3A%2F%2Fgithub.com%2FOpen-Cap-Table-Coalition%2FOCF-Composed-Schemas%2Fblob%2Fmain%2Fobjects%2Ftransactions%2Facceptance%2FConvertibleAcceptance.mapping.md&title=%5BMapping+question%5D+ConvertibleAcceptance+%2F+object_type&property_path=object_type) |
+| `date` | [💬 Ask a question](https://github.com/Open-Cap-Table-Coalition/OCF-Composed-Schemas/issues/new?template=mapping-question.yml&mapping_file=objects%2Ftransactions%2Facceptance%2FConvertibleAcceptance.mapping.md&source_url=https%3A%2F%2Fgithub.com%2FOpen-Cap-Table-Coalition%2FOCF-Composed-Schemas%2Fblob%2Fmain%2Fobjects%2Ftransactions%2Facceptance%2FConvertibleAcceptance.mapping.md&title=%5BMapping+question%5D+ConvertibleAcceptance+%2F+date&property_path=date) |
+| `security_id` | [💬 Ask a question](https://github.com/Open-Cap-Table-Coalition/OCF-Composed-Schemas/issues/new?template=mapping-question.yml&mapping_file=objects%2Ftransactions%2Facceptance%2FConvertibleAcceptance.mapping.md&source_url=https%3A%2F%2Fgithub.com%2FOpen-Cap-Table-Coalition%2FOCF-Composed-Schemas%2Fblob%2Fmain%2Fobjects%2Ftransactions%2Facceptance%2FConvertibleAcceptance.mapping.md&title=%5BMapping+question%5D+ConvertibleAcceptance+%2F+security_id&property_path=security_id) |
+</details>
+<!-- mapping-question-links:end -->
+
 ## Notes / open questions
 
 - **Carta has no convertible-acceptance transaction, so the whole object is unmappable.** OCF's `TX_CONVERTIBLE_ACCEPTANCE` is a standalone *event* recording that a stakeholder accepted/countersigned a previously-issued convertible. Carta's transaction set (grepping the pinned bundle for `…Transaction` `$def`s) covers issuance, cancellation, exercise, transfer, settlement, and conversion — but there is **no `*AcceptanceTransaction`** of any kind, and specifically nothing for convertibles. The OCF acceptance family (`TX_STOCK_ACCEPTANCE`, `TX_PLAN_SECURITY_ACCEPTANCE`, `TX_EQUITY_COMPENSATION_ACCEPTANCE`, `TX_WARRANT_ACCEPTANCE`, and this `TX_CONVERTIBLE_ACCEPTANCE`) has no counterpart in Carta's transaction model.

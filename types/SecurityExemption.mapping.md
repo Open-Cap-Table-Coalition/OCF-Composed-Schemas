@@ -67,6 +67,22 @@ fields:
     reason: no-equivalent
 ```
 
+## Ask a mapping question
+
+Use a link below to open a prefilled GitHub issue. The issue can be copied into the auditable checklist in `## Notes / open questions`.
+
+<details>
+<summary>Open a prefilled issue for a property</summary>
+
+<!-- mapping-question-links:start -->
+| Source property | Action |
+| --- | --- |
+| _(mapping-level)_ | [💬 Ask a question](https://github.com/Open-Cap-Table-Coalition/OCF-Composed-Schemas/issues/new?template=mapping-question.yml&mapping_file=types%2FSecurityExemption.mapping.md&source_url=https%3A%2F%2Fgithub.com%2FOpen-Cap-Table-Coalition%2FOCF-Composed-Schemas%2Fblob%2Fmain%2Ftypes%2FSecurityExemption.mapping.md&title=%5BMapping+question%5D+SecurityExemption) |
+| `description` | [💬 Ask a question](https://github.com/Open-Cap-Table-Coalition/OCF-Composed-Schemas/issues/new?template=mapping-question.yml&mapping_file=types%2FSecurityExemption.mapping.md&source_url=https%3A%2F%2Fgithub.com%2FOpen-Cap-Table-Coalition%2FOCF-Composed-Schemas%2Fblob%2Fmain%2Ftypes%2FSecurityExemption.mapping.md&title=%5BMapping+question%5D+SecurityExemption+%2F+description&property_path=description) |
+| `jurisdiction` | [💬 Ask a question](https://github.com/Open-Cap-Table-Coalition/OCF-Composed-Schemas/issues/new?template=mapping-question.yml&mapping_file=types%2FSecurityExemption.mapping.md&source_url=https%3A%2F%2Fgithub.com%2FOpen-Cap-Table-Coalition%2FOCF-Composed-Schemas%2Fblob%2Fmain%2Ftypes%2FSecurityExemption.mapping.md&title=%5BMapping+question%5D+SecurityExemption+%2F+jurisdiction&property_path=jurisdiction) |
+</details>
+<!-- mapping-question-links:end -->
+
 ## Notes / open questions
 
 - Bucket: type-to-type (1). OCF's `SecurityExemption` is a structured securities-law exemption type, and Carta has one unambiguous home for the concept: `#/$defs/Compliance/properties/federalExemption` (a `FederalExemption` enum). That is exactly the destination called out in the methodology (`SecurityExemption.description -> Compliance.federalExemption`), so this is bucket-1, not bucket-2 — we map the field that has a home and only mark the genuinely-absent field unmappable.

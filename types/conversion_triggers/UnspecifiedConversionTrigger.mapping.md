@@ -116,6 +116,25 @@ fields:
     reason: no-equivalent
 ```
 
+## Ask a mapping question
+
+Use a link below to open a prefilled GitHub issue. The issue can be copied into the auditable checklist in `## Notes / open questions`.
+
+<details>
+<summary>Open a prefilled issue for a property</summary>
+
+<!-- mapping-question-links:start -->
+| Source property | Action |
+| --- | --- |
+| _(mapping-level)_ | [💬 Ask a question](https://github.com/Open-Cap-Table-Coalition/OCF-Composed-Schemas/issues/new?template=mapping-question.yml&mapping_file=types%2Fconversion_triggers%2FUnspecifiedConversionTrigger.mapping.md&source_url=https%3A%2F%2Fgithub.com%2FOpen-Cap-Table-Coalition%2FOCF-Composed-Schemas%2Fblob%2Fmain%2Ftypes%2Fconversion_triggers%2FUnspecifiedConversionTrigger.mapping.md&title=%5BMapping+question%5D+UnspecifiedConversionTrigger) |
+| `type` | [💬 Ask a question](https://github.com/Open-Cap-Table-Coalition/OCF-Composed-Schemas/issues/new?template=mapping-question.yml&mapping_file=types%2Fconversion_triggers%2FUnspecifiedConversionTrigger.mapping.md&source_url=https%3A%2F%2Fgithub.com%2FOpen-Cap-Table-Coalition%2FOCF-Composed-Schemas%2Fblob%2Fmain%2Ftypes%2Fconversion_triggers%2FUnspecifiedConversionTrigger.mapping.md&title=%5BMapping+question%5D+UnspecifiedConversionTrigger+%2F+type&property_path=type) |
+| `trigger_id` | [💬 Ask a question](https://github.com/Open-Cap-Table-Coalition/OCF-Composed-Schemas/issues/new?template=mapping-question.yml&mapping_file=types%2Fconversion_triggers%2FUnspecifiedConversionTrigger.mapping.md&source_url=https%3A%2F%2Fgithub.com%2FOpen-Cap-Table-Coalition%2FOCF-Composed-Schemas%2Fblob%2Fmain%2Ftypes%2Fconversion_triggers%2FUnspecifiedConversionTrigger.mapping.md&title=%5BMapping+question%5D+UnspecifiedConversionTrigger+%2F+trigger_id&property_path=trigger_id) |
+| `nickname` | [💬 Ask a question](https://github.com/Open-Cap-Table-Coalition/OCF-Composed-Schemas/issues/new?template=mapping-question.yml&mapping_file=types%2Fconversion_triggers%2FUnspecifiedConversionTrigger.mapping.md&source_url=https%3A%2F%2Fgithub.com%2FOpen-Cap-Table-Coalition%2FOCF-Composed-Schemas%2Fblob%2Fmain%2Ftypes%2Fconversion_triggers%2FUnspecifiedConversionTrigger.mapping.md&title=%5BMapping+question%5D+UnspecifiedConversionTrigger+%2F+nickname&property_path=nickname) |
+| `trigger_description` | [💬 Ask a question](https://github.com/Open-Cap-Table-Coalition/OCF-Composed-Schemas/issues/new?template=mapping-question.yml&mapping_file=types%2Fconversion_triggers%2FUnspecifiedConversionTrigger.mapping.md&source_url=https%3A%2F%2Fgithub.com%2FOpen-Cap-Table-Coalition%2FOCF-Composed-Schemas%2Fblob%2Fmain%2Ftypes%2Fconversion_triggers%2FUnspecifiedConversionTrigger.mapping.md&title=%5BMapping+question%5D+UnspecifiedConversionTrigger+%2F+trigger_description&property_path=trigger_description) |
+| `conversion_right` | [💬 Ask a question](https://github.com/Open-Cap-Table-Coalition/OCF-Composed-Schemas/issues/new?template=mapping-question.yml&mapping_file=types%2Fconversion_triggers%2FUnspecifiedConversionTrigger.mapping.md&source_url=https%3A%2F%2Fgithub.com%2FOpen-Cap-Table-Coalition%2FOCF-Composed-Schemas%2Fblob%2Fmain%2Ftypes%2Fconversion_triggers%2FUnspecifiedConversionTrigger.mapping.md&title=%5BMapping+question%5D+UnspecifiedConversionTrigger+%2F+conversion_right&property_path=conversion_right) |
+</details>
+<!-- mapping-question-links:end -->
+
 ## Notes / open questions
 
 - **Bucket 3 (absent).** `UnspecifiedConversionTrigger` is the catch-all variant of OCF's `ConversionTrigger` family — used "where no structured data is available regarding what triggers the conversion of a given security." Like its siblings (`AutomaticConversionOnConditionTrigger`, `AutomaticConversionOnDateTrigger`, `ElectiveConversionAtWillTrigger`, `ElectiveConversionInDateRangeTrigger`, `ElectiveConversionOnConditionTrigger`), it is a structural/event-logic node describing *when and how* a convertible converts. Carta does **not** model the OCF conversion-trigger concept as a reusable `$def`: there is no Carta type, object, or sub-structure corresponding to a conversion **trigger** (no trigger-kind discriminator, no trigger id, no per-trigger free-text labels, no nested conversion-right linkage). Carta records convertible *terms* on `ConvertibleNote` / `ConvertibleIssuanceTransaction`, not OCF's trigger state machine, so every property here is `unmappable`. This is consistent with the completed `ElectiveConversionAtWillTrigger` and `AutomaticConversionOnConditionTrigger` mappings, which share the identical field set and the same bucket-3 disposition.

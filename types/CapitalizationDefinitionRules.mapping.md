@@ -128,6 +128,28 @@ fields:
     reason: no-equivalent
 ```
 
+## Ask a mapping question
+
+Use a link below to open a prefilled GitHub issue. The issue can be copied into the auditable checklist in `## Notes / open questions`.
+
+<details>
+<summary>Open a prefilled issue for a property</summary>
+
+<!-- mapping-question-links:start -->
+| Source property | Action |
+| --- | --- |
+| _(mapping-level)_ | [💬 Ask a question](https://github.com/Open-Cap-Table-Coalition/OCF-Composed-Schemas/issues/new?template=mapping-question.yml&mapping_file=types%2FCapitalizationDefinitionRules.mapping.md&source_url=https%3A%2F%2Fgithub.com%2FOpen-Cap-Table-Coalition%2FOCF-Composed-Schemas%2Fblob%2Fmain%2Ftypes%2FCapitalizationDefinitionRules.mapping.md&title=%5BMapping+question%5D+CapitalizationDefinitionRules) |
+| `include_outstanding_shares` | [💬 Ask a question](https://github.com/Open-Cap-Table-Coalition/OCF-Composed-Schemas/issues/new?template=mapping-question.yml&mapping_file=types%2FCapitalizationDefinitionRules.mapping.md&source_url=https%3A%2F%2Fgithub.com%2FOpen-Cap-Table-Coalition%2FOCF-Composed-Schemas%2Fblob%2Fmain%2Ftypes%2FCapitalizationDefinitionRules.mapping.md&title=%5BMapping+question%5D+CapitalizationDefinitionRules+%2F+include_outstanding_shares&property_path=include_outstanding_shares) |
+| `include_outstanding_options` | [💬 Ask a question](https://github.com/Open-Cap-Table-Coalition/OCF-Composed-Schemas/issues/new?template=mapping-question.yml&mapping_file=types%2FCapitalizationDefinitionRules.mapping.md&source_url=https%3A%2F%2Fgithub.com%2FOpen-Cap-Table-Coalition%2FOCF-Composed-Schemas%2Fblob%2Fmain%2Ftypes%2FCapitalizationDefinitionRules.mapping.md&title=%5BMapping+question%5D+CapitalizationDefinitionRules+%2F+include_outstanding_options&property_path=include_outstanding_options) |
+| `include_outstanding_unissued_options` | [💬 Ask a question](https://github.com/Open-Cap-Table-Coalition/OCF-Composed-Schemas/issues/new?template=mapping-question.yml&mapping_file=types%2FCapitalizationDefinitionRules.mapping.md&source_url=https%3A%2F%2Fgithub.com%2FOpen-Cap-Table-Coalition%2FOCF-Composed-Schemas%2Fblob%2Fmain%2Ftypes%2FCapitalizationDefinitionRules.mapping.md&title=%5BMapping+question%5D+CapitalizationDefinitionRules+%2F+include_outstanding_unissued_options&property_path=include_outstanding_unissued_options) |
+| `include_this_security` | [💬 Ask a question](https://github.com/Open-Cap-Table-Coalition/OCF-Composed-Schemas/issues/new?template=mapping-question.yml&mapping_file=types%2FCapitalizationDefinitionRules.mapping.md&source_url=https%3A%2F%2Fgithub.com%2FOpen-Cap-Table-Coalition%2FOCF-Composed-Schemas%2Fblob%2Fmain%2Ftypes%2FCapitalizationDefinitionRules.mapping.md&title=%5BMapping+question%5D+CapitalizationDefinitionRules+%2F+include_this_security&property_path=include_this_security) |
+| `include_other_converting_securities` | [💬 Ask a question](https://github.com/Open-Cap-Table-Coalition/OCF-Composed-Schemas/issues/new?template=mapping-question.yml&mapping_file=types%2FCapitalizationDefinitionRules.mapping.md&source_url=https%3A%2F%2Fgithub.com%2FOpen-Cap-Table-Coalition%2FOCF-Composed-Schemas%2Fblob%2Fmain%2Ftypes%2FCapitalizationDefinitionRules.mapping.md&title=%5BMapping+question%5D+CapitalizationDefinitionRules+%2F+include_other_converting_securities&property_path=include_other_converting_securities) |
+| `include_option_pool_topup_for_promised_options` | [💬 Ask a question](https://github.com/Open-Cap-Table-Coalition/OCF-Composed-Schemas/issues/new?template=mapping-question.yml&mapping_file=types%2FCapitalizationDefinitionRules.mapping.md&source_url=https%3A%2F%2Fgithub.com%2FOpen-Cap-Table-Coalition%2FOCF-Composed-Schemas%2Fblob%2Fmain%2Ftypes%2FCapitalizationDefinitionRules.mapping.md&title=%5BMapping+question%5D+CapitalizationDefinitionRules+%2F+include_option_pool_topup_for_promised_options&property_path=include_option_pool_topup_for_promised_options) |
+| `include_additional_option_pool_topup` | [💬 Ask a question](https://github.com/Open-Cap-Table-Coalition/OCF-Composed-Schemas/issues/new?template=mapping-question.yml&mapping_file=types%2FCapitalizationDefinitionRules.mapping.md&source_url=https%3A%2F%2Fgithub.com%2FOpen-Cap-Table-Coalition%2FOCF-Composed-Schemas%2Fblob%2Fmain%2Ftypes%2FCapitalizationDefinitionRules.mapping.md&title=%5BMapping+question%5D+CapitalizationDefinitionRules+%2F+include_additional_option_pool_topup&property_path=include_additional_option_pool_topup) |
+| `include_new_money` | [💬 Ask a question](https://github.com/Open-Cap-Table-Coalition/OCF-Composed-Schemas/issues/new?template=mapping-question.yml&mapping_file=types%2FCapitalizationDefinitionRules.mapping.md&source_url=https%3A%2F%2Fgithub.com%2FOpen-Cap-Table-Coalition%2FOCF-Composed-Schemas%2Fblob%2Fmain%2Ftypes%2FCapitalizationDefinitionRules.mapping.md&title=%5BMapping+question%5D+CapitalizationDefinitionRules+%2F+include_new_money&property_path=include_new_money) |
+</details>
+<!-- mapping-question-links:end -->
+
 ## Notes / open questions
 
 - Same reason as `types/CapitalizationDefinition.mapping.md`: Carta does not represent fully-diluted *rule definitions* — the booleans here (whether to include outstanding shares, unissued options, promised-option top-ups, new money, etc.) have no counterpart in the bundle. Carta exposes aggregate share counts but not the inclusion/exclusion policy used to compute them.

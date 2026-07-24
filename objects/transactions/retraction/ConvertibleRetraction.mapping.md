@@ -124,6 +124,26 @@ fields:
     reason: no-equivalent
 ```
 
+## Ask a mapping question
+
+Use a link below to open a prefilled GitHub issue. The issue can be copied into the auditable checklist in `## Notes / open questions`.
+
+<details>
+<summary>Open a prefilled issue for a property</summary>
+
+<!-- mapping-question-links:start -->
+| Source property | Action |
+| --- | --- |
+| _(mapping-level)_ | [💬 Ask a question](https://github.com/Open-Cap-Table-Coalition/OCF-Composed-Schemas/issues/new?template=mapping-question.yml&mapping_file=objects%2Ftransactions%2Fretraction%2FConvertibleRetraction.mapping.md&source_url=https%3A%2F%2Fgithub.com%2FOpen-Cap-Table-Coalition%2FOCF-Composed-Schemas%2Fblob%2Fmain%2Fobjects%2Ftransactions%2Fretraction%2FConvertibleRetraction.mapping.md&title=%5BMapping+question%5D+ConvertibleRetraction) |
+| `id` | [💬 Ask a question](https://github.com/Open-Cap-Table-Coalition/OCF-Composed-Schemas/issues/new?template=mapping-question.yml&mapping_file=objects%2Ftransactions%2Fretraction%2FConvertibleRetraction.mapping.md&source_url=https%3A%2F%2Fgithub.com%2FOpen-Cap-Table-Coalition%2FOCF-Composed-Schemas%2Fblob%2Fmain%2Fobjects%2Ftransactions%2Fretraction%2FConvertibleRetraction.mapping.md&title=%5BMapping+question%5D+ConvertibleRetraction+%2F+id&property_path=id) |
+| `comments` | [💬 Ask a question](https://github.com/Open-Cap-Table-Coalition/OCF-Composed-Schemas/issues/new?template=mapping-question.yml&mapping_file=objects%2Ftransactions%2Fretraction%2FConvertibleRetraction.mapping.md&source_url=https%3A%2F%2Fgithub.com%2FOpen-Cap-Table-Coalition%2FOCF-Composed-Schemas%2Fblob%2Fmain%2Fobjects%2Ftransactions%2Fretraction%2FConvertibleRetraction.mapping.md&title=%5BMapping+question%5D+ConvertibleRetraction+%2F+comments&property_path=comments) |
+| `object_type` | [💬 Ask a question](https://github.com/Open-Cap-Table-Coalition/OCF-Composed-Schemas/issues/new?template=mapping-question.yml&mapping_file=objects%2Ftransactions%2Fretraction%2FConvertibleRetraction.mapping.md&source_url=https%3A%2F%2Fgithub.com%2FOpen-Cap-Table-Coalition%2FOCF-Composed-Schemas%2Fblob%2Fmain%2Fobjects%2Ftransactions%2Fretraction%2FConvertibleRetraction.mapping.md&title=%5BMapping+question%5D+ConvertibleRetraction+%2F+object_type&property_path=object_type) |
+| `date` | [💬 Ask a question](https://github.com/Open-Cap-Table-Coalition/OCF-Composed-Schemas/issues/new?template=mapping-question.yml&mapping_file=objects%2Ftransactions%2Fretraction%2FConvertibleRetraction.mapping.md&source_url=https%3A%2F%2Fgithub.com%2FOpen-Cap-Table-Coalition%2FOCF-Composed-Schemas%2Fblob%2Fmain%2Fobjects%2Ftransactions%2Fretraction%2FConvertibleRetraction.mapping.md&title=%5BMapping+question%5D+ConvertibleRetraction+%2F+date&property_path=date) |
+| `security_id` | [💬 Ask a question](https://github.com/Open-Cap-Table-Coalition/OCF-Composed-Schemas/issues/new?template=mapping-question.yml&mapping_file=objects%2Ftransactions%2Fretraction%2FConvertibleRetraction.mapping.md&source_url=https%3A%2F%2Fgithub.com%2FOpen-Cap-Table-Coalition%2FOCF-Composed-Schemas%2Fblob%2Fmain%2Fobjects%2Ftransactions%2Fretraction%2FConvertibleRetraction.mapping.md&title=%5BMapping+question%5D+ConvertibleRetraction+%2F+security_id&property_path=security_id) |
+| `reason_text` | [💬 Ask a question](https://github.com/Open-Cap-Table-Coalition/OCF-Composed-Schemas/issues/new?template=mapping-question.yml&mapping_file=objects%2Ftransactions%2Fretraction%2FConvertibleRetraction.mapping.md&source_url=https%3A%2F%2Fgithub.com%2FOpen-Cap-Table-Coalition%2FOCF-Composed-Schemas%2Fblob%2Fmain%2Fobjects%2Ftransactions%2Fretraction%2FConvertibleRetraction.mapping.md&title=%5BMapping+question%5D+ConvertibleRetraction+%2F+reason_text&property_path=reason_text) |
+</details>
+<!-- mapping-question-links:end -->
+
 ## Notes / open questions
 
 - **Whole object has no Carta equivalent (bucket n/a-object, all six fields unmappable).** OCF retraction transactions record that an erroneously-recorded transaction is being *rescinded / taken back* (the `Retraction` primitive: a `security_id` + `reason_text`, with no quantity or amount). Carta's transaction vocabulary has no analogue. Searching the pinned bundle (`target-schema/Carta.schema.json`) for "retract"/"reason_text"/"reasonText" returns nothing, and the only convertible-security transactions Carta defines are `#/$defs/ConvertibleIssuanceTransaction` and `#/$defs/ConvertibleCancellationTransaction`. Neither models a retraction: a cancellation removes/voids a still-valid security going forward, whereas a retraction asserts the original record should never have existed. There is no Carta object to host any field of this transaction, so every property is `unmappable`.

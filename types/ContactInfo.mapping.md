@@ -95,6 +95,23 @@ fields:
     source: "/email_address"
 ```
 
+## Ask a mapping question
+
+Use a link below to open a prefilled GitHub issue. The issue can be copied into the auditable checklist in `## Notes / open questions`.
+
+<details>
+<summary>Open a prefilled issue for a property</summary>
+
+<!-- mapping-question-links:start -->
+| Source property | Action |
+| --- | --- |
+| _(mapping-level)_ | [💬 Ask a question](https://github.com/Open-Cap-Table-Coalition/OCF-Composed-Schemas/issues/new?template=mapping-question.yml&mapping_file=types%2FContactInfo.mapping.md&source_url=https%3A%2F%2Fgithub.com%2FOpen-Cap-Table-Coalition%2FOCF-Composed-Schemas%2Fblob%2Fmain%2Ftypes%2FContactInfo.mapping.md&title=%5BMapping+question%5D+ContactInfo) |
+| `name` | [💬 Ask a question](https://github.com/Open-Cap-Table-Coalition/OCF-Composed-Schemas/issues/new?template=mapping-question.yml&mapping_file=types%2FContactInfo.mapping.md&source_url=https%3A%2F%2Fgithub.com%2FOpen-Cap-Table-Coalition%2FOCF-Composed-Schemas%2Fblob%2Fmain%2Ftypes%2FContactInfo.mapping.md&title=%5BMapping+question%5D+ContactInfo+%2F+name&property_path=name) |
+| `phone_numbers` | [💬 Ask a question](https://github.com/Open-Cap-Table-Coalition/OCF-Composed-Schemas/issues/new?template=mapping-question.yml&mapping_file=types%2FContactInfo.mapping.md&source_url=https%3A%2F%2Fgithub.com%2FOpen-Cap-Table-Coalition%2FOCF-Composed-Schemas%2Fblob%2Fmain%2Ftypes%2FContactInfo.mapping.md&title=%5BMapping+question%5D+ContactInfo+%2F+phone_numbers&property_path=phone_numbers) |
+| `emails` | [💬 Ask a question](https://github.com/Open-Cap-Table-Coalition/OCF-Composed-Schemas/issues/new?template=mapping-question.yml&mapping_file=types%2FContactInfo.mapping.md&source_url=https%3A%2F%2Fgithub.com%2FOpen-Cap-Table-Coalition%2FOCF-Composed-Schemas%2Fblob%2Fmain%2Ftypes%2FContactInfo.mapping.md&title=%5BMapping+question%5D+ContactInfo+%2F+emails&property_path=emails) |
+</details>
+<!-- mapping-question-links:end -->
+
 ## Notes / open questions
 
 - Carta's nearest analogue to OCF's `ContactInfo` is `PointOfContact` — "A point of contact for an issuer. Examples include a Legal Admin or an Option Signatory." It is the only Carta type that models a named human contact with an email, and it carries exactly the two scalars OCF's `ContactInfo` needs a home for: `userFullName` and `userEmail`. (Carta also has `Stakeholder.fullName`/`Stakeholder.email`, but a Stakeholder *is* the holder of securities, not the "primary contact person for a stakeholder" that `ContactInfo` describes — so `PointOfContact` is the semantically correct target, not `Stakeholder`.)

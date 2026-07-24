@@ -117,6 +117,23 @@ fields:
       YEARS: EXERCISE_PERIOD_YEAR
 ```
 
+## Ask a mapping question
+
+Use a link below to open a prefilled GitHub issue. The issue can be copied into the auditable checklist in `## Notes / open questions`.
+
+<details>
+<summary>Open a prefilled issue for a property</summary>
+
+<!-- mapping-question-links:start -->
+| Source property | Action |
+| --- | --- |
+| _(mapping-level)_ | [💬 Ask a question](https://github.com/Open-Cap-Table-Coalition/OCF-Composed-Schemas/issues/new?template=mapping-question.yml&mapping_file=types%2FTerminationWindow.mapping.md&source_url=https%3A%2F%2Fgithub.com%2FOpen-Cap-Table-Coalition%2FOCF-Composed-Schemas%2Fblob%2Fmain%2Ftypes%2FTerminationWindow.mapping.md&title=%5BMapping+question%5D+TerminationWindow) |
+| `reason` | [💬 Ask a question](https://github.com/Open-Cap-Table-Coalition/OCF-Composed-Schemas/issues/new?template=mapping-question.yml&mapping_file=types%2FTerminationWindow.mapping.md&source_url=https%3A%2F%2Fgithub.com%2FOpen-Cap-Table-Coalition%2FOCF-Composed-Schemas%2Fblob%2Fmain%2Ftypes%2FTerminationWindow.mapping.md&title=%5BMapping+question%5D+TerminationWindow+%2F+reason&property_path=reason) |
+| `period` | [💬 Ask a question](https://github.com/Open-Cap-Table-Coalition/OCF-Composed-Schemas/issues/new?template=mapping-question.yml&mapping_file=types%2FTerminationWindow.mapping.md&source_url=https%3A%2F%2Fgithub.com%2FOpen-Cap-Table-Coalition%2FOCF-Composed-Schemas%2Fblob%2Fmain%2Ftypes%2FTerminationWindow.mapping.md&title=%5BMapping+question%5D+TerminationWindow+%2F+period&property_path=period) |
+| `period_type` | [💬 Ask a question](https://github.com/Open-Cap-Table-Coalition/OCF-Composed-Schemas/issues/new?template=mapping-question.yml&mapping_file=types%2FTerminationWindow.mapping.md&source_url=https%3A%2F%2Fgithub.com%2FOpen-Cap-Table-Coalition%2FOCF-Composed-Schemas%2Fblob%2Fmain%2Ftypes%2FTerminationWindow.mapping.md&title=%5BMapping+question%5D+TerminationWindow+%2F+period_type&property_path=period_type) |
+</details>
+<!-- mapping-question-links:end -->
+
 ## Notes / open questions
 
 - Bucket (1) type-to-type. OCF `TerminationWindow` has one unambiguous Carta home:

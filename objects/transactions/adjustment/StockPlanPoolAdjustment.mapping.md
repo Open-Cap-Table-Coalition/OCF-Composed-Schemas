@@ -137,6 +137,28 @@ fields:
     reason: no-equivalent
 ```
 
+## Ask a mapping question
+
+Use a link below to open a prefilled GitHub issue. The issue can be copied into the auditable checklist in `## Notes / open questions`.
+
+<details>
+<summary>Open a prefilled issue for a property</summary>
+
+<!-- mapping-question-links:start -->
+| Source property | Action |
+| --- | --- |
+| _(mapping-level)_ | [💬 Ask a question](https://github.com/Open-Cap-Table-Coalition/OCF-Composed-Schemas/issues/new?template=mapping-question.yml&mapping_file=objects%2Ftransactions%2Fadjustment%2FStockPlanPoolAdjustment.mapping.md&source_url=https%3A%2F%2Fgithub.com%2FOpen-Cap-Table-Coalition%2FOCF-Composed-Schemas%2Fblob%2Fmain%2Fobjects%2Ftransactions%2Fadjustment%2FStockPlanPoolAdjustment.mapping.md&title=%5BMapping+question%5D+StockPlanPoolAdjustment) |
+| `id` | [💬 Ask a question](https://github.com/Open-Cap-Table-Coalition/OCF-Composed-Schemas/issues/new?template=mapping-question.yml&mapping_file=objects%2Ftransactions%2Fadjustment%2FStockPlanPoolAdjustment.mapping.md&source_url=https%3A%2F%2Fgithub.com%2FOpen-Cap-Table-Coalition%2FOCF-Composed-Schemas%2Fblob%2Fmain%2Fobjects%2Ftransactions%2Fadjustment%2FStockPlanPoolAdjustment.mapping.md&title=%5BMapping+question%5D+StockPlanPoolAdjustment+%2F+id&property_path=id) |
+| `comments` | [💬 Ask a question](https://github.com/Open-Cap-Table-Coalition/OCF-Composed-Schemas/issues/new?template=mapping-question.yml&mapping_file=objects%2Ftransactions%2Fadjustment%2FStockPlanPoolAdjustment.mapping.md&source_url=https%3A%2F%2Fgithub.com%2FOpen-Cap-Table-Coalition%2FOCF-Composed-Schemas%2Fblob%2Fmain%2Fobjects%2Ftransactions%2Fadjustment%2FStockPlanPoolAdjustment.mapping.md&title=%5BMapping+question%5D+StockPlanPoolAdjustment+%2F+comments&property_path=comments) |
+| `object_type` | [💬 Ask a question](https://github.com/Open-Cap-Table-Coalition/OCF-Composed-Schemas/issues/new?template=mapping-question.yml&mapping_file=objects%2Ftransactions%2Fadjustment%2FStockPlanPoolAdjustment.mapping.md&source_url=https%3A%2F%2Fgithub.com%2FOpen-Cap-Table-Coalition%2FOCF-Composed-Schemas%2Fblob%2Fmain%2Fobjects%2Ftransactions%2Fadjustment%2FStockPlanPoolAdjustment.mapping.md&title=%5BMapping+question%5D+StockPlanPoolAdjustment+%2F+object_type&property_path=object_type) |
+| `date` | [💬 Ask a question](https://github.com/Open-Cap-Table-Coalition/OCF-Composed-Schemas/issues/new?template=mapping-question.yml&mapping_file=objects%2Ftransactions%2Fadjustment%2FStockPlanPoolAdjustment.mapping.md&source_url=https%3A%2F%2Fgithub.com%2FOpen-Cap-Table-Coalition%2FOCF-Composed-Schemas%2Fblob%2Fmain%2Fobjects%2Ftransactions%2Fadjustment%2FStockPlanPoolAdjustment.mapping.md&title=%5BMapping+question%5D+StockPlanPoolAdjustment+%2F+date&property_path=date) |
+| `stock_plan_id` | [💬 Ask a question](https://github.com/Open-Cap-Table-Coalition/OCF-Composed-Schemas/issues/new?template=mapping-question.yml&mapping_file=objects%2Ftransactions%2Fadjustment%2FStockPlanPoolAdjustment.mapping.md&source_url=https%3A%2F%2Fgithub.com%2FOpen-Cap-Table-Coalition%2FOCF-Composed-Schemas%2Fblob%2Fmain%2Fobjects%2Ftransactions%2Fadjustment%2FStockPlanPoolAdjustment.mapping.md&title=%5BMapping+question%5D+StockPlanPoolAdjustment+%2F+stock_plan_id&property_path=stock_plan_id) |
+| `board_approval_date` | [💬 Ask a question](https://github.com/Open-Cap-Table-Coalition/OCF-Composed-Schemas/issues/new?template=mapping-question.yml&mapping_file=objects%2Ftransactions%2Fadjustment%2FStockPlanPoolAdjustment.mapping.md&source_url=https%3A%2F%2Fgithub.com%2FOpen-Cap-Table-Coalition%2FOCF-Composed-Schemas%2Fblob%2Fmain%2Fobjects%2Ftransactions%2Fadjustment%2FStockPlanPoolAdjustment.mapping.md&title=%5BMapping+question%5D+StockPlanPoolAdjustment+%2F+board_approval_date&property_path=board_approval_date) |
+| `stockholder_approval_date` | [💬 Ask a question](https://github.com/Open-Cap-Table-Coalition/OCF-Composed-Schemas/issues/new?template=mapping-question.yml&mapping_file=objects%2Ftransactions%2Fadjustment%2FStockPlanPoolAdjustment.mapping.md&source_url=https%3A%2F%2Fgithub.com%2FOpen-Cap-Table-Coalition%2FOCF-Composed-Schemas%2Fblob%2Fmain%2Fobjects%2Ftransactions%2Fadjustment%2FStockPlanPoolAdjustment.mapping.md&title=%5BMapping+question%5D+StockPlanPoolAdjustment+%2F+stockholder_approval_date&property_path=stockholder_approval_date) |
+| `shares_reserved` | [💬 Ask a question](https://github.com/Open-Cap-Table-Coalition/OCF-Composed-Schemas/issues/new?template=mapping-question.yml&mapping_file=objects%2Ftransactions%2Fadjustment%2FStockPlanPoolAdjustment.mapping.md&source_url=https%3A%2F%2Fgithub.com%2FOpen-Cap-Table-Coalition%2FOCF-Composed-Schemas%2Fblob%2Fmain%2Fobjects%2Ftransactions%2Fadjustment%2FStockPlanPoolAdjustment.mapping.md&title=%5BMapping+question%5D+StockPlanPoolAdjustment+%2F+shares_reserved&property_path=shares_reserved) |
+</details>
+<!-- mapping-question-links:end -->
+
 ## Notes / open questions
 
 - Bucket: **n/a-object** (`ocf_kind: object`). This is an OCF *transaction* object, so it would normally map its own properties onto the corresponding Carta transaction + the security/structure it references. The blocking fact here is that **Carta has no corresponding transaction**: the entire OCF stock-plan pool-adjustment event has no Carta home, so every field is unmappable. This is the pool-level analog of the sibling `IssuerAuthorizedSharesAdjustment` (also fully unmappable on main) and follows the same reasoning.

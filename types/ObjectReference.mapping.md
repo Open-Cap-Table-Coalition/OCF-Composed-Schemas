@@ -125,6 +125,22 @@ fields:
     reason: no-equivalent
 ```
 
+## Ask a mapping question
+
+Use a link below to open a prefilled GitHub issue. The issue can be copied into the auditable checklist in `## Notes / open questions`.
+
+<details>
+<summary>Open a prefilled issue for a property</summary>
+
+<!-- mapping-question-links:start -->
+| Source property | Action |
+| --- | --- |
+| _(mapping-level)_ | [💬 Ask a question](https://github.com/Open-Cap-Table-Coalition/OCF-Composed-Schemas/issues/new?template=mapping-question.yml&mapping_file=types%2FObjectReference.mapping.md&source_url=https%3A%2F%2Fgithub.com%2FOpen-Cap-Table-Coalition%2FOCF-Composed-Schemas%2Fblob%2Fmain%2Ftypes%2FObjectReference.mapping.md&title=%5BMapping+question%5D+ObjectReference) |
+| `object_type` | [💬 Ask a question](https://github.com/Open-Cap-Table-Coalition/OCF-Composed-Schemas/issues/new?template=mapping-question.yml&mapping_file=types%2FObjectReference.mapping.md&source_url=https%3A%2F%2Fgithub.com%2FOpen-Cap-Table-Coalition%2FOCF-Composed-Schemas%2Fblob%2Fmain%2Ftypes%2FObjectReference.mapping.md&title=%5BMapping+question%5D+ObjectReference+%2F+object_type&property_path=object_type) |
+| `object_id` | [💬 Ask a question](https://github.com/Open-Cap-Table-Coalition/OCF-Composed-Schemas/issues/new?template=mapping-question.yml&mapping_file=types%2FObjectReference.mapping.md&source_url=https%3A%2F%2Fgithub.com%2FOpen-Cap-Table-Coalition%2FOCF-Composed-Schemas%2Fblob%2Fmain%2Ftypes%2FObjectReference.mapping.md&title=%5BMapping+question%5D+ObjectReference+%2F+object_id&property_path=object_id) |
+</details>
+<!-- mapping-question-links:end -->
+
 ## Notes / open questions
 
 - Bucket: **inlined-per-object**. Carta has no reusable "reference to any object" type. There is no Carta `$def` whose purpose is a generic `{object_type, object_id}` pointer, and no Carta enum corresponds to OCF's `ObjectType` (the 56-value vocabulary of every issuer/stakeholder/stock-class/transaction kind enumerated above). The nearest Carta shapes — `PrecededBySecurity` (`id`/`type`/`label`, where `type` is a free-text security descriptor like `"certificate"`/`"warrant"`, not the OCF object/transaction taxonomy) and `PointOfContact.issuerId` — are narrow, single-purpose references, not a polymorphic equivalent. So there is no well-posed type-level target, and **every field is `unmappable` / `no-equivalent`**.

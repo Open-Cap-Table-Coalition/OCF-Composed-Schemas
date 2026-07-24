@@ -106,6 +106,24 @@ fields:
     reason: no-equivalent
 ```
 
+## Ask a mapping question
+
+Use a link below to open a prefilled GitHub issue. The issue can be copied into the auditable checklist in `## Notes / open questions`.
+
+<details>
+<summary>Open a prefilled issue for a property</summary>
+
+<!-- mapping-question-links:start -->
+| Source property | Action |
+| --- | --- |
+| _(mapping-level)_ | [💬 Ask a question](https://github.com/Open-Cap-Table-Coalition/OCF-Composed-Schemas/issues/new?template=mapping-question.yml&mapping_file=types%2Fconversion_rights%2FWarrantConversionRight.mapping.md&source_url=https%3A%2F%2Fgithub.com%2FOpen-Cap-Table-Coalition%2FOCF-Composed-Schemas%2Fblob%2Fmain%2Ftypes%2Fconversion_rights%2FWarrantConversionRight.mapping.md&title=%5BMapping+question%5D+WarrantConversionRight) |
+| `type` | [💬 Ask a question](https://github.com/Open-Cap-Table-Coalition/OCF-Composed-Schemas/issues/new?template=mapping-question.yml&mapping_file=types%2Fconversion_rights%2FWarrantConversionRight.mapping.md&source_url=https%3A%2F%2Fgithub.com%2FOpen-Cap-Table-Coalition%2FOCF-Composed-Schemas%2Fblob%2Fmain%2Ftypes%2Fconversion_rights%2FWarrantConversionRight.mapping.md&title=%5BMapping+question%5D+WarrantConversionRight+%2F+type&property_path=type) |
+| `conversion_mechanism` | [💬 Ask a question](https://github.com/Open-Cap-Table-Coalition/OCF-Composed-Schemas/issues/new?template=mapping-question.yml&mapping_file=types%2Fconversion_rights%2FWarrantConversionRight.mapping.md&source_url=https%3A%2F%2Fgithub.com%2FOpen-Cap-Table-Coalition%2FOCF-Composed-Schemas%2Fblob%2Fmain%2Ftypes%2Fconversion_rights%2FWarrantConversionRight.mapping.md&title=%5BMapping+question%5D+WarrantConversionRight+%2F+conversion_mechanism&property_path=conversion_mechanism) |
+| `converts_to_future_round` | [💬 Ask a question](https://github.com/Open-Cap-Table-Coalition/OCF-Composed-Schemas/issues/new?template=mapping-question.yml&mapping_file=types%2Fconversion_rights%2FWarrantConversionRight.mapping.md&source_url=https%3A%2F%2Fgithub.com%2FOpen-Cap-Table-Coalition%2FOCF-Composed-Schemas%2Fblob%2Fmain%2Ftypes%2Fconversion_rights%2FWarrantConversionRight.mapping.md&title=%5BMapping+question%5D+WarrantConversionRight+%2F+converts_to_future_round&property_path=converts_to_future_round) |
+| `converts_to_stock_class_id` | [💬 Ask a question](https://github.com/Open-Cap-Table-Coalition/OCF-Composed-Schemas/issues/new?template=mapping-question.yml&mapping_file=types%2Fconversion_rights%2FWarrantConversionRight.mapping.md&source_url=https%3A%2F%2Fgithub.com%2FOpen-Cap-Table-Coalition%2FOCF-Composed-Schemas%2Fblob%2Fmain%2Ftypes%2Fconversion_rights%2FWarrantConversionRight.mapping.md&title=%5BMapping+question%5D+WarrantConversionRight+%2F+converts_to_stock_class_id&property_path=converts_to_stock_class_id) |
+</details>
+<!-- mapping-question-links:end -->
+
 ## Notes / open questions
 
 - **Bucket 3 (absent).** `WarrantConversionRight` is OCF's polymorphic *conversion-right wrapper* for a warrant — a discriminated container (`type` + a `conversion_mechanism` `oneOf`) that bundles the conversion logic/state-machine of a warrant together with its conversion target. Carta has **no analogous reusable `$def` for a "conversion right"** and **no single object that is THE home for this wrapper**. Carta models warrants as flat transaction records (`#/$defs/WarrantIssuanceTransaction`, whose only economic leaves are `exercisePrice`, `purchasePrice`, `quantity`, `shareClassId`, `expirationDatetime`/`issueDatetime`) and never represents a *conversion mechanism* container, the *which-subtype* discriminator, or the convertible-style economics those mechanisms carry. Hence every property is `unmappable` / `no-equivalent`. (It is deliberately NOT treated like the convertible siblings: `StockClassConversionRight`'s single `RatioConversionMechanism` has one clean Carta home on `ShareClassRightsAndPreferences`, and `ConvertibleConversionRight`'s SAFE/Note mechanisms land on `ConvertibleNote` — but the *warrant* variant's five heterogeneous mechanisms describe warrant economics that Carta's `WarrantIssuanceTransaction` does not carry, and have no single Carta destination — see the `conversion_mechanism` note below.)
