@@ -121,6 +121,10 @@ Each `cases:` item names one exact source `$ref` in `source_schema:` and supplie
 entry under `mapping:`. The cases must cover every named source branch exactly once. This keeps a
 branch that has no Carta home explicit instead of allowing a plain `rename` to imply total coverage.
 
+For `rename`, `construct`, `combine`, and `computed`, `target:` may be a non-empty list of pointers
+when one source value is intentionally replicated to multiple Carta homes. `split` already uses a
+target list for its fan-out semantics; `select` and `enum-remap` remain scalar-target operations.
+
 **Status-conditional:** `draft`/`partial` files may contain `TODO`s; `complete`/`reviewed` files
 may not, must cover every property, and every `unmappable` entry must carry a `reason:`:
 
@@ -183,7 +187,9 @@ cross-record polymorphism without a security-specific key.
 **Per-variant target maps.** A `shared:` field is common to every variant, but its Carta *home*
 may differ by variant (e.g. `quantity` lands on `OptionIssuanceTransaction` for options but
 `RsuIssuanceTransaction` for RSUs). Rather than pinning such a field to one representative family,
-give it a `target:` **map** keyed by variant label instead of a single pointer:
+give it a `target:` **map** keyed by variant label instead of a single pointer. Each map value may
+be one pointer, a non-empty list of pointers when the source field is intentionally replicated, or
+`null`:
 
 ```yaml
 shared:
@@ -203,8 +209,8 @@ shared:
 
 The validator enforces the keys **stay in sync** with the variant set: every variant must have an
 entry (none missing) and no key may name a non-existent variant. Each value is a resolving `#/...`
-pointer (not the `true` sentinel) or `null` (= unmappable in that variant; still counts as a
-covered, non-`TODO` entry). Map targets are allowed only on `rename` / `computed` / `combine`
+pointer, a non-empty list of resolving pointers (not the `true` sentinel), or `null` (= unmappable in that variant; still counts as a
+covered, non-`TODO` entry). Map targets are allowed only on `rename` / `construct` / `computed` / `combine`
 `shared:` entries — not on `enum-remap` (route enum values in `variants.fields`) and not inside a
 variant's own `fields:`. `--verbose` projects these effective targets beneath the routed variant
 and groups them by Carta target object.

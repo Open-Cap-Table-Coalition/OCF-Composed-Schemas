@@ -16,7 +16,7 @@ drops only for Sar), so "no Carta home" is a per-flavor statement here, not obje
 magnitude diagrams split flavors apart; `core-bidirectional-flow.md` gives the distinct-field,
 best-landing view (its lower "left behind" count).
 
-## Magnitude — unmapped properties per OCF object (171 distinct across 47 objects; 248 per-flavor rows, 154 OCF-required)
+## Magnitude — unmapped properties per OCF object (166 distinct across 46 objects; 237 per-flavor rows, 143 OCF-required)
 
 Each OCF object → the void, edge labelled with how many of its properties are dropped.
 Green = the object is in strict Core (we carry it but lose these fields); dashed grey = the
@@ -45,42 +45,38 @@ flowchart LR
     o11["Issuer"]:::adm
     o12["Stakeholder"]:::adm
     o13["StakeholderRelationshipChangeEvent"]:::adm
-    o14["StockCancellation [Default]"]:::adm
-    o15["StockCancellation [Rsa]"]:::adm
-    o16["StockClass"]:::adm
-    o17["StockClassAuthorizedSharesAdjustment"]:::adm
-    o18["StockPlan"]:::adm
-    o19["StockTransfer [Default]"]:::adm
-    o20["StockTransfer [Rsa]"]:::adm
-    o21["Valuation"]:::adm
-    o22["WarrantCancellation"]:::adm
-    o23["WarrantTransfer"]:::adm
+    o14["StockClass"]:::adm
+    o15["StockClassAuthorizedSharesAdjustment"]:::adm
+    o16["StockPlan"]:::adm
+    o17["StockTransfer [Default]"]:::adm
+    o18["StockTransfer [Rsa]"]:::adm
+    o19["Valuation"]:::adm
+    o20["WarrantCancellation"]:::adm
+    o21["WarrantTransfer"]:::adm
   end
   void["⌀ not mapped (no Carta home)"]:::sink
   o0 -->|1| void
   o1 -->|5| void
   o2 -->|5| void
-  o3 -->|2| void
-  o4 -->|2| void
-  o5 -->|2| void
-  o6 -->|2| void
-  o7 -->|2| void
-  o8 -->|2| void
+  o3 -->|1| void
+  o4 -->|1| void
+  o5 -->|1| void
+  o6 -->|1| void
+  o7 -->|1| void
+  o8 -->|1| void
   o9 -->|2| void
   o10 -->|2| void
   o11 -->|9| void
   o12 -->|2| void
   o13 -->|1| void
-  o14 -->|1| void
-  o15 -->|1| void
+  o14 -->|3| void
+  o15 -->|3| void
   o16 -->|3| void
-  o17 -->|3| void
-  o18 -->|3| void
-  o19 -->|2| void
-  o20 -->|2| void
-  o21 -->|5| void
-  o22 -->|1| void
-  o23 -->|2| void
+  o17 -->|2| void
+  o18 -->|2| void
+  o19 -->|5| void
+  o20 -->|1| void
+  o21 -->|2| void
 ```
 
 **Not-yet-admissible objects**
@@ -152,7 +148,7 @@ flowchart LR
   o7 -->|5| void
   o8 -->|3| void
   o9 -->|9| void
-  o10 -->|13| void
+  o10 -->|10| void
   o11 -->|7| void
   o12 -->|7| void
   o13 -->|3| void
@@ -262,12 +258,11 @@ flowchart LR
 | date † | **yes** | Date on which the transaction occurred |
 | security_id | **yes** | Identifier for the security (stock, plan security, warrant, or convertible) by which it can be referenced by other transaction objects. N… |
 
-### EquityCompensationCancellation — in Core (admissible) (2 unmapped)
+### EquityCompensationCancellation — in Core (admissible) (1 unmapped)
 
 | property | OCF-req | what it is (OCF) |
 | --- | :---: | --- |
 | balance_security_id |  | Identifier for the security that holds the remainder balance (for partial cancellations) |
-| security_id | **yes** | Identifier for the security (stock, plan security, warrant, or convertible) by which it can be referenced by other transaction objects. N… |
 
 ### EquityCompensationExercise — in Core (admissible) (5 unmapped)
 
@@ -277,9 +272,9 @@ flowchart LR
 | date † | **yes** | Date on which the transaction occurred |
 | quantity † | **yes** | Quantity of shares exercised |
 | resulting_security_ids † | **yes** | Identifier for the security (or securities) that resulted from the exercise |
-| security_id | **yes** | Identifier for the security (stock, plan security, warrant, or convertible) by which it can be referenced by other transaction objects. N… |
+| security_id † | **yes** | Identifier for the security (stock, plan security, warrant, or convertible) by which it can be referenced by other transaction objects. N… |
 
-### EquityCompensationIssuance — not yet admissible (15 unmapped)
+### EquityCompensationIssuance — not yet admissible (12 unmapped)
 
 | property | OCF-req | what it is (OCF) |
 | --- | :---: | --- |
@@ -287,13 +282,10 @@ flowchart LR
 | board_approval_date † |  | Date of board approval for the security, when applicable. |
 | compensation_type † | **yes** | The kind of equity compensation. Determines which type-specific fields are required. |
 | consideration_text |  | Unstructured text description of consideration provided in exchange for the issuance. |
-| custom_id † | **yes** | Human-readable identifier for the security (e.g. 'CN-1'). |
 | early_exercisable † |  | If true, the security is exercisable prior to completion of vesting; the schedule then governs a right-of-repurchase lapse rather than th… |
 | exercise_price † |  | Required for option compensation types. The price per share at which the option can be exercised. |
 | expiration_date † | **yes** | Expiration date of the security, or null if it does not expire. |
 | option_grant_type † |  | If the security is an option, what kind. Retained from v1 for compatibility; in the new model this has been incorporated into Compensatio… |
-| security_id † | **yes** | Identifier for the security created by this issuance. Other transactions (vesting event, exercise, cancellation, etc.) reference this id. |
-| stakeholder_id † | **yes** | Identifier of the stakeholder holding legal title to the security. |
 | stockholder_approval_date |  | Date of stockholder approval for the security, when applicable. |
 | termination_exercise_windows † | **yes** | Exercise periods applicable after a termination, by reason. |
 | vesting_start_date † |  | The per-grant vesting commencement date — the anchor every statement of the referenced template grids from. Required whenever `vesting_te… |
@@ -308,7 +300,7 @@ flowchart LR
 | quantity † | **yes** | Quantity of shares released |
 | release_price † | **yes** | The release price used to determine the value of the security at the time of release |
 | resulting_security_ids † | **yes** | Identifier of the new security (or securities) issuance resulting from a release transaction |
-| security_id | **yes** | Identifier for the security (stock, plan security, warrant, or convertible) by which it can be referenced by other transaction objects. N… |
+| security_id † | **yes** | Identifier for the security (stock, plan security, warrant, or convertible) by which it can be referenced by other transaction objects. N… |
 | settlement_date † | **yes** | The settlement date for the shares released, typically after the release transaction date |
 
 ### EquityCompensationRepricing — in Core (admissible) (3 unmapped)
@@ -395,12 +387,6 @@ flowchart LR
 | property | OCF-req | what it is (OCF) |
 | --- | :---: | --- |
 | date † | **yes** | Date on which the transaction occurred |
-| security_id | **yes** | Identifier for the security (stock, plan security, warrant, or convertible) by which it can be referenced by other transaction objects. N… |
-
-### StockCancellation — in Core (admissible) (1 unmapped)
-
-| property | OCF-req | what it is (OCF) |
-| --- | :---: | --- |
 | security_id | **yes** | Identifier for the security (stock, plan security, warrant, or convertible) by which it can be referenced by other transaction objects. N… |
 
 ### StockClass — in Core (admissible) (3 unmapped)

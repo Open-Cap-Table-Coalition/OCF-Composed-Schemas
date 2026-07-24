@@ -914,7 +914,7 @@ onto one Carta field — most visibly the reverse-edge lineage collapsing onto `
 - `WarrantExerciseTransaction.resultingSecurityId` ← 1: `WarrantExercise.resulting_security_ids`
 - `WarrantTransferTransaction.resultingSecurityId` ← 1: `WarrantTransfer.resulting_security_ids`
 
-## C. No home — no Carta target at all (248 across 47 objects)
+## C. No home — no Carta target at all (237 across 46 objects)
 
 A different animal: Carta has no field to hold these (also in core-gaps.md §a). NOT what
 rich-Core recovers — listed for contrast.
@@ -927,9 +927,9 @@ rich-Core recovers — listed for contrast.
 - **ConvertibleTransfer** *(not yet admissible)* — **amount**, balance_security_id, consideration_text, **date**, **resulting_security_ids**, **security_id**
 - **Document** *(not yet admissible)* — **md5**, related_objects
 - **EquityCompensationAcceptance** *(not yet admissible)* — **date**, **security_id**
-- **EquityCompensationCancellation** — balance_security_id, **security_id**
+- **EquityCompensationCancellation** — balance_security_id
 - **EquityCompensationExercise** — consideration_text, **date**, **quantity**, **resulting_security_ids**, **security_id**
-- **EquityCompensationIssuance** *(not yet admissible)* — base_price, board_approval_date, **compensation_type**, consideration_text, **custom_id**, early_exercisable, exercise_price, **expiration_date**, option_grant_type, **security_id**, **stakeholder_id**, stockholder_approval_date, **termination_exercise_windows**, vesting_start_date, vestings
+- **EquityCompensationIssuance** *(not yet admissible)* — base_price, board_approval_date, **compensation_type**, consideration_text, early_exercisable, exercise_price, **expiration_date**, option_grant_type, stockholder_approval_date, **termination_exercise_windows**, vesting_start_date, vestings
 - **EquityCompensationRelease** — consideration_text, **date**, **quantity**, **release_price**, **resulting_security_ids**, **security_id**, **settlement_date**
 - **EquityCompensationRepricing** — **date**, **new_exercise_price**, **security_id**
 - **EquityCompensationRetraction** *(not yet admissible)* — **date**, **reason_text**, **security_id**
@@ -941,7 +941,6 @@ rich-Core recovers — listed for contrast.
 - **StakeholderRelationshipChangeEvent** — **date**
 - **StakeholderStatusChangeEvent** *(not yet admissible)* — **date**, **new_status**
 - **StockAcceptance** *(not yet admissible)* — **date**, **security_id**
-- **StockCancellation** — **security_id**
 - **StockClass** — board_approval_date, stockholder_approval_date, **votes_per_share**
 - **StockClassAuthorizedSharesAdjustment** — board_approval_date, **date**, stockholder_approval_date
 - **StockClassConversionRatioAdjustment** *(not yet admissible)* — **date**

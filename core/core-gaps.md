@@ -220,126 +220,6 @@ flowchart LR
   o0 -->|"resulting_security_ids → resultingSecurityId"| t0
 ```
 
-**EquityCompensationCancellation [Option]**
-
-```mermaid
-flowchart LR
-  classDef adm fill:#e6f4ea,stroke:#34a853,color:#0b3d20;
-  classDef notadm fill:#f1f3f4,stroke:#9aa0a6,color:#5f6368,stroke-dasharray:4 3;
-  classDef carta fill:#e8f0fe,stroke:#1a73e8,color:#0d2b66;
-  classDef sink fill:#fce8e6,stroke:#d93025,color:#5c0d06;
-  subgraph SRC["OCF source objects"]
-    direction TB
-    o0["EquityCompensationCancellation [Option]"]:::adm
-  end
-  subgraph TGT["Carta target objects"]
-    direction TB
-    sink["⌀ no Carta home"]:::sink
-  end
-  o0 -->|"balance_security_id"| sink
-  o0 -->|"security_id"| sink
-```
-
-**EquityCompensationCancellation [Rsu]**
-
-```mermaid
-flowchart LR
-  classDef adm fill:#e6f4ea,stroke:#34a853,color:#0b3d20;
-  classDef notadm fill:#f1f3f4,stroke:#9aa0a6,color:#5f6368,stroke-dasharray:4 3;
-  classDef carta fill:#e8f0fe,stroke:#1a73e8,color:#0d2b66;
-  classDef sink fill:#fce8e6,stroke:#d93025,color:#5c0d06;
-  subgraph SRC["OCF source objects"]
-    direction TB
-    o0["EquityCompensationCancellation [Rsu]"]:::adm
-  end
-  subgraph TGT["Carta target objects"]
-    direction TB
-    sink["⌀ no Carta home"]:::sink
-  end
-  o0 -->|"balance_security_id"| sink
-  o0 -->|"security_id"| sink
-```
-
-**EquityCompensationCancellation [Sar]**
-
-```mermaid
-flowchart LR
-  classDef adm fill:#e6f4ea,stroke:#34a853,color:#0b3d20;
-  classDef notadm fill:#f1f3f4,stroke:#9aa0a6,color:#5f6368,stroke-dasharray:4 3;
-  classDef carta fill:#e8f0fe,stroke:#1a73e8,color:#0d2b66;
-  classDef sink fill:#fce8e6,stroke:#d93025,color:#5c0d06;
-  subgraph SRC["OCF source objects"]
-    direction TB
-    o0["EquityCompensationCancellation [Sar]"]:::adm
-  end
-  subgraph TGT["Carta target objects"]
-    direction TB
-    sink["⌀ no Carta home"]:::sink
-  end
-  o0 -->|"balance_security_id"| sink
-  o0 -->|"security_id"| sink
-```
-
-**EquityCompensationExercise [Option]**
-
-```mermaid
-flowchart LR
-  classDef adm fill:#e6f4ea,stroke:#34a853,color:#0b3d20;
-  classDef notadm fill:#f1f3f4,stroke:#9aa0a6,color:#5f6368,stroke-dasharray:4 3;
-  classDef carta fill:#e8f0fe,stroke:#1a73e8,color:#0d2b66;
-  classDef sink fill:#fce8e6,stroke:#d93025,color:#5c0d06;
-  subgraph SRC["OCF source objects"]
-    direction TB
-    o0["EquityCompensationExercise [Option]"]:::adm
-  end
-  subgraph TGT["Carta target objects"]
-    direction TB
-    sink["⌀ no Carta home"]:::sink
-  end
-  o0 -->|"consideration_text"| sink
-  o0 -->|"security_id"| sink
-```
-
-**EquityCompensationExercise [Sar]**
-
-```mermaid
-flowchart LR
-  classDef adm fill:#e6f4ea,stroke:#34a853,color:#0b3d20;
-  classDef notadm fill:#f1f3f4,stroke:#9aa0a6,color:#5f6368,stroke-dasharray:4 3;
-  classDef carta fill:#e8f0fe,stroke:#1a73e8,color:#0d2b66;
-  classDef sink fill:#fce8e6,stroke:#d93025,color:#5c0d06;
-  subgraph SRC["OCF source objects"]
-    direction TB
-    o0["EquityCompensationExercise [Sar]"]:::adm
-  end
-  subgraph TGT["Carta target objects"]
-    direction TB
-    sink["⌀ no Carta home"]:::sink
-  end
-  o0 -->|"consideration_text"| sink
-  o0 -->|"security_id"| sink
-```
-
-**EquityCompensationRelease [Rsu]**
-
-```mermaid
-flowchart LR
-  classDef adm fill:#e6f4ea,stroke:#34a853,color:#0b3d20;
-  classDef notadm fill:#f1f3f4,stroke:#9aa0a6,color:#5f6368,stroke-dasharray:4 3;
-  classDef carta fill:#e8f0fe,stroke:#1a73e8,color:#0d2b66;
-  classDef sink fill:#fce8e6,stroke:#d93025,color:#5c0d06;
-  subgraph SRC["OCF source objects"]
-    direction TB
-    o0["EquityCompensationRelease [Rsu]"]:::adm
-  end
-  subgraph TGT["Carta target objects"]
-    direction TB
-    sink["⌀ no Carta home"]:::sink
-  end
-  o0 -->|"consideration_text"| sink
-  o0 -->|"security_id"| sink
-```
-
 **EquityCompensationRepricing [Option]**
 
 ```mermaid
@@ -439,6 +319,120 @@ flowchart LR
   o0 -->|"balance_security_id"| sink
 ```
 
+**EquityCompensationCancellation [Option]**
+
+```mermaid
+flowchart LR
+  classDef adm fill:#e6f4ea,stroke:#34a853,color:#0b3d20;
+  classDef notadm fill:#f1f3f4,stroke:#9aa0a6,color:#5f6368,stroke-dasharray:4 3;
+  classDef carta fill:#e8f0fe,stroke:#1a73e8,color:#0d2b66;
+  classDef sink fill:#fce8e6,stroke:#d93025,color:#5c0d06;
+  subgraph SRC["OCF source objects"]
+    direction TB
+    o0["EquityCompensationCancellation [Option]"]:::adm
+  end
+  subgraph TGT["Carta target objects"]
+    direction TB
+    sink["⌀ no Carta home"]:::sink
+  end
+  o0 -->|"balance_security_id"| sink
+```
+
+**EquityCompensationCancellation [Rsu]**
+
+```mermaid
+flowchart LR
+  classDef adm fill:#e6f4ea,stroke:#34a853,color:#0b3d20;
+  classDef notadm fill:#f1f3f4,stroke:#9aa0a6,color:#5f6368,stroke-dasharray:4 3;
+  classDef carta fill:#e8f0fe,stroke:#1a73e8,color:#0d2b66;
+  classDef sink fill:#fce8e6,stroke:#d93025,color:#5c0d06;
+  subgraph SRC["OCF source objects"]
+    direction TB
+    o0["EquityCompensationCancellation [Rsu]"]:::adm
+  end
+  subgraph TGT["Carta target objects"]
+    direction TB
+    sink["⌀ no Carta home"]:::sink
+  end
+  o0 -->|"balance_security_id"| sink
+```
+
+**EquityCompensationCancellation [Sar]**
+
+```mermaid
+flowchart LR
+  classDef adm fill:#e6f4ea,stroke:#34a853,color:#0b3d20;
+  classDef notadm fill:#f1f3f4,stroke:#9aa0a6,color:#5f6368,stroke-dasharray:4 3;
+  classDef carta fill:#e8f0fe,stroke:#1a73e8,color:#0d2b66;
+  classDef sink fill:#fce8e6,stroke:#d93025,color:#5c0d06;
+  subgraph SRC["OCF source objects"]
+    direction TB
+    o0["EquityCompensationCancellation [Sar]"]:::adm
+  end
+  subgraph TGT["Carta target objects"]
+    direction TB
+    sink["⌀ no Carta home"]:::sink
+  end
+  o0 -->|"balance_security_id"| sink
+```
+
+**EquityCompensationExercise [Option]**
+
+```mermaid
+flowchart LR
+  classDef adm fill:#e6f4ea,stroke:#34a853,color:#0b3d20;
+  classDef notadm fill:#f1f3f4,stroke:#9aa0a6,color:#5f6368,stroke-dasharray:4 3;
+  classDef carta fill:#e8f0fe,stroke:#1a73e8,color:#0d2b66;
+  classDef sink fill:#fce8e6,stroke:#d93025,color:#5c0d06;
+  subgraph SRC["OCF source objects"]
+    direction TB
+    o0["EquityCompensationExercise [Option]"]:::adm
+  end
+  subgraph TGT["Carta target objects"]
+    direction TB
+    sink["⌀ no Carta home"]:::sink
+  end
+  o0 -->|"consideration_text"| sink
+```
+
+**EquityCompensationExercise [Sar]**
+
+```mermaid
+flowchart LR
+  classDef adm fill:#e6f4ea,stroke:#34a853,color:#0b3d20;
+  classDef notadm fill:#f1f3f4,stroke:#9aa0a6,color:#5f6368,stroke-dasharray:4 3;
+  classDef carta fill:#e8f0fe,stroke:#1a73e8,color:#0d2b66;
+  classDef sink fill:#fce8e6,stroke:#d93025,color:#5c0d06;
+  subgraph SRC["OCF source objects"]
+    direction TB
+    o0["EquityCompensationExercise [Sar]"]:::adm
+  end
+  subgraph TGT["Carta target objects"]
+    direction TB
+    sink["⌀ no Carta home"]:::sink
+  end
+  o0 -->|"consideration_text"| sink
+```
+
+**EquityCompensationRelease [Rsu]**
+
+```mermaid
+flowchart LR
+  classDef adm fill:#e6f4ea,stroke:#34a853,color:#0b3d20;
+  classDef notadm fill:#f1f3f4,stroke:#9aa0a6,color:#5f6368,stroke-dasharray:4 3;
+  classDef carta fill:#e8f0fe,stroke:#1a73e8,color:#0d2b66;
+  classDef sink fill:#fce8e6,stroke:#d93025,color:#5c0d06;
+  subgraph SRC["OCF source objects"]
+    direction TB
+    o0["EquityCompensationRelease [Rsu]"]:::adm
+  end
+  subgraph TGT["Carta target objects"]
+    direction TB
+    sink["⌀ no Carta home"]:::sink
+  end
+  o0 -->|"consideration_text"| sink
+```
+
 **StakeholderRelationshipChangeEvent**
 
 ```mermaid
@@ -456,44 +450,6 @@ flowchart LR
     sink["⌀ no Carta home"]:::sink
   end
   o0 -->|"date"| sink
-```
-
-**StockCancellation [Default]**
-
-```mermaid
-flowchart LR
-  classDef adm fill:#e6f4ea,stroke:#34a853,color:#0b3d20;
-  classDef notadm fill:#f1f3f4,stroke:#9aa0a6,color:#5f6368,stroke-dasharray:4 3;
-  classDef carta fill:#e8f0fe,stroke:#1a73e8,color:#0d2b66;
-  classDef sink fill:#fce8e6,stroke:#d93025,color:#5c0d06;
-  subgraph SRC["OCF source objects"]
-    direction TB
-    o0["StockCancellation [Default]"]:::adm
-  end
-  subgraph TGT["Carta target objects"]
-    direction TB
-    sink["⌀ no Carta home"]:::sink
-  end
-  o0 -->|"security_id"| sink
-```
-
-**StockCancellation [Rsa]**
-
-```mermaid
-flowchart LR
-  classDef adm fill:#e6f4ea,stroke:#34a853,color:#0b3d20;
-  classDef notadm fill:#f1f3f4,stroke:#9aa0a6,color:#5f6368,stroke-dasharray:4 3;
-  classDef carta fill:#e8f0fe,stroke:#1a73e8,color:#0d2b66;
-  classDef sink fill:#fce8e6,stroke:#d93025,color:#5c0d06;
-  subgraph SRC["OCF source objects"]
-    direction TB
-    o0["StockCancellation [Rsa]"]:::adm
-  end
-  subgraph TGT["Carta target objects"]
-    direction TB
-    sink["⌀ no Carta home"]:::sink
-  end
-  o0 -->|"security_id"| sink
 ```
 
 **WarrantCancellation**
@@ -535,27 +491,21 @@ flowchart LR
 
 ### EquityCompensationCancellation [Option]
 - balance_security_id: no-destination — kind unmappable
-- **security_id** (OCF-required): no-destination — kind unmappable
 
 ### EquityCompensationCancellation [Rsu]
 - balance_security_id: no-destination — kind unmappable
-- **security_id** (OCF-required): no-destination — kind unmappable
 
 ### EquityCompensationCancellation [Sar]
 - balance_security_id: no-destination — kind unmappable
-- **security_id** (OCF-required): no-destination — kind unmappable
 
 ### EquityCompensationExercise [Option]
 - consideration_text: no-destination — kind unmappable
-- **security_id** (OCF-required): no-destination — kind unmappable
 
 ### EquityCompensationExercise [Sar]
 - consideration_text: no-destination — kind unmappable
-- **security_id** (OCF-required): no-destination — kind unmappable
 
 ### EquityCompensationRelease [Rsu]
 - consideration_text: no-destination — kind unmappable
-- **security_id** (OCF-required): no-destination — kind unmappable
 
 ### EquityCompensationRepricing [Option]
 - **date** (OCF-required): no-destination — kind unmappable
@@ -585,12 +535,6 @@ flowchart LR
 
 ### StakeholderRelationshipChangeEvent
 - **date** (OCF-required): no-destination — kind unmappable
-
-### StockCancellation [Default]
-- **security_id** (OCF-required): no-destination — kind unmappable
-
-### StockCancellation [Rsa]
-- **security_id** (OCF-required): no-destination — kind unmappable
 
 ### StockClass
 - board_approval_date: no-destination — kind unmappable
@@ -646,25 +590,25 @@ A missing root target is therefore not automatically a missing concept.
 3. **86** are object-shaped definitions.
 4. Of those **86**, **54** are support definitions, not standalone objects (**53** nested objects + **1** object-shaped value type), leaving **32** standalone mapping candidates.
 5. **60** support definitions are excluded from standalone mapping: **54** object-shaped support definitions + **6** scalar support types.
-6. We have mapping evidence for **15**: **1** fully mapped and **14** partially mapped (**14** direct executable, **1** type-only, **0** deferred).
-7. **17** standalone candidates have no mapping evidence yet; their inventory role tells us whether that is expected or actionable (**12** report/read-model roll-ups, **2** alternate shapes, **1** CARTA-specific families without OCF sources, **1** workflow/data gaps, **1** actionable gaps, **0** requiring review).
+6. We have mapping evidence for **20**: **7** fully mapped and **13** partially mapped (**19** direct executable, **1** type-only, **0** deferred).
+7. **12** standalone candidates have no mapping evidence yet; their inventory role tells us whether that is expected or actionable (**7** report/read-model roll-ups, **2** alternate shapes, **1** CARTA-specific families without OCF sources, **1** workflow/data gaps, **1** actionable gaps, **0** requiring review).
 
-**Checks:** 139 = 53 non-object + 86 object-shaped; 53 = 47 scalar enum + 6 scalar support; 32 = 15 + 17; 86 = 32 + 54.
+**Checks:** 139 = 53 non-object + 86 object-shaped; 53 = 47 scalar enum + 6 scalar support; 32 = 20 + 12; 86 = 32 + 54.
 
 ### Technical slot diagnostics
 
 | Carta-side dimension | count |
 | --- | ---: |
 | object slots | 588 |
-| defs with direct executable coverage | 14 |
-| direct executable slots | 146 |
+| defs with direct executable coverage | 19 |
+| direct executable slots | 163 |
 | defs with type-only slots | 7 |
 | defs with only type-only coverage | 1 |
 | reusable type-only slots | 34 |
 | implicit constant slots | 3 |
 | deferred slots | 4 |
-| structural child-container slots | 6 |
-| empty slots | 395 |
+| structural child-container slots | 20 |
+| empty slots | 364 |
 
 ### Supporting CARTA definitions excluded from standalone mapping targets (60)
 
@@ -684,10 +628,12 @@ These definitions are packaging/support types, not standalone mapping targets; t
 | `#/$defs/Iso8601CompleteCalendarDate` | owning Carta object properties; not a standalone entity | Reusable calendar-date wrapper, populated through owning object properties. |
 | `#/$defs/Iso8601CompleteCalendarDateTime` | owning Carta object properties; not a standalone entity | Reusable datetime wrapper, populated through owning object properties. |
 
-#### Nested objects with mapped parent coverage (25)
+#### Nested objects with mapped parent coverage (38)
 
 | Carta `$def` | immediate parent(s) |
 | --- | --- |
+| `#/$defs/CertificateCancellationTransaction` | CertificateTransactionItem |
+| `#/$defs/CertificateIssuanceTransaction` | CertificateTransactionItem |
 | `#/$defs/CertificatePrecededBy` | Certificate |
 | `#/$defs/ConvertibleCancellationTransaction` | ConvertibleTransactionItem |
 | `#/$defs/ConvertibleIssuanceTransaction` | ConvertibleTransactionItem |
@@ -696,7 +642,10 @@ These definitions are packaging/support types, not standalone mapping targets; t
 | `#/$defs/ExercisePeriods` | OptionGrant |
 | `#/$defs/Money` | Certificate, CertificateIssuanceTransaction, ConvertibleCancellationTransaction, ConvertibleIssuanceTransaction, ConvertibleNote, OptionGrant, OptionIssuanceTransaction, RestrictedStockAward, RestrictedStockUnit, RestrictedStockUnitSettlement, RsaIssuanceTransaction, SarExerciseTransaction, SarIssuanceTransaction, ShareClass, ShareClassRightsAndPreferences, ShareClassValuation, WarrantIssuanceTransaction |
 | `#/$defs/NoteBlock` | ConvertibleNote |
+| `#/$defs/OptionCancellationTransaction` | OptionTransactionItem |
+| `#/$defs/OptionExerciseTransaction` | OptionTransactionItem |
 | `#/$defs/OptionGrantVestingEvent` | OptionGrant |
+| `#/$defs/OptionIssuanceTransaction` | OptionTransactionItem |
 | `#/$defs/PerformanceCondition` | VestingPeriod |
 | `#/$defs/PrecededBySecurity` | CertificatePrecededBy, RestrictedStockAwardPrecededBy |
 | `#/$defs/PreferredShareClassDetails` | ShareClass |
@@ -704,6 +653,14 @@ These definitions are packaging/support types, not standalone mapping targets; t
 | `#/$defs/RestrictedStockAwardVestingEvent` | RestrictedStockAward |
 | `#/$defs/RestrictedStockUnitSettlement` | RestrictedStockUnit |
 | `#/$defs/RestrictedStockUnitVestingEvent` | RestrictedStockUnit |
+| `#/$defs/RsaCancellationTransaction` | RsaTransactionItem |
+| `#/$defs/RsaIssuanceTransaction` | RsaTransactionItem |
+| `#/$defs/RsuCancellationTransaction` | RsuTransactionItem |
+| `#/$defs/RsuIssuanceTransaction` | RsuTransactionItem |
+| `#/$defs/RsuSettlementTransaction` | RsuTransactionItem |
+| `#/$defs/SarCancellationTransaction` | SarTransactionItem |
+| `#/$defs/SarExerciseTransaction` | SarTransactionItem |
+| `#/$defs/SarIssuanceTransaction` | SarTransactionItem |
 | `#/$defs/ShareClassDividendDetails` | PreferredShareClassDetails |
 | `#/$defs/ShareClassRightsAndPreferences` | PreferredShareClassDetails |
 | `#/$defs/StakeholderAddress` | Stakeholder |
@@ -714,32 +671,19 @@ These definitions are packaging/support types, not standalone mapping targets; t
 | `#/$defs/WarrantIssuanceTransaction` | WarrantTransactionItem |
 | `#/$defs/WarrantTransferTransaction` | WarrantTransactionItem |
 
-#### Nested objects without mapped parent coverage (28)
+#### Nested objects without mapped parent coverage (15)
 
 | Carta `$def` | immediate parent(s) |
 | --- | --- |
 | `#/$defs/Acceleration` | Vesting |
-| `#/$defs/CertificateCancellationTransaction` | CertificateTransactionItem |
-| `#/$defs/CertificateIssuanceTransaction` | CertificateTransactionItem |
 | `#/$defs/Document` | OptionGrantDocuments |
 | `#/$defs/Jurisdiction` | OptionExerciseTaxWithholdingLineItem |
-| `#/$defs/OptionCancellationTransaction` | OptionTransactionItem |
 | `#/$defs/OptionExerciseMoneyMovement` | OptionExercise |
 | `#/$defs/OptionExerciseTaxWithholdingLineItem` | OptionExercise |
-| `#/$defs/OptionExerciseTransaction` | OptionTransactionItem |
-| `#/$defs/OptionIssuanceTransaction` | OptionTransactionItem |
 | `#/$defs/PhantomCancellationTransaction` | PhantomTransactionItem |
 | `#/$defs/PhantomIssuanceTransaction` | PhantomTransactionItem |
 | `#/$defs/PiuCancellationTransaction` | PiuTransactionItem |
 | `#/$defs/PiuIssuanceTransaction` | PiuTransactionItem |
-| `#/$defs/RsaCancellationTransaction` | RsaTransactionItem |
-| `#/$defs/RsaIssuanceTransaction` | RsaTransactionItem |
-| `#/$defs/RsuCancellationTransaction` | RsuTransactionItem |
-| `#/$defs/RsuIssuanceTransaction` | RsuTransactionItem |
-| `#/$defs/RsuSettlementTransaction` | RsuTransactionItem |
-| `#/$defs/SarCancellationTransaction` | SarTransactionItem |
-| `#/$defs/SarExerciseTransaction` | SarTransactionItem |
-| `#/$defs/SarIssuanceTransaction` | SarTransactionItem |
 | `#/$defs/StakeholderCapitalizationTableSummary` | StakeholderGroup |
 | `#/$defs/StakeholderNoteBlockSummary` | StakeholderGroup |
 | `#/$defs/StakeholderOptionPoolSummary` | StakeholderGroup |
@@ -747,7 +691,7 @@ These definitions are packaging/support types, not standalone mapping targets; t
 | `#/$defs/StakeholderWarrantBlockSummary` | StakeholderGroup |
 | `#/$defs/ThresholdDetails` | Interest |
 
-### Standalone candidates requiring inventory detail (17)
+### Standalone candidates requiring inventory detail (12)
 
 The summary above counts these definitions once. The status and reason columns below
 explain whether each is a read-model roll-up, alternate shape, CARTA-specific family
@@ -756,18 +700,13 @@ without an OCF source, workflow/data gap, or actionable mapping candidate.
 | Carta `$def` | status | structural parent(s) | reason |
 | --- | --- | --- | --- |
 | `#/$defs/CapitalizationTableSummary` | report-rollup | — | Carta read-model aggregate; OCF records the underlying leaf facts instead. |
-| `#/$defs/CertificateTransactionItem` | report-rollup | — | Carta read-model aggregate; OCF records the underlying leaf facts instead. |
 | `#/$defs/Corporation` | alternate | — | Unused alternate issuer shape; OCF Issuer maps to Carta Issuer. |
 | `#/$defs/Interest` | vendor-family | — | Carta profits-interest security family has no OCF source object. |
 | `#/$defs/NoteBlockSummary` | report-rollup | — | Carta read-model aggregate; OCF records the underlying leaf facts instead. |
 | `#/$defs/OptionExercise` | workflow-gap | — | Carta exercise-request workflow object; OCF maps the realized transaction instead. |
 | `#/$defs/OptionGrantDocuments` | gap | — | Carta grant-document relationship has no OCF source relationship. |
-| `#/$defs/OptionTransactionItem` | report-rollup | — | Carta read-model aggregate; OCF records the underlying leaf facts instead. |
 | `#/$defs/PhantomTransactionItem` | report-rollup | — | Carta read-model aggregate; OCF records the underlying leaf facts instead. |
 | `#/$defs/PiuTransactionItem` | report-rollup | — | Carta read-model aggregate; OCF records the underlying leaf facts instead. |
-| `#/$defs/RsaTransactionItem` | report-rollup | — | Carta read-model aggregate; OCF records the underlying leaf facts instead. |
-| `#/$defs/RsuTransactionItem` | report-rollup | — | Carta read-model aggregate; OCF records the underlying leaf facts instead. |
-| `#/$defs/SarTransactionItem` | report-rollup | — | Carta read-model aggregate; OCF records the underlying leaf facts instead. |
 | `#/$defs/ShareClassSummary` | report-rollup | — | Carta read-model aggregate; OCF records the underlying leaf facts instead. |
 | `#/$defs/StakeholderGroup` | report-rollup | — | Carta read-model aggregate; OCF records the underlying leaf facts instead. |
 | `#/$defs/Vesting` | alternate | — | Unreachable option-grant vesting shape; mapped OCF vesting uses schedule/event defs. |

@@ -123,12 +123,17 @@ route_by_property:
   exhaustive: true
 
 # shared: fields whose Carta home differs by family carry a per-variant target map
-# { Option/Rsu/Sar: pointer }; all three Carta cancellation txs share the same shape.
+# { Option/Rsu/Sar: pointer or pointer list }; all three Carta cancellation txs share the same shape.
 shared:
   id:                  { kind: unmappable, target: null, reason: ocf-internal }
   comments:            { kind: unmappable, target: null, reason: no-equivalent }
   object_type:         { kind: unmappable, target: null, reason: ocf-internal }
-  security_id:         { kind: unmappable, target: null, reason: ocf-internal }
+  security_id:
+    kind: rename
+    target:
+      Option: "#/$defs/OptionTransactionItem/properties/securityId"
+      Rsu:    "#/$defs/RsuTransactionItem/properties/securityId"
+      Sar:    "#/$defs/SarTransactionItem/properties/securityId"
   balance_security_id: { kind: unmappable, target: null, reason: no-equivalent }
   reason_text:
     kind: computed                 # free text classified into the family's cancellation reason enum
@@ -155,18 +160,21 @@ variants:
     when: [OPTION, OPTION_NSO, OPTION_ISO]
     primary_targets:
       - "#/$defs/OptionCancellationTransaction"
+      - "#/$defs/OptionTransactionItem"
     fields: {}
 
   Rsu:
     when: [RSU]
     primary_targets:
       - "#/$defs/RsuCancellationTransaction"
+      - "#/$defs/RsuTransactionItem"
     fields: {}
 
   Sar:
     when: [CSAR, SSAR]
     primary_targets:
       - "#/$defs/SarCancellationTransaction"
+      - "#/$defs/SarTransactionItem"
     fields: {}
 
  ```
@@ -189,9 +197,10 @@ variants:
   bucket and dropping the prose. It lands on the family's cancellation tx `reason` via
   a per-variant target map, mirroring `date`/`quantity` — and matching the
   `ConvertibleCancellation` / `WarrantCancellation` siblings.
-- **`security_id`** is the join key (`route_by_property.lookup_by.key`); it routes the family,
-  it is not itself a stored Carta field. **`balance_security_id`** (partial-cancel
-  remainder) has no Carta equivalent on any cancellation tx.
+- **`security_id`** is the join key (`route_by_property.lookup_by.key`) and is also copied to the
+  resolved parent `*TransactionItem.securityId` to anchor the cancellation inside that item's
+  `cancellations[]` collection. The cancellation leaf itself still carries no security id.
+  **`balance_security_id`** (partial-cancel remainder) has no Carta equivalent on any cancellation tx.
 - **Lineage asymmetry — why `balance_security_id` stays unmappable here.** A partial
   equity-comp cancellation mints a new balance security in the *same* family — an
   `OptionGrant` / `RestrictedStockUnit` / `SarTransactionItem` — and Carta's

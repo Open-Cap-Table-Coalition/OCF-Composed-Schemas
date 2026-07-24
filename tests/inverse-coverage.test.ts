@@ -14,27 +14,27 @@ describe("Carta inverse coverage", () => {
       totalDefs: 139,
       objectDefs: 86,
       definitionRoleCounts: {
-        direct: 14,
+        direct: 19,
         "type-only": 1,
         deferred: 0,
         "nested-obj": 53,
         "value-type": 1,
-        "report-rollup": 12,
+        "report-rollup": 7,
         alternate: 2,
         "vendor-family": 1,
         "workflow-gap": 1,
         gap: 1,
         review: 0,
       },
-      directSlots: 146,
+      directSlots: 163,
       typeOnlyDefs: 7,
       typeOnlyOnlyDefs: 1,
       typeOnlySlots: 34,
       implicitSlots: 3,
       deferredSlots: 4,
-      structuralSlots: 6,
+      structuralSlots: 20,
       nestedObjDefs: 53,
-      reportRollupDefs: 12,
+      reportRollupDefs: 7,
       curatedValueTypeEntries: 7,
       valueTypeDefs: 1,
       alternateDefs: 2,
@@ -56,6 +56,45 @@ describe("Carta inverse coverage", () => {
       structuralSlots: ["cancellations", "exercises", "issuance", "transfers"],
       emptySlots: [],
     });
+    for (const [name, directSlots, structuralSlots] of [
+      [
+        "CertificateTransactionItem",
+        ["securityId", "securityLabel", "stakeholderId"],
+        ["cancellations", "issuance"],
+      ],
+      [
+        "ConvertibleTransactionItem",
+        ["securityId", "securityLabel", "stakeholderId"],
+        ["cancellations", "issuance"],
+      ],
+      [
+        "OptionTransactionItem",
+        ["securityId", "securityLabel", "stakeholderId"],
+        ["cancellations", "exercises", "issuance"],
+      ],
+      [
+        "RsaTransactionItem",
+        ["securityId", "securityLabel", "stakeholderId"],
+        ["cancellations", "issuance"],
+      ],
+      [
+        "RsuTransactionItem",
+        ["securityId", "securityLabel", "stakeholderId"],
+        ["cancellations", "issuance", "settlements"],
+      ],
+      [
+        "SarTransactionItem",
+        ["securityId", "securityLabel", "stakeholderId"],
+        ["cancellations", "exercises", "issuance"],
+      ],
+    ] as const) {
+      expect(byDef.get(name)).toMatchObject({
+        status: "direct",
+        directSlots,
+        structuralSlots,
+        emptySlots: [],
+      });
+    }
     const transferSlot = inverse.slots.find(
       (slot) => slot.def === "WarrantTransactionItem" && slot.property === "transfers"
     );
@@ -77,8 +116,8 @@ describe("Carta inverse coverage", () => {
     expect(excluded).toHaveLength(60);
     const excludedGroups = groupInverseExcludedRoleRows(excluded);
     expect(excludedGroups.valueTypes).toHaveLength(7);
-    expect(excludedGroups.nestedWithMappedParent).toHaveLength(25);
-    expect(excludedGroups.nestedWithoutMappedParent).toHaveLength(28);
+    expect(excludedGroups.nestedWithMappedParent).toHaveLength(38);
+    expect(excludedGroups.nestedWithoutMappedParent).toHaveLength(15);
     expect(excluded.find((row) => row.name === "Date")).toMatchObject({ role: "value-type" });
     expect(excluded.find((row) => row.name === "VestingSchedule")).toMatchObject({
       role: "nested-obj",
@@ -96,10 +135,10 @@ describe("Carta inverse coverage", () => {
       otherNonObjectDefs: 0,
       objectDefs: 86,
       standaloneCandidateDefs: 32,
-      mappedDefs: 15,
-      fullyMappedDefs: 1,
-      partiallyMappedDefs: 14,
-      unmappedCandidateDefs: 17,
+      mappedDefs: 20,
+      fullyMappedDefs: 7,
+      partiallyMappedDefs: 13,
+      unmappedCandidateDefs: 12,
       nonEntityDefs: 60,
       nonEntityObjectDefs: 54,
       scalarValueTypeDefs: 6,

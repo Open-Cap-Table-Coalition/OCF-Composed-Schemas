@@ -141,14 +141,19 @@ route_by_property:
   exhaustive: true
 
 # shared: every source property. Fields whose Carta home differs by family carry
-# a per-variant target map { Rsu/Option/Sar: pointer }. Only Rsu has a release
+# a per-variant target map { Rsu/Option/Sar: pointer or pointer list }. Only Rsu has a release
 # surface (the RSU-settlement defs); Option/Sar are null because no Carta release
 # transaction exists for those families.
 shared:
   id:                 { kind: unmappable, target: null, reason: ocf-internal }
   comments:           { kind: unmappable, target: null, reason: no-equivalent }
   object_type:        { kind: unmappable, target: null, reason: ocf-internal }
-  security_id:        { kind: unmappable, target: null, reason: ocf-internal }
+  security_id:
+    kind: rename
+    target:
+      Rsu:    "#/$defs/RsuTransactionItem/properties/securityId"
+      Option: null
+      Sar:    null
   consideration_text: { kind: unmappable, target: null, reason: no-equivalent }
   date:
     kind: rename
@@ -187,6 +192,7 @@ variants:
     when: [RSU]
     primary_targets:
       - "#/$defs/RsuSettlementTransaction"
+      - "#/$defs/RsuTransactionItem"
       - "#/$defs/RestrictedStockUnitSettlement"
     fields: {}
 
@@ -208,8 +214,9 @@ variants:
   instrument family fixed at issuance, but the record itself carries no discriminator —
   only `security_id`. An importer must first resolve `compensation_type` from the joined
   `EquityCompensationIssuance` (the two-pass requirement,
-  docs/polymorphic-transaction-routing.md §2.2), then route. `security_id` is the
-  `route_by_property.lookup_by.key` join key, not a stored Carta field.
+  docs/polymorphic-transaction-routing.md §2.2), then route. For the valid RSU route,
+  `security_id` is both the `route_by_property.lookup_by.key` and the parent transaction item's
+  stored placement key; Option/SAR remain null because they have no release surface.
 - **Only RSUs release.** "Release" here means a vested equity-comp security settling
   into shares. Carta models this *only* as RSU settlement — there is no
   `…ReleaseTransaction` for options or SARs — so the **Option** and **Sar** variants

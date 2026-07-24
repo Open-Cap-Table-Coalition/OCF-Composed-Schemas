@@ -195,9 +195,10 @@ Source: [`EquityCompensationIssuance.schema.json`](./EquityCompensationIssuance.
 # routing: route_by_property (local) — compensation_type fans this one OCF
 # transaction out to Carta's Option / Rsu / Sar instrument families.
 # shared: fields common to every variant. A field whose Carta home differs by
-# variant carries a per-variant target map { Option/Rsu/Sar: pointer|null } — so
+# variant carries a per-variant target map { Option/Rsu/Sar: pointer or pointer list|null } — so
 # RSU/SAR name their own objects instead of borrowing the Option family. `null`
-# means the field has no home in that variant (SAR has no Carta security object).
+# means the field has no home in that variant (for example, security-object-only
+# fields have no Carta home for SAR).
 status: complete
 
 route_by_property:
@@ -217,21 +218,33 @@ shared:
   security_id:
     kind: rename
     target:
-      Option: "#/$defs/OptionGrant/properties/securityId"
-      Rsu:    "#/$defs/RestrictedStockUnit/properties/securityId"
-      Sar:    null # SAR has no first-class Carta security object
+      Option:
+        - "#/$defs/OptionTransactionItem/properties/securityId"
+        - "#/$defs/OptionGrant/properties/securityId"
+      Rsu:
+        - "#/$defs/RsuTransactionItem/properties/securityId"
+        - "#/$defs/RestrictedStockUnit/properties/securityId"
+      Sar: "#/$defs/SarTransactionItem/properties/securityId"
   custom_id:
     kind: rename
     target:
-      Option: "#/$defs/OptionGrant/properties/securityLabel"
-      Rsu:    "#/$defs/RestrictedStockUnit/properties/securityLabel"
-      Sar:    null
+      Option:
+        - "#/$defs/OptionTransactionItem/properties/securityLabel"
+        - "#/$defs/OptionGrant/properties/securityLabel"
+      Rsu:
+        - "#/$defs/RsuTransactionItem/properties/securityLabel"
+        - "#/$defs/RestrictedStockUnit/properties/securityLabel"
+      Sar: "#/$defs/SarTransactionItem/properties/securityLabel"
   stakeholder_id:
     kind: rename
     target:
-      Option: "#/$defs/OptionGrant/properties/stakeholderId"
-      Rsu:    "#/$defs/RestrictedStockUnit/properties/stakeholderId"
-      Sar:    null
+      Option:
+        - "#/$defs/OptionTransactionItem/properties/stakeholderId"
+        - "#/$defs/OptionGrant/properties/stakeholderId"
+      Rsu:
+        - "#/$defs/RsuTransactionItem/properties/stakeholderId"
+        - "#/$defs/RestrictedStockUnit/properties/stakeholderId"
+      Sar: "#/$defs/SarTransactionItem/properties/stakeholderId"
   board_approval_date:
     kind: rename
     target:
@@ -291,6 +304,7 @@ variants:
     when: [OPTION, OPTION_NSO, OPTION_ISO]
     primary_targets:
       - "#/$defs/OptionIssuanceTransaction"
+      - "#/$defs/OptionTransactionItem"
       - "#/$defs/OptionGrant"
     fields:
       compensation_type:
@@ -312,6 +326,7 @@ variants:
     when: [RSU]
     primary_targets:
       - "#/$defs/RsuIssuanceTransaction"
+      - "#/$defs/RsuTransactionItem"
       - "#/$defs/RestrictedStockUnit"
     fields:
       compensation_type:            { kind: unmappable, target: null, reason: no-equivalent }
@@ -326,6 +341,7 @@ variants:
     when: [CSAR, SSAR]
     primary_targets:
       - "#/$defs/SarIssuanceTransaction"
+      - "#/$defs/SarTransactionItem"
     fields:
       compensation_type:            { kind: unmappable, target: null, reason: no-equivalent }
       option_grant_type:            { kind: unmappable, target: null, reason: no-equivalent }
@@ -342,14 +358,16 @@ variants:
 - **Polymorphic by `compensation_type`.** OCF carries option grants, RSUs, and SARs in this
   one transaction; Carta splits them into dedicated families. This mapping uses the
   `route_by_property:` convention (see [`docs/polymorphic-transaction-routing.md`](../../../docs/polymorphic-transaction-routing.md)):
-  `OPTION*` → `OptionIssuanceTransaction` + `OptionGrant`; `RSU` → `RsuIssuanceTransaction` +
-  `RestrictedStockUnit`; `CSAR`/`SSAR` → `SarIssuanceTransaction`. The three `when:` sets
+  `OPTION*` → `OptionIssuanceTransaction` + `OptionTransactionItem` + `OptionGrant`; `RSU` →
+  `RsuIssuanceTransaction` + `RsuTransactionItem` + `RestrictedStockUnit`; `CSAR`/`SSAR` →
+  `SarIssuanceTransaction` + `SarTransactionItem`. The three `when:` sets
   partition all six `CompensationType` values (`exhaustive: true`).
 - **`shared:` fields use per-variant target maps where the home diverges.** Transaction-level
   fields (`date`/`stock_plan_id`/`stock_class_id`/`quantity`/`vesting_template_id`) each land on the
   resolved family's `*IssuanceTransaction`; security-level identity fields
-  (`security_id`/`custom_id`/`stakeholder_id`/`board_approval_date`/`vestings`) land on `OptionGrant`
-  vs `RestrictedStockUnit`. Each such field is a `target: { Option/Rsu/Sar: pointer|null }` map; the
+  (`security_id`/`custom_id`/`stakeholder_id`/`board_approval_date`/`vestings`) land on the
+  enclosing `*TransactionItem` and, where present, `OptionGrant` vs `RestrictedStockUnit`. Each
+  identity field is a `target: { Option/Rsu/Sar: pointer or pointer-list|null }` map; the
   validator enforces the keys stay in sync with the variant set (every variant present, none
   unknown). The remaining `shared:` fields are uniform (all `unmappable`).
 - **Per-variant divergence.** `exercise_price` is Option-only; OCF `base_price` → Carta
@@ -358,10 +376,10 @@ variants:
   first window under `first_termination_window`; RSUs settle (no exercise price, no expiration).
   `option_grant_type` (OCF-deprecated) and `compensation_type` both target `stockOptionType`;
   precedence is importer logic.
-- **SAR has no Carta security object.** Carta models SARs with only a `SarIssuanceTransaction`
-  (no `SarGrant`/security `$def`), so the five security-level identity fields are `null` in the
-  `Sar` column of their target maps — genuinely no home, shown as `✗ unmappable` for SAR in the
-  report rather than borrowing an Option pointer.
+- **SAR has no Carta security object.** Carta models SARs with a `SarIssuanceTransaction` and
+  `SarTransactionItem`, but no `SarGrant`/security `$def`. The identity fields therefore land on
+  the transaction item (the parent history container), while security-object-only fields such as
+  `board_approval_date`, `vestings`, and `vesting_start_date` remain `null` for SAR.
 - **Lossy by Carta's design.** CSAR vs SSAR collapse to one `SarIssuanceTransaction` (no
   settlement-mode field). `OPTION` (unspecified) → `OTHER`.
 - **`vesting_start_date` → Carta `vestingStartDate`.** The v2 model splits the old

@@ -120,14 +120,19 @@ route_by_property:
       on_property: issuance_type
   exhaustive: true
 
-# shared: every source property. date/quantity land on a different Carta
+# shared: every source property. security_id also anchors the parent transaction item;
+# date/quantity land on a different Carta
 # cancellation tx per family, so they carry a per-variant target map
-# { Rsa: pointer, Default: pointer }.
+# { Rsa: pointer or pointer list, Default: pointer or pointer list }.
 shared:
   id:                  { kind: unmappable, target: null, reason: ocf-internal }
   comments:            { kind: unmappable, target: null, reason: no-equivalent }
   object_type:         { kind: unmappable, target: null, reason: ocf-internal }
-  security_id:         { kind: unmappable, target: null, reason: ocf-internal }
+  security_id:
+    kind: rename
+    target:
+      Rsa: "#/$defs/RsaTransactionItem/properties/securityId"
+      Default: "#/$defs/CertificateTransactionItem/properties/securityId"
   reason_text:
     kind: computed                 # free text classified into the family's cancellation reason enum
     target:
@@ -155,12 +160,14 @@ variants:
     when: [RSA]
     primary_targets:
       - "#/$defs/RsaCancellationTransaction"
+      - "#/$defs/RsaTransactionItem"
     fields: {}
 
   Default:
     when: [FOUNDERS_STOCK]
     primary_targets:
       - "#/$defs/CertificateCancellationTransaction"
+      - "#/$defs/CertificateTransactionItem"
     fields: {}
 
  ```
@@ -187,8 +194,9 @@ variants:
   prose. It lands on the resolved family's cancellation tx `reason` via a per-variant
   target map, mirroring `date`/`quantity` — and matching the `ConvertibleCancellation`
   / `WarrantCancellation` siblings, which map the identical field the same way.
-- **`security_id`** is the join key (`route_by_property.lookup_by.key`); it routes the family,
-  it is not itself a stored Carta field.
+- **`security_id`** is the join key (`route_by_property.lookup_by.key`) and is also copied to the
+  resolved parent `*TransactionItem.securityId` to anchor the cancellation inside that item's
+  `cancellations[]` collection. The cancellation leaf itself still carries no security id.
 - **`balance_security_id` round-trips as lineage (kind `computed`).** The remainder
   security minted by a partial cancellation is itself a stock security —
   `RestrictedStockAward` for the RSA family, `Certificate` for the default family — and
