@@ -78,6 +78,30 @@ type-only slots.
 | review required | 0 |
 | **total** | **86** |
 
+### Intentionally excluded from inverse gap candidates (16)
+
+Value types are reusable non-entities; nested types are covered through a directly mapped
+Carta parent. They remain in the role accounting above, but are not inverse gaps.
+
+| role | Carta `$def` | covered through | reason |
+| --- | --- | --- | --- |
+| value-type | `#/$defs/Date` | type correspondence: Iso8601CompleteCalendarDate, Iso8601CompleteCalendarDateTime | Partial-date value helper; OCF Date maps to the Iso8601 date wrappers. |
+| value-type | `#/$defs/Decimal` | owning Carta object properties; not a standalone entity | Reusable scalar value wrapper, not a standalone Carta entity. |
+| value-type | `#/$defs/Iso3166Set1Alpha3Code` | owning Carta object properties; not a standalone entity | Reusable scalar value wrapper, not a standalone Carta entity. |
+| value-type | `#/$defs/Iso3166Set2Code` | owning Carta object properties; not a standalone entity | Reusable scalar value wrapper, not a standalone Carta entity. |
+| value-type | `#/$defs/Iso4217CurrencyAlphaCode` | owning Carta object properties; not a standalone entity | Reusable scalar value wrapper, not a standalone Carta entity. |
+| value-type | `#/$defs/Iso8601CompleteCalendarDate` | owning Carta object properties; not a standalone entity | Reusable calendar-date wrapper, populated through owning object properties. |
+| value-type | `#/$defs/Iso8601CompleteCalendarDateTime` | owning Carta object properties; not a standalone entity | Reusable datetime wrapper, populated through owning object properties. |
+| nested-covered | `#/$defs/DividendDetails` | ShareClassDividendDetails | Structural child of directly mapped parent(s). |
+| nested-covered | `#/$defs/Exercise` | OptionGrant | Structural child of directly mapped parent(s). |
+| nested-covered | `#/$defs/PerformanceCondition` | VestingPeriod | Structural child of directly mapped parent(s). |
+| nested-covered | `#/$defs/PrecededBySecurity` | CertificatePrecededBy, RestrictedStockAwardPrecededBy | Structural child of directly mapped parent(s). |
+| nested-covered | `#/$defs/PreferredShareClassDetails` | ShareClass | Structural child of directly mapped parent(s). |
+| nested-covered | `#/$defs/RestrictedStockAwardVestingEvent` | RestrictedStockAward | Structural child of directly mapped parent(s). |
+| nested-covered | `#/$defs/RestrictedStockUnitVestingEvent` | RestrictedStockUnit | Structural child of directly mapped parent(s). |
+| nested-covered | `#/$defs/ShareClassDividendDetails` | PreferredShareClassDetails | Structural child of directly mapped parent(s). |
+| nested-covered | `#/$defs/VestingSchedule` | OptionGrant, RestrictedStockAward, RestrictedStockUnit | Structural child of directly mapped parent(s). |
+
 ## Hub flow — per related group (what flows in vs is lost, both sides)
 
 One diagram per OCF object — each polymorphic flavor (`Object [Variant]`) fully separate — with

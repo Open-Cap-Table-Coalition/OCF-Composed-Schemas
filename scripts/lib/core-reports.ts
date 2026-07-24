@@ -13,6 +13,7 @@ import {
   buildInverseCoverage,
   CARTA_DEF_STATUS_LABELS,
   CARTA_DEF_STATUS_ORDER,
+  excludedInverseRoleRows,
 } from "./inverse-coverage.js";
 import {
   FlowRow,
@@ -272,14 +273,31 @@ export function renderGapReport(d: Derived): string {
     ""
   );
 
+  const excludedDefinitions = excludedInverseRoleRows(d.corpus, inverse);
+  lines.push(
+    `### Intentionally excluded from inverse gap candidates (${excludedDefinitions.length})`,
+    "",
+    "Value types are reusable non-entities; nested types are covered through a directly mapped",
+    "Carta parent. They remain in the role accounting above, but are not inverse gaps.",
+    "The nested-parent column names the Carta object(s) that provide their coverage.",
+    "",
+    "| role | Carta `$def` | covered through | reason |",
+    "| --- | --- | --- | --- |"
+  );
+  for (const row of excludedDefinitions)
+    lines.push(`| ${row.role} | \`#/$defs/${row.name}\` | ${row.coveredThrough} | ${row.reason} |`);
+  lines.push("");
+
   const rawUntargeted = inverse.defs.filter(
-    (row) => !["direct", "type-only", "deferred"].includes(row.status)
+    (row) =>
+      !["direct", "type-only", "deferred", "value-type", "nested-covered"].includes(row.status)
   );
   lines.push(
-    `### Definitions without direct executable coverage (${rawUntargeted.length})`,
+    `### Definitions requiring role follow-up (${rawUntargeted.length})`,
     "",
-    "These are definition-level diagnostics. Use the status and reason columns to distinguish",
-    "nested coverage, derived containers, alternate schema shapes, and actual inverse candidates.",
+    "These definitions are not direct executable roots and are not value-type or nested-type",
+    "exclusions. Use the status and reason columns to distinguish derived containers, alternate",
+    "schema shapes, and actual inverse candidates.",
     "",
     "| Carta `$def` | status | structural parent(s) | reason |",
     "| --- | --- | --- | --- |"

@@ -1,5 +1,5 @@
 import { loadGreenCorpus } from "../scripts/lib/core-corpus.js";
-import { buildInverseCoverage } from "../scripts/lib/inverse-coverage.js";
+import { buildInverseCoverage, excludedInverseRoleRows } from "../scripts/lib/inverse-coverage.js";
 
 describe("Carta inverse coverage", () => {
   it("keeps slot evidence and definition roles in separate dimensions", async () => {
@@ -44,6 +44,14 @@ describe("Carta inverse coverage", () => {
     expect(byDef.get("OptionGrantDocuments")?.status).toBe("gap");
     expect(corpus.coveragePolicy.cartaDefs.get("Iso8601CompleteCalendarDateTime")).toMatchObject({
       role: "value-type",
+    });
+
+    const excluded = excludedInverseRoleRows(corpus, inverse);
+    expect(excluded).toHaveLength(16);
+    expect(excluded.find((row) => row.name === "Date")).toMatchObject({ role: "value-type" });
+    expect(excluded.find((row) => row.name === "VestingSchedule")).toMatchObject({
+      role: "nested-covered",
+      coveredThrough: "OptionGrant, RestrictedStockAward, RestrictedStockUnit",
     });
   });
 

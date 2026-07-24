@@ -28,6 +28,8 @@ import {
   buildInverseCoverage,
   CARTA_DEF_STATUS_LABELS,
   CARTA_DEF_STATUS_ORDER,
+  excludedInverseRoleRows,
+  InverseExcludedRoleRow,
   InverseCoverageLedger,
 } from "./lib/inverse-coverage.js";
 import {
@@ -148,7 +150,16 @@ export function renderBidiDoc(d: Derived): string {
     }
   }
 
-  return render(ocf, carta, inverse, memberGroups, ocfLost, cartaUnfilled, constFills);
+  return render(
+    ocf,
+    carta,
+    inverse,
+    excludedInverseRoleRows(d.corpus, inverse),
+    memberGroups,
+    ocfLost,
+    cartaUnfilled,
+    constFills
+  );
 }
 
 /** Derive (rich profile) and write docs/core-bidirectional-flow.md. */
@@ -177,6 +188,7 @@ function render(
     }
   >,
   inverse: InverseCoverageLedger,
+  excludedDefinitions: InverseExcludedRoleRow[],
   memberGroups: EntityGroup[],
   ocfLost: Map<string, string[]>,
   cartaUnfilled: Map<string, string[]>,
@@ -268,6 +280,17 @@ function render(
         `| ${CARTA_DEF_STATUS_LABELS[status]} | ${inverse.metrics.definitionRoleCounts[status]} |`
     ),
     `| **total** | **${inverse.metrics.objectDefs}** |`,
+    "",
+    `### Intentionally excluded from inverse gap candidates (${excludedDefinitions.length})`,
+    "",
+    "Value types are reusable non-entities; nested types are covered through a directly mapped",
+    "Carta parent. They remain in the role accounting above, but are not inverse gaps.",
+    "",
+    "| role | Carta `$def` | covered through | reason |",
+    "| --- | --- | --- | --- |",
+    ...excludedDefinitions.map(
+      (row) => `| ${row.role} | \`#/$defs/${row.name}\` | ${row.coveredThrough} | ${row.reason} |`
+    ),
     "",
     "## Hub flow — per related group (what flows in vs is lost, both sides)",
     "",

@@ -685,10 +685,36 @@ type-only slots.
 | review required | 0 |
 | **total** | **86** |
 
-### Definitions without direct executable coverage (41)
+### Intentionally excluded from inverse gap candidates (16)
 
-These are definition-level diagnostics. Use the status and reason columns to distinguish
-nested coverage, derived containers, alternate schema shapes, and actual inverse candidates.
+Value types are reusable non-entities; nested types are covered through a directly mapped
+Carta parent. They remain in the role accounting above, but are not inverse gaps.
+The nested-parent column names the Carta object(s) that provide their coverage.
+
+| role | Carta `$def` | covered through | reason |
+| --- | --- | --- | --- |
+| value-type | `#/$defs/Date` | type correspondence: Iso8601CompleteCalendarDate, Iso8601CompleteCalendarDateTime | Partial-date value helper; OCF Date maps to the Iso8601 date wrappers. |
+| value-type | `#/$defs/Decimal` | owning Carta object properties; not a standalone entity | Reusable scalar value wrapper, not a standalone Carta entity. |
+| value-type | `#/$defs/Iso3166Set1Alpha3Code` | owning Carta object properties; not a standalone entity | Reusable scalar value wrapper, not a standalone Carta entity. |
+| value-type | `#/$defs/Iso3166Set2Code` | owning Carta object properties; not a standalone entity | Reusable scalar value wrapper, not a standalone Carta entity. |
+| value-type | `#/$defs/Iso4217CurrencyAlphaCode` | owning Carta object properties; not a standalone entity | Reusable scalar value wrapper, not a standalone Carta entity. |
+| value-type | `#/$defs/Iso8601CompleteCalendarDate` | owning Carta object properties; not a standalone entity | Reusable calendar-date wrapper, populated through owning object properties. |
+| value-type | `#/$defs/Iso8601CompleteCalendarDateTime` | owning Carta object properties; not a standalone entity | Reusable datetime wrapper, populated through owning object properties. |
+| nested-covered | `#/$defs/DividendDetails` | ShareClassDividendDetails | Structural child of directly mapped parent(s). |
+| nested-covered | `#/$defs/Exercise` | OptionGrant | Structural child of directly mapped parent(s). |
+| nested-covered | `#/$defs/PerformanceCondition` | VestingPeriod | Structural child of directly mapped parent(s). |
+| nested-covered | `#/$defs/PrecededBySecurity` | CertificatePrecededBy, RestrictedStockAwardPrecededBy | Structural child of directly mapped parent(s). |
+| nested-covered | `#/$defs/PreferredShareClassDetails` | ShareClass | Structural child of directly mapped parent(s). |
+| nested-covered | `#/$defs/RestrictedStockAwardVestingEvent` | RestrictedStockAward | Structural child of directly mapped parent(s). |
+| nested-covered | `#/$defs/RestrictedStockUnitVestingEvent` | RestrictedStockUnit | Structural child of directly mapped parent(s). |
+| nested-covered | `#/$defs/ShareClassDividendDetails` | PreferredShareClassDetails | Structural child of directly mapped parent(s). |
+| nested-covered | `#/$defs/VestingSchedule` | OptionGrant, RestrictedStockAward, RestrictedStockUnit | Structural child of directly mapped parent(s). |
+
+### Definitions requiring role follow-up (31)
+
+These definitions are not direct executable roots and are not value-type or nested-type
+exclusions. Use the status and reason columns to distinguish derived containers, alternate
+schema shapes, and actual inverse candidates.
 
 | Carta `$def` | status | structural parent(s) | reason |
 | --- | --- | --- | --- |
@@ -696,9 +722,6 @@ nested coverage, derived containers, alternate schema shapes, and actual inverse
 | `#/$defs/CapitalizationTableSummary` | report-rollup | — | Carta read-model aggregate; OCF records the underlying leaf facts instead. |
 | `#/$defs/CertificateTransactionItem` | report-rollup | — | Carta read-model aggregate; OCF records the underlying leaf facts instead. |
 | `#/$defs/Corporation` | alternate | — | Unused alternate issuer shape; OCF Issuer maps to Carta Issuer. |
-| `#/$defs/Date` | value-type | — | Partial-date value helper; OCF Date maps to the Iso8601 date wrappers. |
-| `#/$defs/DividendDetails` | nested-covered | ShareClassDividendDetails | — |
-| `#/$defs/Exercise` | nested-covered | OptionGrant | — |
 | `#/$defs/Interest` | vendor-family | — | Carta profits-interest security family has no OCF source object. |
 | `#/$defs/Jurisdiction` | workflow-gap | — | Carta tax-withholding jurisdiction; OCF address/exemption jurisdictions are different concepts. |
 | `#/$defs/NoteBlockSummary` | report-rollup | — | Carta read-model aggregate; OCF records the underlying leaf facts instead. |
@@ -707,21 +730,15 @@ nested coverage, derived containers, alternate schema shapes, and actual inverse
 | `#/$defs/OptionExerciseTaxWithholdingLineItem` | workflow-gap | — | Nested Carta tax-withholding workflow data has no OCF source. |
 | `#/$defs/OptionGrantDocuments` | gap | — | Carta grant-document relationship has no OCF source relationship. |
 | `#/$defs/OptionTransactionItem` | report-rollup | — | Carta read-model aggregate; OCF records the underlying leaf facts instead. |
-| `#/$defs/PerformanceCondition` | nested-covered | VestingPeriod | — |
 | `#/$defs/PhantomCancellationTransaction` | vendor-family | — | Carta phantom-equity transaction family has no OCF route. |
 | `#/$defs/PhantomIssuanceTransaction` | vendor-family | — | Carta phantom-equity transaction family has no OCF route. |
 | `#/$defs/PhantomTransactionItem` | report-rollup | — | Carta read-model aggregate; OCF records the underlying leaf facts instead. |
 | `#/$defs/PiuCancellationTransaction` | vendor-family | — | Carta profits-interest-unit transaction family has no OCF route. |
 | `#/$defs/PiuIssuanceTransaction` | vendor-family | — | Carta profits-interest-unit transaction family has no OCF route. |
 | `#/$defs/PiuTransactionItem` | report-rollup | — | Carta read-model aggregate; OCF records the underlying leaf facts instead. |
-| `#/$defs/PrecededBySecurity` | nested-covered | CertificatePrecededBy, RestrictedStockAwardPrecededBy | — |
-| `#/$defs/PreferredShareClassDetails` | nested-covered | ShareClass | — |
-| `#/$defs/RestrictedStockAwardVestingEvent` | nested-covered | RestrictedStockAward | — |
-| `#/$defs/RestrictedStockUnitVestingEvent` | nested-covered | RestrictedStockUnit | — |
 | `#/$defs/RsaTransactionItem` | report-rollup | — | Carta read-model aggregate; OCF records the underlying leaf facts instead. |
 | `#/$defs/RsuTransactionItem` | report-rollup | — | Carta read-model aggregate; OCF records the underlying leaf facts instead. |
 | `#/$defs/SarTransactionItem` | report-rollup | — | Carta read-model aggregate; OCF records the underlying leaf facts instead. |
-| `#/$defs/ShareClassDividendDetails` | nested-covered | PreferredShareClassDetails | — |
 | `#/$defs/ShareClassSummary` | report-rollup | — | Carta read-model aggregate; OCF records the underlying leaf facts instead. |
 | `#/$defs/StakeholderCapitalizationTableSummary` | report-rollup | — | Carta read-model aggregate; OCF records the underlying leaf facts instead. |
 | `#/$defs/StakeholderGroup` | report-rollup | — | Carta read-model aggregate; OCF records the underlying leaf facts instead. |
@@ -731,7 +748,6 @@ nested coverage, derived containers, alternate schema shapes, and actual inverse
 | `#/$defs/StakeholderWarrantBlockSummary` | report-rollup | — | Carta read-model aggregate; OCF records the underlying leaf facts instead. |
 | `#/$defs/ThresholdDetails` | vendor-family | — | Nested profits-interest threshold details have no OCF source. |
 | `#/$defs/Vesting` | alternate | — | Unreachable option-grant vesting shape; mapped OCF vesting uses schedule/event defs. |
-| `#/$defs/VestingSchedule` | nested-covered | OptionGrant, RestrictedStockAward, RestrictedStockUnit | — |
 | `#/$defs/WarrantBlockSummary` | report-rollup | — | Carta read-model aggregate; OCF records the underlying leaf facts instead. |
 
 ### Reusable and schema-aware type correspondences (8 selected examples)

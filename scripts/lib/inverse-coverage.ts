@@ -137,6 +137,13 @@ export interface InverseCoverageLedger {
   candidates: CartaDefCoverage[];
 }
 
+export interface InverseExcludedRoleRow {
+  role: "value-type" | "nested-covered";
+  name: string;
+  coveredThrough: string;
+  reason: string;
+}
+
 export function isCartaObjectLike(def: unknown): boolean {
   if (!isPlainObject(def) || !isPlainObject(def.properties)) return false;
   const keys = Object.keys(def.properties);
@@ -502,4 +509,43 @@ export function buildInverseCoverage(corpus: Corpus): InverseCoverageLedger {
     metrics,
     candidates: candidates.sort((a, b) => a.name.localeCompare(b.name)),
   };
+}
+
+/**
+ * Return the definitions intentionally omitted from inverse-gap follow-up.
+ * Value-type policy entries include scalar wrappers that are not object-like;
+ * nested rows name the directly mapped Carta parents that structurally cover them.
+ */
+export function excludedInverseRoleRows(
+  corpus: Corpus,
+  inverse: InverseCoverageLedger
+): InverseExcludedRoleRow[] {
+  const rows: InverseExcludedRoleRow[] = [];
+  for (const [name, entry] of [...corpus.coveragePolicy.cartaDefs.entries()]
+    .filter(([, policy]) => policy.role === "value-type")
+    .sort(([a], [b]) => a.localeCompare(b))) {
+    const correspondence = inverse.typeCorrespondences
+      .filter((row) => row.sourceType === name)
+      .map((row) => row.targetType)
+      .sort();
+    rows.push({
+      role: "value-type",
+      name,
+      coveredThrough: correspondence.length
+        ? `type correspondence: ${correspondence.join(", ")}`
+        : "owning Carta object properties; not a standalone entity",
+      reason: entry.reason,
+    });
+  }
+  for (const row of inverse.defs
+    .filter((definition) => definition.status === "nested-covered")
+    .sort((a, b) => a.name.localeCompare(b.name))) {
+    rows.push({
+      role: "nested-covered",
+      name: row.name,
+      coveredThrough: row.structuralParents.join(", ") || "—",
+      reason: "Structural child of directly mapped parent(s).",
+    });
+  }
+  return rows;
 }
