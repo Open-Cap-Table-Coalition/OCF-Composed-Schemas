@@ -164,6 +164,27 @@ fields:
       OTHER: OTHER
 ```
 
+## Ask a mapping question
+
+Use a link below to open a prefilled GitHub issue. The issue can be copied into the auditable checklist in `## Notes / open questions`.
+
+<details>
+<summary>Open a prefilled issue for a property</summary>
+
+<!-- mapping-question-links:start -->
+| Source property | Action |
+| --- | --- |
+| _(mapping-level)_ | [💬 Ask a question](https://github.com/Open-Cap-Table-Coalition/OCF-Composed-Schemas/issues/new?template=mapping-question.yml&mapping_file=objects%2Ftransactions%2Fchange_event%2FStakeholderRelationshipChangeEvent.mapping.md&source_url=https%3A%2F%2Fgithub.com%2FOpen-Cap-Table-Coalition%2FOCF-Composed-Schemas%2Fblob%2Fmain%2Fobjects%2Ftransactions%2Fchange_event%2FStakeholderRelationshipChangeEvent.mapping.md&title=%5BMapping+question%5D+StakeholderRelationshipChangeEvent) |
+| `id` | [💬 Ask a question](https://github.com/Open-Cap-Table-Coalition/OCF-Composed-Schemas/issues/new?template=mapping-question.yml&mapping_file=objects%2Ftransactions%2Fchange_event%2FStakeholderRelationshipChangeEvent.mapping.md&source_url=https%3A%2F%2Fgithub.com%2FOpen-Cap-Table-Coalition%2FOCF-Composed-Schemas%2Fblob%2Fmain%2Fobjects%2Ftransactions%2Fchange_event%2FStakeholderRelationshipChangeEvent.mapping.md&title=%5BMapping+question%5D+StakeholderRelationshipChangeEvent%3A+id&property_path=id) |
+| `comments` | [💬 Ask a question](https://github.com/Open-Cap-Table-Coalition/OCF-Composed-Schemas/issues/new?template=mapping-question.yml&mapping_file=objects%2Ftransactions%2Fchange_event%2FStakeholderRelationshipChangeEvent.mapping.md&source_url=https%3A%2F%2Fgithub.com%2FOpen-Cap-Table-Coalition%2FOCF-Composed-Schemas%2Fblob%2Fmain%2Fobjects%2Ftransactions%2Fchange_event%2FStakeholderRelationshipChangeEvent.mapping.md&title=%5BMapping+question%5D+StakeholderRelationshipChangeEvent%3A+comments&property_path=comments) |
+| `object_type` | [💬 Ask a question](https://github.com/Open-Cap-Table-Coalition/OCF-Composed-Schemas/issues/new?template=mapping-question.yml&mapping_file=objects%2Ftransactions%2Fchange_event%2FStakeholderRelationshipChangeEvent.mapping.md&source_url=https%3A%2F%2Fgithub.com%2FOpen-Cap-Table-Coalition%2FOCF-Composed-Schemas%2Fblob%2Fmain%2Fobjects%2Ftransactions%2Fchange_event%2FStakeholderRelationshipChangeEvent.mapping.md&title=%5BMapping+question%5D+StakeholderRelationshipChangeEvent%3A+object_type&property_path=object_type) |
+| `date` | [💬 Ask a question](https://github.com/Open-Cap-Table-Coalition/OCF-Composed-Schemas/issues/new?template=mapping-question.yml&mapping_file=objects%2Ftransactions%2Fchange_event%2FStakeholderRelationshipChangeEvent.mapping.md&source_url=https%3A%2F%2Fgithub.com%2FOpen-Cap-Table-Coalition%2FOCF-Composed-Schemas%2Fblob%2Fmain%2Fobjects%2Ftransactions%2Fchange_event%2FStakeholderRelationshipChangeEvent.mapping.md&title=%5BMapping+question%5D+StakeholderRelationshipChangeEvent%3A+date&property_path=date) |
+| `stakeholder_id` | [💬 Ask a question](https://github.com/Open-Cap-Table-Coalition/OCF-Composed-Schemas/issues/new?template=mapping-question.yml&mapping_file=objects%2Ftransactions%2Fchange_event%2FStakeholderRelationshipChangeEvent.mapping.md&source_url=https%3A%2F%2Fgithub.com%2FOpen-Cap-Table-Coalition%2FOCF-Composed-Schemas%2Fblob%2Fmain%2Fobjects%2Ftransactions%2Fchange_event%2FStakeholderRelationshipChangeEvent.mapping.md&title=%5BMapping+question%5D+StakeholderRelationshipChangeEvent%3A+stakeholder_id&property_path=stakeholder_id) |
+| `relationship_started` | [💬 Ask a question](https://github.com/Open-Cap-Table-Coalition/OCF-Composed-Schemas/issues/new?template=mapping-question.yml&mapping_file=objects%2Ftransactions%2Fchange_event%2FStakeholderRelationshipChangeEvent.mapping.md&source_url=https%3A%2F%2Fgithub.com%2FOpen-Cap-Table-Coalition%2FOCF-Composed-Schemas%2Fblob%2Fmain%2Fobjects%2Ftransactions%2Fchange_event%2FStakeholderRelationshipChangeEvent.mapping.md&title=%5BMapping+question%5D+StakeholderRelationshipChangeEvent%3A+relationship_started&property_path=relationship_started) |
+| `relationship_ended` | [💬 Ask a question](https://github.com/Open-Cap-Table-Coalition/OCF-Composed-Schemas/issues/new?template=mapping-question.yml&mapping_file=objects%2Ftransactions%2Fchange_event%2FStakeholderRelationshipChangeEvent.mapping.md&source_url=https%3A%2F%2Fgithub.com%2FOpen-Cap-Table-Coalition%2FOCF-Composed-Schemas%2Fblob%2Fmain%2Fobjects%2Ftransactions%2Fchange_event%2FStakeholderRelationshipChangeEvent.mapping.md&title=%5BMapping+question%5D+StakeholderRelationshipChangeEvent%3A+relationship_ended&property_path=relationship_ended) |
+</details>
+<!-- mapping-question-links:end -->
+
 ## Notes / open questions
 
 - **Object kind: this is an OCF transaction object (`ocf_kind: object`), so per policy it maps its own properties directly to Carta fields (bucket `n/a-object`) — it is never a bucket-2 type.**

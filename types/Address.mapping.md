@@ -103,6 +103,26 @@ fields:
     reason: no-equivalent
 ```
 
+## Ask a mapping question
+
+Use a link below to open a prefilled GitHub issue. The issue can be copied into the auditable checklist in `## Notes / open questions`.
+
+<details>
+<summary>Open a prefilled issue for a property</summary>
+
+<!-- mapping-question-links:start -->
+| Source property | Action |
+| --- | --- |
+| _(mapping-level)_ | [💬 Ask a question](https://github.com/Open-Cap-Table-Coalition/OCF-Composed-Schemas/issues/new?template=mapping-question.yml&mapping_file=types%2FAddress.mapping.md&source_url=https%3A%2F%2Fgithub.com%2FOpen-Cap-Table-Coalition%2FOCF-Composed-Schemas%2Fblob%2Fmain%2Ftypes%2FAddress.mapping.md&title=%5BMapping+question%5D+Address) |
+| `address_type` | [💬 Ask a question](https://github.com/Open-Cap-Table-Coalition/OCF-Composed-Schemas/issues/new?template=mapping-question.yml&mapping_file=types%2FAddress.mapping.md&source_url=https%3A%2F%2Fgithub.com%2FOpen-Cap-Table-Coalition%2FOCF-Composed-Schemas%2Fblob%2Fmain%2Ftypes%2FAddress.mapping.md&title=%5BMapping+question%5D+Address%3A+address_type&property_path=address_type) |
+| `street_suite` | [💬 Ask a question](https://github.com/Open-Cap-Table-Coalition/OCF-Composed-Schemas/issues/new?template=mapping-question.yml&mapping_file=types%2FAddress.mapping.md&source_url=https%3A%2F%2Fgithub.com%2FOpen-Cap-Table-Coalition%2FOCF-Composed-Schemas%2Fblob%2Fmain%2Ftypes%2FAddress.mapping.md&title=%5BMapping+question%5D+Address%3A+street_suite&property_path=street_suite) |
+| `city` | [💬 Ask a question](https://github.com/Open-Cap-Table-Coalition/OCF-Composed-Schemas/issues/new?template=mapping-question.yml&mapping_file=types%2FAddress.mapping.md&source_url=https%3A%2F%2Fgithub.com%2FOpen-Cap-Table-Coalition%2FOCF-Composed-Schemas%2Fblob%2Fmain%2Ftypes%2FAddress.mapping.md&title=%5BMapping+question%5D+Address%3A+city&property_path=city) |
+| `country_subdivision` | [💬 Ask a question](https://github.com/Open-Cap-Table-Coalition/OCF-Composed-Schemas/issues/new?template=mapping-question.yml&mapping_file=types%2FAddress.mapping.md&source_url=https%3A%2F%2Fgithub.com%2FOpen-Cap-Table-Coalition%2FOCF-Composed-Schemas%2Fblob%2Fmain%2Ftypes%2FAddress.mapping.md&title=%5BMapping+question%5D+Address%3A+country_subdivision&property_path=country_subdivision) |
+| `country` | [💬 Ask a question](https://github.com/Open-Cap-Table-Coalition/OCF-Composed-Schemas/issues/new?template=mapping-question.yml&mapping_file=types%2FAddress.mapping.md&source_url=https%3A%2F%2Fgithub.com%2FOpen-Cap-Table-Coalition%2FOCF-Composed-Schemas%2Fblob%2Fmain%2Ftypes%2FAddress.mapping.md&title=%5BMapping+question%5D+Address%3A+country&property_path=country) |
+| `postal_code` | [💬 Ask a question](https://github.com/Open-Cap-Table-Coalition/OCF-Composed-Schemas/issues/new?template=mapping-question.yml&mapping_file=types%2FAddress.mapping.md&source_url=https%3A%2F%2Fgithub.com%2FOpen-Cap-Table-Coalition%2FOCF-Composed-Schemas%2Fblob%2Fmain%2Ftypes%2FAddress.mapping.md&title=%5BMapping+question%5D+Address%3A+postal_code&property_path=postal_code) |
+</details>
+<!-- mapping-question-links:end -->
+
 ## Notes / open questions
 
 - Carta models a postal address as `StakeholderAddress`, and it is deliberately minimal: the only property is `country` (a free `string`, `maxLength: 1000`, "The country of the stakeholder's address. This will not be set for all stakeholders."). `StakeholderAddress` is reachable in the bundle via `Stakeholder.address → #/$defs/StakeholderAddress`, so it is the correct, in-scope home for an OCF mailing `Address`. Of OCF's six fields, only `country` has a Carta destination.

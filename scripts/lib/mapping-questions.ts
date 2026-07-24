@@ -11,6 +11,8 @@ export class MappingQuestionParseError extends Error {}
 export interface MappingQuestion {
   /** Optional source-side property path, such as `security_id` or `terms[].ratio`. */
   property: string | null;
+  /** Optional Carta-side target path, such as `Compliance.countryOfResidency`. */
+  target: string | null;
   question: string;
   askedBy: string;
   answer: string;
@@ -21,7 +23,9 @@ export interface MappingQuestion {
   line: number;
 }
 
-const METADATA_LABELS = ["asked by", "answer", "answered by"] as const;
+const REQUIRED_METADATA_LABELS = ["asked by", "answer", "answered by"] as const;
+const METADATA_LABELS = [...REQUIRED_METADATA_LABELS, "target"] as const;
+type RequiredMetadataLabel = typeof REQUIRED_METADATA_LABELS[number];
 type MetadataLabel = typeof METADATA_LABELS[number];
 
 const PLACEHOLDER_VALUES = new Set([
@@ -49,6 +53,18 @@ export function isValidQuestionPropertyPath(value: string): boolean {
       .every((segment) => /^(?:[^/~]|~0|~1)+$/.test(segment));
   }
   return value.split(".").every((segment) => /^[A-Za-z_][A-Za-z0-9_-]*(?:\[\])?$/.test(segment));
+}
+
+/** Accept a top-level Carta object/property path, such as `Compliance.countryOfResidency`. */
+export function isValidQuestionTargetPath(value: string): boolean {
+  const parts = value.split(".");
+  return parts.length === 2 && parts.every((part) => /^[A-Za-z_][A-Za-z0-9_-]*$/u.test(part));
+}
+
+export function questionTargetParts(value: string): { object: string; property: string } | null {
+  if (!isValidQuestionTargetPath(value)) return null;
+  const [object, property] = value.split(".");
+  return object && property ? { object, property } : null;
 }
 
 /** Return the top-level source property represented by a question path. */
@@ -99,8 +115,8 @@ function metadataLabel(value: string): MetadataLabel | null {
 function requireMetadata(
   metadata: Partial<Record<MetadataLabel, string>>,
   line: number
-): Record<MetadataLabel, string> {
-  for (const label of METADATA_LABELS) {
+): Record<RequiredMetadataLabel, string> {
+  for (const label of REQUIRED_METADATA_LABELS) {
     const value = metadata[label];
     if (value === undefined || value.trim() === "") {
       throw new MappingQuestionParseError(
@@ -110,7 +126,7 @@ function requireMetadata(
       );
     }
   }
-  return metadata as Record<MetadataLabel, string>;
+  return metadata as Record<RequiredMetadataLabel, string>;
 }
 
 /** Parse all checklist questions in the notes section. */
@@ -177,6 +193,12 @@ export function parseMappingQuestions(markdown: string): MappingQuestion[] {
     }
 
     const complete = requireMetadata(metadata, lineNumber);
+    const target = metadata.target?.trim() ?? null;
+    if (target !== null && !isValidQuestionTargetPath(target)) {
+      throw new MappingQuestionParseError(
+        `line ${lineNumber}: invalid Carta target path "${target}"`
+      );
+    }
     if (isPlaceholder(complete["asked by"])) {
       throw new MappingQuestionParseError(
         `line ${lineNumber}: Asked by must name a person or handle`
@@ -197,6 +219,7 @@ export function parseMappingQuestions(markdown: string): MappingQuestion[] {
 
     questions.push({
       ...header,
+      target,
       askedBy: complete["asked by"],
       answer: complete.answer,
       answeredBy,

@@ -75,6 +75,23 @@ fields:
     reason: no-equivalent
 ```
 
+## Ask a mapping question
+
+Use a link below to open a prefilled GitHub issue. The issue can be copied into the auditable checklist in `## Notes / open questions`.
+
+<details>
+<summary>Open a prefilled issue for a property</summary>
+
+<!-- mapping-question-links:start -->
+| Source property | Action |
+| --- | --- |
+| _(mapping-level)_ | [💬 Ask a question](https://github.com/Open-Cap-Table-Coalition/OCF-Composed-Schemas/issues/new?template=mapping-question.yml&mapping_file=types%2FInterestRate.mapping.md&source_url=https%3A%2F%2Fgithub.com%2FOpen-Cap-Table-Coalition%2FOCF-Composed-Schemas%2Fblob%2Fmain%2Ftypes%2FInterestRate.mapping.md&title=%5BMapping+question%5D+InterestRate) |
+| `rate` | [💬 Ask a question](https://github.com/Open-Cap-Table-Coalition/OCF-Composed-Schemas/issues/new?template=mapping-question.yml&mapping_file=types%2FInterestRate.mapping.md&source_url=https%3A%2F%2Fgithub.com%2FOpen-Cap-Table-Coalition%2FOCF-Composed-Schemas%2Fblob%2Fmain%2Ftypes%2FInterestRate.mapping.md&title=%5BMapping+question%5D+InterestRate%3A+rate&property_path=rate) |
+| `accrual_start_date` | [💬 Ask a question](https://github.com/Open-Cap-Table-Coalition/OCF-Composed-Schemas/issues/new?template=mapping-question.yml&mapping_file=types%2FInterestRate.mapping.md&source_url=https%3A%2F%2Fgithub.com%2FOpen-Cap-Table-Coalition%2FOCF-Composed-Schemas%2Fblob%2Fmain%2Ftypes%2FInterestRate.mapping.md&title=%5BMapping+question%5D+InterestRate%3A+accrual_start_date&property_path=accrual_start_date) |
+| `accrual_end_date` | [💬 Ask a question](https://github.com/Open-Cap-Table-Coalition/OCF-Composed-Schemas/issues/new?template=mapping-question.yml&mapping_file=types%2FInterestRate.mapping.md&source_url=https%3A%2F%2Fgithub.com%2FOpen-Cap-Table-Coalition%2FOCF-Composed-Schemas%2Fblob%2Fmain%2Ftypes%2FInterestRate.mapping.md&title=%5BMapping+question%5D+InterestRate%3A+accrual_end_date&property_path=accrual_end_date) |
+</details>
+<!-- mapping-question-links:end -->
+
 ## Notes / open questions
 
 - **Bucket (1) — type-to-type with a single clear home.** OCF's `InterestRate` is a structured type, but it has one unambiguous Carta destination: the convertible-note interest terms inlined on `#/$defs/ConvertibleNote` (and mirrored on `#/$defs/ConvertibleIssuanceTransaction`). The only OCF object that `$ref`s this type is `types/conversion_mechanisms/NoteConversionMechanism.schema.json`, whose `interest_rates` array carries `InterestRate` entries describing the rate(s) of a convertible note. At the object level a `NoteConversionMechanism` routes to `ConvertibleNote` / `ConvertibleIssuanceTransaction`, so the rate value lands on those objects' `interestRate` field. We therefore map the field that has a home and mark only the genuinely-absent ones unmappable, rather than treating the whole type as unmappable.

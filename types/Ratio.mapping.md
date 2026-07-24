@@ -68,6 +68,22 @@ fields:
     reason: no-equivalent
 ```
 
+## Ask a mapping question
+
+Use a link below to open a prefilled GitHub issue. The issue can be copied into the auditable checklist in `## Notes / open questions`.
+
+<details>
+<summary>Open a prefilled issue for a property</summary>
+
+<!-- mapping-question-links:start -->
+| Source property | Action |
+| --- | --- |
+| _(mapping-level)_ | [💬 Ask a question](https://github.com/Open-Cap-Table-Coalition/OCF-Composed-Schemas/issues/new?template=mapping-question.yml&mapping_file=types%2FRatio.mapping.md&source_url=https%3A%2F%2Fgithub.com%2FOpen-Cap-Table-Coalition%2FOCF-Composed-Schemas%2Fblob%2Fmain%2Ftypes%2FRatio.mapping.md&title=%5BMapping+question%5D+Ratio) |
+| `numerator` | [💬 Ask a question](https://github.com/Open-Cap-Table-Coalition/OCF-Composed-Schemas/issues/new?template=mapping-question.yml&mapping_file=types%2FRatio.mapping.md&source_url=https%3A%2F%2Fgithub.com%2FOpen-Cap-Table-Coalition%2FOCF-Composed-Schemas%2Fblob%2Fmain%2Ftypes%2FRatio.mapping.md&title=%5BMapping+question%5D+Ratio%3A+numerator&property_path=numerator) |
+| `denominator` | [💬 Ask a question](https://github.com/Open-Cap-Table-Coalition/OCF-Composed-Schemas/issues/new?template=mapping-question.yml&mapping_file=types%2FRatio.mapping.md&source_url=https%3A%2F%2Fgithub.com%2FOpen-Cap-Table-Coalition%2FOCF-Composed-Schemas%2Fblob%2Fmain%2Ftypes%2FRatio.mapping.md&title=%5BMapping+question%5D+Ratio%3A+denominator&property_path=denominator) |
+</details>
+<!-- mapping-question-links:end -->
+
 ## Notes / open questions
 
 - **Bucket 2 (inlined-per-object; no single well-posed home).** OCF's `Ratio` is a *generic, reusable* two-part quotient (`numerator` / `denominator`, each a `Numeric`). Carta has **no** analogous reusable `Ratio` (or `Fraction`/`Quotient`) `$def`, and — critically — `Ratio` is `$ref`'d by **four unrelated** OCF consumers (a stock-class conversion ratio, a SAFE conversion, a note conversion, and a stock-split factor) that do **not** share one Carta destination. The only ratio-shaped Carta scalar in the bundle is `ShareClassRightsAndPreferences.conversionRatio` (`Decimal`), and that is the home for **only one** of those consumers (`RatioConversionMechanism`), not for the split factor or the SAFE/note ratios. Because there is no single Carta `$def` (or even single scalar field) that corresponds to the *whole* `Ratio` type, this is the inlined-per-object bucket, and **every** field is `unmappable` / `no-equivalent` at the type level. Picking `conversionRatio` as a representative target for the generic type would be inventing a representative inline target — exactly what bucket 2 forbids; that target legitimately lives in the *object-level* mapping (`RatioConversionMechanism.mapping.md`, which maps its `ratio` field to `conversionRatio`).

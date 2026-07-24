@@ -121,6 +121,26 @@ fields:
       - "#/$defs/ShareClassRightsAndPreferences/properties/conversionPrice"
 ```
 
+## Ask a mapping question
+
+Use a link below to open a prefilled GitHub issue. The issue can be copied into the auditable checklist in `## Notes / open questions`.
+
+<details>
+<summary>Open a prefilled issue for a property</summary>
+
+<!-- mapping-question-links:start -->
+| Source property | Action |
+| --- | --- |
+| _(mapping-level)_ | [💬 Ask a question](https://github.com/Open-Cap-Table-Coalition/OCF-Composed-Schemas/issues/new?template=mapping-question.yml&mapping_file=objects%2Ftransactions%2Fadjustment%2FStockClassConversionRatioAdjustment.mapping.md&source_url=https%3A%2F%2Fgithub.com%2FOpen-Cap-Table-Coalition%2FOCF-Composed-Schemas%2Fblob%2Fmain%2Fobjects%2Ftransactions%2Fadjustment%2FStockClassConversionRatioAdjustment.mapping.md&title=%5BMapping+question%5D+StockClassConversionRatioAdjustment) |
+| `id` | [💬 Ask a question](https://github.com/Open-Cap-Table-Coalition/OCF-Composed-Schemas/issues/new?template=mapping-question.yml&mapping_file=objects%2Ftransactions%2Fadjustment%2FStockClassConversionRatioAdjustment.mapping.md&source_url=https%3A%2F%2Fgithub.com%2FOpen-Cap-Table-Coalition%2FOCF-Composed-Schemas%2Fblob%2Fmain%2Fobjects%2Ftransactions%2Fadjustment%2FStockClassConversionRatioAdjustment.mapping.md&title=%5BMapping+question%5D+StockClassConversionRatioAdjustment%3A+id&property_path=id) |
+| `comments` | [💬 Ask a question](https://github.com/Open-Cap-Table-Coalition/OCF-Composed-Schemas/issues/new?template=mapping-question.yml&mapping_file=objects%2Ftransactions%2Fadjustment%2FStockClassConversionRatioAdjustment.mapping.md&source_url=https%3A%2F%2Fgithub.com%2FOpen-Cap-Table-Coalition%2FOCF-Composed-Schemas%2Fblob%2Fmain%2Fobjects%2Ftransactions%2Fadjustment%2FStockClassConversionRatioAdjustment.mapping.md&title=%5BMapping+question%5D+StockClassConversionRatioAdjustment%3A+comments&property_path=comments) |
+| `object_type` | [💬 Ask a question](https://github.com/Open-Cap-Table-Coalition/OCF-Composed-Schemas/issues/new?template=mapping-question.yml&mapping_file=objects%2Ftransactions%2Fadjustment%2FStockClassConversionRatioAdjustment.mapping.md&source_url=https%3A%2F%2Fgithub.com%2FOpen-Cap-Table-Coalition%2FOCF-Composed-Schemas%2Fblob%2Fmain%2Fobjects%2Ftransactions%2Fadjustment%2FStockClassConversionRatioAdjustment.mapping.md&title=%5BMapping+question%5D+StockClassConversionRatioAdjustment%3A+object_type&property_path=object_type) |
+| `date` | [💬 Ask a question](https://github.com/Open-Cap-Table-Coalition/OCF-Composed-Schemas/issues/new?template=mapping-question.yml&mapping_file=objects%2Ftransactions%2Fadjustment%2FStockClassConversionRatioAdjustment.mapping.md&source_url=https%3A%2F%2Fgithub.com%2FOpen-Cap-Table-Coalition%2FOCF-Composed-Schemas%2Fblob%2Fmain%2Fobjects%2Ftransactions%2Fadjustment%2FStockClassConversionRatioAdjustment.mapping.md&title=%5BMapping+question%5D+StockClassConversionRatioAdjustment%3A+date&property_path=date) |
+| `stock_class_id` | [💬 Ask a question](https://github.com/Open-Cap-Table-Coalition/OCF-Composed-Schemas/issues/new?template=mapping-question.yml&mapping_file=objects%2Ftransactions%2Fadjustment%2FStockClassConversionRatioAdjustment.mapping.md&source_url=https%3A%2F%2Fgithub.com%2FOpen-Cap-Table-Coalition%2FOCF-Composed-Schemas%2Fblob%2Fmain%2Fobjects%2Ftransactions%2Fadjustment%2FStockClassConversionRatioAdjustment.mapping.md&title=%5BMapping+question%5D+StockClassConversionRatioAdjustment%3A+stock_class_id&property_path=stock_class_id) |
+| `new_ratio_conversion_mechanism` | [💬 Ask a question](https://github.com/Open-Cap-Table-Coalition/OCF-Composed-Schemas/issues/new?template=mapping-question.yml&mapping_file=objects%2Ftransactions%2Fadjustment%2FStockClassConversionRatioAdjustment.mapping.md&source_url=https%3A%2F%2Fgithub.com%2FOpen-Cap-Table-Coalition%2FOCF-Composed-Schemas%2Fblob%2Fmain%2Fobjects%2Ftransactions%2Fadjustment%2FStockClassConversionRatioAdjustment.mapping.md&title=%5BMapping+question%5D+StockClassConversionRatioAdjustment%3A+new_ratio_conversion_mechanism&property_path=new_ratio_conversion_mechanism) |
+</details>
+<!-- mapping-question-links:end -->
+
 ## Notes / open questions
 
 - Bucket: **n/a-object** (`ocf_kind: object`). This is an OCF *transaction* object, so it would normally map its properties onto the corresponding Carta transaction plus the security/state object it touches. The blocking fact is that **Carta has no adjustment transaction** of any kind: confirmed against the bundle, Carta's transaction surface is entirely security-level (`CertificateIssuance/CancellationTransaction`, the `Option`/`Warrant`/`Rsa`/`Rsu`/`Sar`/`Piu`/`Phantom`/`Convertible` issuance/exercise/cancellation/transfer families) — there is no `StockClassConversionRatioAdjustment`, no down-round/anti-dilution repricing event, and no generic "amend a share class" transaction. This matches the context note that Carta has no equivalent for OCF adjustment (authorized-shares/pool/**ratio**) transactions.

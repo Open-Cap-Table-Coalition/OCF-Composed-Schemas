@@ -142,6 +142,25 @@ fields:
     reason: no-equivalent
 ```
 
+## Ask a mapping question
+
+Use a link below to open a prefilled GitHub issue. The issue can be copied into the auditable checklist in `## Notes / open questions`.
+
+<details>
+<summary>Open a prefilled issue for a property</summary>
+
+<!-- mapping-question-links:start -->
+| Source property | Action |
+| --- | --- |
+| _(mapping-level)_ | [💬 Ask a question](https://github.com/Open-Cap-Table-Coalition/OCF-Composed-Schemas/issues/new?template=mapping-question.yml&mapping_file=types%2Fconversion_mechanisms%2FSharePriceBasedConversionMechanism.mapping.md&source_url=https%3A%2F%2Fgithub.com%2FOpen-Cap-Table-Coalition%2FOCF-Composed-Schemas%2Fblob%2Fmain%2Ftypes%2Fconversion_mechanisms%2FSharePriceBasedConversionMechanism.mapping.md&title=%5BMapping+question%5D+SharePriceBasedConversionMechanism) |
+| `type` | [💬 Ask a question](https://github.com/Open-Cap-Table-Coalition/OCF-Composed-Schemas/issues/new?template=mapping-question.yml&mapping_file=types%2Fconversion_mechanisms%2FSharePriceBasedConversionMechanism.mapping.md&source_url=https%3A%2F%2Fgithub.com%2FOpen-Cap-Table-Coalition%2FOCF-Composed-Schemas%2Fblob%2Fmain%2Ftypes%2Fconversion_mechanisms%2FSharePriceBasedConversionMechanism.mapping.md&title=%5BMapping+question%5D+SharePriceBasedConversionMechanism%3A+type&property_path=type) |
+| `description` | [💬 Ask a question](https://github.com/Open-Cap-Table-Coalition/OCF-Composed-Schemas/issues/new?template=mapping-question.yml&mapping_file=types%2Fconversion_mechanisms%2FSharePriceBasedConversionMechanism.mapping.md&source_url=https%3A%2F%2Fgithub.com%2FOpen-Cap-Table-Coalition%2FOCF-Composed-Schemas%2Fblob%2Fmain%2Ftypes%2Fconversion_mechanisms%2FSharePriceBasedConversionMechanism.mapping.md&title=%5BMapping+question%5D+SharePriceBasedConversionMechanism%3A+description&property_path=description) |
+| `discount` | [💬 Ask a question](https://github.com/Open-Cap-Table-Coalition/OCF-Composed-Schemas/issues/new?template=mapping-question.yml&mapping_file=types%2Fconversion_mechanisms%2FSharePriceBasedConversionMechanism.mapping.md&source_url=https%3A%2F%2Fgithub.com%2FOpen-Cap-Table-Coalition%2FOCF-Composed-Schemas%2Fblob%2Fmain%2Ftypes%2Fconversion_mechanisms%2FSharePriceBasedConversionMechanism.mapping.md&title=%5BMapping+question%5D+SharePriceBasedConversionMechanism%3A+discount&property_path=discount) |
+| `discount_percentage` | [💬 Ask a question](https://github.com/Open-Cap-Table-Coalition/OCF-Composed-Schemas/issues/new?template=mapping-question.yml&mapping_file=types%2Fconversion_mechanisms%2FSharePriceBasedConversionMechanism.mapping.md&source_url=https%3A%2F%2Fgithub.com%2FOpen-Cap-Table-Coalition%2FOCF-Composed-Schemas%2Fblob%2Fmain%2Ftypes%2Fconversion_mechanisms%2FSharePriceBasedConversionMechanism.mapping.md&title=%5BMapping+question%5D+SharePriceBasedConversionMechanism%3A+discount_percentage&property_path=discount_percentage) |
+| `discount_amount` | [💬 Ask a question](https://github.com/Open-Cap-Table-Coalition/OCF-Composed-Schemas/issues/new?template=mapping-question.yml&mapping_file=types%2Fconversion_mechanisms%2FSharePriceBasedConversionMechanism.mapping.md&source_url=https%3A%2F%2Fgithub.com%2FOpen-Cap-Table-Coalition%2FOCF-Composed-Schemas%2Fblob%2Fmain%2Ftypes%2Fconversion_mechanisms%2FSharePriceBasedConversionMechanism.mapping.md&title=%5BMapping+question%5D+SharePriceBasedConversionMechanism%3A+discount_amount&property_path=discount_amount) |
+</details>
+<!-- mapping-question-links:end -->
+
 ## Notes / open questions
 
 - **Bucket (1) — structured OCF type with a single, unambiguous Carta home.** `SharePriceBasedConversionMechanism` is the "price-per-share of the next round, less a discount" conversion mechanism — the classic discount-off-next-financing term shared by SAFEs and convertible notes. Carta models exactly that discount term as a field on its convertible objects (`#/$defs/ConvertibleNote/properties/discountPercentage`, mirrored by `#/$defs/ConvertibleIssuanceTransaction/properties/discountPercentage`), so the one economic input this mechanism actually contributes to Carta has a clear, well-posed home. That makes this bucket-1 (map the term that lands, mark `unmappable` only the genuinely-absent ones), not bucket-2: the destination is a single concrete Carta field, not a scatter of unrelated bare scalars. This is consistent with `types/conversion_mechanisms/NoteConversionMechanism.mapping.md`, where `conversion_discount` (the same OCF `Percentage` discount) maps to the same `ConvertibleNote.discountPercentage`.

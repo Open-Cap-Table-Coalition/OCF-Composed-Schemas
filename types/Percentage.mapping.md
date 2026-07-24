@@ -46,6 +46,20 @@ status: complete
 fields: {}
 ```
 
+## Ask a mapping question
+
+Use a link below to open a prefilled GitHub issue. The issue can be copied into the auditable checklist in `## Notes / open questions`.
+
+<details>
+<summary>Open a prefilled issue for a property</summary>
+
+<!-- mapping-question-links:start -->
+| Source property | Action |
+| --- | --- |
+| _(mapping-level)_ | [💬 Ask a question](https://github.com/Open-Cap-Table-Coalition/OCF-Composed-Schemas/issues/new?template=mapping-question.yml&mapping_file=types%2FPercentage.mapping.md&source_url=https%3A%2F%2Fgithub.com%2FOpen-Cap-Table-Coalition%2FOCF-Composed-Schemas%2Fblob%2Fmain%2Ftypes%2FPercentage.mapping.md&title=%5BMapping+question%5D+Percentage) |
+</details>
+<!-- mapping-question-links:end -->
+
 ## Notes / open questions
 
 - **Zero-property scalar leaf type (no fields to map).** `Percentage` is a bare `string` constrained by a `pattern` (a fixed-point decimal in `[0.0, 1.0]`, e.g. `0.125` for 12.5%); its `properties` object is empty. Like `types/Md5.mapping.md`, there are no member fields, so `fields: {}`. The type-level correspondence is documented here.

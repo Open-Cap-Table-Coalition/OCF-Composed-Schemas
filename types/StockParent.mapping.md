@@ -73,6 +73,22 @@ fields:
     reason: no-equivalent
 ```
 
+## Ask a mapping question
+
+Use a link below to open a prefilled GitHub issue. The issue can be copied into the auditable checklist in `## Notes / open questions`.
+
+<details>
+<summary>Open a prefilled issue for a property</summary>
+
+<!-- mapping-question-links:start -->
+| Source property | Action |
+| --- | --- |
+| _(mapping-level)_ | [💬 Ask a question](https://github.com/Open-Cap-Table-Coalition/OCF-Composed-Schemas/issues/new?template=mapping-question.yml&mapping_file=types%2FStockParent.mapping.md&source_url=https%3A%2F%2Fgithub.com%2FOpen-Cap-Table-Coalition%2FOCF-Composed-Schemas%2Fblob%2Fmain%2Ftypes%2FStockParent.mapping.md&title=%5BMapping+question%5D+StockParent) |
+| `parent_object_type` | [💬 Ask a question](https://github.com/Open-Cap-Table-Coalition/OCF-Composed-Schemas/issues/new?template=mapping-question.yml&mapping_file=types%2FStockParent.mapping.md&source_url=https%3A%2F%2Fgithub.com%2FOpen-Cap-Table-Coalition%2FOCF-Composed-Schemas%2Fblob%2Fmain%2Ftypes%2FStockParent.mapping.md&title=%5BMapping+question%5D+StockParent%3A+parent_object_type&property_path=parent_object_type) |
+| `parent_object_id` | [💬 Ask a question](https://github.com/Open-Cap-Table-Coalition/OCF-Composed-Schemas/issues/new?template=mapping-question.yml&mapping_file=types%2FStockParent.mapping.md&source_url=https%3A%2F%2Fgithub.com%2FOpen-Cap-Table-Coalition%2FOCF-Composed-Schemas%2Fblob%2Fmain%2Ftypes%2FStockParent.mapping.md&title=%5BMapping+question%5D+StockParent%3A+parent_object_id&property_path=parent_object_id) |
+</details>
+<!-- mapping-question-links:end -->
+
 ## Notes / open questions
 
 - OCF's `StockParent` is a generic parent-security reference (a stock issuance came from a stock plan, a prior stock entry, a warrant exercise, or a convertible conversion). Carta represents these lineage relationships positionally via specific typed transaction and `*PrecededBy` shapes (`CertificatePrecededBy`/`CertificatePrecededByReason`, `RestrictedStockAwardPrecededBy`/`RestrictedStockAwardPrecededByReason`, and the various `*ExerciseTransaction`/`*ConversionTransaction` types) rather than via a single polymorphic `parent` reference. There is no Carta type that corresponds to `StockParent` itself.

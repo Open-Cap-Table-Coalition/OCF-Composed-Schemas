@@ -13,6 +13,7 @@ describe("mapping questions", () => {
       notes(
         [
           "- [ ] `terms[].ratio`: Which ratio should be used when several terms exist?",
+          "  - Target: ConvertibleNote.discountPercentage",
           "  - Asked by: @alice",
           "  - Answer: Pending confirmation from the OCF owners.",
           "  - Answered by: —",
@@ -28,6 +29,7 @@ describe("mapping questions", () => {
     expect(questions).toEqual([
       {
         property: "terms[].ratio",
+        target: "ConvertibleNote.discountPercentage",
         question: "Which ratio should be used when several terms exist?",
         askedBy: "@alice",
         answer: "Pending confirmation from the OCF owners.",
@@ -37,12 +39,13 @@ describe("mapping questions", () => {
       },
       {
         property: null,
+        target: null,
         question: "Should mapping-level notes be retained?",
         askedBy: "@alice",
         answer: "Yes; the Markdown is the audit record.",
         answeredBy: "@bob",
         answered: true,
-        line: 8,
+        line: 9,
       },
     ]);
   });
@@ -60,6 +63,22 @@ describe("mapping questions", () => {
         )
       )
     ).toThrow(MappingQuestionParseError);
+  });
+
+  it("rejects malformed Carta target paths", () => {
+    expect(() =>
+      parseMappingQuestions(
+        notes(
+          [
+            "- [ ] Is this target a possible two-hop route?",
+            "  - Target: Compliance.countryOfResidency.extra",
+            "  - Asked by: @alice",
+            "  - Answer: Pending confirmation.",
+            "  - Answered by: —",
+          ].join("\n")
+        )
+      )
+    ).toThrow(/invalid Carta target path/);
   });
 
   it("requires a real answerer when a question is checked", () => {

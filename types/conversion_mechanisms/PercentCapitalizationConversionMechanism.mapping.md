@@ -90,6 +90,24 @@ fields:
     reason: no-equivalent
 ```
 
+## Ask a mapping question
+
+Use a link below to open a prefilled GitHub issue. The issue can be copied into the auditable checklist in `## Notes / open questions`.
+
+<details>
+<summary>Open a prefilled issue for a property</summary>
+
+<!-- mapping-question-links:start -->
+| Source property | Action |
+| --- | --- |
+| _(mapping-level)_ | [💬 Ask a question](https://github.com/Open-Cap-Table-Coalition/OCF-Composed-Schemas/issues/new?template=mapping-question.yml&mapping_file=types%2Fconversion_mechanisms%2FPercentCapitalizationConversionMechanism.mapping.md&source_url=https%3A%2F%2Fgithub.com%2FOpen-Cap-Table-Coalition%2FOCF-Composed-Schemas%2Fblob%2Fmain%2Ftypes%2Fconversion_mechanisms%2FPercentCapitalizationConversionMechanism.mapping.md&title=%5BMapping+question%5D+PercentCapitalizationConversionMechanism) |
+| `type` | [💬 Ask a question](https://github.com/Open-Cap-Table-Coalition/OCF-Composed-Schemas/issues/new?template=mapping-question.yml&mapping_file=types%2Fconversion_mechanisms%2FPercentCapitalizationConversionMechanism.mapping.md&source_url=https%3A%2F%2Fgithub.com%2FOpen-Cap-Table-Coalition%2FOCF-Composed-Schemas%2Fblob%2Fmain%2Ftypes%2Fconversion_mechanisms%2FPercentCapitalizationConversionMechanism.mapping.md&title=%5BMapping+question%5D+PercentCapitalizationConversionMechanism%3A+type&property_path=type) |
+| `converts_to_percent` | [💬 Ask a question](https://github.com/Open-Cap-Table-Coalition/OCF-Composed-Schemas/issues/new?template=mapping-question.yml&mapping_file=types%2Fconversion_mechanisms%2FPercentCapitalizationConversionMechanism.mapping.md&source_url=https%3A%2F%2Fgithub.com%2FOpen-Cap-Table-Coalition%2FOCF-Composed-Schemas%2Fblob%2Fmain%2Ftypes%2Fconversion_mechanisms%2FPercentCapitalizationConversionMechanism.mapping.md&title=%5BMapping+question%5D+PercentCapitalizationConversionMechanism%3A+converts_to_percent&property_path=converts_to_percent) |
+| `capitalization_definition` | [💬 Ask a question](https://github.com/Open-Cap-Table-Coalition/OCF-Composed-Schemas/issues/new?template=mapping-question.yml&mapping_file=types%2Fconversion_mechanisms%2FPercentCapitalizationConversionMechanism.mapping.md&source_url=https%3A%2F%2Fgithub.com%2FOpen-Cap-Table-Coalition%2FOCF-Composed-Schemas%2Fblob%2Fmain%2Ftypes%2Fconversion_mechanisms%2FPercentCapitalizationConversionMechanism.mapping.md&title=%5BMapping+question%5D+PercentCapitalizationConversionMechanism%3A+capitalization_definition&property_path=capitalization_definition) |
+| `capitalization_definition_rules` | [💬 Ask a question](https://github.com/Open-Cap-Table-Coalition/OCF-Composed-Schemas/issues/new?template=mapping-question.yml&mapping_file=types%2Fconversion_mechanisms%2FPercentCapitalizationConversionMechanism.mapping.md&source_url=https%3A%2F%2Fgithub.com%2FOpen-Cap-Table-Coalition%2FOCF-Composed-Schemas%2Fblob%2Fmain%2Ftypes%2Fconversion_mechanisms%2FPercentCapitalizationConversionMechanism.mapping.md&title=%5BMapping+question%5D+PercentCapitalizationConversionMechanism%3A+capitalization_definition_rules&property_path=capitalization_definition_rules) |
+</details>
+<!-- mapping-question-links:end -->
+
 ## Notes / open questions
 
 - **Bucket 3 (absent).** Carta has no reusable conversion-mechanism `$def` and, more specifically, no concept of a *percent-of-capitalization* conversion. Carta records convertible/preferred conversion economics as bare scalar terms on objects — `ConvertibleNote`/`ConvertibleIssuanceTransaction` (`priceCap`/`valuationCap` as `Money`, `discountPercentage`/`interestRate` as `Decimal`, `conversionTrigger` as `Money`) and `ShareClassRightsAndPreferences` (`conversionPrice`/`originalIssuePrice` as `Money`, `conversionRatio`/`multiplier`/`participationCap` as `Decimal`). None of those is "what fraction of the fully-diluted capitalization this instrument converts into," which is the entire point of this mechanism. There is no single clear Carta home, so every field is `unmappable` / `no-equivalent`.

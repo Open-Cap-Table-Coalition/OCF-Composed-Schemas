@@ -68,6 +68,22 @@ fields:
     reason: no-equivalent
 ```
 
+## Ask a mapping question
+
+Use a link below to open a prefilled GitHub issue. The issue can be copied into the auditable checklist in `## Notes / open questions`.
+
+<details>
+<summary>Open a prefilled issue for a property</summary>
+
+<!-- mapping-question-links:start -->
+| Source property | Action |
+| --- | --- |
+| _(mapping-level)_ | [💬 Ask a question](https://github.com/Open-Cap-Table-Coalition/OCF-Composed-Schemas/issues/new?template=mapping-question.yml&mapping_file=types%2FTaxID.mapping.md&source_url=https%3A%2F%2Fgithub.com%2FOpen-Cap-Table-Coalition%2FOCF-Composed-Schemas%2Fblob%2Fmain%2Ftypes%2FTaxID.mapping.md&title=%5BMapping+question%5D+TaxID) |
+| `tax_id` | [💬 Ask a question](https://github.com/Open-Cap-Table-Coalition/OCF-Composed-Schemas/issues/new?template=mapping-question.yml&mapping_file=types%2FTaxID.mapping.md&source_url=https%3A%2F%2Fgithub.com%2FOpen-Cap-Table-Coalition%2FOCF-Composed-Schemas%2Fblob%2Fmain%2Ftypes%2FTaxID.mapping.md&title=%5BMapping+question%5D+TaxID%3A+tax_id&property_path=tax_id) |
+| `country` | [💬 Ask a question](https://github.com/Open-Cap-Table-Coalition/OCF-Composed-Schemas/issues/new?template=mapping-question.yml&mapping_file=types%2FTaxID.mapping.md&source_url=https%3A%2F%2Fgithub.com%2FOpen-Cap-Table-Coalition%2FOCF-Composed-Schemas%2Fblob%2Fmain%2Ftypes%2FTaxID.mapping.md&title=%5BMapping+question%5D+TaxID%3A+country&property_path=country) |
+</details>
+<!-- mapping-question-links:end -->
+
 ## Notes / open questions
 
 - Carta has no tax-identifier fields anywhere in the bundled schema. The closest tax-related concepts (`OptionExerciseTaxWithholdingLineItem`, `Jurisdiction.country`) are about tax *withholding* on transactions, not stakeholder/issuer tax IDs. Both OCF Issuer and Stakeholder consequently mark their `tax_ids` arrays as unmappable.

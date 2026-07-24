@@ -105,6 +105,25 @@ fields:
     reason: no-equivalent
 ```
 
+## Ask a mapping question
+
+Use a link below to open a prefilled GitHub issue. The issue can be copied into the auditable checklist in `## Notes / open questions`.
+
+<details>
+<summary>Open a prefilled issue for a property</summary>
+
+<!-- mapping-question-links:start -->
+| Source property | Action |
+| --- | --- |
+| _(mapping-level)_ | [💬 Ask a question](https://github.com/Open-Cap-Table-Coalition/OCF-Composed-Schemas/issues/new?template=mapping-question.yml&mapping_file=objects%2FStockLegendTemplate.mapping.md&source_url=https%3A%2F%2Fgithub.com%2FOpen-Cap-Table-Coalition%2FOCF-Composed-Schemas%2Fblob%2Fmain%2Fobjects%2FStockLegendTemplate.mapping.md&title=%5BMapping+question%5D+StockLegendTemplate) |
+| `id` | [💬 Ask a question](https://github.com/Open-Cap-Table-Coalition/OCF-Composed-Schemas/issues/new?template=mapping-question.yml&mapping_file=objects%2FStockLegendTemplate.mapping.md&source_url=https%3A%2F%2Fgithub.com%2FOpen-Cap-Table-Coalition%2FOCF-Composed-Schemas%2Fblob%2Fmain%2Fobjects%2FStockLegendTemplate.mapping.md&title=%5BMapping+question%5D+StockLegendTemplate%3A+id&property_path=id) |
+| `comments` | [💬 Ask a question](https://github.com/Open-Cap-Table-Coalition/OCF-Composed-Schemas/issues/new?template=mapping-question.yml&mapping_file=objects%2FStockLegendTemplate.mapping.md&source_url=https%3A%2F%2Fgithub.com%2FOpen-Cap-Table-Coalition%2FOCF-Composed-Schemas%2Fblob%2Fmain%2Fobjects%2FStockLegendTemplate.mapping.md&title=%5BMapping+question%5D+StockLegendTemplate%3A+comments&property_path=comments) |
+| `object_type` | [💬 Ask a question](https://github.com/Open-Cap-Table-Coalition/OCF-Composed-Schemas/issues/new?template=mapping-question.yml&mapping_file=objects%2FStockLegendTemplate.mapping.md&source_url=https%3A%2F%2Fgithub.com%2FOpen-Cap-Table-Coalition%2FOCF-Composed-Schemas%2Fblob%2Fmain%2Fobjects%2FStockLegendTemplate.mapping.md&title=%5BMapping+question%5D+StockLegendTemplate%3A+object_type&property_path=object_type) |
+| `name` | [💬 Ask a question](https://github.com/Open-Cap-Table-Coalition/OCF-Composed-Schemas/issues/new?template=mapping-question.yml&mapping_file=objects%2FStockLegendTemplate.mapping.md&source_url=https%3A%2F%2Fgithub.com%2FOpen-Cap-Table-Coalition%2FOCF-Composed-Schemas%2Fblob%2Fmain%2Fobjects%2FStockLegendTemplate.mapping.md&title=%5BMapping+question%5D+StockLegendTemplate%3A+name&property_path=name) |
+| `text` | [💬 Ask a question](https://github.com/Open-Cap-Table-Coalition/OCF-Composed-Schemas/issues/new?template=mapping-question.yml&mapping_file=objects%2FStockLegendTemplate.mapping.md&source_url=https%3A%2F%2Fgithub.com%2FOpen-Cap-Table-Coalition%2FOCF-Composed-Schemas%2Fblob%2Fmain%2Fobjects%2FStockLegendTemplate.mapping.md&title=%5BMapping+question%5D+StockLegendTemplate%3A+text&property_path=text) |
+</details>
+<!-- mapping-question-links:end -->
+
 ## Notes / open questions
 
 - **Carta has no stock-legend concept at all.** A case-insensitive search for `legend` across the authoritative pinned bundle (`target-schema/Carta.schema.json`), the per-`$def` index (`/tmp/carta-index.json`), and the enum dump (`/tmp/carta-enums.json`) returns **zero** hits. There is no `StockLegendTemplate`/`LegendTemplate` `$def`, no object that stores restrictive-legend text, and no `legendId`/`stockLegendId` foreign key anywhere. So OCF's whole `StockLegendTemplate` object — a reusable, per-issuer library entry holding the boilerplate restrictive-transfer text printed on certificates (e.g. the Rule 144 / "THE SECURITIES REPRESENTED BY THIS CERTIFICATE HAVE NOT BEEN REGISTERED…" legends) — has no Carta counterpart object, and therefore no destination for any of its fields. This is the all-unmappable shape of the `Issuer` precedent, where the named field has no Carta home.

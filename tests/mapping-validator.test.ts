@@ -253,6 +253,29 @@ describe("validateMapping — frontmatter and top level", () => {
     expect(errs.some((m) => m.includes("does not match"))).toBe(true);
   });
 
+  it("validates target-bound questions against the target bundle", () => {
+    const validQuestion = {
+      property: "name",
+      target: "Thing.name",
+      question: "Should this source field feed the target slot?",
+      askedBy: "@alice",
+      answer: "Pending investigation.",
+      answeredBy: null,
+      answered: false,
+      line: 10,
+    };
+    expect(messages(makeInput({ questions: [validQuestion] }))).toEqual([]);
+
+    const invalidQuestion = { ...validQuestion, target: "Thing.missing" };
+    expect(
+      messages(makeInput({ questions: [invalidQuestion] })).some((message) =>
+        message.includes(
+          'Carta target property "Thing.missing" does not exist in the target schema'
+        )
+      )
+    ).toBe(true);
+  });
+
   it("treats fields: null as an empty map (property-less schemas)", () => {
     const input = makeInput({
       sourceSchema: { $id: "test://scalar", title: "Scalar" },

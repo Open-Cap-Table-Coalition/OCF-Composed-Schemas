@@ -130,6 +130,26 @@ fields:
       TERMINATION_INVOLUNTARY_WITH_CAUSE: null
 ```
 
+## Ask a mapping question
+
+Use a link below to open a prefilled GitHub issue. The issue can be copied into the auditable checklist in `## Notes / open questions`.
+
+<details>
+<summary>Open a prefilled issue for a property</summary>
+
+<!-- mapping-question-links:start -->
+| Source property | Action |
+| --- | --- |
+| _(mapping-level)_ | [💬 Ask a question](https://github.com/Open-Cap-Table-Coalition/OCF-Composed-Schemas/issues/new?template=mapping-question.yml&mapping_file=objects%2Ftransactions%2Fchange_event%2FStakeholderStatusChangeEvent.mapping.md&source_url=https%3A%2F%2Fgithub.com%2FOpen-Cap-Table-Coalition%2FOCF-Composed-Schemas%2Fblob%2Fmain%2Fobjects%2Ftransactions%2Fchange_event%2FStakeholderStatusChangeEvent.mapping.md&title=%5BMapping+question%5D+StakeholderStatusChangeEvent) |
+| `id` | [💬 Ask a question](https://github.com/Open-Cap-Table-Coalition/OCF-Composed-Schemas/issues/new?template=mapping-question.yml&mapping_file=objects%2Ftransactions%2Fchange_event%2FStakeholderStatusChangeEvent.mapping.md&source_url=https%3A%2F%2Fgithub.com%2FOpen-Cap-Table-Coalition%2FOCF-Composed-Schemas%2Fblob%2Fmain%2Fobjects%2Ftransactions%2Fchange_event%2FStakeholderStatusChangeEvent.mapping.md&title=%5BMapping+question%5D+StakeholderStatusChangeEvent%3A+id&property_path=id) |
+| `comments` | [💬 Ask a question](https://github.com/Open-Cap-Table-Coalition/OCF-Composed-Schemas/issues/new?template=mapping-question.yml&mapping_file=objects%2Ftransactions%2Fchange_event%2FStakeholderStatusChangeEvent.mapping.md&source_url=https%3A%2F%2Fgithub.com%2FOpen-Cap-Table-Coalition%2FOCF-Composed-Schemas%2Fblob%2Fmain%2Fobjects%2Ftransactions%2Fchange_event%2FStakeholderStatusChangeEvent.mapping.md&title=%5BMapping+question%5D+StakeholderStatusChangeEvent%3A+comments&property_path=comments) |
+| `object_type` | [💬 Ask a question](https://github.com/Open-Cap-Table-Coalition/OCF-Composed-Schemas/issues/new?template=mapping-question.yml&mapping_file=objects%2Ftransactions%2Fchange_event%2FStakeholderStatusChangeEvent.mapping.md&source_url=https%3A%2F%2Fgithub.com%2FOpen-Cap-Table-Coalition%2FOCF-Composed-Schemas%2Fblob%2Fmain%2Fobjects%2Ftransactions%2Fchange_event%2FStakeholderStatusChangeEvent.mapping.md&title=%5BMapping+question%5D+StakeholderStatusChangeEvent%3A+object_type&property_path=object_type) |
+| `date` | [💬 Ask a question](https://github.com/Open-Cap-Table-Coalition/OCF-Composed-Schemas/issues/new?template=mapping-question.yml&mapping_file=objects%2Ftransactions%2Fchange_event%2FStakeholderStatusChangeEvent.mapping.md&source_url=https%3A%2F%2Fgithub.com%2FOpen-Cap-Table-Coalition%2FOCF-Composed-Schemas%2Fblob%2Fmain%2Fobjects%2Ftransactions%2Fchange_event%2FStakeholderStatusChangeEvent.mapping.md&title=%5BMapping+question%5D+StakeholderStatusChangeEvent%3A+date&property_path=date) |
+| `stakeholder_id` | [💬 Ask a question](https://github.com/Open-Cap-Table-Coalition/OCF-Composed-Schemas/issues/new?template=mapping-question.yml&mapping_file=objects%2Ftransactions%2Fchange_event%2FStakeholderStatusChangeEvent.mapping.md&source_url=https%3A%2F%2Fgithub.com%2FOpen-Cap-Table-Coalition%2FOCF-Composed-Schemas%2Fblob%2Fmain%2Fobjects%2Ftransactions%2Fchange_event%2FStakeholderStatusChangeEvent.mapping.md&title=%5BMapping+question%5D+StakeholderStatusChangeEvent%3A+stakeholder_id&property_path=stakeholder_id) |
+| `new_status` | [💬 Ask a question](https://github.com/Open-Cap-Table-Coalition/OCF-Composed-Schemas/issues/new?template=mapping-question.yml&mapping_file=objects%2Ftransactions%2Fchange_event%2FStakeholderStatusChangeEvent.mapping.md&source_url=https%3A%2F%2Fgithub.com%2FOpen-Cap-Table-Coalition%2FOCF-Composed-Schemas%2Fblob%2Fmain%2Fobjects%2Ftransactions%2Fchange_event%2FStakeholderStatusChangeEvent.mapping.md&title=%5BMapping+question%5D+StakeholderStatusChangeEvent%3A+new_status&property_path=new_status) |
+</details>
+<!-- mapping-question-links:end -->
+
 ## Notes / open questions
 
 - **Bucket: n/a-object — no Carta event host; only the stakeholder foreign key lands.** OCF's `StakeholderStatusChangeEvent` is a dated *transaction* that records the moment a stakeholder's employment/engagement **activity status** changes (becomes active, goes on leave, or is terminated for a specific reason). Carta's pinned `v1alpha1 (2026-04-30)` bundle has **no transaction type and no event type for stakeholder status changes.** The bundle's full transaction surface is the issuance/cancellation/exercise/settlement/transfer set for Certificate, Convertible, Option, Phantom, Piu, Rsa, Rsu, Sar, and Warrant securities (verified by enumerating every `*Transaction` `$def`); none model a stakeholder lifecycle event. The only non-security "event" `$def`s are the three vesting-event types (`OptionGrantVestingEvent`, `RestrictedStockAwardVestingEvent`, `RestrictedStockUnitVestingEvent`), which are unrelated. So the event *itself* — its existence as a transaction, its effective date, and the new-status payload — has no host object in Carta. The one field with a real destination is the subject foreign key (`stakeholder_id`), which references the Carta `Stakeholder` record whose state a consumer would update when replaying this event.

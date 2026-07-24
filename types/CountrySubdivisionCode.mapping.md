@@ -48,6 +48,20 @@ status: complete
 fields: {}
 ```
 
+## Ask a mapping question
+
+Use a link below to open a prefilled GitHub issue. The issue can be copied into the auditable checklist in `## Notes / open questions`.
+
+<details>
+<summary>Open a prefilled issue for a property</summary>
+
+<!-- mapping-question-links:start -->
+| Source property | Action |
+| --- | --- |
+| _(mapping-level)_ | [💬 Ask a question](https://github.com/Open-Cap-Table-Coalition/OCF-Composed-Schemas/issues/new?template=mapping-question.yml&mapping_file=types%2FCountrySubdivisionCode.mapping.md&source_url=https%3A%2F%2Fgithub.com%2FOpen-Cap-Table-Coalition%2FOCF-Composed-Schemas%2Fblob%2Fmain%2Ftypes%2FCountrySubdivisionCode.mapping.md&title=%5BMapping+question%5D+CountrySubdivisionCode) |
+</details>
+<!-- mapping-question-links:end -->
+
 ## Notes / open questions
 
 - **Type-level correspondence (bucket 1, type-to-type).** OCF `CountrySubdivisionCode` is a zero-property scalar string (`type: string`, `pattern: ^[A-Z0-9]{1,}$`, max 3 chars) carrying an ISO 3166-2 principal-subdivision code (e.g. `CA`, `NY`, `BC`). Carta models the exact same concept as a reusable `$def`: `#/$defs/Iso3166Set2Code` — "Codes identifying the principal subdivisions of countries as defined by the ISO 3166-2 standard." The whole OCF type therefore corresponds, value-for-value, to `Iso3166Set2Code`. As with `types/Md5.mapping.md`, a scalar type has no `properties`, so `fields: {}`; the correspondence lives here in Notes rather than in a per-field row.

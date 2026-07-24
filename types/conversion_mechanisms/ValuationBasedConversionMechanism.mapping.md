@@ -125,6 +125,25 @@ fields:
     reason: no-equivalent
 ```
 
+## Ask a mapping question
+
+Use a link below to open a prefilled GitHub issue. The issue can be copied into the auditable checklist in `## Notes / open questions`.
+
+<details>
+<summary>Open a prefilled issue for a property</summary>
+
+<!-- mapping-question-links:start -->
+| Source property | Action |
+| --- | --- |
+| _(mapping-level)_ | [💬 Ask a question](https://github.com/Open-Cap-Table-Coalition/OCF-Composed-Schemas/issues/new?template=mapping-question.yml&mapping_file=types%2Fconversion_mechanisms%2FValuationBasedConversionMechanism.mapping.md&source_url=https%3A%2F%2Fgithub.com%2FOpen-Cap-Table-Coalition%2FOCF-Composed-Schemas%2Fblob%2Fmain%2Ftypes%2Fconversion_mechanisms%2FValuationBasedConversionMechanism.mapping.md&title=%5BMapping+question%5D+ValuationBasedConversionMechanism) |
+| `type` | [💬 Ask a question](https://github.com/Open-Cap-Table-Coalition/OCF-Composed-Schemas/issues/new?template=mapping-question.yml&mapping_file=types%2Fconversion_mechanisms%2FValuationBasedConversionMechanism.mapping.md&source_url=https%3A%2F%2Fgithub.com%2FOpen-Cap-Table-Coalition%2FOCF-Composed-Schemas%2Fblob%2Fmain%2Ftypes%2Fconversion_mechanisms%2FValuationBasedConversionMechanism.mapping.md&title=%5BMapping+question%5D+ValuationBasedConversionMechanism%3A+type&property_path=type) |
+| `valuation_type` | [💬 Ask a question](https://github.com/Open-Cap-Table-Coalition/OCF-Composed-Schemas/issues/new?template=mapping-question.yml&mapping_file=types%2Fconversion_mechanisms%2FValuationBasedConversionMechanism.mapping.md&source_url=https%3A%2F%2Fgithub.com%2FOpen-Cap-Table-Coalition%2FOCF-Composed-Schemas%2Fblob%2Fmain%2Ftypes%2Fconversion_mechanisms%2FValuationBasedConversionMechanism.mapping.md&title=%5BMapping+question%5D+ValuationBasedConversionMechanism%3A+valuation_type&property_path=valuation_type) |
+| `valuation_amount` | [💬 Ask a question](https://github.com/Open-Cap-Table-Coalition/OCF-Composed-Schemas/issues/new?template=mapping-question.yml&mapping_file=types%2Fconversion_mechanisms%2FValuationBasedConversionMechanism.mapping.md&source_url=https%3A%2F%2Fgithub.com%2FOpen-Cap-Table-Coalition%2FOCF-Composed-Schemas%2Fblob%2Fmain%2Ftypes%2Fconversion_mechanisms%2FValuationBasedConversionMechanism.mapping.md&title=%5BMapping+question%5D+ValuationBasedConversionMechanism%3A+valuation_amount&property_path=valuation_amount) |
+| `capitalization_definition` | [💬 Ask a question](https://github.com/Open-Cap-Table-Coalition/OCF-Composed-Schemas/issues/new?template=mapping-question.yml&mapping_file=types%2Fconversion_mechanisms%2FValuationBasedConversionMechanism.mapping.md&source_url=https%3A%2F%2Fgithub.com%2FOpen-Cap-Table-Coalition%2FOCF-Composed-Schemas%2Fblob%2Fmain%2Ftypes%2Fconversion_mechanisms%2FValuationBasedConversionMechanism.mapping.md&title=%5BMapping+question%5D+ValuationBasedConversionMechanism%3A+capitalization_definition&property_path=capitalization_definition) |
+| `capitalization_definition_rules` | [💬 Ask a question](https://github.com/Open-Cap-Table-Coalition/OCF-Composed-Schemas/issues/new?template=mapping-question.yml&mapping_file=types%2Fconversion_mechanisms%2FValuationBasedConversionMechanism.mapping.md&source_url=https%3A%2F%2Fgithub.com%2FOpen-Cap-Table-Coalition%2FOCF-Composed-Schemas%2Fblob%2Fmain%2Ftypes%2Fconversion_mechanisms%2FValuationBasedConversionMechanism.mapping.md&title=%5BMapping+question%5D+ValuationBasedConversionMechanism%3A+capitalization_definition_rules&property_path=capitalization_definition_rules) |
+</details>
+<!-- mapping-question-links:end -->
+
 ## Notes / open questions
 
 - **Bucket (1) — structured OCF type with a single, unambiguous Carta home for its economic value.** `ValuationBasedConversionMechanism` is a convertible/SAFE conversion-mechanism variant that sets the conversion price off a *company valuation* figure: `valuation_amount` is the dollar valuation, and `valuation_type` says whether that figure is a max valuation (`CAP`), a fixed valuation (`FIXED`), or the actual valuation at exercise (`ACTUAL`). Carta models the convertible itself as a reusable object — `#/$defs/ConvertibleNote` (mirrored by the issuance event `#/$defs/ConvertibleIssuanceTransaction`) — and inlines a convertible's valuation/price cap as `priceCap` (`Money`) on the note and `valuationCap` (`Money`) on the issuance. So the type's one true economic input (`valuation_amount`) has a single clear home and this is bucket-1, not bucket-2/3: we map that field and mark `unmappable` only the genuinely-absent OCF concepts. This is the same routing already used by the complete `types/conversion_mechanisms/NoteConversionMechanism.mapping.md`, whose `conversion_valuation_cap` (`Monetary`) → `#/$defs/ConvertibleNote/properties/priceCap`; per the **consistency rule**, a convertible valuation cap must land in the same Carta place, so this mapping follows that precedent.

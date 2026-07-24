@@ -100,6 +100,24 @@ fields:
     reason: no-equivalent
 ```
 
+## Ask a mapping question
+
+Use a link below to open a prefilled GitHub issue. The issue can be copied into the auditable checklist in `## Notes / open questions`.
+
+<details>
+<summary>Open a prefilled issue for a property</summary>
+
+<!-- mapping-question-links:start -->
+| Source property | Action |
+| --- | --- |
+| _(mapping-level)_ | [💬 Ask a question](https://github.com/Open-Cap-Table-Coalition/OCF-Composed-Schemas/issues/new?template=mapping-question.yml&mapping_file=types%2FCapitalizationDefinition.mapping.md&source_url=https%3A%2F%2Fgithub.com%2FOpen-Cap-Table-Coalition%2FOCF-Composed-Schemas%2Fblob%2Fmain%2Ftypes%2FCapitalizationDefinition.mapping.md&title=%5BMapping+question%5D+CapitalizationDefinition) |
+| `include_stock_class_ids` | [💬 Ask a question](https://github.com/Open-Cap-Table-Coalition/OCF-Composed-Schemas/issues/new?template=mapping-question.yml&mapping_file=types%2FCapitalizationDefinition.mapping.md&source_url=https%3A%2F%2Fgithub.com%2FOpen-Cap-Table-Coalition%2FOCF-Composed-Schemas%2Fblob%2Fmain%2Ftypes%2FCapitalizationDefinition.mapping.md&title=%5BMapping+question%5D+CapitalizationDefinition%3A+include_stock_class_ids&property_path=include_stock_class_ids) |
+| `include_stock_plans_ids` | [💬 Ask a question](https://github.com/Open-Cap-Table-Coalition/OCF-Composed-Schemas/issues/new?template=mapping-question.yml&mapping_file=types%2FCapitalizationDefinition.mapping.md&source_url=https%3A%2F%2Fgithub.com%2FOpen-Cap-Table-Coalition%2FOCF-Composed-Schemas%2Fblob%2Fmain%2Ftypes%2FCapitalizationDefinition.mapping.md&title=%5BMapping+question%5D+CapitalizationDefinition%3A+include_stock_plans_ids&property_path=include_stock_plans_ids) |
+| `include_security_ids` | [💬 Ask a question](https://github.com/Open-Cap-Table-Coalition/OCF-Composed-Schemas/issues/new?template=mapping-question.yml&mapping_file=types%2FCapitalizationDefinition.mapping.md&source_url=https%3A%2F%2Fgithub.com%2FOpen-Cap-Table-Coalition%2FOCF-Composed-Schemas%2Fblob%2Fmain%2Ftypes%2FCapitalizationDefinition.mapping.md&title=%5BMapping+question%5D+CapitalizationDefinition%3A+include_security_ids&property_path=include_security_ids) |
+| `exclude_security_ids` | [💬 Ask a question](https://github.com/Open-Cap-Table-Coalition/OCF-Composed-Schemas/issues/new?template=mapping-question.yml&mapping_file=types%2FCapitalizationDefinition.mapping.md&source_url=https%3A%2F%2Fgithub.com%2FOpen-Cap-Table-Coalition%2FOCF-Composed-Schemas%2Fblob%2Fmain%2Ftypes%2FCapitalizationDefinition.mapping.md&title=%5BMapping+question%5D+CapitalizationDefinition%3A+exclude_security_ids&property_path=exclude_security_ids) |
+</details>
+<!-- mapping-question-links:end -->
+
 ## Notes / open questions
 
 - Carta has no concept of a named, configurable capitalization-rule definition. OCF uses `CapitalizationDefinition` (and `CapitalizationDefinitionRules`) to express *which* stock classes/plans/securities are included or excluded when calculating fully-diluted capitalization. Carta exposes aggregate quantities (e.g. `fullyDilutedShares` on `OptionPoolSummary`, `CapitalizationTableSummary`) but not the rule definitions that produced them. The README also notes that Carta capitalization-summary types are an excluded part of the bundle in any case.

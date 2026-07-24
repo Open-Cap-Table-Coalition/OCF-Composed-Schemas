@@ -1,0 +1,74 @@
+name: Mapping question
+description: Open an auditable question about an OCF-to-Carta mapping
+title: "[Mapping question] "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use this form to raise a mapping question. After the decision is made, copy the result into the mapping file's `## Notes / open questions` checklist so the question remains auditable in the repository.
+
+  - type: input
+    id: mapping_file
+    attributes:
+      label: Mapping file
+      description: Repository-relative path to the .mapping.md file.
+      placeholder: objects/transactions/issuance/StockIssuance.mapping.md
+    validations:
+      required: true
+
+  - type: input
+    id: property_path
+    attributes:
+      label: Source property path
+      description: Optional source-side property path, such as security_id or terms[].ratio.
+      placeholder: security_id
+
+  - type: input
+    id: target_path
+    attributes:
+      label: Carta target property path
+      description: Optional Carta-side target path, such as Compliance.countryOfResidency. Copy it into the mapping as Target: Object.property.
+      placeholder: Compliance.countryOfResidency
+
+  - type: input
+    id: asked_by
+    attributes:
+      label: Asked by
+      description: Your GitHub handle or name for the audit trail.
+      placeholder: "@github-user"
+    validations:
+      required: true
+
+  - type: textarea
+    id: question
+    attributes:
+      label: Question
+      description: State the mapping question clearly enough for a reviewer to answer.
+      placeholder: Should this OCF property map to the proposed Carta property?
+    validations:
+      required: true
+
+  - type: textarea
+    id: answer
+    attributes:
+      label: Current or provisional answer
+      description: Provide the current understanding. An open question may have a provisional answer.
+      placeholder: Pending confirmation from the relevant owners.
+    validations:
+      required: true
+
+  - type: input
+    id: answered_by
+    attributes:
+      label: Answered by
+      description: Leave this as — while the question is open; fill it when the answer is decided.
+      value: —
+
+  - type: input
+    id: source_url
+    attributes:
+      label: Mapping page URL
+      description: Link back to the mapping page for context.
+      placeholder: https://github.com/Open-Cap-Table-Coalition/OCF-Composed-Schemas/blob/main/objects/...
+    validations:
+      required: true

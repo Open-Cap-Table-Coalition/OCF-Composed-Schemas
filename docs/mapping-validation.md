@@ -34,6 +34,20 @@ derived coverage stays reviewable, and enum remaps are checked value-by-value.
   The generated report is added to the GitHub Actions job summary and uploaded as the
   `mapping-inverse-report` artifact, including when another mapping check fails.
 
+Each mapping page also contains a generated **Ask a mapping question** table with a prefilled
+GitHub issue-form link for every source property. The links pass the mapping file, property path,
+source page, and issue title into `.github/ISSUE_TEMPLATE/mapping-question.yml`. The generated
+block is marked with HTML comments and can be refreshed without touching the hand-authored YAML
+mapping or notes:
+
+```bash
+npm run mapping:question-links
+npm run mapping:question-links -- --check
+```
+
+Issue templates are read from the repository's default branch, so these links become active after
+the template lands on `main`.
+
 ### Auditable mapping questions
 
 Questions are ordinary GitHub task-list items, with fixed metadata underneath so CI can validate
@@ -49,6 +63,12 @@ them and the inverse report can project open questions onto the related Carta pr
   - Asked by: @alice
   - Answer: No; Carta generates its own identifier.
   - Answered by: @bob
+
+- [ ] `addresses[].country`: Should this source also populate stakeholder compliance residency?
+  - Target: Compliance.countryOfResidency
+  - Asked by: @alice
+  - Answer: Open: investigate the required object linkage and code conversion.
+  - Answered by: —
 ```
 
 The property path is optional for mapping-level questions. Dotted paths such as
@@ -57,9 +77,11 @@ top-level segment must exist in the sibling source schema. Every question must h
 `Asked by`, `Answer`, and `Answered by` metadata. An open question may use `—` (or another
 explicit placeholder) for `Answered by`; a checked question must name the answerer. The answer
 and audit metadata remain in the mapping Markdown after the question is checked, while
-`--inverse` renders only unchecked questions beneath the matching target property. Malformed
-question headers, metadata, answers, or property paths fail mapping validation and therefore fail
-CI.
+`--inverse` renders only unchecked questions beneath the matching target property. To bind a
+question directly to a Carta slot, add optional `Target: CartaObject.property` metadata; this is
+especially useful for a target property that currently has no mapped OCF source. Carta target
+paths are checked against the target bundle. Malformed question headers, metadata, answers, source
+property paths, or Carta target paths fail mapping validation and therefore fail CI.
 
 ## DSL operator reference
 

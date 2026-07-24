@@ -110,6 +110,24 @@ fields:
     reason: no-equivalent
 ```
 
+## Ask a mapping question
+
+Use a link below to open a prefilled GitHub issue. The issue can be copied into the auditable checklist in `## Notes / open questions`.
+
+<details>
+<summary>Open a prefilled issue for a property</summary>
+
+<!-- mapping-question-links:start -->
+| Source property | Action |
+| --- | --- |
+| _(mapping-level)_ | [💬 Ask a question](https://github.com/Open-Cap-Table-Coalition/OCF-Composed-Schemas/issues/new?template=mapping-question.yml&mapping_file=types%2Fconversion_rights%2FConvertibleConversionRight.mapping.md&source_url=https%3A%2F%2Fgithub.com%2FOpen-Cap-Table-Coalition%2FOCF-Composed-Schemas%2Fblob%2Fmain%2Ftypes%2Fconversion_rights%2FConvertibleConversionRight.mapping.md&title=%5BMapping+question%5D+ConvertibleConversionRight) |
+| `type` | [💬 Ask a question](https://github.com/Open-Cap-Table-Coalition/OCF-Composed-Schemas/issues/new?template=mapping-question.yml&mapping_file=types%2Fconversion_rights%2FConvertibleConversionRight.mapping.md&source_url=https%3A%2F%2Fgithub.com%2FOpen-Cap-Table-Coalition%2FOCF-Composed-Schemas%2Fblob%2Fmain%2Ftypes%2Fconversion_rights%2FConvertibleConversionRight.mapping.md&title=%5BMapping+question%5D+ConvertibleConversionRight%3A+type&property_path=type) |
+| `conversion_mechanism` | [💬 Ask a question](https://github.com/Open-Cap-Table-Coalition/OCF-Composed-Schemas/issues/new?template=mapping-question.yml&mapping_file=types%2Fconversion_rights%2FConvertibleConversionRight.mapping.md&source_url=https%3A%2F%2Fgithub.com%2FOpen-Cap-Table-Coalition%2FOCF-Composed-Schemas%2Fblob%2Fmain%2Ftypes%2Fconversion_rights%2FConvertibleConversionRight.mapping.md&title=%5BMapping+question%5D+ConvertibleConversionRight%3A+conversion_mechanism&property_path=conversion_mechanism) |
+| `converts_to_future_round` | [💬 Ask a question](https://github.com/Open-Cap-Table-Coalition/OCF-Composed-Schemas/issues/new?template=mapping-question.yml&mapping_file=types%2Fconversion_rights%2FConvertibleConversionRight.mapping.md&source_url=https%3A%2F%2Fgithub.com%2FOpen-Cap-Table-Coalition%2FOCF-Composed-Schemas%2Fblob%2Fmain%2Ftypes%2Fconversion_rights%2FConvertibleConversionRight.mapping.md&title=%5BMapping+question%5D+ConvertibleConversionRight%3A+converts_to_future_round&property_path=converts_to_future_round) |
+| `converts_to_stock_class_id` | [💬 Ask a question](https://github.com/Open-Cap-Table-Coalition/OCF-Composed-Schemas/issues/new?template=mapping-question.yml&mapping_file=types%2Fconversion_rights%2FConvertibleConversionRight.mapping.md&source_url=https%3A%2F%2Fgithub.com%2FOpen-Cap-Table-Coalition%2FOCF-Composed-Schemas%2Fblob%2Fmain%2Ftypes%2Fconversion_rights%2FConvertibleConversionRight.mapping.md&title=%5BMapping+question%5D+ConvertibleConversionRight%3A+converts_to_stock_class_id&property_path=converts_to_stock_class_id) |
+</details>
+<!-- mapping-question-links:end -->
+
 ## Notes / open questions
 
 - **Bucket 1 (type-to-type, with one clear Carta home).** `ConvertibleConversionRight` is OCF's polymorphic *conversion-right wrapper* for a convertible — a discriminated container (`type` + a `conversion_mechanism` `oneOf`) that bundles the conversion economics and logic/state-machine of a convertible together with its conversion target. Carta has no reusable `$def` literally named "conversion right," but a convertible's economic terms have a single, unambiguous Carta home: Carta models the convertible itself as a reusable object, `#/$defs/ConvertibleNote` (mirrored by the issuance event `#/$defs/ConvertibleIssuanceTransaction`), which inlines the discount, valuation/price cap, interest rate, accrual/compounding period, and day-count basis that this type's mechanisms carry. Per the Carta structured-target surface ("Convertible economics → `#/$defs/ConvertibleNote/...`") and the directly analogous sibling `StockClassConversionRight.mapping.md` (whose single mechanism maps onto `ShareClassRightsAndPreferences`), this is bucket 1, not bucket 3: the `conversion_mechanism` payload is mapped to its Carta leaves and only the genuinely-absent structural fields are marked `unmappable`. (It is deliberately NOT treated like the sibling `WarrantConversionRight`, whose mechanisms describe *warrant* economics that Carta's `WarrantIssuanceTransaction` does not carry; here the relevant `oneOf` members are convertible mechanisms with a clean `ConvertibleNote` home.)

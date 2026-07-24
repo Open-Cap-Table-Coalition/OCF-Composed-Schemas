@@ -76,6 +76,22 @@ fields:
     reason: no-equivalent
 ```
 
+## Ask a mapping question
+
+Use a link below to open a prefilled GitHub issue. The issue can be copied into the auditable checklist in `## Notes / open questions`.
+
+<details>
+<summary>Open a prefilled issue for a property</summary>
+
+<!-- mapping-question-links:start -->
+| Source property | Action |
+| --- | --- |
+| _(mapping-level)_ | [💬 Ask a question](https://github.com/Open-Cap-Table-Coalition/OCF-Composed-Schemas/issues/new?template=mapping-question.yml&mapping_file=types%2Fconversion_mechanisms%2FCustomConversionMechanism.mapping.md&source_url=https%3A%2F%2Fgithub.com%2FOpen-Cap-Table-Coalition%2FOCF-Composed-Schemas%2Fblob%2Fmain%2Ftypes%2Fconversion_mechanisms%2FCustomConversionMechanism.mapping.md&title=%5BMapping+question%5D+CustomConversionMechanism) |
+| `type` | [💬 Ask a question](https://github.com/Open-Cap-Table-Coalition/OCF-Composed-Schemas/issues/new?template=mapping-question.yml&mapping_file=types%2Fconversion_mechanisms%2FCustomConversionMechanism.mapping.md&source_url=https%3A%2F%2Fgithub.com%2FOpen-Cap-Table-Coalition%2FOCF-Composed-Schemas%2Fblob%2Fmain%2Ftypes%2Fconversion_mechanisms%2FCustomConversionMechanism.mapping.md&title=%5BMapping+question%5D+CustomConversionMechanism%3A+type&property_path=type) |
+| `custom_conversion_description` | [💬 Ask a question](https://github.com/Open-Cap-Table-Coalition/OCF-Composed-Schemas/issues/new?template=mapping-question.yml&mapping_file=types%2Fconversion_mechanisms%2FCustomConversionMechanism.mapping.md&source_url=https%3A%2F%2Fgithub.com%2FOpen-Cap-Table-Coalition%2FOCF-Composed-Schemas%2Fblob%2Fmain%2Ftypes%2Fconversion_mechanisms%2FCustomConversionMechanism.mapping.md&title=%5BMapping+question%5D+CustomConversionMechanism%3A+custom_conversion_description&property_path=custom_conversion_description) |
+</details>
+<!-- mapping-question-links:end -->
+
 ## Notes / open questions
 
 - **Bucket 3 (absent).** `CustomConversionMechanism` is OCF's escape-hatch conversion-mechanism subtype — the one used when a bespoke conversion "cannot be accurately modelled with any other OCF conversion mechanism type." It carries exactly two fields: a `CUSTOM_CONVERSION` discriminator const and a free-text legal-language `custom_conversion_description`. Carta has **no analogous reusable `$def` for a conversion mechanism**, no conversion-mechanism-type enum, and — critically for this subtype — **no free-text conversion-description field anywhere in the bundle**. Carta models convertible economics only as concrete, typed term fields (`#/$defs/ConvertibleNote/properties/{interestRate, priceCap, discountPercentage, conversionTrigger, …}`, `#/$defs/ConvertibleIssuanceTransaction/properties/{principal, valuationCap, …}`, and `#/$defs/ShareClassRightsAndPreferences/properties/{conversionPrice, conversionRatio, multiplier, …}`). A *custom* mechanism by definition does not fit those typed fields, and there is no narrative slot to spill the prose into — so both properties are `unmappable` / `no-equivalent`.

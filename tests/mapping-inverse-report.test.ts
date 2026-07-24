@@ -153,6 +153,7 @@ describe("renderMappingInverseReport", () => {
             questions: [
               {
                 property: "discount",
+                target: null,
                 question: "Should this discount be preserved exactly?",
                 askedBy: "@alice",
                 answer: "Pending confirmation.",
@@ -162,6 +163,7 @@ describe("renderMappingInverseReport", () => {
               },
               {
                 property: "discount",
+                target: null,
                 question: "This answered question must not appear.",
                 askedBy: "@alice",
                 answer: "Yes.",
@@ -179,6 +181,51 @@ describe("renderMappingInverseReport", () => {
     expect(out).toContain("? open question: Should this discount be preserved exactly?");
     expect(out).toContain("asked by @alice");
     expect(out).not.toContain("This answered question must not appear.");
+  });
+
+  it("renders target-bound questions beside unmapped target properties", () => {
+    const inverse = ledger(
+      {
+        Compliance: {
+          properties: { countryOfResidency: {}, federalExemption: {} },
+        },
+      },
+      [
+        fieldEdge(
+          "types/SecurityExemption.mapping.md",
+          "SecurityExemption",
+          "description",
+          "#/$defs/Compliance/properties/federalExemption"
+        ),
+      ]
+    );
+    const out = renderMappingInverseReport({
+      inverse,
+      targetObject: "Compliance",
+      mappingDocuments: new Map([
+        [
+          "objects/Stakeholder.mapping.md",
+          {
+            questions: [
+              {
+                property: "addresses[].country",
+                target: "Compliance.countryOfResidency",
+                question: "Should stakeholder country feed compliance residency?",
+                askedBy: "@alice",
+                answer: "Pending investigation.",
+                answeredBy: null,
+                answered: false,
+                line: 12,
+              },
+            ],
+          },
+        ],
+      ]),
+    });
+
+    expect(out).toContain("countryOfResidency");
+    expect(out).toContain("✗ no mapped OCF source");
+    expect(out).toContain("? open question: Should stakeholder country feed compliance residency?");
   });
 
   it("includes only object-like definitions requiring role follow-up", () => {

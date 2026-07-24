@@ -19,6 +19,7 @@ jobs:
       - run: npm run lint
       - run: npm test
       - run: npm run mapping:validate -- --verbose
+      - run: npm run mapping:question-links -- --check
       - name: Generate shared inverse coverage report
         shell: bash
         run: |

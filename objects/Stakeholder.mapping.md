@@ -220,6 +220,33 @@ fields:
     reason: no-equivalent
 ```
 
+## Ask a mapping question
+
+Use a link below to open a prefilled GitHub issue. The issue can be copied into the auditable checklist in `## Notes / open questions`.
+
+<details>
+<summary>Open a prefilled issue for a property</summary>
+
+<!-- mapping-question-links:start -->
+| Source property | Action |
+| --- | --- |
+| _(mapping-level)_ | [💬 Ask a question](https://github.com/Open-Cap-Table-Coalition/OCF-Composed-Schemas/issues/new?template=mapping-question.yml&mapping_file=objects%2FStakeholder.mapping.md&source_url=https%3A%2F%2Fgithub.com%2FOpen-Cap-Table-Coalition%2FOCF-Composed-Schemas%2Fblob%2Fmain%2Fobjects%2FStakeholder.mapping.md&title=%5BMapping+question%5D+Stakeholder) |
+| `id` | [💬 Ask a question](https://github.com/Open-Cap-Table-Coalition/OCF-Composed-Schemas/issues/new?template=mapping-question.yml&mapping_file=objects%2FStakeholder.mapping.md&source_url=https%3A%2F%2Fgithub.com%2FOpen-Cap-Table-Coalition%2FOCF-Composed-Schemas%2Fblob%2Fmain%2Fobjects%2FStakeholder.mapping.md&title=%5BMapping+question%5D+Stakeholder%3A+id&property_path=id) |
+| `comments` | [💬 Ask a question](https://github.com/Open-Cap-Table-Coalition/OCF-Composed-Schemas/issues/new?template=mapping-question.yml&mapping_file=objects%2FStakeholder.mapping.md&source_url=https%3A%2F%2Fgithub.com%2FOpen-Cap-Table-Coalition%2FOCF-Composed-Schemas%2Fblob%2Fmain%2Fobjects%2FStakeholder.mapping.md&title=%5BMapping+question%5D+Stakeholder%3A+comments&property_path=comments) |
+| `object_type` | [💬 Ask a question](https://github.com/Open-Cap-Table-Coalition/OCF-Composed-Schemas/issues/new?template=mapping-question.yml&mapping_file=objects%2FStakeholder.mapping.md&source_url=https%3A%2F%2Fgithub.com%2FOpen-Cap-Table-Coalition%2FOCF-Composed-Schemas%2Fblob%2Fmain%2Fobjects%2FStakeholder.mapping.md&title=%5BMapping+question%5D+Stakeholder%3A+object_type&property_path=object_type) |
+| `name` | [💬 Ask a question](https://github.com/Open-Cap-Table-Coalition/OCF-Composed-Schemas/issues/new?template=mapping-question.yml&mapping_file=objects%2FStakeholder.mapping.md&source_url=https%3A%2F%2Fgithub.com%2FOpen-Cap-Table-Coalition%2FOCF-Composed-Schemas%2Fblob%2Fmain%2Fobjects%2FStakeholder.mapping.md&title=%5BMapping+question%5D+Stakeholder%3A+name&property_path=name) |
+| `stakeholder_type` | [💬 Ask a question](https://github.com/Open-Cap-Table-Coalition/OCF-Composed-Schemas/issues/new?template=mapping-question.yml&mapping_file=objects%2FStakeholder.mapping.md&source_url=https%3A%2F%2Fgithub.com%2FOpen-Cap-Table-Coalition%2FOCF-Composed-Schemas%2Fblob%2Fmain%2Fobjects%2FStakeholder.mapping.md&title=%5BMapping+question%5D+Stakeholder%3A+stakeholder_type&property_path=stakeholder_type) |
+| `issuer_assigned_id` | [💬 Ask a question](https://github.com/Open-Cap-Table-Coalition/OCF-Composed-Schemas/issues/new?template=mapping-question.yml&mapping_file=objects%2FStakeholder.mapping.md&source_url=https%3A%2F%2Fgithub.com%2FOpen-Cap-Table-Coalition%2FOCF-Composed-Schemas%2Fblob%2Fmain%2Fobjects%2FStakeholder.mapping.md&title=%5BMapping+question%5D+Stakeholder%3A+issuer_assigned_id&property_path=issuer_assigned_id) |
+| `current_relationship` | [💬 Ask a question](https://github.com/Open-Cap-Table-Coalition/OCF-Composed-Schemas/issues/new?template=mapping-question.yml&mapping_file=objects%2FStakeholder.mapping.md&source_url=https%3A%2F%2Fgithub.com%2FOpen-Cap-Table-Coalition%2FOCF-Composed-Schemas%2Fblob%2Fmain%2Fobjects%2FStakeholder.mapping.md&title=%5BMapping+question%5D+Stakeholder%3A+current_relationship&property_path=current_relationship) |
+| `current_relationships` | [💬 Ask a question](https://github.com/Open-Cap-Table-Coalition/OCF-Composed-Schemas/issues/new?template=mapping-question.yml&mapping_file=objects%2FStakeholder.mapping.md&source_url=https%3A%2F%2Fgithub.com%2FOpen-Cap-Table-Coalition%2FOCF-Composed-Schemas%2Fblob%2Fmain%2Fobjects%2FStakeholder.mapping.md&title=%5BMapping+question%5D+Stakeholder%3A+current_relationships&property_path=current_relationships) |
+| `current_status` | [💬 Ask a question](https://github.com/Open-Cap-Table-Coalition/OCF-Composed-Schemas/issues/new?template=mapping-question.yml&mapping_file=objects%2FStakeholder.mapping.md&source_url=https%3A%2F%2Fgithub.com%2FOpen-Cap-Table-Coalition%2FOCF-Composed-Schemas%2Fblob%2Fmain%2Fobjects%2FStakeholder.mapping.md&title=%5BMapping+question%5D+Stakeholder%3A+current_status&property_path=current_status) |
+| `primary_contact` | [💬 Ask a question](https://github.com/Open-Cap-Table-Coalition/OCF-Composed-Schemas/issues/new?template=mapping-question.yml&mapping_file=objects%2FStakeholder.mapping.md&source_url=https%3A%2F%2Fgithub.com%2FOpen-Cap-Table-Coalition%2FOCF-Composed-Schemas%2Fblob%2Fmain%2Fobjects%2FStakeholder.mapping.md&title=%5BMapping+question%5D+Stakeholder%3A+primary_contact&property_path=primary_contact) |
+| `contact_info` | [💬 Ask a question](https://github.com/Open-Cap-Table-Coalition/OCF-Composed-Schemas/issues/new?template=mapping-question.yml&mapping_file=objects%2FStakeholder.mapping.md&source_url=https%3A%2F%2Fgithub.com%2FOpen-Cap-Table-Coalition%2FOCF-Composed-Schemas%2Fblob%2Fmain%2Fobjects%2FStakeholder.mapping.md&title=%5BMapping+question%5D+Stakeholder%3A+contact_info&property_path=contact_info) |
+| `addresses` | [💬 Ask a question](https://github.com/Open-Cap-Table-Coalition/OCF-Composed-Schemas/issues/new?template=mapping-question.yml&mapping_file=objects%2FStakeholder.mapping.md&source_url=https%3A%2F%2Fgithub.com%2FOpen-Cap-Table-Coalition%2FOCF-Composed-Schemas%2Fblob%2Fmain%2Fobjects%2FStakeholder.mapping.md&title=%5BMapping+question%5D+Stakeholder%3A+addresses&property_path=addresses) |
+| `tax_ids` | [💬 Ask a question](https://github.com/Open-Cap-Table-Coalition/OCF-Composed-Schemas/issues/new?template=mapping-question.yml&mapping_file=objects%2FStakeholder.mapping.md&source_url=https%3A%2F%2Fgithub.com%2FOpen-Cap-Table-Coalition%2FOCF-Composed-Schemas%2Fblob%2Fmain%2Fobjects%2FStakeholder.mapping.md&title=%5BMapping+question%5D+Stakeholder%3A+tax_ids&property_path=tax_ids) |
+</details>
+<!-- mapping-question-links:end -->
+
 ## Notes / open questions
 
 - `name` → `fullName`: OCF `name` is a structured `Name` (required `legal_name`, optional `first_name`/`last_name`); Carta `fullName` is a flat string. The mapping explicitly selects `/legal_name` under policy `legal_name`; `first_name`/`last_name` have no Carta slot and are dropped.
@@ -232,5 +259,15 @@ fields:
 - `primary_contact` (institutional) and `contact_info` (individual) both → Carta `email`: both OCF types carry `emails: array` and `phone_numbers: array` (and `primary_contact` also carries `name`). Only the email is transferred, and Carta accepts only a single string — so only the first email per record survives. Phone numbers, the contact person's name (for institutions), and additional emails are all dropped. Marked `kind: combine` rather than `rename`: these are two *distinct* optional OCF fields that both feed Carta's single `email`, so the relationship is a two-source → one-target fan-in, not a 1:1 field rename. Selection is by `stakeholder_type` (`contact_info` for an `INDIVIDUAL`, `primary_contact` for an `INSTITUTION`); the OCF schema places no `oneOf`/`anyOf` on the two fields, so if both happen to be set the one matching `stakeholder_type` wins. (`computed` is reserved for cross-record or otherwise-derived values; here the value is copied verbatim from whichever source applies, just collapsed to the first email.)
 - `addresses` → `address`: dramatic loss in two dimensions. OCF carries an *array* of richly structured `Address` objects (street, city, state, country, postal code, etc.); Carta's `StakeholderAddress` has *only* `country` (a single string, no structure). The mapping explicitly selects the first address's `/country` under policy `first_address_country`; all other address data is dropped.
 - `tax_ids`: unmappable. Carta's `Stakeholder` has no tax-id field.
+- [ ] `addresses[].country`: Should an OCF stakeholder address country also populate Carta `Compliance.countryOfResidency`? Investigate whether a two-hop stakeholder linkage is required and how the OCF alpha-2 value should be converted to Carta's alpha-3 code.
+  - Target: Compliance.countryOfResidency
+  - Asked by: @johnscrudato
+  - Answer: Open: determine whether `Stakeholder.addresses[].country` is the intended OCF source for stakeholder residency, or whether another stakeholder-level field should be used.
+  - Answered by: —
+- [ ] `addresses[].country_subdivision`: Should an OCF stakeholder address subdivision also populate Carta `Compliance.stateOfResidency`? Investigate whether a two-hop stakeholder linkage is required and how the country-qualified ISO 3166-2 value should be constructed.
+  - Target: Compliance.stateOfResidency
+  - Asked by: @johnscrudato
+  - Answer: Open: determine whether `Stakeholder.addresses[].country_subdivision` is the intended OCF source for stakeholder residency, or whether another stakeholder-level field should be used.
+  - Answered by: —
 - `id`, `comments`, `object_type`: unmappable boilerplate OCF object scaffolding (same as `Document`/`Issuer`).
 - Carta-side fields with no OCF counterpart: `issuerId` (a back-reference; in OCF the issuer is implicit because each OCF file represents one issuer), `group` (an arbitrary tag with no OCF analogue).

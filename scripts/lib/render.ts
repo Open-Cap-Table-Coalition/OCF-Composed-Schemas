@@ -1,5 +1,6 @@
 import path from "node:path";
 import { detectEnumValues } from "./enum-detection.js";
+import { renderQuestionLinks } from "./question-links.js";
 import { RawSchema, Registry } from "./registry.js";
 
 export interface FrontmatterInput {
@@ -136,9 +137,13 @@ export function renderMappingMarkdown(input: RenderInput): string {
     "",
     renderMappingBlock(properties, registry),
     "",
+    renderQuestionLinks(
+      schemaRelPath.replace(/\.schema\.json$/, ".mapping.md"),
+      Object.keys(properties)
+    ),
     "## Notes / open questions",
     "",
-    "<!-- Optional checklist questions use: - [ ] `property.path`: question + Asked by / Answer / Answered by metadata. -->",
+    "<!-- Optional checklist questions use: - [ ] `property.path`: question + optional Target: CartaObject.property + Asked by / Answer / Answered by metadata. -->",
     "",
     "- ",
     "",
