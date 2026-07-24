@@ -18,12 +18,15 @@ derived coverage stays reviewable, and enum remaps are checked value-by-value.
   when present — a `composite (N steps, all emitted)` node listing each step's Carta target(s) and
   any fixed `const:` fills).
 - `--inverse` prints a repository-wide target-first report in addition to validation. It renders the
-  shared inverse-coverage ledger: executable/type/deferred evidence, mutually exclusive definition
+  shared inverse-coverage ledger: executable/type/structural/deferred evidence, mutually exclusive definition
   roles, and the curated value-type/nested-type exclusions. Use `--inverse --target-object
   ConvertibleNote` to focus the object panels on one Carta definition. Unfiltered reports show
   mapped object-like definitions and only role-follow-up candidates; value types and nested types
-  are listed separately with their coverage/parent objects. Target properties with no mapped OCF
-  source remain explicit in each panel.
+  are listed separately with their coverage/parent objects. A `structural` slot is a parent
+  property whose `$ref`/`items.$ref` child definition has executable mapping evidence and whose
+  same mapping also carries executable evidence for the containing parent; it is populated through
+  child records rather than by a source field aimed at the parent property.
+  Target properties with no mapped OCF source remain explicit in each panel.
 - CI runs the equivalent `npm run mapping:inverse` command on every pull request and push to `main`.
   That command renders the same shared inverse-coverage ledger and role policy used by the
   generated Core reports, then uploads the object-panel view as a CI artifact.

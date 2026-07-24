@@ -10,8 +10,8 @@
  *                  Split three ways: clean (core), lossy (existence-loss/heuristic), dropped.
  *   Carta → Core : Core is OCF-shaped, so a Carta field flows in iff some green mapping
  *                  targets it (a Carta doc can populate that Core slot via the reverse
- *                  edge); a Carta field is left behind if no mapping ever targets it —
- *                  Carta richness Core (being OCF-shaped) can't hold.
+ *                  edge), or the slot is a schema-backed parent container populated by
+ *                  mapped child records; a Carta field is left behind if neither applies.
  *
  * One `deriveCore` call; the Carta side uses the shared inverse-coverage
  * ledger. Read-only; writes docs/core-bidirectional-flow.md.
@@ -82,6 +82,7 @@ export function renderBidiDoc(d: Derived): string {
     typeOnly: string[];
     implicit: string[];
     deferred: string[];
+    structural: string[];
     empty: string[];
   }
   const carta = new Map<string, CartaObj>();
@@ -97,9 +98,19 @@ export function renderBidiDoc(d: Derived): string {
     const deferred = defSlots
       .filter((slot) => slot.status === "deferred")
       .map((slot) => slot.property);
+    const structural = defSlots
+      .filter((slot) => slot.status === "structural")
+      .map((slot) => slot.property);
     const empty = defSlots.filter((slot) => slot.status === "empty").map((slot) => slot.property);
-    if (direct.length || typeOnly.length || implicit.length || deferred.length || def.directRoot) {
-      carta.set(def.name, { direct, typeOnly, implicit, deferred, empty });
+    if (
+      direct.length ||
+      typeOnly.length ||
+      implicit.length ||
+      deferred.length ||
+      structural.length ||
+      def.directRoot
+    ) {
+      carta.set(def.name, { direct, typeOnly, implicit, deferred, structural, empty });
     }
   }
   // Member (flow-in) fields with their Carta targets, plus the per-object loss
@@ -220,6 +231,7 @@ function render(
       typeOnly: string[];
       implicit: string[];
       deferred: string[];
+      structural: string[];
       empty: string[];
     }
   >,
@@ -237,6 +249,7 @@ function render(
   const cartaTypeOnly = sum([...carta.values()].map((c) => c.typeOnly.length));
   const cartaImplicit = sum([...carta.values()].map((c) => c.implicit.length));
   const cartaDeferred = sum([...carta.values()].map((c) => c.deferred.length));
+  const cartaStructural = sum([...carta.values()].map((c) => c.structural.length));
   const cartaEmpty = sum([...carta.values()].map((c) => c.empty.length));
   const excludedGroups = groupInverseExcludedRoleRows(excludedDefinitions);
 
@@ -260,7 +273,7 @@ function render(
     `  OCF["OCF"]:::in -->|"${ocfClean} clean + ${ocfLossy} lossy"| CORE`,
     `  OCF -.->|"${ocfDropped} left behind"| ocfvoid["⌀ dropped (no Carta home)"]:::out`,
     '  CORE["OCF Core (rich)"]:::core',
-    `  Carta["Carta"]:::in -->|"${cartaDirect} direct + ${cartaTypeOnly} type-only + ${cartaImplicit} implicit"| CORE`,
+    `  Carta["Carta"]:::in -->|"${cartaDirect} direct + ${cartaTypeOnly} type-only + ${cartaImplicit} implicit + ${cartaStructural} structural"| CORE`,
     ...(cartaDeferred
       ? [
           `  Carta -.->|"${cartaDeferred} deferred"| deferbox["⏳ deferred (OCF has it, extraction TODO)"]:::defer`,
@@ -273,7 +286,9 @@ function render(
     "  left behind only if it has **no Carta home** (`no-destination`).",
     "- **Carta → Core**: direct slots are populated by executable object/composite mappings;",
     "  type-only slots are reusable correspondences whose concrete object context is supplied",
-    "  separately; implicit slots come from deterministic constants. Empty slots are reported",
+    "  separately; implicit slots come from deterministic constants; structural slots are",
+    "  schema-backed parent containers populated by mapped child records plus parent-anchor",
+    "  evidence. Empty slots are reported",
     "  separately from unmapped `$defs` so root shape, nested coverage, and semantic type coverage",
     "  are not conflated. Curated value-type roles (for example, date/datetime wrappers) remain",
     "  available for type correspondences but are not treated as standalone inverse entities.",
@@ -292,6 +307,7 @@ function render(
     `| type-only slots | ${inverse.metrics.typeOnlySlots} |`,
     `| implicit constant slots | ${inverse.metrics.implicitSlots} |`,
     `| deferred slots | ${inverse.metrics.deferredSlots} |`,
+    `| structural child-container slots | ${inverse.metrics.structuralSlots} |`,
     "",
     ...renderInverseCoverageStory(inverse, excludedDefinitions),
     `#### Value-type support definitions (${excludedGroups.valueTypes.length})`,
@@ -354,9 +370,10 @@ function render(
     "",
     "## Carta → Core — per object (which Carta fields OCF fills vs leaves empty)",
     "",
-    "Only Carta objects with direct, reusable, implicit, or deferred evidence are listed here.",
+    "Only Carta objects with direct, reusable, implicit, structural, or deferred evidence are listed here.",
     "`direct` = executable object/composite edge; `type-only` = reusable type correspondence;",
-    "`implicit` = fixed deterministic value; `left behind` = an empty slot on this Carta object.",
+    "`implicit` = fixed deterministic value; `structural` = populated through mapped child records;",
+    "`left behind` = an empty slot on this Carta object.",
     "",
     "Caveat: `left behind` is slot-level. Carta denormalizes issuance-time attributes across a",
     "security object and its issuance transaction (`OptionGrant`↔`OptionIssuanceTransaction`,",
@@ -367,8 +384,8 @@ function render(
     "`deferred` = a slot a field's `defer:` placeholder claims: OCF *has* the data, the nested",
     "extraction just isn't built yet (see the ledger's Deferred mappings). Not counted as left behind.",
     "",
-    "| Carta object | direct | type-only | implicit | deferred | left behind | left-behind fields |",
-    "| --- | ---: | ---: | ---: | ---: | ---: | --- |"
+    "| Carta object | direct | type-only | implicit | structural | deferred | left behind | left-behind fields |",
+    "| --- | ---: | ---: | ---: | ---: | ---: | ---: | --- |"
   );
   for (const [name, c] of [...carta.entries()].sort(
     (a, b) =>
@@ -378,7 +395,7 @@ function render(
   )) {
     const left = c.empty.length ? c.empty.join(", ") : "—";
     lines.push(
-      `| ${name} | ${c.direct.length} | ${c.typeOnly.length} | ${c.implicit.length} | ${c.deferred.length} | ${c.empty.length} | ${left} |`
+      `| ${name} | ${c.direct.length} | ${c.typeOnly.length} | ${c.implicit.length} | ${c.structural.length} | ${c.deferred.length} | ${c.empty.length} | ${left} |`
     );
   }
   lines.push("");

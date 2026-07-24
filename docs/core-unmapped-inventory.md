@@ -16,7 +16,7 @@ drops only for Sar), so "no Carta home" is a per-flavor statement here, not obje
 magnitude diagrams split flavors apart; `core-bidirectional-flow.md` gives the distinct-field,
 best-landing view (its lower "left behind" count).
 
-## Magnitude — unmapped properties per OCF object (172 distinct across 47 objects; 249 per-flavor rows, 155 OCF-required)
+## Magnitude — unmapped properties per OCF object (171 distinct across 47 objects; 248 per-flavor rows, 154 OCF-required)
 
 Each OCF object → the void, edge labelled with how many of its properties are dropped.
 Green = the object is in strict Core (we carry it but lose these fields); dashed grey = the
@@ -79,7 +79,7 @@ flowchart LR
   o19 -->|2| void
   o20 -->|2| void
   o21 -->|5| void
-  o22 -->|2| void
+  o22 -->|1| void
   o23 -->|2| void
 ```
 
@@ -563,12 +563,11 @@ flowchart LR
 | date | **yes** | Date on which the transaction occurred |
 | security_id | **yes** | Identifier for the security (stock, plan security, warrant, or convertible) by which it can be referenced by other transaction objects. N… |
 
-### WarrantCancellation — in Core (admissible) (2 unmapped)
+### WarrantCancellation — in Core (admissible) (1 unmapped)
 
 | property | OCF-req | what it is (OCF) |
 | --- | :---: | --- |
 | balance_security_id |  | Identifier for the security that holds the remainder balance (for partial cancellations) |
-| security_id | **yes** | Identifier for the security (stock, plan security, warrant, or convertible) by which it can be referenced by other transaction objects. N… |
 
 ### WarrantExercise — not yet admissible (2 unmapped)
 

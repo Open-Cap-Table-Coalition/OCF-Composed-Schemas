@@ -34,6 +34,19 @@ function fieldEdge(
   };
 }
 
+function objectFieldEdge(file: string, source: string, field: string, target: string): MappingEdge {
+  return {
+    rel: file,
+    sourceKind: "object",
+    source,
+    variant: "—",
+    field,
+    scope: "object",
+    target,
+    kind: "rename",
+  };
+}
+
 describe("renderMappingInverseReport", () => {
   it("renders ledger edges into target properties and shows unmapped target properties", () => {
     const inverse = ledger(
@@ -133,5 +146,55 @@ describe("renderMappingInverseReport", () => {
     expect(out).toContain("status: NO MAPPINGS");
     expect(out).not.toContain("Carta objects with no mappings");
     expect(out).not.toContain("✗ no mapped OCF source");
+  });
+
+  it("projects executable child mappings into direct parent container slots", () => {
+    const inverse = ledger(
+      {
+        Parent: {
+          type: "object",
+          properties: {
+            child: { $ref: "#/$defs/Child" },
+            children: { type: "array", items: { $ref: "#/$defs/Child" } },
+            empty: { type: "string" },
+          },
+        },
+        Child: {
+          type: "object",
+          properties: { value: { type: "string" }, label: { type: "string" } },
+        },
+      },
+      [
+        {
+          rel: "objects/Child.mapping.md",
+          sourceKind: "object",
+          source: "Child",
+          variant: "—",
+          scope: "object",
+          target: "#/$defs/Parent",
+        },
+        objectFieldEdge(
+          "objects/Child.mapping.md",
+          "Child",
+          "value",
+          "#/$defs/Child/properties/value"
+        ),
+      ]
+    );
+
+    const parent = inverse.defs.find((row) => row.name === "Parent");
+    expect(parent).toMatchObject({
+      status: "direct",
+      structuralSlots: ["child", "children"],
+      emptySlots: ["empty"],
+    });
+
+    const out = renderMappingInverseReport({ inverse, targetObject: "Parent" });
+    expect(out).toContain("child");
+    expect(out).toContain("(contains → Child) (structural)");
+    expect(out).toContain("children");
+    expect(out).toContain("(contains items → Child) (structural)");
+    expect(out).toContain("empty");
+    expect(out).toContain("✗ no mapped OCF source");
   });
 });

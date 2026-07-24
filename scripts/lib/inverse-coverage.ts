@@ -74,8 +74,9 @@ export interface CartaSlotCoverage {
   pointer: string;
   def: string;
   property: string;
-  status: "direct" | "type-only" | "implicit" | "deferred" | "empty";
+  status: "direct" | "type-only" | "implicit" | "deferred" | "structural" | "empty";
   edges: MappingEdge[];
+  structuralEdges: MappingEdge[];
 }
 
 export interface CartaDefCoverage {
@@ -86,6 +87,7 @@ export interface CartaDefCoverage {
   typeOnlySlots: string[];
   implicitSlots: string[];
   deferredSlots: string[];
+  structuralSlots: string[];
   emptySlots: string[];
   structuralParents: string[];
   status: CartaDefStatus;
@@ -114,6 +116,7 @@ export interface InverseCoverageMetrics {
   typeOnlySlots: number;
   implicitSlots: number;
   deferredSlots: number;
+  structuralSlots: number;
   emptySlots: number;
   nestedObjDefs: number;
   reportRollupDefs: number;
@@ -158,6 +161,8 @@ export interface InverseCoverageStory {
 export interface InverseCoverageLedger {
   schema: CartaSchemaIndex;
   edges: MappingEdge[];
+  /** Schema-backed parent-property evidence inferred from mapped child definitions. */
+  structuralEdges: MappingEdge[];
   slots: CartaSlotCoverage[];
   defs: CartaDefCoverage[];
   typeCorrespondences: TypeCorrespondence[];
@@ -390,6 +395,112 @@ function slotPointer(name: string, property: string): string {
   return `#/$defs/${name}/properties/${property}`;
 }
 
+interface CartaPropertyChildRef {
+  name: string;
+  cardinality: "object" | "array";
+}
+
+/**
+ * Find the definitions directly contained by one Carta property schema.
+ *
+ * This deliberately stops at the first `$ref` it encounters. A property such
+ * as `transfers.items.$ref` therefore reports `WarrantTransferTransaction`,
+ * while a reusable child definition's own descendants are handled when that
+ * child is visited as a parent in its own right. The same rule works for
+ * direct object properties and for union branches.
+ */
+function directPropertyChildRefs(
+  node: unknown,
+  cardinality: "object" | "array" = "object"
+): CartaPropertyChildRef[] {
+  if (!isPlainObject(node)) return [];
+  if (typeof node.$ref === "string") {
+    const name = schemaRefName(node.$ref);
+    return name ? [{ name, cardinality }] : [];
+  }
+
+  const items = node.items;
+  if (items !== undefined) return directPropertyChildRefs(items, "array");
+
+  const refs: CartaPropertyChildRef[] = [];
+  for (const key of ["oneOf", "anyOf", "allOf"] as const) {
+    const branches = node[key];
+    if (!Array.isArray(branches)) continue;
+    for (const branch of branches) refs.push(...directPropertyChildRefs(branch, cardinality));
+  }
+  return refs.filter(
+    (ref, index) =>
+      refs.findIndex(
+        (candidate) => candidate.name === ref.name && candidate.cardinality === ref.cardinality
+      ) === index
+  );
+}
+
+/**
+ * Infer parent-property evidence from executable mappings to referenced child
+ * definitions. A mapping must also have executable evidence for the containing
+ * parent (typically a routing key such as `securityId`) before it can populate
+ * the parent slot. This is schema-backed containment evidence, not a second
+ * field mapping: the child fields retain their original mapping edges, while
+ * the parent slot records that the child record(s) can be placed there.
+ */
+function structuralEdgesForProperties(
+  schema: CartaSchemaIndex,
+  edges: MappingEdge[]
+): MappingEdge[] {
+  const executableByRoot = new Map<string, MappingEdge[]>();
+  const executableBySource = new Map<string, MappingEdge[]>();
+  for (const edge of edges) {
+    if (!isDirect(edge)) continue;
+    const root = rootOf(edge.target);
+    if (!root) continue;
+    const group = executableByRoot.get(root) ?? [];
+    group.push(edge);
+    executableByRoot.set(root, group);
+
+    const sourceKey = `${edge.rel}\u0000${edge.source}\u0000${edge.variant}`;
+    const sourceGroup = executableBySource.get(sourceKey) ?? [];
+    sourceGroup.push(edge);
+    executableBySource.set(sourceKey, sourceGroup);
+  }
+
+  const structural: MappingEdge[] = [];
+  for (const parent of schema.defs.values()) {
+    if (!parent.isObjectLike) continue;
+    for (const property of Object.keys(parent.properties)) {
+      const pointer = slotPointer(parent.name, property);
+      for (const child of directPropertyChildRefs(parent.properties[property])) {
+        const childInfo = schema.defs.get(child.name);
+        if (!childInfo?.isObjectLike) continue;
+
+        const childEdges = executableByRoot.get(child.name) ?? [];
+        const sources = new Map<string, MappingEdge>();
+        for (const edge of childEdges) {
+          const key = `${edge.rel}\u0000${edge.source}\u0000${edge.variant}`;
+          const parentAnchored = (executableBySource.get(key) ?? []).some(
+            (candidate) => rootOf(candidate.target) === parent.name
+          );
+          if (parentAnchored && !sources.has(key)) sources.set(key, edge);
+        }
+
+        for (const edge of sources.values()) {
+          structural.push({
+            rel: edge.rel,
+            sourceKind: edge.sourceKind,
+            source: edge.source,
+            variant: edge.variant,
+            scope: "structural",
+            kind: "structural",
+            target: pointer,
+            detail: `${child.cardinality === "array" ? "items →" : "→"} ${child.name}`,
+          });
+        }
+      }
+    }
+  }
+  return structural;
+}
+
 function sourcePropertyNode(corpus: Corpus, object: GreenObject, field: string): unknown {
   const root = object.sourceSchemaId ? corpus.registry.get(object.sourceSchemaId) : undefined;
   const seen = new Set<unknown>();
@@ -478,6 +589,7 @@ function buildTypeCorrespondences(
 export function buildInverseCoverage(corpus: Corpus): InverseCoverageLedger {
   const schema = buildCartaSchemaIndex(corpus.bundle);
   const edges = corpus.mappingEdges;
+  const structuralEdges = structuralEdgesForProperties(schema, edges);
   const directEdges = edges.filter(isDirect);
   const typeEdges = edges.filter((edge) => edge.scope === "type");
   const constantEdges = edges.filter((edge) => edge.scope === "constant");
@@ -497,6 +609,7 @@ export function buildInverseCoverage(corpus: Corpus): InverseCoverageLedger {
     for (const property of Object.keys(info.properties).sort()) {
       const pointer = slotPointer(info.name, property);
       const slotEdges = edges.filter((edge) => edge.target === pointer);
+      const slotStructuralEdges = structuralEdges.filter((edge) => edge.target === pointer);
       const status = directPointers.has(pointer)
         ? "direct"
         : typePointers.has(pointer)
@@ -505,8 +618,17 @@ export function buildInverseCoverage(corpus: Corpus): InverseCoverageLedger {
         ? "implicit"
         : deferredPointers.has(pointer)
         ? "deferred"
+        : slotStructuralEdges.length > 0
+        ? "structural"
         : "empty";
-      slots.push({ pointer, def: info.name, property, status, edges: slotEdges });
+      slots.push({
+        pointer,
+        def: info.name,
+        property,
+        status,
+        edges: slotEdges,
+        structuralEdges: slotStructuralEdges,
+      });
     }
   }
 
@@ -525,6 +647,9 @@ export function buildInverseCoverage(corpus: Corpus): InverseCoverageLedger {
       .map((slot) => slot.property);
     const deferredSlots = defSlots
       .filter((slot) => slot.status === "deferred")
+      .map((slot) => slot.property);
+    const structuralSlots = defSlots
+      .filter((slot) => slot.status === "structural")
       .map((slot) => slot.property);
     const emptySlots = defSlots
       .filter((slot) => slot.status === "empty")
@@ -571,6 +696,7 @@ export function buildInverseCoverage(corpus: Corpus): InverseCoverageLedger {
       typeOnlySlots,
       implicitSlots,
       deferredSlots,
+      structuralSlots,
       emptySlots,
       structuralParents,
       status,
@@ -601,6 +727,7 @@ export function buildInverseCoverage(corpus: Corpus): InverseCoverageLedger {
     typeOnlySlots: slots.filter((slot) => slot.status === "type-only").length,
     implicitSlots: slots.filter((slot) => slot.status === "implicit").length,
     deferredSlots: slots.filter((slot) => slot.status === "deferred").length,
+    structuralSlots: slots.filter((slot) => slot.status === "structural").length,
     emptySlots: slots.filter((slot) => slot.status === "empty").length,
     nestedObjDefs: countStatus("nested-obj"),
     reportRollupDefs: countStatus("report-rollup"),
@@ -620,6 +747,7 @@ export function buildInverseCoverage(corpus: Corpus): InverseCoverageLedger {
   const ledger: InverseCoverageLedger = {
     schema,
     edges,
+    structuralEdges,
     slots,
     defs: defRows.sort((a, b) => a.name.localeCompare(b.name)),
     typeCorrespondences,

@@ -32,6 +32,7 @@ describe("Carta inverse coverage", () => {
       typeOnlySlots: 34,
       implicitSlots: 3,
       deferredSlots: 4,
+      structuralSlots: 6,
       nestedObjDefs: 53,
       reportRollupDefs: 12,
       curatedValueTypeEntries: 7,
@@ -49,6 +50,25 @@ describe("Carta inverse coverage", () => {
     expect(byDef.get("Interest")?.status).toBe("vendor-family");
     expect(byDef.get("ThresholdDetails")?.status).toBe("nested-obj");
     expect(byDef.get("OptionGrantDocuments")?.status).toBe("gap");
+    expect(byDef.get("WarrantTransactionItem")).toMatchObject({
+      status: "direct",
+      directSlots: ["securityId", "securityLabel", "stakeholderId"],
+      structuralSlots: ["cancellations", "exercises", "issuance", "transfers"],
+      emptySlots: [],
+    });
+    const transferSlot = inverse.slots.find(
+      (slot) => slot.def === "WarrantTransactionItem" && slot.property === "transfers"
+    );
+    expect(transferSlot).toMatchObject({
+      status: "structural",
+      structuralEdges: [
+        expect.objectContaining({
+          source: "WarrantTransfer",
+          scope: "structural",
+          detail: "items → WarrantTransferTransaction",
+        }),
+      ],
+    });
     expect(corpus.coveragePolicy.cartaDefs.get("Iso8601CompleteCalendarDateTime")).toMatchObject({
       role: "value-type",
     });
@@ -77,8 +97,8 @@ describe("Carta inverse coverage", () => {
       objectDefs: 86,
       standaloneCandidateDefs: 32,
       mappedDefs: 15,
-      fullyMappedDefs: 0,
-      partiallyMappedDefs: 15,
+      fullyMappedDefs: 1,
+      partiallyMappedDefs: 14,
       unmappedCandidateDefs: 17,
       nonEntityDefs: 60,
       nonEntityObjectDefs: 54,

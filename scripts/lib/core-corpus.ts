@@ -178,7 +178,7 @@ export interface MappingEdge {
   /** OCF field when this is a field-level edge; absent for root/constant edges. */
   field?: string;
   /** Where the edge came from in the mapping DSL. */
-  scope: "object" | "type" | "composite" | "constant" | "deferred";
+  scope: "object" | "type" | "composite" | "constant" | "deferred" | "structural";
   /** Exact Carta pointer, including the root-only form. */
   target: string;
   /** Mapping kind, when the edge came from a field entry. */

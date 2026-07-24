@@ -14,19 +14,21 @@ flowchart LR
   classDef in fill:#e6f4ea,stroke:#34a853,color:#0b3d20;
   classDef out fill:#fce8e6,stroke:#d93025,color:#5c0d06;
   classDef defer fill:#fff8e1,stroke:#f9a825,color:#5c4400,stroke-dasharray:4 3;
-  OCF["OCF"]:::in -->|"96 clean + 36 lossy"| CORE
-  OCF -.->|"146 left behind"| ocfvoid["⌀ dropped (no Carta home)"]:::out
+  OCF["OCF"]:::in -->|"97 clean + 36 lossy"| CORE
+  OCF -.->|"145 left behind"| ocfvoid["⌀ dropped (no Carta home)"]:::out
   CORE["OCF Core (rich)"]:::core
-  Carta["Carta"]:::in -->|"146 direct + 34 type-only + 3 implicit"| CORE
+  Carta["Carta"]:::in -->|"146 direct + 34 type-only + 3 implicit + 6 structural"| CORE
   Carta -.->|"4 deferred"| deferbox["⏳ deferred (OCF has it, extraction TODO)"]:::defer
-  Carta -.->|"181 left behind"| cartavoid["⌀ Core can't hold"]:::out
+  Carta -.->|"175 left behind"| cartavoid["⌀ Core can't hold"]:::out
 ```
 
 - **OCF → Core**: a property flows in if it is a Core member (mapped, even lossily); it is
   left behind only if it has **no Carta home** (`no-destination`).
 - **Carta → Core**: direct slots are populated by executable object/composite mappings;
   type-only slots are reusable correspondences whose concrete object context is supplied
-  separately; implicit slots come from deterministic constants. Empty slots are reported
+  separately; implicit slots come from deterministic constants; structural slots are
+  schema-backed parent containers populated by mapped child records plus parent-anchor
+  evidence. Empty slots are reported
   separately from unmapped `$defs` so root shape, nested coverage, and semantic type coverage
   are not conflated. Curated value-type roles (for example, date/datetime wrappers) remain
   available for type correspondences but are not treated as standalone inverse entities.
@@ -45,6 +47,7 @@ These counts are mutually descriptive dimensions of the same ledger, not a singl
 | type-only slots | 34 |
 | implicit constant slots | 3 |
 | deferred slots | 4 |
+| structural child-container slots | 6 |
 
 ### CARTA inverse coverage: the simple story
 
@@ -53,7 +56,7 @@ These counts are mutually descriptive dimensions of the same ledger, not a singl
 3. **86** are object-shaped definitions.
 4. Of those **86**, **54** are support definitions, not standalone objects (**53** nested objects + **1** object-shaped value type), leaving **32** standalone mapping candidates.
 5. **60** support definitions are excluded from standalone mapping: **54** object-shaped support definitions + **6** scalar support types.
-6. We have mapping evidence for **15**: **0** fully mapped and **15** partially mapped (**14** direct executable, **1** type-only, **0** deferred).
+6. We have mapping evidence for **15**: **1** fully mapped and **14** partially mapped (**14** direct executable, **1** type-only, **0** deferred).
 7. **17** standalone candidates have no mapping evidence yet; their inventory role tells us whether that is expected or actionable (**12** report/read-model roll-ups, **2** alternate shapes, **1** CARTA-specific families without OCF sources, **1** workflow/data gaps, **1** actionable gaps, **0** requiring review).
 
 **Checks:** 139 = 53 non-object + 86 object-shaped; 53 = 47 scalar enum + 6 scalar support; 32 = 15 + 17; 86 = 32 + 54.
@@ -374,7 +377,6 @@ flowchart LR
   o0 -.->|"board_approval_date, consideration_text, exercise_triggers, quantity_source, stockholder_approval_date, vestings"| ocflost
   t0 -.->|"countryOfResidency, stateOfResidency"| cartalost
   t1 -.->|"shareClassId"| cartalost
-  t2 -.->|"cancellations, exercises, issuance, transfers"| cartalost
 ```
 
 **ConvertibleIssuance → Compliance, ConvertibleIssuanceTransaction, ConvertibleNote, NoteBlock**
@@ -409,7 +411,7 @@ flowchart LR
   o0 -.->|"board_approval_date, consideration_text, pro_rata, seniority, stockholder_approval_date"| ocflost
   t0 -.->|"countryOfResidency, stateOfResidency"| cartalost
   t1 -.->|"maturityDatetime, noteBlockId, precededBySecurityId"| cartalost
-  t2 -.->|"canceledDatetime, cashPaid, changeInControlPercent, conversionDatetime, conversionTrigger, id +5 more"| cartalost
+  t2 -.->|"canceledDatetime, cashPaid, changeInControlPercent, conversionDatetime, conversionTrigger, id +4 more"| cartalost
   t3 -.->|"id, name, prefix, status"| cartalost
 ```
 
@@ -596,7 +598,7 @@ flowchart LR
   o0 -->|"reason_text → reason"| t0
   o0 -->|"security_id → securityId"| t1
   o0 -.->|"balance_security_id"| ocflost
-  t1 -.->|"cancellations, issuance, securityLabel, stakeholderId"| cartalost
+  t1 -.->|"issuance, securityLabel, stakeholderId"| cartalost
 ```
 
 **StockCancellation [Default] → CertificateCancellationTransaction, CertificatePrecededBy**
@@ -679,6 +681,31 @@ flowchart LR
   t0 -.->|"fullyDilutedShares, optionPoolId, outstandingCommittedRestrictedStockAwards, outstandingEquityAwardDerivatives, terminatedDatetime"| cartalost
 ```
 
+**WarrantCancellation → WarrantCancellationTransaction, WarrantTransactionItem**
+
+```mermaid
+flowchart LR
+  classDef adm fill:#e6f4ea,stroke:#34a853,color:#0b3d20;
+  classDef notadm fill:#f1f3f4,stroke:#9aa0a6,color:#5f6368,stroke-dasharray:4 3;
+  classDef carta fill:#e8f0fe,stroke:#1a73e8,color:#0d2b66;
+  classDef lost fill:#fce8e6,stroke:#d93025,color:#5c0d06;
+  subgraph SRC["OCF (= Core, source)"]
+    direction TB
+    o0["WarrantCancellation"]:::adm
+  end
+  subgraph TGT["Carta"]
+    direction TB
+    t0["WarrantCancellationTransaction"]:::carta
+    t1["WarrantTransactionItem"]:::carta
+  end
+  ocflost["⌀ OCF lost (no Carta home)"]:::lost
+  o0 -->|"date → effectiveDatetime"| t0
+  o0 -->|"quantity → quantity"| t0
+  o0 -->|"reason_text → reason"| t0
+  o0 -->|"security_id → securityId"| t1
+  o0 -.->|"balance_security_id"| ocflost
+```
+
 **WarrantTransfer → WarrantTransactionItem, WarrantTransferTransaction**
 
 ```mermaid
@@ -703,7 +730,6 @@ flowchart LR
   o0 -->|"resulting_security_ids → resultingSecurityId"| t1
   o0 -->|"security_id → securityId"| t0
   o0 -.->|"balance_security_id, consideration_text"| ocflost
-  t0 -.->|"cancellations, exercises, issuance, transfers"| cartalost
   t1 -.->|"resultingSecurityLabel"| cartalost
 ```
 
@@ -730,7 +756,7 @@ flowchart LR
   o0 -->|"quantity_converted → canceledQuantity"| t1
   o0 -->|"security_id → securityId"| t1
   o0 -.->|"balance_security_id, capitalization_definition, reason_text, resulting_security_ids, trigger_id"| ocflost
-  t1 -.->|"canceledDatetime, cashPaid, changeInControlPercent, conversionDatetime, conversionTrigger, id +5 more"| cartalost
+  t1 -.->|"canceledDatetime, cashPaid, changeInControlPercent, conversionDatetime, conversionTrigger, id +4 more"| cartalost
 ```
 
 **EquityCompensationCancellation [Option] → OptionCancellationTransaction**
@@ -885,29 +911,6 @@ flowchart LR
   t0 -.->|"group, issuerId"| cartalost
 ```
 
-**WarrantCancellation → WarrantCancellationTransaction**
-
-```mermaid
-flowchart LR
-  classDef adm fill:#e6f4ea,stroke:#34a853,color:#0b3d20;
-  classDef notadm fill:#f1f3f4,stroke:#9aa0a6,color:#5f6368,stroke-dasharray:4 3;
-  classDef carta fill:#e8f0fe,stroke:#1a73e8,color:#0d2b66;
-  classDef lost fill:#fce8e6,stroke:#d93025,color:#5c0d06;
-  subgraph SRC["OCF (= Core, source)"]
-    direction TB
-    o0["WarrantCancellation"]:::adm
-  end
-  subgraph TGT["Carta"]
-    direction TB
-    t0["WarrantCancellationTransaction"]:::carta
-  end
-  ocflost["⌀ OCF lost (no Carta home)"]:::lost
-  o0 -->|"date → effectiveDatetime"| t0
-  o0 -->|"quantity → quantity"| t0
-  o0 -->|"reason_text → reason"| t0
-  o0 -.->|"balance_security_id, security_id"| ocflost
-```
-
 **WarrantExercise → WarrantExerciseTransaction, WarrantTransactionItem**
 
 ```mermaid
@@ -932,7 +935,6 @@ flowchart LR
   o0 -->|"security_id → securityId"| t1
   o0 -.->|"consideration_text, trigger_id"| ocflost
   t0 -.->|"quantity, resultingSecurityLabel, resultingSecurityType, settledQuantity, withheldQuantity"| cartalost
-  t1 -.->|"cancellations, exercises, issuance, transfers"| cartalost
 ```
 
 **Document → Document**
@@ -1427,7 +1429,6 @@ are DISTINCT fields per object (variants collapsed; a field that lands in any va
 | StockClassSplit | ✗ | 0 | 0 | 3 |
 | StockRetraction | ✗ | 0 | 0 | 3 |
 | VestingEvent | ✗ | 0 | 0 | 3 |
-| WarrantCancellation | ✓ | 2 | 1 | 2 |
 | WarrantExercise | ✗ | 2 | 1 | 2 |
 | WarrantRetraction | ✗ | 0 | 0 | 3 |
 | WarrantTransfer | ✓ | 3 | 1 | 2 |
@@ -1438,6 +1439,7 @@ are DISTINCT fields per object (variants collapsed; a field that lands in any va
 | StockClassConversionRatioAdjustment | ✓ | 1 | 1 | 1 |
 | StockLegendTemplate | ✗ | 0 | 0 | 2 |
 | WarrantAcceptance | ✗ | 0 | 0 | 2 |
+| WarrantCancellation | ✓ | 3 | 1 | 1 |
 | EquityCompensationAcceptance | ✗ | 1 | 0 | 1 |
 | StakeholderRelationshipChangeEvent | ✓ | 3 | 0 | 1 |
 | StockAcceptance | ✗ | 1 | 0 | 1 |
@@ -1445,9 +1447,10 @@ are DISTINCT fields per object (variants collapsed; a field that lands in any va
 
 ## Carta → Core — per object (which Carta fields OCF fills vs leaves empty)
 
-Only Carta objects with direct, reusable, implicit, or deferred evidence are listed here.
+Only Carta objects with direct, reusable, implicit, structural, or deferred evidence are listed here.
 `direct` = executable object/composite edge; `type-only` = reusable type correspondence;
-`implicit` = fixed deterministic value; `left behind` = an empty slot on this Carta object.
+`implicit` = fixed deterministic value; `structural` = populated through mapped child records;
+`left behind` = an empty slot on this Carta object.
 
 Caveat: `left behind` is slot-level. Carta denormalizes issuance-time attributes across a
 security object and its issuance transaction (`OptionGrant`↔`OptionIssuanceTransaction`,
@@ -1458,51 +1461,51 @@ Those duplicated slots inflate the count — they are not capability Core lacks.
 `deferred` = a slot a field's `defer:` placeholder claims: OCF *has* the data, the nested
 extraction just isn't built yet (see the ledger's Deferred mappings). Not counted as left behind.
 
-| Carta object | direct | type-only | implicit | deferred | left behind | left-behind fields |
-| --- | ---: | ---: | ---: | ---: | ---: | --- |
-| OptionGrant | 11 | 0 | 0 | 0 | 24 | canceledDate, canceledQuantity, disqualificationDate, equityIncentivePlanName, exercisedQuantity, exercises, expiredQuantity, forfeitedQuantity, grantExpirationDate, id, isoNsoSplit, issueDate, issuerId, lastExercisableDate, lastModifiedDatetime, outstandingQuantity, quantity, returnedToPoolQuantity, returnedToTreasuryQuantity, shareClassId, terminationDate, vestedQuantity, vestingSchedule, vestingScheduleTemplateId |
-| RestrictedStockUnit | 7 | 0 | 0 | 0 | 21 | canceledDate, canceledQuantity, equityIncentivePlanName, expiredQuantity, forfeitedQuantity, id, issueDate, issuerId, lastModifiedDatetime, netSettledQuantity, quantity, releasePricePerShare, releasedQuantity, returnedToPoolQuantity, returnedToTreasuryQuantity, settlements, shareClassId, terminationDate, vestedQuantity, vestingSchedule, vestingScheduleTemplateId |
-| RestrictedStockAward | 8 | 0 | 0 | 0 | 17 | canceledDate, canceledQuantity, equityIncentivePlanName, id, issueDate, issuerId, lastModifiedDatetime, precededBy, quantity, returnedToPoolQuantity, returnedToTreasuryQuantity, shareClassName, terminationDate, vestedQuantity, vestingSchedule, vestingScheduleTemplateId, vestingStartDate |
-| Certificate | 5 | 0 | 0 | 0 | 12 | canceledDate, canceledQuantity, id, issueDate, issuerId, lastModifiedDatetime, precededBy, quantity, returnedToPoolQuantity, returnedToTreasuryQuantity, shareClassName, vestingScheduleTemplateId |
-| ConvertibleNote | 4 | 6 | 0 | 0 | 11 | canceledDatetime, cashPaid, changeInControlPercent, conversionDatetime, conversionTrigger, id, interest, issueDatetime, issuerId, maturityDatetime, noteBlock |
-| OptionGrantVestingEvent | 0 | 2 | 0 | 0 | 8 | id, isoQuantity, maxQuantity, nsoQuantity, performanceCondition, targetQuantity, vested, vestedQuantity |
-| OptionExerciseTransaction | 2 | 0 | 0 | 0 | 6 | exerciseMethod, id, recordType, resultingSecurityId, resultingSecurityLabel, resultingSecurityType |
-| RestrictedStockUnitSettlement | 2 | 0 | 0 | 0 | 6 | certificateId, certificateLabel, netSettlementQuantity, releaseQuantity, saleQuantity, withholdingQuantity |
-| SarExerciseTransaction | 2 | 0 | 0 | 0 | 6 | cashAcquired, resultingSecurityId, resultingSecurityLabel, resultingSecurityType, settledQuantity, withheldQuantity |
-| OptionPoolSummary | 3 | 0 | 0 | 0 | 5 | fullyDilutedShares, optionPoolId, outstandingCommittedRestrictedStockAwards, outstandingEquityAwardDerivatives, terminatedDatetime |
-| RsuSettlementTransaction | 2 | 0 | 0 | 0 | 5 | id, resultingSecurityId, resultingSecurityLabel, resultingSecurityType, withheldQuantity |
-| VestingScheduleTemplate | 2 | 0 | 0 | 0 | 5 | description, issuerId, name, uuid, vestingScheduleType |
-| WarrantExerciseTransaction | 2 | 0 | 0 | 0 | 5 | quantity, resultingSecurityLabel, resultingSecurityType, settledQuantity, withheldQuantity |
-| ConvertibleTransactionItem | 1 | 0 | 0 | 0 | 4 | cancellations, issuance, securityLabel, stakeholderId |
-| NoteBlock | 1 | 0 | 0 | 0 | 4 | id, name, prefix, status |
-| WarrantTransactionItem | 3 | 0 | 0 | 0 | 4 | cancellations, exercises, issuance, transfers |
-| ConvertibleIssuanceTransaction | 5 | 0 | 0 | 4 | 3 | maturityDatetime, noteBlockId, precededBySecurityId |
-| ShareClass | 7 | 0 | 0 | 0 | 3 | issuerId, pariPassu, preferredShareClassDetails |
-| VestingPeriod | 0 | 9 | 0 | 0 | 3 | immediatePercentage, milestoneName, vestingOccurs |
-| CertificateCancellationTransaction | 3 | 0 | 0 | 0 | 2 | forfeitureDatetime, terminationDatetime |
-| CertificateIssuanceTransaction | 5 | 0 | 1 | 0 | 2 | precededBySecurityId, shareClassId |
-| Compliance | 1 | 0 | 0 | 0 | 2 | countryOfResidency, stateOfResidency |
-| Document | 1 | 0 | 0 | 0 | 2 | name, url |
-| Issuer | 2 | 0 | 0 | 0 | 2 | id, website |
-| OptionCancellationTransaction | 3 | 0 | 0 | 0 | 2 | forfeitureDatetime, terminationDatetime |
-| PointOfContact | 0 | 2 | 0 | 0 | 2 | issuerId, type |
-| RsaCancellationTransaction | 3 | 0 | 0 | 0 | 2 | forfeitureDatetime, terminationDatetime |
-| RsuCancellationTransaction | 3 | 0 | 0 | 0 | 2 | forfeitureDatetime, terminationDatetime |
-| SarCancellationTransaction | 3 | 0 | 0 | 0 | 2 | forfeitureDatetime, terminationDatetime |
-| ShareClassValuation | 2 | 0 | 0 | 0 | 2 | common, shareClassName |
-| Stakeholder | 7 | 0 | 0 | 0 | 2 | group, issuerId |
-| OptionIssuanceTransaction | 7 | 0 | 0 | 0 | 1 | stockOptionType |
-| RsaIssuanceTransaction | 5 | 0 | 0 | 0 | 1 | shareClassId |
-| ShareClassRightsAndPreferences | 5 | 0 | 0 | 0 | 1 | participating |
-| WarrantIssuanceTransaction | 6 | 0 | 0 | 0 | 1 | shareClassId |
-| WarrantTransferTransaction | 3 | 0 | 0 | 0 | 1 | resultingSecurityLabel |
-| CertificatePrecededBy | 1 | 0 | 1 | 0 | 0 | — |
-| ConvertibleCancellationTransaction | 3 | 0 | 0 | 0 | 0 | — |
-| ExercisePeriods | 0 | 12 | 0 | 0 | 0 | — |
-| Money | 0 | 2 | 0 | 0 | 0 | — |
-| RestrictedStockAwardPrecededBy | 1 | 0 | 1 | 0 | 0 | — |
-| RsuIssuanceTransaction | 5 | 0 | 0 | 0 | 0 | — |
-| SarIssuanceTransaction | 7 | 0 | 0 | 0 | 0 | — |
-| StakeholderAddress | 0 | 1 | 0 | 0 | 0 | — |
-| WarrantCancellationTransaction | 3 | 0 | 0 | 0 | 0 | — |
+| Carta object | direct | type-only | implicit | structural | deferred | left behind | left-behind fields |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | --- |
+| OptionGrant | 11 | 0 | 0 | 0 | 0 | 24 | canceledDate, canceledQuantity, disqualificationDate, equityIncentivePlanName, exercisedQuantity, exercises, expiredQuantity, forfeitedQuantity, grantExpirationDate, id, isoNsoSplit, issueDate, issuerId, lastExercisableDate, lastModifiedDatetime, outstandingQuantity, quantity, returnedToPoolQuantity, returnedToTreasuryQuantity, shareClassId, terminationDate, vestedQuantity, vestingSchedule, vestingScheduleTemplateId |
+| RestrictedStockUnit | 7 | 0 | 0 | 0 | 0 | 21 | canceledDate, canceledQuantity, equityIncentivePlanName, expiredQuantity, forfeitedQuantity, id, issueDate, issuerId, lastModifiedDatetime, netSettledQuantity, quantity, releasePricePerShare, releasedQuantity, returnedToPoolQuantity, returnedToTreasuryQuantity, settlements, shareClassId, terminationDate, vestedQuantity, vestingSchedule, vestingScheduleTemplateId |
+| RestrictedStockAward | 8 | 0 | 0 | 0 | 0 | 17 | canceledDate, canceledQuantity, equityIncentivePlanName, id, issueDate, issuerId, lastModifiedDatetime, precededBy, quantity, returnedToPoolQuantity, returnedToTreasuryQuantity, shareClassName, terminationDate, vestedQuantity, vestingSchedule, vestingScheduleTemplateId, vestingStartDate |
+| Certificate | 5 | 0 | 0 | 0 | 0 | 12 | canceledDate, canceledQuantity, id, issueDate, issuerId, lastModifiedDatetime, precededBy, quantity, returnedToPoolQuantity, returnedToTreasuryQuantity, shareClassName, vestingScheduleTemplateId |
+| ConvertibleNote | 4 | 6 | 0 | 1 | 0 | 10 | canceledDatetime, cashPaid, changeInControlPercent, conversionDatetime, conversionTrigger, id, interest, issueDatetime, issuerId, maturityDatetime |
+| OptionGrantVestingEvent | 0 | 2 | 0 | 0 | 0 | 8 | id, isoQuantity, maxQuantity, nsoQuantity, performanceCondition, targetQuantity, vested, vestedQuantity |
+| OptionExerciseTransaction | 2 | 0 | 0 | 0 | 0 | 6 | exerciseMethod, id, recordType, resultingSecurityId, resultingSecurityLabel, resultingSecurityType |
+| RestrictedStockUnitSettlement | 2 | 0 | 0 | 0 | 0 | 6 | certificateId, certificateLabel, netSettlementQuantity, releaseQuantity, saleQuantity, withholdingQuantity |
+| SarExerciseTransaction | 2 | 0 | 0 | 0 | 0 | 6 | cashAcquired, resultingSecurityId, resultingSecurityLabel, resultingSecurityType, settledQuantity, withheldQuantity |
+| OptionPoolSummary | 3 | 0 | 0 | 0 | 0 | 5 | fullyDilutedShares, optionPoolId, outstandingCommittedRestrictedStockAwards, outstandingEquityAwardDerivatives, terminatedDatetime |
+| RsuSettlementTransaction | 2 | 0 | 0 | 0 | 0 | 5 | id, resultingSecurityId, resultingSecurityLabel, resultingSecurityType, withheldQuantity |
+| VestingScheduleTemplate | 2 | 0 | 0 | 0 | 0 | 5 | description, issuerId, name, uuid, vestingScheduleType |
+| WarrantExerciseTransaction | 2 | 0 | 0 | 0 | 0 | 5 | quantity, resultingSecurityLabel, resultingSecurityType, settledQuantity, withheldQuantity |
+| NoteBlock | 1 | 0 | 0 | 0 | 0 | 4 | id, name, prefix, status |
+| ConvertibleIssuanceTransaction | 5 | 0 | 0 | 0 | 4 | 3 | maturityDatetime, noteBlockId, precededBySecurityId |
+| ConvertibleTransactionItem | 1 | 0 | 0 | 1 | 0 | 3 | issuance, securityLabel, stakeholderId |
+| ShareClass | 7 | 0 | 0 | 0 | 0 | 3 | issuerId, pariPassu, preferredShareClassDetails |
+| VestingPeriod | 0 | 9 | 0 | 0 | 0 | 3 | immediatePercentage, milestoneName, vestingOccurs |
+| CertificateCancellationTransaction | 3 | 0 | 0 | 0 | 0 | 2 | forfeitureDatetime, terminationDatetime |
+| CertificateIssuanceTransaction | 5 | 0 | 1 | 0 | 0 | 2 | precededBySecurityId, shareClassId |
+| Compliance | 1 | 0 | 0 | 0 | 0 | 2 | countryOfResidency, stateOfResidency |
+| Document | 1 | 0 | 0 | 0 | 0 | 2 | name, url |
+| Issuer | 2 | 0 | 0 | 0 | 0 | 2 | id, website |
+| OptionCancellationTransaction | 3 | 0 | 0 | 0 | 0 | 2 | forfeitureDatetime, terminationDatetime |
+| PointOfContact | 0 | 2 | 0 | 0 | 0 | 2 | issuerId, type |
+| RsaCancellationTransaction | 3 | 0 | 0 | 0 | 0 | 2 | forfeitureDatetime, terminationDatetime |
+| RsuCancellationTransaction | 3 | 0 | 0 | 0 | 0 | 2 | forfeitureDatetime, terminationDatetime |
+| SarCancellationTransaction | 3 | 0 | 0 | 0 | 0 | 2 | forfeitureDatetime, terminationDatetime |
+| ShareClassValuation | 2 | 0 | 0 | 0 | 0 | 2 | common, shareClassName |
+| Stakeholder | 7 | 0 | 0 | 0 | 0 | 2 | group, issuerId |
+| OptionIssuanceTransaction | 7 | 0 | 0 | 0 | 0 | 1 | stockOptionType |
+| RsaIssuanceTransaction | 5 | 0 | 0 | 0 | 0 | 1 | shareClassId |
+| ShareClassRightsAndPreferences | 5 | 0 | 0 | 0 | 0 | 1 | participating |
+| WarrantIssuanceTransaction | 6 | 0 | 0 | 0 | 0 | 1 | shareClassId |
+| WarrantTransferTransaction | 3 | 0 | 0 | 0 | 0 | 1 | resultingSecurityLabel |
+| CertificatePrecededBy | 1 | 0 | 1 | 0 | 0 | 0 | — |
+| ConvertibleCancellationTransaction | 3 | 0 | 0 | 0 | 0 | 0 | — |
+| ExercisePeriods | 0 | 12 | 0 | 0 | 0 | 0 | — |
+| Money | 0 | 2 | 0 | 0 | 0 | 0 | — |
+| RestrictedStockAwardPrecededBy | 1 | 0 | 1 | 0 | 0 | 0 | — |
+| RsuIssuanceTransaction | 5 | 0 | 0 | 0 | 0 | 0 | — |
+| SarIssuanceTransaction | 7 | 0 | 0 | 0 | 0 | 0 | — |
+| StakeholderAddress | 0 | 1 | 0 | 0 | 0 | 0 | — |
+| WarrantCancellationTransaction | 3 | 0 | 0 | 0 | 0 | 0 | — |
+| WarrantTransactionItem | 3 | 0 | 0 | 4 | 0 | 0 | — |
 

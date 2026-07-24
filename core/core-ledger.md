@@ -87,7 +87,7 @@ mapping lives in `X`. The core/payload counts are the wrapper's own (only
 | VestingEvent | — | 0 | 0 | ✗ | no-payload |
 | VestingTerms | — | 1 | 0 | ✗ | no-payload |
 | WarrantAcceptance | — | 0 | 0 | ✗ | no-payload |
-| WarrantCancellation | — | 2 | 1 | ✓ | — |
+| WarrantCancellation | — | 3 | 1 | ✓ | — |
 | WarrantExercise | — | 2 | 0 | ✗ | no-payload |
 | WarrantIssuance | — | 9 | 4 | ✗ | vesting_terms_id→VestingTerms |
 | WarrantRetraction | — | 0 | 0 | ✗ | no-payload |
@@ -323,7 +323,7 @@ in the coverage report.
 | WarrantCancellation | — | comments | out | no-destination | kind unmappable |
 | WarrantCancellation | — | object_type | out | no-destination | kind unmappable |
 | WarrantCancellation | — | date | core | widening |  |
-| WarrantCancellation | — | security_id | out | no-destination | kind unmappable |
+| WarrantCancellation | — | security_id | core | direct |  |
 | WarrantCancellation | — | balance_security_id | out | no-destination | kind unmappable |
 | WarrantCancellation | — | reason_text | out | heuristic | kind computed |
 | WarrantCancellation | — | quantity | core | widening |  |

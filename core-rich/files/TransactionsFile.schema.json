@@ -5865,6 +5865,10 @@
               "reason_text": {
                 "type": "string",
                 "description": "Reason for the cancellation"
+              },
+              "security_id": {
+                "type": "string",
+                "description": "Identifier for the security (stock, plan security, warrant, or convertible) by which it can be referenced by other transaction objects. N…"
               }
             },
             "required": [

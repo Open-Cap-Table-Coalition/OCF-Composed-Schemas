@@ -914,7 +914,7 @@ onto one Carta field — most visibly the reverse-edge lineage collapsing onto `
 - `WarrantExerciseTransaction.resultingSecurityId` ← 1: `WarrantExercise.resulting_security_ids`
 - `WarrantTransferTransaction.resultingSecurityId` ← 1: `WarrantTransfer.resulting_security_ids`
 
-## C. No home — no Carta target at all (249 across 47 objects)
+## C. No home — no Carta target at all (248 across 47 objects)
 
 A different animal: Carta has no field to hold these (also in core-gaps.md §a). NOT what
 rich-Core recovers — listed for contrast.
@@ -961,7 +961,7 @@ rich-Core recovers — listed for contrast.
 - **VestingAcceleration** *(not yet admissible)* — **date**, **quantity**, **reason_text**, **security_id**
 - **VestingEvent** *(not yet admissible)* — **date**, **event_id**, **security_id**
 - **WarrantAcceptance** *(not yet admissible)* — **date**, **security_id**
-- **WarrantCancellation** — balance_security_id, **security_id**
+- **WarrantCancellation** — balance_security_id
 - **WarrantExercise** *(not yet admissible)* — consideration_text, **trigger_id**
 - **WarrantIssuance** *(not yet admissible)* — board_approval_date, consideration_text, **exercise_triggers**, quantity_source, stockholder_approval_date, vestings
 - **WarrantRetraction** *(not yet admissible)* — **date**, **reason_text**, **security_id**
