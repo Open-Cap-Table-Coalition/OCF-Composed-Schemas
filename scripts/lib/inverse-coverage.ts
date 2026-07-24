@@ -15,7 +15,7 @@ export type CartaDefDisposition = CartaCoverageRole | "review";
 export type CartaDefStatus =
   | "direct"
   | "type-only"
-  | "nested-covered"
+  | "nested-obj"
   | "deferred"
   | CartaDefDisposition;
 
@@ -24,7 +24,7 @@ export const CARTA_DEF_STATUS_ORDER: CartaDefStatus[] = [
   "direct",
   "type-only",
   "deferred",
-  "nested-covered",
+  "nested-obj",
   "value-type",
   "report-rollup",
   "alternate",
@@ -38,7 +38,7 @@ export const CARTA_DEF_STATUS_LABELS: Record<CartaDefStatus, string> = {
   direct: "direct executable",
   "type-only": "type-only",
   deferred: "deferred",
-  "nested-covered": "nested-covered",
+  "nested-obj": "nested object / non-target",
   "value-type": "value-type / non-target",
   "report-rollup": "report roll-up",
   alternate: "alternate shape",
@@ -115,7 +115,7 @@ export interface InverseCoverageMetrics {
   implicitSlots: number;
   deferredSlots: number;
   emptySlots: number;
-  nestedCoveredDefs: number;
+  nestedObjDefs: number;
   reportRollupDefs: number;
   curatedValueTypeEntries: number;
   valueTypeDefs: number;
@@ -141,7 +141,7 @@ export interface InverseCoverageStory {
   partiallyMappedDefs: number;
   /** Standalone candidates without mapping evidence, partitioned by inventory role. */
   unmappedCandidateDefs: number;
-  /** All curated value types plus nested-covered definitions, including scalar wrappers. */
+  /** All curated value types plus nested object definitions, including scalar wrappers. */
   nonEntityDefs: number;
   /** The subset of non-entities that are object-like and therefore appear in the 86-def denominator. */
   nonEntityObjectDefs: number;
@@ -162,16 +162,13 @@ export interface InverseCoverageLedger {
 }
 
 export interface InverseExcludedRoleRow {
-  role: "value-type" | "nested-covered";
+  role: "value-type" | "nested-obj";
   name: string;
   coveredThrough: string;
   reason: string;
 }
 
-export const INVERSE_NON_ENTITY_STATUSES: readonly CartaDefStatus[] = [
-  "value-type",
-  "nested-covered",
-];
+export const INVERSE_NON_ENTITY_STATUSES: readonly CartaDefStatus[] = ["value-type", "nested-obj"];
 
 export function isInverseNonEntityDefinition(row: Pick<CartaDefCoverage, "status">): boolean {
   return INVERSE_NON_ENTITY_STATUSES.includes(row.status);
@@ -196,7 +193,7 @@ export function isInverseMappedDefinition(row: Pick<CartaDefCoverage, "status">)
 export function inverseCoverageStory(inverse: InverseCoverageLedger): InverseCoverageStory {
   const counts = inverse.metrics.definitionRoleCounts;
   const mappedDefs = counts.direct + counts["type-only"] + counts.deferred;
-  const nonEntityObjectDefs = counts["nested-covered"] + counts["value-type"];
+  const nonEntityObjectDefs = counts["nested-obj"] + counts["value-type"];
   const unmappedCandidateDefs =
     counts["report-rollup"] +
     counts.alternate +
@@ -505,7 +502,13 @@ export function buildInverseCoverage(corpus: Corpus): InverseCoverageLedger {
     let disposition: CartaDefDisposition | undefined;
     let reason: string | undefined;
 
-    if (directRoot || directSlots.length > 0) status = "direct";
+    if (policy?.role === "value-type") {
+      status = "value-type";
+      disposition = policy.role;
+      reason = policy.reason;
+    } else if (info.inboundRefs.length > 0 || policy?.role === "nested-obj") {
+      status = "nested-obj";
+    } else if (directRoot || directSlots.length > 0) status = "direct";
     else if (
       typeOnlySlots.length > 0 ||
       typeEdges.some((edge) => rootOf(edge.target) === info.name)
@@ -516,7 +519,6 @@ export function buildInverseCoverage(corpus: Corpus): InverseCoverageLedger {
       deferredEdges.some((edge) => rootOf(edge.target) === info.name)
     )
       status = "deferred";
-    else if (structuralParents.length > 0) status = "nested-covered";
     else if (policy) {
       status = policy.role;
       disposition = policy.role;
@@ -566,7 +568,7 @@ export function buildInverseCoverage(corpus: Corpus): InverseCoverageLedger {
     implicitSlots: slots.filter((slot) => slot.status === "implicit").length,
     deferredSlots: slots.filter((slot) => slot.status === "deferred").length,
     emptySlots: slots.filter((slot) => slot.status === "empty").length,
-    nestedCoveredDefs: countStatus("nested-covered"),
+    nestedObjDefs: countStatus("nested-obj"),
     reportRollupDefs: countStatus("report-rollup"),
     curatedValueTypeEntries: [...corpus.coveragePolicy.cartaDefs.values()].filter(
       (entry) => entry.role === "value-type"
@@ -598,7 +600,9 @@ export function buildInverseCoverage(corpus: Corpus): InverseCoverageLedger {
 /**
  * Return the definitions intentionally omitted from inverse-gap follow-up.
  * Value-type policy entries include scalar wrappers that are not object-like;
- * nested rows name the directly mapped Carta parents that structurally cover them.
+ * nested rows name the immediate parent and, when available, the mapped parent
+ * that provides coverage. Nested objects remain excluded even when no mapped
+ * parent evidence exists.
  */
 export function excludedInverseRoleRows(
   policy: CoveragePolicy,
@@ -622,27 +626,31 @@ export function excludedInverseRoleRows(
     });
   }
   for (const row of inverse.defs
-    .filter(
-      (definition) =>
-        definition.status === "nested-covered" && definition.structuralParents.length > 0
-    )
+    .filter((definition) => definition.status === "nested-obj")
     .sort((a, b) => a.name.localeCompare(b.name))) {
+    const info = inverse.schema.defs.get(row.name);
+    const immediateParents = (info?.inboundRefs ?? []).map((ref) => ref.from).sort();
+    const coveredThrough = row.structuralParents.length
+      ? row.structuralParents.join(", ")
+      : immediateParents.join(", ") || "—";
     rows.push({
-      role: "nested-covered",
+      role: "nested-obj",
       name: row.name,
-      coveredThrough: row.structuralParents.join(", ") || "—",
-      reason: "Structural child of directly mapped parent(s).",
+      coveredThrough,
+      reason: row.structuralParents.length
+        ? "Nested object; covered through mapped parent(s)."
+        : "Nested object; no mapped parent coverage established, but not a standalone target.",
     });
   }
   for (const [name, entry] of [...policy.cartaDefs.entries()]
-    .filter(([, policy]) => policy.role === "nested-covered")
+    .filter(([, policy]) => policy.role === "nested-obj")
     .sort(([a], [b]) => a.localeCompare(b))) {
     if (rows.some((row) => row.name === name)) continue;
     const inboundParents = (inverse.schema.defs.get(name)?.inboundRefs ?? [])
       .map((ref) => ref.from)
       .sort();
     rows.push({
-      role: "nested-covered",
+      role: "nested-obj",
       name,
       coveredThrough: inboundParents.join(", ") || "curated nested role",
       reason: entry.reason,

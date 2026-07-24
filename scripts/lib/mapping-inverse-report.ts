@@ -250,7 +250,7 @@ function renderCoverageStory(inverse: InverseCoverageLedger): string[] {
     "Simple story",
     `  Carta defines ${story.totalDefs} total definitions.`,
     `  ${story.objectDefs} are object-shaped definitions.`,
-    `  ${story.nonEntityObjectDefs} object-shaped support definitions + ${story.scalarValueTypeDefs} scalar support types are not standalone objects.`,
+    `  ${story.nonEntityObjectDefs} object-shaped support definitions (${counts["nested-obj"]} nested objects + ${counts["value-type"]} object-shaped value type) + ${story.scalarValueTypeDefs} scalar support types are not standalone objects.`,
     `  That leaves ${story.standaloneCandidateDefs} standalone mapping candidates.`,
     `  ${story.mappedDefs} have OCF mapping evidence: ${story.fullyMappedDefs} fully mapped, ${story.partiallyMappedDefs} partially mapped.`,
     `  ${story.unmappedCandidateDefs} standalone candidates have no mapping evidence yet; their inventory role says whether that is expected or actionable.`,
@@ -275,7 +275,7 @@ function renderExcludedRows(
   rows: InverseExcludedRoleRow[],
   inverse: InverseCoverageLedger
 ): string[] {
-  const nested = rows.filter((row) => row.role === "nested-covered").length;
+  const nested = rows.filter((row) => row.role === "nested-obj").length;
   const valueTypes = rows.filter((row) => row.role === "value-type").length;
   const scalarValueTypes = Math.max(0, valueTypes - inverse.metrics.valueTypeDefs);
   const lines = [
@@ -285,7 +285,7 @@ function renderExcludedRows(
     `  These ${rows.length} definitions are packaging/support types, not standalone mapping targets; their mapping/type evidence remains valid.`,
   ];
   for (const row of rows) {
-    lines.push(`  - ${row.role}: #/$defs/${row.name} — ${row.coveredThrough}`);
+    lines.push(`  - ${row.role}: #/$defs/${row.name} — ${row.coveredThrough}; ${row.reason}`);
   }
   return lines;
 }
@@ -330,7 +330,7 @@ export function renderMappingInverseReport(options: MappingInverseReportOptions)
       lines.push("", `No object-like Carta definition found for ${options.targetObject}`);
       return lines.join("\n");
     }
-    if (row.status === "value-type" || row.status === "nested-covered") {
+    if (row.status === "value-type" || row.status === "nested-obj") {
       lines.push(
         "",
         `Carta definition ${options.targetObject} is a supporting definition, not a standalone mapping target (${row.status}).`

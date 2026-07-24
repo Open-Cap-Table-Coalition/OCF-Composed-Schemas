@@ -181,7 +181,7 @@ function renderInverseCoverageStory(
     "",
     `1. Carta defines **${story.totalDefs}** total definitions.`,
     `2. **${story.objectDefs}** of them are object-shaped.`,
-    `3. **${story.nonEntityObjectDefs}** object-shaped support definitions plus **${story.scalarValueTypeDefs}** scalar support types are packaging pieces, not standalone objects.`,
+    `3. **${story.nonEntityObjectDefs}** object-shaped support definitions (**${counts["nested-obj"]}** nested objects + **${counts["value-type"]}** object-shaped value type) plus **${story.scalarValueTypeDefs}** scalar support types are packaging pieces, not standalone objects.`,
     `4. That leaves **${story.standaloneCandidateDefs}** standalone mapping candidates.`,
     `5. We have mapping evidence for **${story.mappedDefs}**: **${story.fullyMappedDefs}** fully mapped and **${story.partiallyMappedDefs}** partially mapped.`,
     `6. **${story.unmappedCandidateDefs}** standalone candidates have no mapping evidence yet; their inventory role tells us whether that is expected or actionable.`,
@@ -191,13 +191,13 @@ function renderInverseCoverageStory(
     `### Supporting CARTA definitions excluded from standalone mapping targets (${excludedDefinitions.length})`,
     "",
     `${
-      excludedDefinitions.filter((row) => row.role === "nested-covered").length
+      excludedDefinitions.filter((row) => row.role === "nested-obj").length
     } nested object definitions and ${
       excludedDefinitions.filter((row) => row.role === "value-type").length
     } curated value types are intentionally not standalone targets.`,
     `${story.scalarValueTypeDefs} scalar wrappers are outside the object-like definition denominator; ${counts["value-type"]} value-type definition is object-like.`,
     "These definitions are packaging/support types, not standalone mapping targets; their mapping/type evidence remains valid.",
-    "The nested-parent column names the Carta object(s) that provide their coverage.",
+    "The parent column names the immediate parent(s); the reason says whether mapped-parent coverage is established.",
     "",
   ];
 }
@@ -287,7 +287,7 @@ function render(
     `| type-only slots | ${inverse.metrics.typeOnlySlots} |`,
     `| implicit constant slots | ${inverse.metrics.implicitSlots} |`,
     `| deferred slots | ${inverse.metrics.deferredSlots} |`,
-    `| structurally nested-covered defs | ${inverse.metrics.nestedCoveredDefs} |`,
+    `| nested object defs | ${inverse.metrics.nestedObjDefs} |`,
     `| expected report roll-ups | ${inverse.metrics.reportRollupDefs} |`,
     `| curated value-type policy entries | ${inverse.metrics.curatedValueTypeEntries} |`,
     `| object-like value-type/non-target defs | ${inverse.metrics.valueTypeDefs} |`,

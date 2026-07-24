@@ -901,47 +901,47 @@ A missing root target is therefore not automatically a missing concept.
 | Carta `$defs` total | 139 |
 | object-like Carta `$defs` | 86 |
 | object slots | 588 |
-| defs with direct executable coverage | 39 |
+| defs with direct executable coverage | 14 |
 | direct executable slots | 146 |
 | defs with type-only slots | 7 |
-| defs with only type-only coverage | 6 |
+| defs with only type-only coverage | 1 |
 | reusable type-only slots | 34 |
 | implicit constant slots | 3 |
 | deferred slots | 4 |
 | empty slots | 401 |
-| nested-covered defs | 10 |
-| expected report roll-ups | 17 |
+| nested object defs | 53 |
+| expected report roll-ups | 12 |
 | curated value-type policy entries | 7 |
 | object-like value-type/non-target defs | 1 |
-| alternate/unreachable shapes | 3 |
-| vendor-only family candidates | 5 |
-| workflow/data-shape gap candidates | 4 |
-| actionable inverse gap candidates | 10 |
+| alternate/unreachable shapes | 2 |
+| vendor-only family candidates | 1 |
+| workflow/data-shape gap candidates | 1 |
+| actionable inverse gap candidates | 3 |
 | unresolved role-review candidates | 0 |
 
 ### CARTA inverse coverage: the simple story
 
 1. Carta defines **139** total definitions.
 2. **86** of them are object-shaped.
-3. **11** object-shaped support definitions plus **6** scalar support types are packaging pieces, not standalone objects.
-4. That leaves **75** standalone mapping candidates.
-5. We have mapping evidence for **45**: **9** fully mapped and **36** partially mapped.
-6. **30** standalone candidates have no mapping evidence yet; their inventory role tells us whether that is expected or actionable.
+3. **54** object-shaped support definitions (**53** nested objects + **1** object-shaped value type) plus **6** scalar support types are packaging pieces, not standalone objects.
+4. That leaves **32** standalone mapping candidates.
+5. We have mapping evidence for **15**: **0** fully mapped and **15** partially mapped.
+6. **17** standalone candidates have no mapping evidence yet; their inventory role tells us whether that is expected or actionable.
 
-**Checks:** 75 = 45 + 30; 86 = 75 + 11.
+**Checks:** 32 = 15 + 17; 86 = 32 + 54.
 
 | mapping evidence detail | count |
 | --- | ---: |
-| direct executable | 39 |
-| type-only | 6 |
+| direct executable | 14 |
+| type-only | 1 |
 | deferred | 0 |
 
-### Supporting CARTA definitions excluded from standalone mapping targets (17)
+### Supporting CARTA definitions excluded from standalone mapping targets (60)
 
-10 nested object definitions and 7 curated value types are intentionally not standalone targets.
+53 nested object definitions and 7 curated value types are intentionally not standalone targets.
 6 scalar wrappers are outside the object-like definition denominator; 1 value-type definition is object-like.
 These definitions are packaging/support types, not standalone mapping targets; their mapping/type evidence remains valid.
-The nested-parent column names the Carta object(s) that provide their coverage.
+The parent column names the immediate parent(s); the reason says whether mapped-parent coverage is established.
 
 | role | Carta `$def` | covered through | reason |
 | --- | --- | --- | --- |
@@ -952,18 +952,61 @@ The nested-parent column names the Carta object(s) that provide their coverage.
 | value-type | `#/$defs/Iso4217CurrencyAlphaCode` | owning Carta object properties; not a standalone entity | Reusable scalar value wrapper, not a standalone Carta entity. |
 | value-type | `#/$defs/Iso8601CompleteCalendarDate` | owning Carta object properties; not a standalone entity | Reusable calendar-date wrapper, populated through owning object properties. |
 | value-type | `#/$defs/Iso8601CompleteCalendarDateTime` | owning Carta object properties; not a standalone entity | Reusable datetime wrapper, populated through owning object properties. |
-| nested-covered | `#/$defs/DividendDetails` | ShareClassDividendDetails | Structural child of directly mapped parent(s). |
-| nested-covered | `#/$defs/Exercise` | OptionGrant | Structural child of directly mapped parent(s). |
-| nested-covered | `#/$defs/PerformanceCondition` | VestingPeriod | Structural child of directly mapped parent(s). |
-| nested-covered | `#/$defs/PrecededBySecurity` | CertificatePrecededBy, RestrictedStockAwardPrecededBy | Structural child of directly mapped parent(s). |
-| nested-covered | `#/$defs/PreferredShareClassDetails` | ShareClass | Structural child of directly mapped parent(s). |
-| nested-covered | `#/$defs/RestrictedStockAwardVestingEvent` | RestrictedStockAward | Structural child of directly mapped parent(s). |
-| nested-covered | `#/$defs/RestrictedStockUnitVestingEvent` | RestrictedStockUnit | Structural child of directly mapped parent(s). |
-| nested-covered | `#/$defs/ShareClassDividendDetails` | PreferredShareClassDetails | Structural child of directly mapped parent(s). |
-| nested-covered | `#/$defs/VestingSchedule` | OptionGrant, RestrictedStockAward, RestrictedStockUnit | Structural child of directly mapped parent(s). |
-| nested-covered | `#/$defs/ThresholdDetails` | Interest | Nested under Interest; supporting threshold details are not a standalone target. |
+| nested-obj | `#/$defs/Acceleration` | Vesting | Nested object; no mapped parent coverage established, but not a standalone target. |
+| nested-obj | `#/$defs/CertificateCancellationTransaction` | CertificateTransactionItem | Nested object; no mapped parent coverage established, but not a standalone target. |
+| nested-obj | `#/$defs/CertificateIssuanceTransaction` | CertificateTransactionItem | Nested object; no mapped parent coverage established, but not a standalone target. |
+| nested-obj | `#/$defs/CertificatePrecededBy` | Certificate | Nested object; covered through mapped parent(s). |
+| nested-obj | `#/$defs/ConvertibleCancellationTransaction` | ConvertibleTransactionItem | Nested object; covered through mapped parent(s). |
+| nested-obj | `#/$defs/ConvertibleIssuanceTransaction` | ConvertibleTransactionItem | Nested object; covered through mapped parent(s). |
+| nested-obj | `#/$defs/DividendDetails` | ShareClassDividendDetails | Nested object; covered through mapped parent(s). |
+| nested-obj | `#/$defs/Document` | OptionGrantDocuments | Nested object; no mapped parent coverage established, but not a standalone target. |
+| nested-obj | `#/$defs/Exercise` | OptionGrant | Nested object; covered through mapped parent(s). |
+| nested-obj | `#/$defs/ExercisePeriods` | OptionGrant | Nested object; covered through mapped parent(s). |
+| nested-obj | `#/$defs/Jurisdiction` | OptionExerciseTaxWithholdingLineItem | Nested object; no mapped parent coverage established, but not a standalone target. |
+| nested-obj | `#/$defs/Money` | Certificate, CertificateIssuanceTransaction, ConvertibleCancellationTransaction, ConvertibleIssuanceTransaction, ConvertibleNote, OptionGrant, OptionIssuanceTransaction, RestrictedStockAward, RestrictedStockUnit, RestrictedStockUnitSettlement, RsaIssuanceTransaction, SarExerciseTransaction, SarIssuanceTransaction, ShareClass, ShareClassRightsAndPreferences, ShareClassValuation, WarrantIssuanceTransaction | Nested object; covered through mapped parent(s). |
+| nested-obj | `#/$defs/NoteBlock` | ConvertibleNote | Nested object; covered through mapped parent(s). |
+| nested-obj | `#/$defs/OptionCancellationTransaction` | OptionTransactionItem | Nested object; no mapped parent coverage established, but not a standalone target. |
+| nested-obj | `#/$defs/OptionExerciseMoneyMovement` | OptionExercise | Nested object; no mapped parent coverage established, but not a standalone target. |
+| nested-obj | `#/$defs/OptionExerciseTaxWithholdingLineItem` | OptionExercise | Nested object; no mapped parent coverage established, but not a standalone target. |
+| nested-obj | `#/$defs/OptionExerciseTransaction` | OptionTransactionItem | Nested object; no mapped parent coverage established, but not a standalone target. |
+| nested-obj | `#/$defs/OptionGrantVestingEvent` | OptionGrant | Nested object; covered through mapped parent(s). |
+| nested-obj | `#/$defs/OptionIssuanceTransaction` | OptionTransactionItem | Nested object; no mapped parent coverage established, but not a standalone target. |
+| nested-obj | `#/$defs/PerformanceCondition` | VestingPeriod | Nested object; covered through mapped parent(s). |
+| nested-obj | `#/$defs/PhantomCancellationTransaction` | PhantomTransactionItem | Nested object; no mapped parent coverage established, but not a standalone target. |
+| nested-obj | `#/$defs/PhantomIssuanceTransaction` | PhantomTransactionItem | Nested object; no mapped parent coverage established, but not a standalone target. |
+| nested-obj | `#/$defs/PiuCancellationTransaction` | PiuTransactionItem | Nested object; no mapped parent coverage established, but not a standalone target. |
+| nested-obj | `#/$defs/PiuIssuanceTransaction` | PiuTransactionItem | Nested object; no mapped parent coverage established, but not a standalone target. |
+| nested-obj | `#/$defs/PrecededBySecurity` | CertificatePrecededBy, RestrictedStockAwardPrecededBy | Nested object; covered through mapped parent(s). |
+| nested-obj | `#/$defs/PreferredShareClassDetails` | ShareClass | Nested object; covered through mapped parent(s). |
+| nested-obj | `#/$defs/RestrictedStockAwardPrecededBy` | RestrictedStockAward | Nested object; covered through mapped parent(s). |
+| nested-obj | `#/$defs/RestrictedStockAwardVestingEvent` | RestrictedStockAward | Nested object; covered through mapped parent(s). |
+| nested-obj | `#/$defs/RestrictedStockUnitSettlement` | RestrictedStockUnit | Nested object; covered through mapped parent(s). |
+| nested-obj | `#/$defs/RestrictedStockUnitVestingEvent` | RestrictedStockUnit | Nested object; covered through mapped parent(s). |
+| nested-obj | `#/$defs/RsaCancellationTransaction` | RsaTransactionItem | Nested object; no mapped parent coverage established, but not a standalone target. |
+| nested-obj | `#/$defs/RsaIssuanceTransaction` | RsaTransactionItem | Nested object; no mapped parent coverage established, but not a standalone target. |
+| nested-obj | `#/$defs/RsuCancellationTransaction` | RsuTransactionItem | Nested object; no mapped parent coverage established, but not a standalone target. |
+| nested-obj | `#/$defs/RsuIssuanceTransaction` | RsuTransactionItem | Nested object; no mapped parent coverage established, but not a standalone target. |
+| nested-obj | `#/$defs/RsuSettlementTransaction` | RsuTransactionItem | Nested object; no mapped parent coverage established, but not a standalone target. |
+| nested-obj | `#/$defs/SarCancellationTransaction` | SarTransactionItem | Nested object; no mapped parent coverage established, but not a standalone target. |
+| nested-obj | `#/$defs/SarExerciseTransaction` | SarTransactionItem | Nested object; no mapped parent coverage established, but not a standalone target. |
+| nested-obj | `#/$defs/SarIssuanceTransaction` | SarTransactionItem | Nested object; no mapped parent coverage established, but not a standalone target. |
+| nested-obj | `#/$defs/ShareClassDividendDetails` | PreferredShareClassDetails | Nested object; covered through mapped parent(s). |
+| nested-obj | `#/$defs/ShareClassRightsAndPreferences` | PreferredShareClassDetails | Nested object; covered through mapped parent(s). |
+| nested-obj | `#/$defs/StakeholderAddress` | Stakeholder | Nested object; covered through mapped parent(s). |
+| nested-obj | `#/$defs/StakeholderCapitalizationTableSummary` | StakeholderGroup | Nested object; no mapped parent coverage established, but not a standalone target. |
+| nested-obj | `#/$defs/StakeholderNoteBlockSummary` | StakeholderGroup | Nested object; no mapped parent coverage established, but not a standalone target. |
+| nested-obj | `#/$defs/StakeholderOptionPoolSummary` | StakeholderGroup | Nested object; no mapped parent coverage established, but not a standalone target. |
+| nested-obj | `#/$defs/StakeholderShareClassSummary` | StakeholderGroup | Nested object; no mapped parent coverage established, but not a standalone target. |
+| nested-obj | `#/$defs/StakeholderWarrantBlockSummary` | StakeholderGroup | Nested object; no mapped parent coverage established, but not a standalone target. |
+| nested-obj | `#/$defs/ThresholdDetails` | Interest | Nested object; no mapped parent coverage established, but not a standalone target. |
+| nested-obj | `#/$defs/VestingPeriod` | VestingScheduleTemplate | Nested object; covered through mapped parent(s). |
+| nested-obj | `#/$defs/VestingSchedule` | OptionGrant, RestrictedStockAward, RestrictedStockUnit | Nested object; covered through mapped parent(s). |
+| nested-obj | `#/$defs/WarrantCancellationTransaction` | WarrantTransactionItem | Nested object; covered through mapped parent(s). |
+| nested-obj | `#/$defs/WarrantExerciseTransaction` | WarrantTransactionItem | Nested object; covered through mapped parent(s). |
+| nested-obj | `#/$defs/WarrantIssuanceTransaction` | WarrantTransactionItem | Nested object; covered through mapped parent(s). |
+| nested-obj | `#/$defs/WarrantTransferTransaction` | WarrantTransactionItem | Nested object; covered through mapped parent(s). |
 
-### Unmapped standalone candidates by inventory role (30)
+### Unmapped standalone candidates by inventory role (17)
 
 These definitions are not counted as mapped targets yet. The status and reason columns
 explain whether each is a read-model roll-up, alternate shape, CARTA-specific family
@@ -971,34 +1014,21 @@ without an OCF source, workflow/data gap, or actionable mapping candidate.
 
 | Carta `$def` | status | structural parent(s) | reason |
 | --- | --- | --- | --- |
-| `#/$defs/Acceleration` | alternate | — | Child of the unreachable Carta Vesting shape. |
 | `#/$defs/CapitalizationTableSummary` | report-rollup | — | Carta read-model aggregate; OCF records the underlying leaf facts instead. |
 | `#/$defs/CertificateTransactionItem` | report-rollup | — | Carta read-model aggregate; OCF records the underlying leaf facts instead. |
 | `#/$defs/Corporation` | alternate | — | Unused alternate issuer shape; OCF Issuer maps to Carta Issuer. |
 | `#/$defs/Interest` | vendor-family | — | Carta profits-interest security family has no OCF source object. |
-| `#/$defs/Jurisdiction` | workflow-gap | — | Carta tax-withholding jurisdiction; OCF address/exemption jurisdictions are different concepts. |
 | `#/$defs/NoteBlockSummary` | report-rollup | — | Carta read-model aggregate; OCF records the underlying leaf facts instead. |
 | `#/$defs/OptionExercise` | workflow-gap | — | Carta exercise-request workflow object; OCF maps the realized transaction instead. |
-| `#/$defs/OptionExerciseMoneyMovement` | workflow-gap | — | Nested Carta exercise-funding workflow data has no OCF source. |
-| `#/$defs/OptionExerciseTaxWithholdingLineItem` | workflow-gap | — | Nested Carta tax-withholding workflow data has no OCF source. |
 | `#/$defs/OptionGrantDocuments` | gap | — | Carta grant-document relationship has no OCF source relationship. |
 | `#/$defs/OptionTransactionItem` | report-rollup | — | Carta read-model aggregate; OCF records the underlying leaf facts instead. |
-| `#/$defs/PhantomCancellationTransaction` | vendor-family | — | Carta phantom-equity transaction family has no OCF route. |
-| `#/$defs/PhantomIssuanceTransaction` | vendor-family | — | Carta phantom-equity transaction family has no OCF route. |
 | `#/$defs/PhantomTransactionItem` | report-rollup | — | Carta read-model aggregate; OCF records the underlying leaf facts instead. |
-| `#/$defs/PiuCancellationTransaction` | vendor-family | — | Carta profits-interest-unit transaction family has no OCF route. |
-| `#/$defs/PiuIssuanceTransaction` | vendor-family | — | Carta profits-interest-unit transaction family has no OCF route. |
 | `#/$defs/PiuTransactionItem` | report-rollup | — | Carta read-model aggregate; OCF records the underlying leaf facts instead. |
 | `#/$defs/RsaTransactionItem` | report-rollup | — | Carta read-model aggregate; OCF records the underlying leaf facts instead. |
 | `#/$defs/RsuTransactionItem` | report-rollup | — | Carta read-model aggregate; OCF records the underlying leaf facts instead. |
 | `#/$defs/SarTransactionItem` | report-rollup | — | Carta read-model aggregate; OCF records the underlying leaf facts instead. |
 | `#/$defs/ShareClassSummary` | report-rollup | — | Carta read-model aggregate; OCF records the underlying leaf facts instead. |
-| `#/$defs/StakeholderCapitalizationTableSummary` | report-rollup | — | Carta read-model aggregate; OCF records the underlying leaf facts instead. |
 | `#/$defs/StakeholderGroup` | report-rollup | — | Carta read-model aggregate; OCF records the underlying leaf facts instead. |
-| `#/$defs/StakeholderNoteBlockSummary` | report-rollup | — | Carta read-model aggregate; OCF records the underlying leaf facts instead. |
-| `#/$defs/StakeholderOptionPoolSummary` | report-rollup | — | Carta read-model aggregate; OCF records the underlying leaf facts instead. |
-| `#/$defs/StakeholderShareClassSummary` | report-rollup | — | Carta read-model aggregate; OCF records the underlying leaf facts instead. |
-| `#/$defs/StakeholderWarrantBlockSummary` | report-rollup | — | Carta read-model aggregate; OCF records the underlying leaf facts instead. |
 | `#/$defs/Vesting` | alternate | — | Unreachable option-grant vesting shape; mapped OCF vesting uses schedule/event defs. |
 | `#/$defs/WarrantBlockSummary` | report-rollup | — | Carta read-model aggregate; OCF records the underlying leaf facts instead. |
 
@@ -1026,13 +1056,6 @@ role policy excludes expected roll-ups and alternate schema shapes.
 | Carta `$def` | disposition | reason |
 | --- | --- | --- |
 | `#/$defs/Interest` | vendor-family | Carta profits-interest security family has no OCF source object. |
-| `#/$defs/Jurisdiction` | workflow-gap | Carta tax-withholding jurisdiction; OCF address/exemption jurisdictions are different concepts. |
 | `#/$defs/OptionExercise` | workflow-gap | Carta exercise-request workflow object; OCF maps the realized transaction instead. |
-| `#/$defs/OptionExerciseMoneyMovement` | workflow-gap | Nested Carta exercise-funding workflow data has no OCF source. |
-| `#/$defs/OptionExerciseTaxWithholdingLineItem` | workflow-gap | Nested Carta tax-withholding workflow data has no OCF source. |
 | `#/$defs/OptionGrantDocuments` | gap | Carta grant-document relationship has no OCF source relationship. |
-| `#/$defs/PhantomCancellationTransaction` | vendor-family | Carta phantom-equity transaction family has no OCF route. |
-| `#/$defs/PhantomIssuanceTransaction` | vendor-family | Carta phantom-equity transaction family has no OCF route. |
-| `#/$defs/PiuCancellationTransaction` | vendor-family | Carta profits-interest-unit transaction family has no OCF route. |
-| `#/$defs/PiuIssuanceTransaction` | vendor-family | Carta profits-interest-unit transaction family has no OCF route. |
 

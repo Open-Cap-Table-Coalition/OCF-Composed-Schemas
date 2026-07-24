@@ -36,15 +36,15 @@ describe("core reports (the markdown drift gate's premise)", () => {
   it("explains inverse coverage as a plain-language standalone-target story", async () => {
     const report = renderGapReport(await deriveCore(process.cwd()));
     expect(report).toContain("### CARTA inverse coverage: the simple story");
-    expect(report).toContain("4. That leaves **75** standalone mapping candidates.");
+    expect(report).toContain("4. That leaves **32** standalone mapping candidates.");
     expect(report).toContain(
-      "5. We have mapping evidence for **45**: **9** fully mapped and **36** partially mapped."
+      "5. We have mapping evidence for **15**: **0** fully mapped and **15** partially mapped."
     );
     expect(report).toContain(
-      "6. **30** standalone candidates have no mapping evidence yet; their inventory role tells us whether that is expected or actionable."
+      "6. **17** standalone candidates have no mapping evidence yet; their inventory role tells us whether that is expected or actionable."
     );
     expect(report).toContain(
-      "### Supporting CARTA definitions excluded from standalone mapping targets (17)"
+      "### Supporting CARTA definitions excluded from standalone mapping targets (60)"
     );
     expect(report).not.toContain("### CARTA object-definition coverage story");
   });

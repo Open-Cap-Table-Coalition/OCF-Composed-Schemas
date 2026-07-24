@@ -10,66 +10,67 @@ describe("Carta inverse coverage", () => {
       totalDefs: 139,
       objectDefs: 86,
       definitionRoleCounts: {
-        direct: 39,
-        "type-only": 6,
+        direct: 14,
+        "type-only": 1,
         deferred: 0,
-        "nested-covered": 10,
+        "nested-obj": 53,
         "value-type": 1,
-        "report-rollup": 17,
-        alternate: 3,
-        "vendor-family": 5,
-        "workflow-gap": 4,
+        "report-rollup": 12,
+        alternate: 2,
+        "vendor-family": 1,
+        "workflow-gap": 1,
         gap: 1,
         review: 0,
       },
       directSlots: 146,
       typeOnlyDefs: 7,
-      typeOnlyOnlyDefs: 6,
+      typeOnlyOnlyDefs: 1,
       typeOnlySlots: 34,
       implicitSlots: 3,
       deferredSlots: 4,
-      nestedCoveredDefs: 10,
-      reportRollupDefs: 17,
+      nestedObjDefs: 53,
+      reportRollupDefs: 12,
       curatedValueTypeEntries: 7,
       valueTypeDefs: 1,
-      alternateDefs: 3,
-      actionableGapDefs: 10,
+      alternateDefs: 2,
+      actionableGapDefs: 3,
       reviewDefs: 0,
     });
 
     const byDef = new Map(inverse.defs.map((row) => [row.name, row]));
     expect(byDef.get("Date")?.status).toBe("value-type");
     expect(byDef.get("Vesting")?.status).toBe("alternate");
-    expect(byDef.get("DividendDetails")?.status).toBe("nested-covered");
+    expect(byDef.get("DividendDetails")?.status).toBe("nested-obj");
+    expect(byDef.get("CertificateIssuanceTransaction")?.status).toBe("nested-obj");
     expect(byDef.get("Interest")?.status).toBe("vendor-family");
-    expect(byDef.get("ThresholdDetails")?.status).toBe("nested-covered");
+    expect(byDef.get("ThresholdDetails")?.status).toBe("nested-obj");
     expect(byDef.get("OptionGrantDocuments")?.status).toBe("gap");
     expect(corpus.coveragePolicy.cartaDefs.get("Iso8601CompleteCalendarDateTime")).toMatchObject({
       role: "value-type",
     });
 
     const excluded = inverse.excludedRoleRows;
-    expect(excluded).toHaveLength(17);
+    expect(excluded).toHaveLength(60);
     expect(excluded.find((row) => row.name === "Date")).toMatchObject({ role: "value-type" });
     expect(excluded.find((row) => row.name === "VestingSchedule")).toMatchObject({
-      role: "nested-covered",
+      role: "nested-obj",
       coveredThrough: "OptionGrant, RestrictedStockAward, RestrictedStockUnit",
     });
     expect(excluded.find((row) => row.name === "ThresholdDetails")).toMatchObject({
-      role: "nested-covered",
+      role: "nested-obj",
       coveredThrough: "Interest",
     });
 
     expect(inverseCoverageStory(inverse)).toEqual({
       totalDefs: 139,
       objectDefs: 86,
-      standaloneCandidateDefs: 75,
-      mappedDefs: 45,
-      fullyMappedDefs: 9,
-      partiallyMappedDefs: 36,
-      unmappedCandidateDefs: 30,
-      nonEntityDefs: 17,
-      nonEntityObjectDefs: 11,
+      standaloneCandidateDefs: 32,
+      mappedDefs: 15,
+      fullyMappedDefs: 0,
+      partiallyMappedDefs: 15,
+      unmappedCandidateDefs: 17,
+      nonEntityDefs: 60,
+      nonEntityObjectDefs: 54,
       scalarValueTypeDefs: 6,
     });
   });

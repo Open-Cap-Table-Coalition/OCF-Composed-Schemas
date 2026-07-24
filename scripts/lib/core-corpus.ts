@@ -249,7 +249,7 @@ export interface Corpus {
    * structural coverage). A green mapping writes to a parent object, and that
    * parent `$ref`s these children — so the concept is covered indirectly even
    * though `collectTargets` only ever credits the ROOT segment of a target
-   * pointer and never these nested defs. Used to separate "nested-covered" from
+   * pointer and never these nested defs. Used to separate nested objects from
    * "true gap" in gap report (b). Structural reachability, not a proof that a
    * specific field writes into the child.
    */
