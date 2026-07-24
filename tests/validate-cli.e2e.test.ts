@@ -125,7 +125,7 @@ describe("validate-mappings CLI (temp tree)", () => {
     const { stdout } = await runCli(root, ["--inverse"]);
     expect(stdout).toContain("name: EmptyObject");
     expect(stdout).toContain("status: NO MAPPINGS");
-    expect(stdout).toContain("6. 1 standalone candidates have no mapping evidence yet");
+    expect(stdout).toContain("7. 1 standalone candidates have no mapping evidence yet");
   });
 
   it("exits 1 and reports field-level errors on a broken mapping", async () => {

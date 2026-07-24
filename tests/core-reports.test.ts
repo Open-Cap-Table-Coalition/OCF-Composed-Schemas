@@ -36,12 +36,14 @@ describe("core reports (the markdown drift gate's premise)", () => {
   it("explains inverse coverage as a plain-language standalone-target story", async () => {
     const report = renderGapReport(await deriveCore(process.cwd()));
     expect(report).toContain("### CARTA inverse coverage: the simple story");
-    expect(report).toContain("4. That leaves **32** standalone mapping candidates.");
     expect(report).toContain(
-      "7. We have mapping evidence for **15**: **0** fully mapped and **15** partially mapped (**14** direct executable, **1** type-only, **0** deferred)."
+      "4. Of those **86**, **54** are support definitions, not standalone objects (**53** nested objects + **1** object-shaped value type), leaving **32** standalone mapping candidates."
     );
     expect(report).toContain(
-      "8. **17** standalone candidates have no mapping evidence yet; their inventory role tells us whether that is expected or actionable (**12** report/read-model roll-ups, **2** alternate shapes, **1** CARTA-specific families without OCF sources, **1** workflow/data gaps, **1** actionable gaps, **0** requiring review)."
+      "6. We have mapping evidence for **15**: **0** fully mapped and **15** partially mapped (**14** direct executable, **1** type-only, **0** deferred)."
+    );
+    expect(report).toContain(
+      "7. **17** standalone candidates have no mapping evidence yet; their inventory role tells us whether that is expected or actionable (**12** report/read-model roll-ups, **2** alternate shapes, **1** CARTA-specific families without OCF sources, **1** workflow/data gaps, **1** actionable gaps, **0** requiring review)."
     );
     expect(report).toContain("### Technical slot diagnostics");
     expect(report).not.toContain("| mapping evidence detail | count |");
