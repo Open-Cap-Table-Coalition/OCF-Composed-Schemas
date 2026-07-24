@@ -260,10 +260,12 @@ Use a link below to open a prefilled GitHub issue. The issue can be copied into 
 - `addresses` → `address`: dramatic loss in two dimensions. OCF carries an *array* of richly structured `Address` objects (street, city, state, country, postal code, etc.); Carta's `StakeholderAddress` has *only* `country` (a single string, no structure). The mapping explicitly selects the first address's `/country` under policy `first_address_country`; all other address data is dropped.
 - `tax_ids`: unmappable. Carta's `Stakeholder` has no tax-id field.
 - [ ] `addresses[].country`: Should an OCF stakeholder address country also populate Carta `Compliance.countryOfResidency`? Investigate whether a two-hop stakeholder linkage is required and how the OCF alpha-2 value should be converted to Carta's alpha-3 code.
+  - Target: Compliance.countryOfResidency
   - Asked by: @johnscrudato
   - Answer: Open: determine whether `Stakeholder.addresses[].country` is the intended OCF source for stakeholder residency, or whether another stakeholder-level field should be used.
   - Answered by: —
 - [ ] `addresses[].country_subdivision`: Should an OCF stakeholder address subdivision also populate Carta `Compliance.stateOfResidency`? Investigate whether a two-hop stakeholder linkage is required and how the country-qualified ISO 3166-2 value should be constructed.
+  - Target: Compliance.stateOfResidency
   - Asked by: @johnscrudato
   - Answer: Open: determine whether `Stakeholder.addresses[].country_subdivision` is the intended OCF source for stakeholder residency, or whether another stakeholder-level field should be used.
   - Answered by: —

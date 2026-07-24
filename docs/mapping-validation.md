@@ -63,6 +63,12 @@ them and the inverse report can project open questions onto the related Carta pr
   - Asked by: @alice
   - Answer: No; Carta generates its own identifier.
   - Answered by: @bob
+
+- [ ] `addresses[].country`: Should this source also populate stakeholder compliance residency?
+  - Target: Compliance.countryOfResidency
+  - Asked by: @alice
+  - Answer: Open: investigate the required object linkage and code conversion.
+  - Answered by: —
 ```
 
 The property path is optional for mapping-level questions. Dotted paths such as
@@ -71,9 +77,11 @@ top-level segment must exist in the sibling source schema. Every question must h
 `Asked by`, `Answer`, and `Answered by` metadata. An open question may use `—` (or another
 explicit placeholder) for `Answered by`; a checked question must name the answerer. The answer
 and audit metadata remain in the mapping Markdown after the question is checked, while
-`--inverse` renders only unchecked questions beneath the matching target property. Malformed
-question headers, metadata, answers, or property paths fail mapping validation and therefore fail
-CI.
+`--inverse` renders only unchecked questions beneath the matching target property. To bind a
+question directly to a Carta slot, add optional `Target: CartaObject.property` metadata; this is
+especially useful for a target property that currently has no mapped OCF source. Carta target
+paths are checked against the target bundle. Malformed question headers, metadata, answers, source
+property paths, or Carta target paths fail mapping validation and therefore fail CI.
 
 ## DSL operator reference
 

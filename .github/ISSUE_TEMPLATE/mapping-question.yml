@@ -24,6 +24,13 @@ body:
       placeholder: security_id
 
   - type: input
+    id: target_path
+    attributes:
+      label: Carta target property path
+      description: Optional Carta-side target path, such as Compliance.countryOfResidency. Copy it into the mapping as Target: Object.property.
+      placeholder: Compliance.countryOfResidency
+
+  - type: input
     id: asked_by
     attributes:
       label: Asked by

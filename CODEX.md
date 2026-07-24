@@ -22,6 +22,9 @@ Rules:
 
 - The property path is optional. When present, it is a source-side path from the mapping's
   sibling schema; dotted paths and JSON-pointer-like paths are supported.
+- `Target: CartaObject.property` is optional when the question is about a specific Carta slot,
+  including an unmapped target property. The target path is validated against `target-schema/` and
+  makes the inverse report place the open question beside that target property.
 - Every question must have non-empty `Asked by`, `Answer`, and `Answered by` metadata. An open
   question may use `—` for `Answered by`; a checked question must name the answerer.
 - Keep answered questions in the mapping Markdown for the GitHub audit trail. The inverse report
@@ -31,7 +34,8 @@ Rules:
   issue form. Do not hand-edit that generated block; refresh it with `npm run mapping:question-links`.
 - Do not hand-edit generated reports. Add or answer the question in the upstream mapping file,
   then regenerate or rerun the report.
-- Malformed question headers, metadata, answers, or property paths are CI errors.
+- Malformed question headers, metadata, answers, source property paths, or Carta target paths are
+  CI errors.
 
 After changing mapping questions or their parser/reporting behavior, run:
 

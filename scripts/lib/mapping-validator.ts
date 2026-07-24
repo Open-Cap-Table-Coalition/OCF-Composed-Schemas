@@ -3,7 +3,12 @@ import jsonpointer from "jsonpointer";
 import { detectEnumValues } from "./enum-detection.js";
 import { getTransformPolicy, PolicyHostKind, registeredPolicyNames } from "./mapping-policies.js";
 import { RawSchema, Registry } from "./registry.js";
-import { isValidQuestionPropertyPath, questionPropertyRoot } from "./mapping-questions.js";
+import {
+  isValidQuestionPropertyPath,
+  isValidQuestionTargetPath,
+  questionPropertyRoot,
+  questionTargetParts,
+} from "./mapping-questions.js";
 import type { MappingQuestion } from "./mapping-questions.js";
 
 export interface PointerResult {
@@ -302,6 +307,7 @@ export function validateMapping(input: ValidateInput, opts: ValidateOptions): Va
   validateQuestionProperties(
     input.questions ?? [],
     (input.sourceSchema.properties ?? {}) as Record<string, unknown>,
+    input.targetBundle,
     err
   );
 
@@ -355,21 +361,49 @@ export function validateMapping(input: ValidateInput, opts: ValidateOptions): Va
 function validateQuestionProperties(
   questions: readonly MappingQuestion[],
   properties: Record<string, unknown>,
+  targetBundle: unknown | null,
   err: ErrFn
 ): void {
   questions.forEach((question, index) => {
-    if (question.property === null) return;
     const field = `questions[${index}]`;
-    if (!isValidQuestionPropertyPath(question.property)) {
-      err(field, `property path "${question.property}" is not a valid dotted or JSON-pointer path`);
+    if (question.property !== null) {
+      if (!isValidQuestionPropertyPath(question.property)) {
+        err(
+          field,
+          `property path "${question.property}" is not a valid dotted or JSON-pointer path`
+        );
+      } else {
+        const root = questionPropertyRoot(question.property);
+        if (!(root in properties)) {
+          err(
+            field,
+            `property path "${question.property}" does not start with a source schema property`
+          );
+        }
+      }
+    }
+
+    if (question.target === null) return;
+    if (!isValidQuestionTargetPath(question.target)) {
+      err(field, `Carta target path "${question.target}" is not a valid Object.property path`);
       return;
     }
-    const root = questionPropertyRoot(question.property);
-    if (!(root in properties)) {
-      err(
-        field,
-        `property path "${question.property}" does not start with a source schema property`
-      );
+    const target = questionTargetParts(question.target);
+    if (!targetBundle || !target) {
+      err(field, `Carta target path "${question.target}" requires a loaded target schema`);
+      return;
+    }
+    const defs = isPlainObject(targetBundle) ? targetBundle.$defs : undefined;
+    const targetDef =
+      isPlainObject(defs) && target.object in defs
+        ? derefNode(targetBundle, defs[target.object])
+        : undefined;
+    if (!isPlainObject(targetDef) || !isPlainObject(targetDef.properties)) {
+      err(field, `Carta target object "${target.object}" does not exist or has no properties`);
+      return;
+    }
+    if (!(target.property in targetDef.properties)) {
+      err(field, `Carta target property "${question.target}" does not exist in the target schema`);
     }
   });
 }

@@ -8,7 +8,7 @@ import {
 } from "./inverse-coverage.js";
 import { MappingEdge } from "./core-corpus.js";
 import { targetPointerParts } from "./mapping-report.js";
-import { questionPropertyRoot } from "./mapping-questions.js";
+import { questionPropertyRoot, questionTargetParts } from "./mapping-questions.js";
 import type { MappingQuestion } from "./mapping-questions.js";
 
 interface InverseFlow {
@@ -71,7 +71,7 @@ interface ReportQuestion {
 }
 
 function questionMatchesSourceField(question: MappingQuestion, sourceField: string): boolean {
-  if (question.property === null) return false;
+  if (question.property === null || question.target !== null) return false;
   const path = question.property;
   if (path.startsWith("/")) return questionPropertyRoot(path) === sourceField;
   return (
@@ -79,6 +79,15 @@ function questionMatchesSourceField(question: MappingQuestion, sourceField: stri
     path.startsWith(`${sourceField}.`) ||
     path.startsWith(`${sourceField}[]`)
   );
+}
+
+function questionMatchesTargetField(
+  question: MappingQuestion,
+  object: string,
+  field: string
+): boolean {
+  const target = question.target === null ? null : questionTargetParts(question.target);
+  return target?.object === object && target.property === field;
 }
 
 function openQuestionsForFlows(
@@ -94,6 +103,25 @@ function openQuestionsForFlows(
       if (question.answered || !predicate(question, flow)) continue;
       const key = `${flow.file}:${question.line}`;
       if (!found.has(key)) found.set(key, { file: flow.file, question });
+    }
+  }
+  return [...found.values()].sort(
+    (left, right) => left.file.localeCompare(right.file) || left.question.line - right.question.line
+  );
+}
+
+function openQuestionsForTargetField(
+  object: string,
+  field: string,
+  mappingDocuments: ReadonlyMap<string, MappingQuestionDocument> | undefined
+): ReportQuestion[] {
+  if (!mappingDocuments) return [];
+  const found = new Map<string, ReportQuestion>();
+  for (const [file, document] of mappingDocuments) {
+    for (const question of document.questions ?? []) {
+      if (question.answered || !questionMatchesTargetField(question, object, field)) continue;
+      const key = `${file}:${question.line}`;
+      if (!found.has(key)) found.set(key, { file, question });
     }
   }
   return [...found.values()].sort(
@@ -211,7 +239,7 @@ function renderMappingTree(
   const mappingQuestions = openQuestionsForFlows(
     allFlows,
     mappingDocuments,
-    (question) => question.property === null
+    (question) => question.property === null && question.target === null
   );
   const renderedFields = mappingQuestions.length > 0 ? [...fields, "(mapping questions)"] : fields;
   const lines: string[] = [];
@@ -231,24 +259,24 @@ function renderMappingTree(
       return;
     }
 
-    if (flows.length === 0) {
-      lines.push(`${flowPrefix}└── ✗ no mapped OCF source`);
-      return;
+    const targetQuestions = openQuestionsForTargetField(object, field, mappingDocuments);
+    const children: string[] = [];
+    if (flows.length === 0) children.push("✗ no mapped OCF source");
+    else {
+      flows.sort((left, right) => flowLabel(left).localeCompare(flowLabel(right)));
+      children.push(...flows.map(flowLabel));
     }
-    flows.sort((left, right) => flowLabel(left).localeCompare(flowLabel(right)));
-    flows.forEach((flow, flowIndex) => {
-      const lastFlow = flowIndex === flows.length - 1;
-      lines.push(`${flowPrefix}${lastFlow ? "└── " : "├── "}${flowLabel(flow)}`);
-    });
     const propertyQuestions = openQuestionsForFlows(
       flows,
       mappingDocuments,
       (question, flow) =>
         question.property !== null && questionMatchesSourceField(question, flow.sourceField)
     );
-    propertyQuestions.forEach((reportQuestion, questionIndex) => {
-      const lastQuestion = questionIndex === propertyQuestions.length - 1;
-      lines.push(`${flowPrefix}${lastQuestion ? "└── " : "├── "}${questionLabel(reportQuestion)}`);
+    children.push(...propertyQuestions.map(questionLabel));
+    children.push(...targetQuestions.map(questionLabel));
+    children.forEach((child, childIndex) => {
+      const lastChild = childIndex === children.length - 1;
+      lines.push(`${flowPrefix}${lastChild ? "└── " : "├── "}${child}`);
     });
   });
   return lines;
