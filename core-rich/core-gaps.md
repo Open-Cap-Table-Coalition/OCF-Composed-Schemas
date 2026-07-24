@@ -924,73 +924,84 @@ A missing root target is therefore not automatically a missing concept.
 
 ### Supporting CARTA definitions excluded from standalone mapping targets (60)
 
-53 nested object definitions and 7 curated value types are intentionally not standalone targets.
+53 nested object definitions and 7 value-type support definitions are intentionally not standalone targets.
 6 scalar wrappers are outside the object-like definition denominator; 1 value-type definition is object-like.
 These definitions are packaging/support types, not standalone mapping targets; their mapping/type evidence remains valid.
-The parent column names the immediate parent(s); the reason says whether mapped-parent coverage is established.
 
-| role | Carta `$def` | covered through | reason |
-| --- | --- | --- | --- |
-| value-type | `#/$defs/Date` | type correspondence: Iso8601CompleteCalendarDate, Iso8601CompleteCalendarDateTime | Partial-date value helper; OCF Date maps to the Iso8601 date wrappers. |
-| value-type | `#/$defs/Decimal` | owning Carta object properties; not a standalone entity | Reusable scalar value wrapper, not a standalone Carta entity. |
-| value-type | `#/$defs/Iso3166Set1Alpha3Code` | owning Carta object properties; not a standalone entity | Reusable scalar value wrapper, not a standalone Carta entity. |
-| value-type | `#/$defs/Iso3166Set2Code` | owning Carta object properties; not a standalone entity | Reusable scalar value wrapper, not a standalone Carta entity. |
-| value-type | `#/$defs/Iso4217CurrencyAlphaCode` | owning Carta object properties; not a standalone entity | Reusable scalar value wrapper, not a standalone Carta entity. |
-| value-type | `#/$defs/Iso8601CompleteCalendarDate` | owning Carta object properties; not a standalone entity | Reusable calendar-date wrapper, populated through owning object properties. |
-| value-type | `#/$defs/Iso8601CompleteCalendarDateTime` | owning Carta object properties; not a standalone entity | Reusable datetime wrapper, populated through owning object properties. |
-| nested-obj | `#/$defs/Acceleration` | Vesting | Nested object; no mapped parent coverage established, but not a standalone target. |
-| nested-obj | `#/$defs/CertificateCancellationTransaction` | CertificateTransactionItem | Nested object; no mapped parent coverage established, but not a standalone target. |
-| nested-obj | `#/$defs/CertificateIssuanceTransaction` | CertificateTransactionItem | Nested object; no mapped parent coverage established, but not a standalone target. |
-| nested-obj | `#/$defs/CertificatePrecededBy` | Certificate | Nested object; covered through mapped parent(s). |
-| nested-obj | `#/$defs/ConvertibleCancellationTransaction` | ConvertibleTransactionItem | Nested object; covered through mapped parent(s). |
-| nested-obj | `#/$defs/ConvertibleIssuanceTransaction` | ConvertibleTransactionItem | Nested object; covered through mapped parent(s). |
-| nested-obj | `#/$defs/DividendDetails` | ShareClassDividendDetails | Nested object; covered through mapped parent(s). |
-| nested-obj | `#/$defs/Document` | OptionGrantDocuments | Nested object; no mapped parent coverage established, but not a standalone target. |
-| nested-obj | `#/$defs/Exercise` | OptionGrant | Nested object; covered through mapped parent(s). |
-| nested-obj | `#/$defs/ExercisePeriods` | OptionGrant | Nested object; covered through mapped parent(s). |
-| nested-obj | `#/$defs/Jurisdiction` | OptionExerciseTaxWithholdingLineItem | Nested object; no mapped parent coverage established, but not a standalone target. |
-| nested-obj | `#/$defs/Money` | Certificate, CertificateIssuanceTransaction, ConvertibleCancellationTransaction, ConvertibleIssuanceTransaction, ConvertibleNote, OptionGrant, OptionIssuanceTransaction, RestrictedStockAward, RestrictedStockUnit, RestrictedStockUnitSettlement, RsaIssuanceTransaction, SarExerciseTransaction, SarIssuanceTransaction, ShareClass, ShareClassRightsAndPreferences, ShareClassValuation, WarrantIssuanceTransaction | Nested object; covered through mapped parent(s). |
-| nested-obj | `#/$defs/NoteBlock` | ConvertibleNote | Nested object; covered through mapped parent(s). |
-| nested-obj | `#/$defs/OptionCancellationTransaction` | OptionTransactionItem | Nested object; no mapped parent coverage established, but not a standalone target. |
-| nested-obj | `#/$defs/OptionExerciseMoneyMovement` | OptionExercise | Nested object; no mapped parent coverage established, but not a standalone target. |
-| nested-obj | `#/$defs/OptionExerciseTaxWithholdingLineItem` | OptionExercise | Nested object; no mapped parent coverage established, but not a standalone target. |
-| nested-obj | `#/$defs/OptionExerciseTransaction` | OptionTransactionItem | Nested object; no mapped parent coverage established, but not a standalone target. |
-| nested-obj | `#/$defs/OptionGrantVestingEvent` | OptionGrant | Nested object; covered through mapped parent(s). |
-| nested-obj | `#/$defs/OptionIssuanceTransaction` | OptionTransactionItem | Nested object; no mapped parent coverage established, but not a standalone target. |
-| nested-obj | `#/$defs/PerformanceCondition` | VestingPeriod | Nested object; covered through mapped parent(s). |
-| nested-obj | `#/$defs/PhantomCancellationTransaction` | PhantomTransactionItem | Nested object; no mapped parent coverage established, but not a standalone target. |
-| nested-obj | `#/$defs/PhantomIssuanceTransaction` | PhantomTransactionItem | Nested object; no mapped parent coverage established, but not a standalone target. |
-| nested-obj | `#/$defs/PiuCancellationTransaction` | PiuTransactionItem | Nested object; no mapped parent coverage established, but not a standalone target. |
-| nested-obj | `#/$defs/PiuIssuanceTransaction` | PiuTransactionItem | Nested object; no mapped parent coverage established, but not a standalone target. |
-| nested-obj | `#/$defs/PrecededBySecurity` | CertificatePrecededBy, RestrictedStockAwardPrecededBy | Nested object; covered through mapped parent(s). |
-| nested-obj | `#/$defs/PreferredShareClassDetails` | ShareClass | Nested object; covered through mapped parent(s). |
-| nested-obj | `#/$defs/RestrictedStockAwardPrecededBy` | RestrictedStockAward | Nested object; covered through mapped parent(s). |
-| nested-obj | `#/$defs/RestrictedStockAwardVestingEvent` | RestrictedStockAward | Nested object; covered through mapped parent(s). |
-| nested-obj | `#/$defs/RestrictedStockUnitSettlement` | RestrictedStockUnit | Nested object; covered through mapped parent(s). |
-| nested-obj | `#/$defs/RestrictedStockUnitVestingEvent` | RestrictedStockUnit | Nested object; covered through mapped parent(s). |
-| nested-obj | `#/$defs/RsaCancellationTransaction` | RsaTransactionItem | Nested object; no mapped parent coverage established, but not a standalone target. |
-| nested-obj | `#/$defs/RsaIssuanceTransaction` | RsaTransactionItem | Nested object; no mapped parent coverage established, but not a standalone target. |
-| nested-obj | `#/$defs/RsuCancellationTransaction` | RsuTransactionItem | Nested object; no mapped parent coverage established, but not a standalone target. |
-| nested-obj | `#/$defs/RsuIssuanceTransaction` | RsuTransactionItem | Nested object; no mapped parent coverage established, but not a standalone target. |
-| nested-obj | `#/$defs/RsuSettlementTransaction` | RsuTransactionItem | Nested object; no mapped parent coverage established, but not a standalone target. |
-| nested-obj | `#/$defs/SarCancellationTransaction` | SarTransactionItem | Nested object; no mapped parent coverage established, but not a standalone target. |
-| nested-obj | `#/$defs/SarExerciseTransaction` | SarTransactionItem | Nested object; no mapped parent coverage established, but not a standalone target. |
-| nested-obj | `#/$defs/SarIssuanceTransaction` | SarTransactionItem | Nested object; no mapped parent coverage established, but not a standalone target. |
-| nested-obj | `#/$defs/ShareClassDividendDetails` | PreferredShareClassDetails | Nested object; covered through mapped parent(s). |
-| nested-obj | `#/$defs/ShareClassRightsAndPreferences` | PreferredShareClassDetails | Nested object; covered through mapped parent(s). |
-| nested-obj | `#/$defs/StakeholderAddress` | Stakeholder | Nested object; covered through mapped parent(s). |
-| nested-obj | `#/$defs/StakeholderCapitalizationTableSummary` | StakeholderGroup | Nested object; no mapped parent coverage established, but not a standalone target. |
-| nested-obj | `#/$defs/StakeholderNoteBlockSummary` | StakeholderGroup | Nested object; no mapped parent coverage established, but not a standalone target. |
-| nested-obj | `#/$defs/StakeholderOptionPoolSummary` | StakeholderGroup | Nested object; no mapped parent coverage established, but not a standalone target. |
-| nested-obj | `#/$defs/StakeholderShareClassSummary` | StakeholderGroup | Nested object; no mapped parent coverage established, but not a standalone target. |
-| nested-obj | `#/$defs/StakeholderWarrantBlockSummary` | StakeholderGroup | Nested object; no mapped parent coverage established, but not a standalone target. |
-| nested-obj | `#/$defs/ThresholdDetails` | Interest | Nested object; no mapped parent coverage established, but not a standalone target. |
-| nested-obj | `#/$defs/VestingPeriod` | VestingScheduleTemplate | Nested object; covered through mapped parent(s). |
-| nested-obj | `#/$defs/VestingSchedule` | OptionGrant, RestrictedStockAward, RestrictedStockUnit | Nested object; covered through mapped parent(s). |
-| nested-obj | `#/$defs/WarrantCancellationTransaction` | WarrantTransactionItem | Nested object; covered through mapped parent(s). |
-| nested-obj | `#/$defs/WarrantExerciseTransaction` | WarrantTransactionItem | Nested object; covered through mapped parent(s). |
-| nested-obj | `#/$defs/WarrantIssuanceTransaction` | WarrantTransactionItem | Nested object; covered through mapped parent(s). |
-| nested-obj | `#/$defs/WarrantTransferTransaction` | WarrantTransactionItem | Nested object; covered through mapped parent(s). |
+#### Value-type support definitions (7)
+
+| Carta `$def` | covered through | note |
+| --- | --- | --- |
+| `#/$defs/Date` | type correspondence: Iso8601CompleteCalendarDate, Iso8601CompleteCalendarDateTime | Partial-date value helper; OCF Date maps to the Iso8601 date wrappers. |
+| `#/$defs/Decimal` | owning Carta object properties; not a standalone entity | Reusable scalar value wrapper, not a standalone Carta entity. |
+| `#/$defs/Iso3166Set1Alpha3Code` | owning Carta object properties; not a standalone entity | Reusable scalar value wrapper, not a standalone Carta entity. |
+| `#/$defs/Iso3166Set2Code` | owning Carta object properties; not a standalone entity | Reusable scalar value wrapper, not a standalone Carta entity. |
+| `#/$defs/Iso4217CurrencyAlphaCode` | owning Carta object properties; not a standalone entity | Reusable scalar value wrapper, not a standalone Carta entity. |
+| `#/$defs/Iso8601CompleteCalendarDate` | owning Carta object properties; not a standalone entity | Reusable calendar-date wrapper, populated through owning object properties. |
+| `#/$defs/Iso8601CompleteCalendarDateTime` | owning Carta object properties; not a standalone entity | Reusable datetime wrapper, populated through owning object properties. |
+
+#### Nested objects with mapped parent coverage (25)
+
+| Carta `$def` | immediate parent(s) |
+| --- | --- |
+| `#/$defs/CertificatePrecededBy` | Certificate |
+| `#/$defs/ConvertibleCancellationTransaction` | ConvertibleTransactionItem |
+| `#/$defs/ConvertibleIssuanceTransaction` | ConvertibleTransactionItem |
+| `#/$defs/DividendDetails` | ShareClassDividendDetails |
+| `#/$defs/Exercise` | OptionGrant |
+| `#/$defs/ExercisePeriods` | OptionGrant |
+| `#/$defs/Money` | Certificate, CertificateIssuanceTransaction, ConvertibleCancellationTransaction, ConvertibleIssuanceTransaction, ConvertibleNote, OptionGrant, OptionIssuanceTransaction, RestrictedStockAward, RestrictedStockUnit, RestrictedStockUnitSettlement, RsaIssuanceTransaction, SarExerciseTransaction, SarIssuanceTransaction, ShareClass, ShareClassRightsAndPreferences, ShareClassValuation, WarrantIssuanceTransaction |
+| `#/$defs/NoteBlock` | ConvertibleNote |
+| `#/$defs/OptionGrantVestingEvent` | OptionGrant |
+| `#/$defs/PerformanceCondition` | VestingPeriod |
+| `#/$defs/PrecededBySecurity` | CertificatePrecededBy, RestrictedStockAwardPrecededBy |
+| `#/$defs/PreferredShareClassDetails` | ShareClass |
+| `#/$defs/RestrictedStockAwardPrecededBy` | RestrictedStockAward |
+| `#/$defs/RestrictedStockAwardVestingEvent` | RestrictedStockAward |
+| `#/$defs/RestrictedStockUnitSettlement` | RestrictedStockUnit |
+| `#/$defs/RestrictedStockUnitVestingEvent` | RestrictedStockUnit |
+| `#/$defs/ShareClassDividendDetails` | PreferredShareClassDetails |
+| `#/$defs/ShareClassRightsAndPreferences` | PreferredShareClassDetails |
+| `#/$defs/StakeholderAddress` | Stakeholder |
+| `#/$defs/VestingPeriod` | VestingScheduleTemplate |
+| `#/$defs/VestingSchedule` | OptionGrant, RestrictedStockAward, RestrictedStockUnit |
+| `#/$defs/WarrantCancellationTransaction` | WarrantTransactionItem |
+| `#/$defs/WarrantExerciseTransaction` | WarrantTransactionItem |
+| `#/$defs/WarrantIssuanceTransaction` | WarrantTransactionItem |
+| `#/$defs/WarrantTransferTransaction` | WarrantTransactionItem |
+
+#### Nested objects without mapped parent coverage (28)
+
+| Carta `$def` | immediate parent(s) |
+| --- | --- |
+| `#/$defs/Acceleration` | Vesting |
+| `#/$defs/CertificateCancellationTransaction` | CertificateTransactionItem |
+| `#/$defs/CertificateIssuanceTransaction` | CertificateTransactionItem |
+| `#/$defs/Document` | OptionGrantDocuments |
+| `#/$defs/Jurisdiction` | OptionExerciseTaxWithholdingLineItem |
+| `#/$defs/OptionCancellationTransaction` | OptionTransactionItem |
+| `#/$defs/OptionExerciseMoneyMovement` | OptionExercise |
+| `#/$defs/OptionExerciseTaxWithholdingLineItem` | OptionExercise |
+| `#/$defs/OptionExerciseTransaction` | OptionTransactionItem |
+| `#/$defs/OptionIssuanceTransaction` | OptionTransactionItem |
+| `#/$defs/PhantomCancellationTransaction` | PhantomTransactionItem |
+| `#/$defs/PhantomIssuanceTransaction` | PhantomTransactionItem |
+| `#/$defs/PiuCancellationTransaction` | PiuTransactionItem |
+| `#/$defs/PiuIssuanceTransaction` | PiuTransactionItem |
+| `#/$defs/RsaCancellationTransaction` | RsaTransactionItem |
+| `#/$defs/RsaIssuanceTransaction` | RsaTransactionItem |
+| `#/$defs/RsuCancellationTransaction` | RsuTransactionItem |
+| `#/$defs/RsuIssuanceTransaction` | RsuTransactionItem |
+| `#/$defs/RsuSettlementTransaction` | RsuTransactionItem |
+| `#/$defs/SarCancellationTransaction` | SarTransactionItem |
+| `#/$defs/SarExerciseTransaction` | SarTransactionItem |
+| `#/$defs/SarIssuanceTransaction` | SarTransactionItem |
+| `#/$defs/StakeholderCapitalizationTableSummary` | StakeholderGroup |
+| `#/$defs/StakeholderNoteBlockSummary` | StakeholderGroup |
+| `#/$defs/StakeholderOptionPoolSummary` | StakeholderGroup |
+| `#/$defs/StakeholderShareClassSummary` | StakeholderGroup |
+| `#/$defs/StakeholderWarrantBlockSummary` | StakeholderGroup |
+| `#/$defs/ThresholdDetails` | Interest |
 
 ### Standalone candidates requiring inventory detail (17)
 

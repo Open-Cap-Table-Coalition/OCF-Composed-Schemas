@@ -11,6 +11,7 @@ import { Derived } from "./core-pipeline.js";
 import { BOOKKEEPING, buildTargetIndex } from "./report-helpers.js";
 import {
   buildInverseCoverage,
+  groupInverseExcludedRoleRows,
   inverseCoverageStory,
   isInverseMappedDefinition,
   isInverseNonEntityDefinition,
@@ -266,23 +267,43 @@ export function renderGapReport(d: Derived): string {
   );
 
   const excludedDefinitions = inverse.excludedRoleRows;
+  const excludedGroups = groupInverseExcludedRoleRows(excludedDefinitions);
   lines.push(
     `### Supporting CARTA definitions excluded from standalone mapping targets (${excludedDefinitions.length})`,
     "",
     `${
-      excludedDefinitions.filter((row) => row.role === "nested-obj").length
+      excludedGroups.nestedWithMappedParent.length + excludedGroups.nestedWithoutMappedParent.length
     } nested object definitions and ${
-      excludedDefinitions.filter((row) => row.role === "value-type").length
-    } curated value types are intentionally not standalone targets.`,
+      excludedGroups.valueTypes.length
+    } value-type support definitions are intentionally not standalone targets.`,
     `${story.scalarValueTypeDefs} scalar wrappers are outside the object-like definition denominator; ${roleCounts["value-type"]} value-type definition is object-like.`,
     "These definitions are packaging/support types, not standalone mapping targets; their mapping/type evidence remains valid.",
-    "The parent column names the immediate parent(s); the reason says whether mapped-parent coverage is established.",
     "",
-    "| role | Carta `$def` | covered through | reason |",
-    "| --- | --- | --- | --- |"
+    `#### Value-type support definitions (${excludedGroups.valueTypes.length})`,
+    "",
+    "| Carta `$def` | covered through | note |",
+    "| --- | --- | --- |"
   );
-  for (const row of excludedDefinitions)
-    lines.push(`| ${row.role} | \`#/$defs/${row.name}\` | ${row.coveredThrough} | ${row.reason} |`);
+  for (const row of excludedGroups.valueTypes)
+    lines.push(`| \`#/$defs/${row.name}\` | ${row.coveredThrough} | ${row.reason} |`);
+  lines.push(
+    "",
+    `#### Nested objects with mapped parent coverage (${excludedGroups.nestedWithMappedParent.length})`,
+    "",
+    "| Carta `$def` | immediate parent(s) |",
+    "| --- | --- |"
+  );
+  for (const row of excludedGroups.nestedWithMappedParent)
+    lines.push(`| \`#/$defs/${row.name}\` | ${row.coveredThrough} |`);
+  lines.push(
+    "",
+    `#### Nested objects without mapped parent coverage (${excludedGroups.nestedWithoutMappedParent.length})`,
+    "",
+    "| Carta `$def` | immediate parent(s) |",
+    "| --- | --- |"
+  );
+  for (const row of excludedGroups.nestedWithoutMappedParent)
+    lines.push(`| \`#/$defs/${row.name}\` | ${row.coveredThrough} |`);
   lines.push("");
 
   const rawUntargeted = inverse.defs.filter(

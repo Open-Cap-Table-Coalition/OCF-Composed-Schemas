@@ -1,5 +1,9 @@
 import { loadGreenCorpus } from "../scripts/lib/core-corpus.js";
-import { buildInverseCoverage, inverseCoverageStory } from "../scripts/lib/inverse-coverage.js";
+import {
+  buildInverseCoverage,
+  groupInverseExcludedRoleRows,
+  inverseCoverageStory,
+} from "../scripts/lib/inverse-coverage.js";
 
 describe("Carta inverse coverage", () => {
   it("keeps slot evidence and definition roles in separate dimensions", async () => {
@@ -51,6 +55,10 @@ describe("Carta inverse coverage", () => {
 
     const excluded = inverse.excludedRoleRows;
     expect(excluded).toHaveLength(60);
+    const excludedGroups = groupInverseExcludedRoleRows(excluded);
+    expect(excludedGroups.valueTypes).toHaveLength(7);
+    expect(excludedGroups.nestedWithMappedParent).toHaveLength(25);
+    expect(excludedGroups.nestedWithoutMappedParent).toHaveLength(28);
     expect(excluded.find((row) => row.name === "Date")).toMatchObject({ role: "value-type" });
     expect(excluded.find((row) => row.name === "VestingSchedule")).toMatchObject({
       role: "nested-obj",

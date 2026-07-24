@@ -2,6 +2,7 @@ import {
   CartaDefCoverage,
   InverseCoverageLedger,
   InverseExcludedRoleRow,
+  groupInverseExcludedRoleRows,
   isInverseMappedDefinition,
   inverseCoverageStory,
 } from "./inverse-coverage.js";
@@ -270,22 +271,75 @@ function renderCoverageStory(inverse: InverseCoverageLedger): string[] {
   ];
 }
 
-function renderExcludedRows(
-  rows: InverseExcludedRoleRow[],
-  inverse: InverseCoverageLedger
+function wrapReportText(
+  text: string,
+  firstPrefix: string,
+  continuationPrefix: string,
+  width = 112
 ): string[] {
-  const nested = rows.filter((row) => row.role === "nested-obj").length;
-  const valueTypes = rows.filter((row) => row.role === "value-type").length;
-  const scalarValueTypes = Math.max(0, valueTypes - inverse.metrics.valueTypeDefs);
+  const words = text.split(/\s+/).filter(Boolean);
+  const lines: string[] = [];
+  let current = firstPrefix;
+  for (const word of words) {
+    const separator = current === firstPrefix ? "" : " ";
+    if (current !== firstPrefix && current.length + separator.length + word.length > width) {
+      lines.push(current);
+      current = continuationPrefix + word;
+    } else {
+      current += separator + word;
+    }
+  }
+  if (current !== firstPrefix) lines.push(current);
+  return lines;
+}
+
+function renderExcludedRoleGroup(
+  title: string,
+  rows: InverseExcludedRoleRow[],
+  detail: "value" | "nested"
+): string[] {
+  const lines = ["", `  ${title} (${rows.length})`];
+  for (const row of rows) {
+    if (detail === "nested") {
+      lines.push(
+        ...wrapReportText(
+          `#/$defs/${row.name} — parent(s): ${row.coveredThrough}`,
+          "    - ",
+          "      "
+        )
+      );
+      continue;
+    }
+    lines.push(`    - #/$defs/${row.name}`);
+    lines.push(...wrapReportText(`through: ${row.coveredThrough}`, "      ", "      "));
+    lines.push(...wrapReportText(`note: ${row.reason}`, "      ", "      "));
+  }
+  return lines;
+}
+
+function renderExcludedRows(rows: InverseExcludedRoleRow[]): string[] {
+  const groups = groupInverseExcludedRoleRows(rows);
   const lines = [
     "",
     `Supporting CARTA definitions excluded from standalone mapping targets (${rows.length})`,
-    `  ${nested} nested object definitions + ${valueTypes} curated value types (${scalarValueTypes} scalar wrappers, ${inverse.metrics.valueTypeDefs} object-shaped value type).`,
+    `  ${
+      groups.nestedWithMappedParent.length + groups.nestedWithoutMappedParent.length
+    } nested object definitions + ${groups.valueTypes.length} value-type support definitions.`,
     `  These ${rows.length} definitions are packaging/support types, not standalone mapping targets; their mapping/type evidence remains valid.`,
   ];
-  for (const row of rows) {
-    lines.push(`  - ${row.role}: #/$defs/${row.name} — ${row.coveredThrough}; ${row.reason}`);
-  }
+  lines.push(
+    ...renderExcludedRoleGroup("Value-type support definitions", groups.valueTypes, "value"),
+    ...renderExcludedRoleGroup(
+      "Nested objects with mapped parent coverage",
+      groups.nestedWithMappedParent,
+      "nested"
+    ),
+    ...renderExcludedRoleGroup(
+      "Nested objects without mapped parent coverage",
+      groups.nestedWithoutMappedParent,
+      "nested"
+    )
+  );
   return lines;
 }
 
@@ -312,7 +366,7 @@ export function renderMappingInverseReport(options: MappingInverseReportOptions)
     `green_carta_documents: ${greenDocuments}`,
   ]);
 
-  lines.push(...renderCoverageStory(inverse), ...renderExcludedRows(excluded, inverse));
+  lines.push(...renderCoverageStory(inverse), ...renderExcludedRows(excluded));
 
   if (options.targetObject) {
     const row = rowForTarget(inverse, options.targetObject);

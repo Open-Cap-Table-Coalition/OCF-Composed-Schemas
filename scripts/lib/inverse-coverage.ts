@@ -174,6 +174,26 @@ export interface InverseExcludedRoleRow {
   reason: string;
 }
 
+export interface InverseExcludedRoleGroups {
+  valueTypes: InverseExcludedRoleRow[];
+  nestedWithMappedParent: InverseExcludedRoleRow[];
+  nestedWithoutMappedParent: InverseExcludedRoleRow[];
+}
+
+export function groupInverseExcludedRoleRows(
+  rows: InverseExcludedRoleRow[]
+): InverseExcludedRoleGroups {
+  return {
+    valueTypes: rows.filter((row) => row.role === "value-type"),
+    nestedWithMappedParent: rows.filter(
+      (row) => row.role === "nested-obj" && row.reason.includes("covered through mapped parent")
+    ),
+    nestedWithoutMappedParent: rows.filter(
+      (row) => row.role === "nested-obj" && !row.reason.includes("covered through mapped parent")
+    ),
+  };
+}
+
 export const INVERSE_NON_ENTITY_STATUSES: readonly CartaDefStatus[] = ["value-type", "nested-obj"];
 
 export function isInverseNonEntityDefinition(row: Pick<CartaDefCoverage, "status">): boolean {
