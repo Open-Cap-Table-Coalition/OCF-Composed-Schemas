@@ -3,7 +3,7 @@ import { renderQuestionLinks, upsertQuestionLinks } from "../scripts/lib/questio
 describe("mapping question links", () => {
   it("renders prefilled issue links for mapping-level and source properties", () => {
     const markdown = renderQuestionLinks("objects/Foo.mapping.md", ["name", "security_id"]);
-    const link = markdown.match(/\[💬 Ask a question\]\(([^)]+)\)/u)?.[1];
+    const link = markdown.match(/\| `name` \| \[💬 Ask a question\]\(([^)]+)\)/u)?.[1];
     expect(link).toBeDefined();
     const url = new URL(link as string);
 
@@ -11,6 +11,7 @@ describe("mapping question links", () => {
     expect(url.searchParams.get("template")).toBe("mapping-question.yml");
     expect(url.searchParams.get("mapping_file")).toBe("objects/Foo.mapping.md");
     expect(url.searchParams.get("source_url")).toContain("/blob/main/objects/Foo.mapping.md");
+    expect(url.searchParams.get("title")).toBe("[Mapping question] Foo: name");
     expect(markdown).toContain("property_path=name");
     expect(markdown).toContain("property_path=security_id");
     expect(markdown).toContain("_(mapping-level)_");

@@ -17,7 +17,7 @@ function issueUrl(mappingRelPath: string, property: string | null): string {
     template: ISSUE_TEMPLATE,
     mapping_file: normalizedPath,
     source_url: mappingFileUrl(normalizedPath),
-    title: `[Mapping question] ${mappingName}${property ? ` / ${property}` : ""}`,
+    title: `[Mapping question] ${mappingName}${property ? `: ${property}` : ""}`,
   });
   if (property !== null) params.set("property_path", property);
   return `${REPOSITORY_URL}/issues/new?${params.toString()}`;

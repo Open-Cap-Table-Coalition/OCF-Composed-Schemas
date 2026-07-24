@@ -85,8 +85,8 @@ Use a link below to open a prefilled GitHub issue. The issue can be copied into 
 | Source property | Action |
 | --- | --- |
 | _(mapping-level)_ | [💬 Ask a question](https://github.com/Open-Cap-Table-Coalition/OCF-Composed-Schemas/issues/new?template=mapping-question.yml&mapping_file=types%2FPhone.mapping.md&source_url=https%3A%2F%2Fgithub.com%2FOpen-Cap-Table-Coalition%2FOCF-Composed-Schemas%2Fblob%2Fmain%2Ftypes%2FPhone.mapping.md&title=%5BMapping+question%5D+Phone) |
-| `phone_type` | [💬 Ask a question](https://github.com/Open-Cap-Table-Coalition/OCF-Composed-Schemas/issues/new?template=mapping-question.yml&mapping_file=types%2FPhone.mapping.md&source_url=https%3A%2F%2Fgithub.com%2FOpen-Cap-Table-Coalition%2FOCF-Composed-Schemas%2Fblob%2Fmain%2Ftypes%2FPhone.mapping.md&title=%5BMapping+question%5D+Phone+%2F+phone_type&property_path=phone_type) |
-| `phone_number` | [💬 Ask a question](https://github.com/Open-Cap-Table-Coalition/OCF-Composed-Schemas/issues/new?template=mapping-question.yml&mapping_file=types%2FPhone.mapping.md&source_url=https%3A%2F%2Fgithub.com%2FOpen-Cap-Table-Coalition%2FOCF-Composed-Schemas%2Fblob%2Fmain%2Ftypes%2FPhone.mapping.md&title=%5BMapping+question%5D+Phone+%2F+phone_number&property_path=phone_number) |
+| `phone_type` | [💬 Ask a question](https://github.com/Open-Cap-Table-Coalition/OCF-Composed-Schemas/issues/new?template=mapping-question.yml&mapping_file=types%2FPhone.mapping.md&source_url=https%3A%2F%2Fgithub.com%2FOpen-Cap-Table-Coalition%2FOCF-Composed-Schemas%2Fblob%2Fmain%2Ftypes%2FPhone.mapping.md&title=%5BMapping+question%5D+Phone%3A+phone_type&property_path=phone_type) |
+| `phone_number` | [💬 Ask a question](https://github.com/Open-Cap-Table-Coalition/OCF-Composed-Schemas/issues/new?template=mapping-question.yml&mapping_file=types%2FPhone.mapping.md&source_url=https%3A%2F%2Fgithub.com%2FOpen-Cap-Table-Coalition%2FOCF-Composed-Schemas%2Fblob%2Fmain%2Ftypes%2FPhone.mapping.md&title=%5BMapping+question%5D+Phone%3A+phone_number&property_path=phone_number) |
 </details>
 <!-- mapping-question-links:end -->
 

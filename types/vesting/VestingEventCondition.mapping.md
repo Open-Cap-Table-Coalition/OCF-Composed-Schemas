@@ -70,7 +70,7 @@ Use a link below to open a prefilled GitHub issue. The issue can be copied into 
 | Source property | Action |
 | --- | --- |
 | _(mapping-level)_ | [💬 Ask a question](https://github.com/Open-Cap-Table-Coalition/OCF-Composed-Schemas/issues/new?template=mapping-question.yml&mapping_file=types%2Fvesting%2FVestingEventCondition.mapping.md&source_url=https%3A%2F%2Fgithub.com%2FOpen-Cap-Table-Coalition%2FOCF-Composed-Schemas%2Fblob%2Fmain%2Ftypes%2Fvesting%2FVestingEventCondition.mapping.md&title=%5BMapping+question%5D+VestingEventCondition) |
-| `event_id` | [💬 Ask a question](https://github.com/Open-Cap-Table-Coalition/OCF-Composed-Schemas/issues/new?template=mapping-question.yml&mapping_file=types%2Fvesting%2FVestingEventCondition.mapping.md&source_url=https%3A%2F%2Fgithub.com%2FOpen-Cap-Table-Coalition%2FOCF-Composed-Schemas%2Fblob%2Fmain%2Ftypes%2Fvesting%2FVestingEventCondition.mapping.md&title=%5BMapping+question%5D+VestingEventCondition+%2F+event_id&property_path=event_id) |
+| `event_id` | [💬 Ask a question](https://github.com/Open-Cap-Table-Coalition/OCF-Composed-Schemas/issues/new?template=mapping-question.yml&mapping_file=types%2Fvesting%2FVestingEventCondition.mapping.md&source_url=https%3A%2F%2Fgithub.com%2FOpen-Cap-Table-Coalition%2FOCF-Composed-Schemas%2Fblob%2Fmain%2Ftypes%2Fvesting%2FVestingEventCondition.mapping.md&title=%5BMapping+question%5D+VestingEventCondition%3A+event_id&property_path=event_id) |
 </details>
 <!-- mapping-question-links:end -->
 
