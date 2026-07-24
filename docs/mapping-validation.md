@@ -17,13 +17,16 @@ derived coverage stays reviewable, and enum remaps are checked value-by-value.
   tree (field → target, split fan-outs, enum value remaps, unmappable reasons, TODO counts, and —
   when present — a `composite (N steps, all emitted)` node listing each step's Carta target(s) and
   any fixed `const:` fills).
-- `--inverse` prints a repository-wide target-first report in addition to validation. It aggregates
-  every executable target pointer by Carta `$defs` object and property, including polymorphic
-  variants and composite steps. Use `--inverse --target-object ConvertibleNote` to focus the report
-  on one Carta object. Unfiltered reports include every object-shaped Carta `$defs`, marking objects
-  with no incoming mapping as `[NO MAPPINGS]`; target properties with no mapped OCF source are also
-  shown explicitly.
+- `--inverse` prints a repository-wide target-first report in addition to validation. It renders the
+  shared inverse-coverage ledger: executable/type/deferred evidence, mutually exclusive definition
+  roles, and the curated value-type/nested-type exclusions. Use `--inverse --target-object
+  ConvertibleNote` to focus the object panels on one Carta definition. Unfiltered reports show
+  mapped object-like definitions and only role-follow-up candidates; value types and nested types
+  are listed separately with their coverage/parent objects. Target properties with no mapped OCF
+  source remain explicit in each panel.
 - CI runs the equivalent `npm run mapping:inverse` command on every pull request and push to `main`.
+  That command renders the same shared inverse-coverage ledger and role policy used by the
+  generated Core reports, then uploads the object-panel view as a CI artifact.
   The generated report is added to the GitHub Actions job summary and uploaded as the
   `mapping-inverse-report` artifact, including when another mapping check fails.
 

@@ -1,14 +1,13 @@
-import { RawSchema } from "./registry.js";
 import {
-  MappingReportDocument,
-  commonFields,
-  compositeFields,
-  effectiveVariantFields,
-  targetObjectName,
-  targetPointerParts,
-  targetPointers,
-} from "./mapping-report.js";
-import { compositeStepIds } from "./mapping-validator.js";
+  CartaDefCoverage,
+  InverseCoverageLedger,
+  InverseExcludedRoleRow,
+  groupInverseExcludedRoleRows,
+  isInverseMappedDefinition,
+  inverseCoverageStory,
+} from "./inverse-coverage.js";
+import { MappingEdge } from "./core-corpus.js";
+import { targetPointerParts } from "./mapping-report.js";
 
 interface InverseFlow {
   file: string;
@@ -24,156 +23,32 @@ interface TargetGroup {
 }
 
 export interface MappingInverseReportOptions {
-  documents: ReadonlyMap<string, MappingReportDocument>;
-  targetBundle?: RawSchema;
+  /** The shared Carta-side ledger used by every inverse report. */
+  inverse: InverseCoverageLedger;
+  /** Number of parseable mapping documents in the repository. */
+  sourceDocuments?: number;
+  /** Number of green Carta mapping documents in the repository. */
+  greenDocuments?: number;
   targetObject?: string;
 }
 
-function isPlainObject(value: unknown): value is Record<string, unknown> {
-  return typeof value === "object" && value !== null && !Array.isArray(value);
+function edgeSourceField(edge: MappingEdge): string {
+  if (edge.field) return edge.field;
+  if (edge.detail === "primary_targets") return "(primary target)";
+  if (edge.scope === "composite") return "(composite step)";
+  if (edge.scope === "constant") return "(constant)";
+  return "(target route)";
 }
 
-function mappingKind(entry: unknown): string {
-  return isPlainObject(entry) && typeof entry.kind === "string" ? entry.kind : "?";
+function edgeKind(edge: MappingEdge): string {
+  if (edge.kind) return edge.kind;
+  if (edge.detail === "primary_targets") return "route";
+  return edge.scope;
 }
 
-function addFlows(
-  groups: Map<string, TargetGroup>,
-  file: string,
-  fields: Record<string, unknown>,
-  context?: string
-): void {
-  for (const [sourceField, entry] of Object.entries(fields)) {
-    for (const pointer of targetPointers(entry)) {
-      const object = targetObjectName(pointer);
-      if (object === "?") continue;
-      const parts = targetPointerParts(pointer);
-      const field = parts.relative === parts.object ? "(object route)" : parts.relative;
-      const group = groups.get(object) ?? { object, flows: new Map() };
-      const flowKey = field;
-      const flows: InverseFlow[] = group.flows.get(flowKey) ?? [];
-      const flow: InverseFlow = {
-        file,
-        sourceField,
-        kind: mappingKind(entry),
-        pointer,
-        ...(context ? { context } : {}),
-      };
-      if (
-        !flows.some(
-          (existing) =>
-            existing.file === flow.file &&
-            existing.sourceField === flow.sourceField &&
-            existing.kind === flow.kind &&
-            existing.pointer === flow.pointer &&
-            existing.context === flow.context
-        )
-      ) {
-        flows.push(flow);
-      }
-      group.flows.set(flowKey, flows);
-      groups.set(object, group);
-    }
-  }
-}
-
-function addPrimaryTargets(
-  groups: Map<string, TargetGroup>,
-  file: string,
-  variant: string,
-  rawVariant: unknown
-): void {
-  if (!isPlainObject(rawVariant) || !Array.isArray(rawVariant.primary_targets)) return;
-  for (const pointer of rawVariant.primary_targets) {
-    if (typeof pointer !== "string" || !pointer.startsWith("#/")) continue;
-    const object = targetObjectName(pointer);
-    if (object === "?") continue;
-    const group = groups.get(object) ?? { object, flows: new Map() };
-    const flows: InverseFlow[] = group.flows.get("(object route)") ?? [];
-    const flow: InverseFlow = {
-      file,
-      sourceField: "(primary target)",
-      kind: "route",
-      pointer,
-      context: variant,
-    };
-    if (!flows.some((existing) => existing.file === file && existing.context === variant)) {
-      flows.push(flow);
-    }
-    group.flows.set("(object route)", flows);
-    groups.set(object, group);
-  }
-}
-
-function collectDocumentFlows(
-  groups: Map<string, TargetGroup>,
-  file: string,
-  document: MappingReportDocument
-): void {
-  const mapping = document.mapping;
-  const variants = isPlainObject(mapping.variants) ? mapping.variants : null;
-  if (!variants) {
-    addFlows(groups, file, isPlainObject(mapping.fields) ? mapping.fields : {});
-    return;
-  }
-
-  const labels = Object.keys(variants);
-  const stepIds = compositeStepIds(mapping);
-  const effective = new Map<string, Record<string, unknown>>();
-  for (const label of labels) {
-    effective.set(label, effectiveVariantFields(mapping, label, stepIds));
-    addPrimaryTargets(groups, file, label, variants[label]);
-  }
-
-  const common = commonFields(mapping, labels, effective, stepIds.length > 0);
-  addFlows(groups, file, common, "shared");
-
-  for (const label of labels) {
-    const fields = effective.get(label) ?? {};
-    const visible = Object.fromEntries(
-      Object.entries(fields).filter(([field]) => !(field in common))
-    );
-    if (stepIds.length === 0) {
-      addFlows(groups, file, visible, label);
-      continue;
-    }
-
-    for (const step of stepIds) {
-      addFlows(groups, file, compositeFields(visible, label, step), `${label} · ${step}`);
-    }
-    // Non-step-keyed fields are still valid mappings alongside a composite.
-    addFlows(
-      groups,
-      file,
-      Object.fromEntries(
-        Object.entries(visible).filter(([, entry]) => {
-          return !(isPlainObject(entry) && isPlainObject(entry.target));
-        })
-      ),
-      label
-    );
-  }
-}
-
-function targetProperties(targetBundle: RawSchema | undefined, object: string): string[] {
-  if (!targetBundle || !isPlainObject(targetBundle.$defs)) return [];
-  const definition = targetBundle.$defs[object];
-  if (!isPlainObject(definition) || !isPlainObject(definition.properties)) return [];
-  return Object.keys(definition.properties);
-}
-
-function targetObjectNames(targetBundle: RawSchema | undefined): string[] {
-  if (!targetBundle || !isPlainObject(targetBundle.$defs)) return [];
-  return Object.entries(targetBundle.$defs)
-    .filter(([, definition]) => {
-      if (!isPlainObject(definition)) return false;
-      return (
-        definition.type === "object" ||
-        (Array.isArray(definition.type) && definition.type.includes("object")) ||
-        isPlainObject(definition.properties)
-      );
-    })
-    .map(([object]) => object);
+function edgeContext(edge: MappingEdge): string | undefined {
+  if (edge.scope === "composite" && edge.detail) return edge.detail;
+  return edge.variant === "—" ? undefined : edge.variant;
 }
 
 function flowLabel(flow: InverseFlow): string {
@@ -181,12 +56,91 @@ function flowLabel(flow: InverseFlow): string {
   return `${flow.file} :: ${flow.sourceField}${context} (${flow.kind})`;
 }
 
+function sameFlow(left: InverseFlow, right: InverseFlow): boolean {
+  return (
+    left.file === right.file &&
+    left.sourceField === right.sourceField &&
+    left.kind === right.kind &&
+    left.pointer === right.pointer &&
+    left.context === right.context
+  );
+}
+
+function sameDestination(left: InverseFlow, right: InverseFlow): boolean {
+  return (
+    left.file === right.file &&
+    left.sourceField === right.sourceField &&
+    left.kind === right.kind &&
+    left.pointer === right.pointer
+  );
+}
+
+function addEdge(
+  groups: Map<string, TargetGroup>,
+  edge: MappingEdge,
+  inverse: InverseCoverageLedger
+): void {
+  const parts = targetPointerParts(edge.target);
+  const info = inverse.schema.defs.get(parts.object);
+  // The inverse report is intentionally object-oriented. Scalar wrappers and
+  // other non-entity defs remain accounted for by the shared ledger but do not
+  // become object panels.
+  if (!info?.isObjectLike) return;
+
+  const field = parts.relative === parts.object ? "(object route)" : parts.relative;
+  const flow: InverseFlow = {
+    file: edge.rel,
+    sourceField: edgeSourceField(edge),
+    kind: edgeKind(edge),
+    pointer: edge.target,
+    ...(edgeContext(edge) ? { context: edgeContext(edge) } : {}),
+  };
+  const group = groups.get(parts.object) ?? { object: parts.object, flows: new Map() };
+  const flows: InverseFlow[] = group.flows.get(field) ?? [];
+  if (!flows.some((existing) => sameFlow(existing, flow))) {
+    const sameDestinationFlow = flows.find((existing) => sameDestination(existing, flow));
+    if (sameDestinationFlow) sameDestinationFlow.context = "shared";
+    else flows.push(flow);
+  }
+  group.flows.set(field, flows);
+  groups.set(parts.object, group);
+}
+
+function buildGroups(inverse: InverseCoverageLedger): Map<string, TargetGroup> {
+  const groups = new Map<string, TargetGroup>();
+  for (const edge of inverse.edges) addEdge(groups, edge, inverse);
+  return groups;
+}
+
+function targetObjectNames(inverse: InverseCoverageLedger): string[] {
+  return [...inverse.schema.defs.values()]
+    .filter((info) => info.isObjectLike)
+    .map((info) => info.name)
+    .sort();
+}
+
+function mappedDefinitions(inverse: InverseCoverageLedger): CartaDefCoverage[] {
+  return inverse.defs
+    .filter(isInverseMappedDefinition)
+    .sort((a, b) => a.name.localeCompare(b.name));
+}
+
+function followUpDefinitions(inverse: InverseCoverageLedger): CartaDefCoverage[] {
+  return [...inverse.candidates].sort((a, b) => a.name.localeCompare(b.name));
+}
+
+function targetProperties(inverse: InverseCoverageLedger, object: string): string[] {
+  return inverse.schema.defs.get(object)?.properties
+    ? Object.keys(inverse.schema.defs.get(object)!.properties)
+    : [];
+}
+
 function sortedTargetFields(
   object: string,
   group: TargetGroup,
-  targetBundle: RawSchema | undefined
+  inverse: InverseCoverageLedger
 ): string[] {
-  const fields = new Set(targetProperties(targetBundle, object));
+  const fields = new Set(targetProperties(inverse, object));
   for (const field of group.flows.keys()) fields.add(field);
   return [...fields].sort((left, right) => {
     if (left === "(object route)") return -1;
@@ -198,13 +152,13 @@ function sortedTargetFields(
 function renderMappingTree(
   object: string,
   group: TargetGroup,
-  targetBundle: RawSchema | undefined
+  inverse: InverseCoverageLedger
 ): string[] {
-  const fields = sortedTargetFields(object, group, targetBundle);
+  const fields = sortedTargetFields(object, group, inverse);
   const lines: string[] = [];
   fields.forEach((field, fieldIndex) => {
     const lastField = fieldIndex === fields.length - 1;
-    const flows: InverseFlow[] = group.flows.get(field) ?? [];
+    const flows = group.flows.get(field) ?? [];
     lines.push(`${lastField ? "└── " : "├── "}${field}`);
     const flowPrefix = lastField ? "    " : "│   ";
     if (flows.length === 0) {
@@ -249,92 +203,211 @@ function flowCount(group: TargetGroup): number {
 }
 
 function renderObjectPanel(
-  object: string,
+  row: CartaDefCoverage,
   group: TargetGroup,
-  targetBundle: RawSchema | undefined
+  inverse: InverseCoverageLedger
 ): string[] {
   const hasMappings = group.flows.size > 0;
-  const fields = sortedTargetFields(object, group, targetBundle);
-  const unmappedProperties = hasMappings
-    ? fields.filter((field) => (group.flows.get(field) ?? []).length === 0).length
-    : 0;
+  const fields = sortedTargetFields(row.name, group, inverse);
+  const unmappedProperties = hasMappings ? row.emptySlots.length : 0;
   const metadata = [
-    `name: ${object}`,
-    `id: "#/$defs/${object}"`,
+    `name: ${row.name}`,
+    `id: "#/$defs/${row.name}"`,
+    `inverse_role: ${row.status}`,
     `status: ${hasMappings ? (unmappedProperties > 0 ? "PARTIAL" : "MAPPED") : "NO MAPPINGS"}`,
     `incoming_mappings: ${flowCount(group)}`,
   ];
   if (hasMappings) metadata.push(`unmapped_properties: ${unmappedProperties}`);
-  const body = hasMappings ? renderMappingTree(object, group, targetBundle) : ["(empty mapping)"];
-  return renderBox(`Carta object: ${object}`, metadata, body);
+  if (!hasMappings && row.reason) metadata.push(`reason: ${row.reason}`);
+  const body = hasMappings ? renderMappingTree(row.name, group, inverse) : ["(empty mapping)"];
+  return renderBox(`Carta object: ${row.name}`, metadata, body);
 }
 
 function renderSection(
   title: string,
-  objects: string[],
+  rows: CartaDefCoverage[],
   groups: Map<string, TargetGroup>,
-  targetBundle: RawSchema | undefined
+  inverse: InverseCoverageLedger
 ): string[] {
-  const lines = [`${title} (${objects.length})`];
-  objects.forEach((object, index) => {
+  const lines = [`${title} (${rows.length})`];
+  rows.forEach((row, index) => {
     lines.push(
-      ...renderObjectPanel(object, groups.get(object) ?? { object, flows: new Map() }, targetBundle)
+      ...renderObjectPanel(
+        row,
+        groups.get(row.name) ?? { object: row.name, flows: new Map() },
+        inverse
+      )
     );
-    if (index < objects.length - 1) lines.push("");
+    if (index < rows.length - 1) lines.push("");
   });
   return lines;
 }
 
+function renderCoverageStory(inverse: InverseCoverageLedger): string[] {
+  const story = inverseCoverageStory(inverse);
+  const counts = inverse.metrics.definitionRoleCounts;
+  const otherNonObjectText = story.otherNonObjectDefs
+    ? ` + ${story.otherNonObjectDefs} other non-object definitions`
+    : "";
+  return [
+    "",
+    "Simple story",
+    `  1. Carta defines ${story.totalDefs} total definitions.`,
+    `  2. ${story.nonObjectDefs} are non-object definitions:`,
+    `       ${story.scalarEnumDefs} scalar enum definitions (field vocabularies) + ${story.scalarValueTypeDefs} curated scalar support types; neither is a standalone mapping target.`,
+    `  3. ${story.objectDefs} are object-shaped definitions.`,
+    `  4. Of those ${story.objectDefs}:`,
+    `       ${story.nonEntityObjectDefs} are support definitions, not standalone objects (${counts["nested-obj"]} nested objects + ${counts["value-type"]} object-shaped value type).`,
+    `       ${story.standaloneCandidateDefs} are standalone mapping candidates.`,
+    `  5. ${story.nonEntityDefs} support definitions are excluded from standalone mapping: ${story.nonEntityObjectDefs} object-shaped support definitions + ${story.scalarValueTypeDefs} scalar support types.`,
+    `  6. ${story.mappedDefs} standalone candidates have OCF mapping evidence:`,
+    `       ${counts.direct} direct executable, ${counts["type-only"]} type-only, ${counts.deferred} deferred.`,
+    `       Completeness: ${story.fullyMappedDefs} fully mapped, ${story.partiallyMappedDefs} partially mapped.`,
+    `  7. ${story.unmappedCandidateDefs} standalone candidates have no mapping evidence yet; their inventory role says whether that is expected or actionable:`,
+    `       ${counts["report-rollup"]} report/read-model roll-ups, ${counts.alternate} alternate shapes,`,
+    `       ${counts["vendor-family"]} CARTA-specific families without OCF sources, ${counts["workflow-gap"]} workflow/data gaps,`,
+    `       ${counts.gap} actionable gaps, ${counts.review} requiring review.`,
+    `  Check: ${story.totalDefs} = ${story.nonObjectDefs} non-object + ${story.objectDefs} object-shaped; ${story.nonObjectDefs} = ${story.scalarEnumDefs} scalar enum + ${story.scalarValueTypeDefs} scalar support${otherNonObjectText}; ${story.standaloneCandidateDefs} = ${story.mappedDefs} + ${story.unmappedCandidateDefs}; ${story.objectDefs} = ${story.standaloneCandidateDefs} + ${story.nonEntityObjectDefs}.`,
+  ];
+}
+
+function wrapReportText(
+  text: string,
+  firstPrefix: string,
+  continuationPrefix: string,
+  width = 112
+): string[] {
+  const words = text.split(/\s+/).filter(Boolean);
+  const lines: string[] = [];
+  let current = firstPrefix;
+  for (const word of words) {
+    const separator = current === firstPrefix ? "" : " ";
+    if (current !== firstPrefix && current.length + separator.length + word.length > width) {
+      lines.push(current);
+      current = continuationPrefix + word;
+    } else {
+      current += separator + word;
+    }
+  }
+  if (current !== firstPrefix) lines.push(current);
+  return lines;
+}
+
+function renderExcludedRoleGroup(
+  title: string,
+  rows: InverseExcludedRoleRow[],
+  detail: "value" | "nested"
+): string[] {
+  const lines = ["", `  ${title} (${rows.length})`];
+  for (const row of rows) {
+    if (detail === "nested") {
+      lines.push(
+        ...wrapReportText(
+          `#/$defs/${row.name} — parent(s): ${row.coveredThrough}`,
+          "    - ",
+          "      "
+        )
+      );
+      continue;
+    }
+    lines.push(`    - #/$defs/${row.name}`);
+    lines.push(...wrapReportText(`through: ${row.coveredThrough}`, "      ", "      "));
+    lines.push(...wrapReportText(`note: ${row.reason}`, "      ", "      "));
+  }
+  return lines;
+}
+
+function renderExcludedRows(rows: InverseExcludedRoleRow[]): string[] {
+  const groups = groupInverseExcludedRoleRows(rows);
+  const lines = [
+    "",
+    `Supporting CARTA definitions excluded from standalone mapping targets (${rows.length})`,
+    `  ${
+      groups.nestedWithMappedParent.length + groups.nestedWithoutMappedParent.length
+    } nested object definitions + ${groups.valueTypes.length} value-type support definitions.`,
+    `  These ${rows.length} definitions are packaging/support types, not standalone mapping targets; their mapping/type evidence remains valid.`,
+  ];
+  lines.push(
+    ...renderExcludedRoleGroup("Value-type support definitions", groups.valueTypes, "value"),
+    ...renderExcludedRoleGroup(
+      "Nested objects with mapped parent coverage",
+      groups.nestedWithMappedParent,
+      "nested"
+    ),
+    ...renderExcludedRoleGroup(
+      "Nested objects without mapped parent coverage",
+      groups.nestedWithoutMappedParent,
+      "nested"
+    )
+  );
+  return lines;
+}
+
+function rowForTarget(
+  inverse: InverseCoverageLedger,
+  object: string
+): CartaDefCoverage | undefined {
+  return inverse.defs.find((row) => row.name === object);
+}
+
 export function renderMappingInverseReport(options: MappingInverseReportOptions): string {
-  const groups = new Map<string, TargetGroup>();
-  for (const [file, document] of options.documents) collectDocumentFlows(groups, file, document);
-  const bundleObjects = new Set(targetObjectNames(options.targetBundle));
-
-  const selected = options.targetObject
-    ? [options.targetObject].filter((object) => groups.has(object) || bundleObjects.has(object))
-    : [...new Set([...groups.keys(), ...bundleObjects])].sort();
-
-  const mappedTargets = selected.filter((object) => (groups.get(object)?.flows.size ?? 0) > 0);
-  const unmappedObjects = selected.filter((object) => (groups.get(object)?.flows.size ?? 0) === 0);
-  const lines = renderBox("Carta inverse mapping report", [
-    `source_documents: ${options.documents.size}`,
-    `mapped_targets: ${mappedTargets.length}`,
-    `unmapped_objects: ${unmappedObjects.length}`,
+  const { inverse } = options;
+  const groups = buildGroups(inverse);
+  const allObjects = targetObjectNames(inverse);
+  const mapped = mappedDefinitions(inverse);
+  const followUp = followUpDefinitions(inverse);
+  const excluded = inverse.excludedRoleRows;
+  const sourceDocuments =
+    options.sourceDocuments ?? new Set(inverse.edges.map((edge) => edge.rel)).size;
+  const greenDocuments =
+    options.greenDocuments ?? new Set(inverse.edges.map((edge) => edge.rel)).size;
+  const lines = renderBox("Carta inverse coverage report", [
+    `source_documents: ${sourceDocuments}`,
+    `green_carta_documents: ${greenDocuments}`,
   ]);
+
+  lines.push(...renderCoverageStory(inverse), ...renderExcludedRows(excluded));
+
   if (options.targetObject) {
-    if (selected.length === 0) {
-      lines.push("└── no target flows found");
+    const row = rowForTarget(inverse, options.targetObject);
+    if (!row || !allObjects.includes(options.targetObject)) {
+      lines.push("", `No object-like Carta definition found for ${options.targetObject}`);
       return lines.join("\n");
     }
-    const object = selected[0]!;
+    if (row.status === "value-type" || row.status === "nested-obj") {
+      lines.push(
+        "",
+        `Carta definition ${options.targetObject} is a supporting definition, not a standalone mapping target (${row.status}).`
+      );
+    }
     lines.push(
       "",
       ...renderObjectPanel(
-        object,
-        groups.get(object) ?? { object, flows: new Map() },
-        options.targetBundle
+        row,
+        groups.get(row.name) ?? { object: row.name, flows: new Map() },
+        inverse
       )
     );
     return lines.join("\n");
   }
 
-  if (mappedTargets.length > 0) {
+  if (mapped.length > 0) {
     lines.push(
       "",
-      ...renderSection("Carta targets with mappings", mappedTargets, groups, options.targetBundle)
+      ...renderSection("Standalone Carta targets with mapping evidence", mapped, groups, inverse)
     );
   }
-  if (unmappedObjects.length > 0) {
+  if (followUp.length > 0) {
     lines.push(
       "",
       ...renderSection(
-        "Carta objects with no mappings",
-        unmappedObjects,
+        "Standalone candidates requiring inventory detail",
+        followUp,
         groups,
-        options.targetBundle
+        inverse
       )
     );
   }
-  if (selected.length === 0) lines.push("", "(no target flows found)");
+  if (allObjects.length === 0) lines.push("", "(no object-like Carta definitions found)");
   return lines.join("\n");
 }

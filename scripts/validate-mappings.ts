@@ -10,6 +10,8 @@ import { parseMappingDocument, MappingParseError } from "./lib/mapping-parser.js
 import { validateMapping, ValidationError, TARGET_BUNDLES } from "./lib/mapping-validator.js";
 import { MappingReportDocument, renderMappingReport } from "./lib/mapping-report.js";
 import { renderMappingInverseReport } from "./lib/mapping-inverse-report.js";
+import { loadGreenCorpus } from "./lib/core-corpus.js";
+import { buildInverseCoverage } from "./lib/inverse-coverage.js";
 
 const MAPPING_DIRS = ["objects", "types"] as const;
 
@@ -93,27 +95,21 @@ async function main(argv: Args): Promise<number> {
   }
 
   if (argv.inverse) {
-    const bundleRel = TARGET_BUNDLES.Carta;
-    if (!bundleRel) {
-      console.error("Failed to load target bundle: no Carta bundle is configured");
-      return 1;
-    }
-    let targetBundle: RawSchema;
     try {
-      targetBundle = JSON.parse(
-        await readFile(path.join(repoRoot, bundleRel), "utf8")
-      ) as RawSchema;
+      const corpus = await loadGreenCorpus(repoRoot);
+      const inverse = buildInverseCoverage(corpus);
+      console.log(
+        renderMappingInverseReport({
+          inverse,
+          sourceDocuments: mappingDocuments.size,
+          greenDocuments: corpus.greenDocuments.size,
+          targetObject: argv.targetObject,
+        }) + "\n"
+      );
     } catch (err) {
-      console.error(`Failed to load target bundle ${bundleRel}: ${(err as Error).message}`);
+      console.error(`Failed to build inverse coverage ledger: ${(err as Error).message}`);
       return 1;
     }
-    console.log(
-      renderMappingInverseReport({
-        documents: mappingDocuments,
-        targetBundle,
-        targetObject: argv.targetObject,
-      }) + "\n"
-    );
   }
 
   for (const rel of files) {

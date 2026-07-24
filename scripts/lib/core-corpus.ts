@@ -22,6 +22,7 @@ import {
 } from "./mapping-validator.js";
 import { classifyType, TypeVerdict } from "./core-classifier.js";
 import { ReferenceGraph } from "./core-admissibility.js";
+import { CoveragePolicy, loadCoveragePolicy, validateCoveragePolicy } from "./coverage-policy.js";
 
 const REFERENCE_GRAPH = "core/reference-graph.yml";
 
@@ -164,10 +165,34 @@ export interface DeferralNote {
   targets: string[];
 }
 
+/** One normalized Carta target emitted by a green mapping document. */
+export interface MappingEdge {
+  /** Mapping document path, relative to the repository root. */
+  rel: string;
+  /** OCF source kind declared by the mapping front matter. */
+  sourceKind: "object" | "type";
+  /** Canonical OCF entity/type name, derived from the mapping filename. */
+  source: string;
+  /** Polymorphic family, or `—` for a non-polymorphic mapping. */
+  variant: string;
+  /** OCF field when this is a field-level edge; absent for root/constant edges. */
+  field?: string;
+  /** Where the edge came from in the mapping DSL. */
+  scope: "object" | "type" | "composite" | "constant" | "deferred";
+  /** Exact Carta pointer, including the root-only form. */
+  target: string;
+  /** Mapping kind, when the edge came from a field entry. */
+  kind?: string;
+  /** Composite step or const property, when applicable. */
+  detail?: string;
+}
+
 export interface GreenObject {
   /** Canonical entity name (the mapping filename, camelCase). */
   entity: string;
   rel: string;
+  /** Source schema id from mapping front matter, for schema-aware inverse metrics. */
+  sourceSchemaId?: string;
   /** OCF `required_fields` from frontmatter (used for R5 gap reporting). */
   requiredFields: string[];
   /** Source composed-schema properties, by field name. */
@@ -207,6 +232,8 @@ export interface GreenObject {
 export interface Corpus {
   registry: Registry;
   bundle: unknown;
+  /** Shared hand-curated roles for Carta definitions that shape-only inference cannot classify. */
+  coveragePolicy: CoveragePolicy;
   typeLib: Map<string, TypeVerdict>;
   objects: GreenObject[];
   /** Root Carta `$def` names targeted by any green mapping (for gap report b). */
@@ -222,11 +249,15 @@ export interface Corpus {
    * structural coverage). A green mapping writes to a parent object, and that
    * parent `$ref`s these children — so the concept is covered indirectly even
    * though `collectTargets` only ever credits the ROOT segment of a target
-   * pointer and never these nested defs. Used to separate "nested-covered" from
+   * pointer and never these nested defs. Used to separate nested objects from
    * "true gap" in gap report (b). Structural reachability, not a proof that a
    * specific field writes into the child.
    */
   transitivelyCoveredDefs: Set<string>;
+  /** Normalized target evidence retained for inverse-coverage metrics and reports. */
+  mappingEdges: MappingEdge[];
+  /** Parseable mapping documents with green status and Carta as target standard. */
+  greenDocuments: Set<string>;
   skipped: string[];
 }
 
@@ -353,13 +384,10 @@ async function collectMappingFiles(repoRoot: string): Promise<string[]> {
 
 /** Collect every Carta `#/$defs/<Root>/...` root name reachable from a target value. */
 function collectTargets(target: unknown, into: Set<string>): void {
-  const add = (ptr: string) => {
+  walkTargetPointers(target, (ptr) => {
     const m = /^#\/\$defs\/([^/]+)/.exec(ptr);
     if (m) into.add(m[1] as string);
-  };
-  if (typeof target === "string") add(target);
-  else if (Array.isArray(target)) target.forEach((t) => collectTargets(t, into));
-  else if (isPlainObject(target)) Object.values(target).forEach((t) => collectTargets(t, into));
+  });
 }
 
 /** Collect Carta targets from a normal entry, including nested union-map cases. */
@@ -504,13 +532,143 @@ function objectConstFills(mapping: Record<string, unknown>): Record<string, Comp
   return out;
 }
 
+/** Harvest all target evidence from one green mapping document. */
+function mappingEdgesOf(
+  rel: string,
+  frontmatter: Record<string, unknown>,
+  mapping: Record<string, unknown>
+): MappingEdge[] {
+  const sourceKind = frontmatter.ocf_kind === "object" ? "object" : "type";
+  const source = path.basename(rel).replace(/\.mapping\.md$/, "");
+  const edges: MappingEdge[] = [];
+
+  for (const [variant, fields] of variantFieldMaps(mapping)) {
+    for (const [field, rawEntry] of Object.entries(fields)) {
+      if (!isPlainObject(rawEntry)) continue;
+      collectEntryEdges(
+        rawEntry,
+        {
+          rel,
+          sourceKind,
+          source,
+          variant,
+          field,
+          scope: sourceKind,
+          kind: typeof rawEntry.kind === "string" ? rawEntry.kind : undefined,
+        },
+        edges
+      );
+    }
+  }
+
+  const addBlock = (
+    target: unknown,
+    variant: string,
+    scope: MappingEdge["scope"],
+    detail?: string
+  ) =>
+    walkTargetPointers(target, (pointer) =>
+      edges.push({ rel, sourceKind, source, variant, scope, target: pointer, detail })
+    );
+
+  addBlock(mapping.primary_targets, "—", sourceKind, "primary_targets");
+  if (isPlainObject(mapping.variants)) {
+    for (const [variant, rawVariant] of Object.entries(mapping.variants)) {
+      if (isPlainObject(rawVariant))
+        addBlock(rawVariant.primary_targets, variant, sourceKind, "primary_targets");
+    }
+  }
+
+  if (Array.isArray(mapping.composite)) {
+    for (const rawStep of mapping.composite) {
+      if (!isPlainObject(rawStep)) continue;
+      addBlock(
+        rawStep.target,
+        "—",
+        "composite",
+        typeof rawStep.step === "string" ? rawStep.step : undefined
+      );
+    }
+  }
+
+  for (const [variant, fills] of Object.entries(objectConstFills(mapping))) {
+    for (const fill of fills) {
+      edges.push({
+        rel,
+        sourceKind,
+        source,
+        variant,
+        scope: "constant",
+        target: `#/$defs/${fill.object}/properties/${fill.prop}`,
+        detail: `${fill.prop}=${fill.value}`,
+      });
+    }
+  }
+
+  for (const deferral of objectDeferrals(mapping)) {
+    for (const target of deferral.targets) {
+      walkTargetPointers(target, (pointer) =>
+        edges.push({
+          rel,
+          sourceKind,
+          source,
+          variant: "—",
+          field: deferral.field,
+          scope: "deferred",
+          target: pointer,
+          detail: deferral.note,
+        })
+      );
+    }
+  }
+
+  return edges;
+}
+
 /** Like collectTargets but keeps the FULL pointer (`#/$defs/Root/properties/x`), for
  *  property-level Carta coverage (which Carta slots a green mapping actually writes to). */
 function collectPointers(target: unknown, into: Set<string>): void {
+  walkTargetPointers(target, (ptr) => into.add(ptr));
+}
+
+/** Visit every Carta pointer nested inside a scalar, array, or map target. */
+function walkTargetPointers(target: unknown, visit: (pointer: string) => void): void {
   if (typeof target === "string") {
-    if (/^#\/\$defs\//.test(target)) into.add(target);
-  } else if (Array.isArray(target)) target.forEach((t) => collectPointers(t, into));
-  else if (isPlainObject(target)) Object.values(target).forEach((t) => collectPointers(t, into));
+    if (/^#\/\$defs\//.test(target)) visit(target);
+    return;
+  }
+  if (Array.isArray(target)) {
+    for (const value of target) walkTargetPointers(value, visit);
+    return;
+  }
+  if (isPlainObject(target)) {
+    for (const value of Object.values(target)) walkTargetPointers(value, visit);
+  }
+}
+
+/** Add normalized mapping edges for every Carta pointer nested in a mapping entry. */
+function collectEntryEdges(
+  entry: Record<string, unknown>,
+  base: Omit<MappingEdge, "target">,
+  into: MappingEdge[]
+): void {
+  const add = (target: unknown, detail?: string) =>
+    walkTargetPointers(target, (pointer) => into.push({ ...base, target: pointer, detail }));
+
+  add(entry.target);
+  add(entry.values);
+  if (entry.kind === "sequential_transform" && Array.isArray(entry.steps)) {
+    for (const step of entry.steps) {
+      if (isPlainObject(step))
+        add(step.targets, typeof step.step === "string" ? step.step : undefined);
+    }
+  }
+  if (entry.kind === "union-map" && Array.isArray(entry.cases)) {
+    for (const rawCase of entry.cases) {
+      if (!isPlainObject(rawCase) || !isPlainObject(rawCase.mapping)) continue;
+      collectEntryEdges(rawCase.mapping, base, into);
+    }
+  }
 }
 
 /** Collect every `#/$defs/<Root>` root named by a `$ref` anywhere inside a schema node. */
@@ -566,9 +724,13 @@ export async function loadGreenCorpus(repoRoot: string): Promise<Corpus> {
   const bundle = JSON.parse(
     await readFile(path.join(repoRoot, TARGET_BUNDLES.Carta as string), "utf8")
   );
+  const coveragePolicy = await loadCoveragePolicy(repoRoot);
+  validateCoveragePolicy(coveragePolicy, bundle);
   const typeLib = new Map<string, TypeVerdict>();
   const targetedDefs = new Set<string>();
   const targetedPointers = new Set<string>();
+  const mappingEdges: MappingEdge[] = [];
+  const greenDocuments = new Set<string>();
   const skipped: string[] = [];
 
   const files = await collectMappingFiles(repoRoot);
@@ -595,8 +757,10 @@ export async function loadGreenCorpus(repoRoot: string): Promise<Corpus> {
     typeof m.status === "string" && GREEN.has(m.status) && fm.target_standard === "Carta";
 
   // Pass 1 — type library + harvest all target pointers (for the gap report).
-  for (const { frontmatter, mapping } of parsed) {
+  for (const { rel, frontmatter, mapping } of parsed) {
     if (!isGreenCarta(frontmatter, mapping)) continue;
+    greenDocuments.add(rel);
+    mappingEdges.push(...mappingEdgesOf(rel, frontmatter, mapping));
     for (const fm of variantFieldMaps(mapping).values()) {
       for (const entry of Object.values(fm)) {
         if (isPlainObject(entry)) {
@@ -686,6 +850,8 @@ export async function loadGreenCorpus(repoRoot: string): Promise<Corpus> {
     objects.push({
       entity: path.basename(rel).replace(/\.mapping\.md$/, ""),
       rel,
+      sourceSchemaId:
+        typeof frontmatter.ocf_schema_id === "string" ? frontmatter.ocf_schema_id : undefined,
       requiredFields,
       properties: (sourceSchema.properties ?? {}) as Record<string, unknown>,
       variants: variantFieldMaps(mapping),
@@ -701,15 +867,36 @@ export async function loadGreenCorpus(repoRoot: string): Promise<Corpus> {
   for (const o of objects)
     for (const d of o.deferrals) for (const t of d.targets) deferredTargets.add(t);
 
+  const uniqueEdges = [
+    ...new Map(
+      mappingEdges.map((edge) => [
+        [
+          edge.rel,
+          edge.source,
+          edge.variant,
+          edge.field ?? "",
+          edge.scope,
+          edge.target,
+          edge.kind ?? "",
+          edge.detail ?? "",
+        ].join("\u0000"),
+        edge,
+      ])
+    ).values(),
+  ];
+
   return {
     registry,
     bundle,
+    coveragePolicy,
     typeLib,
     objects,
     deferredTargets,
     targetedDefs,
     targetedPointers,
     transitivelyCoveredDefs,
+    mappingEdges: uniqueEdges,
+    greenDocuments,
     skipped,
   };
 }

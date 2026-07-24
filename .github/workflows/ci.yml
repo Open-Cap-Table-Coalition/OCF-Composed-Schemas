@@ -19,7 +19,7 @@ jobs:
       - run: npm run lint
       - run: npm test
       - run: npm run mapping:validate -- --verbose
-      - name: Generate inverse mapping report
+      - name: Generate shared inverse coverage report
         shell: bash
         run: |
           mkdir -p ci-artifacts
@@ -30,7 +30,7 @@ jobs:
           cat ci-artifacts/mapping-inverse-report.txt >> "$GITHUB_STEP_SUMMARY"
           echo '```' >> "$GITHUB_STEP_SUMMARY"
           exit "$status"
-      - name: Upload inverse mapping report
+      - name: Upload inverse coverage report
         if: always()
         uses: actions/upload-artifact@v4
         with:
