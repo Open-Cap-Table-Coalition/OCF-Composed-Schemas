@@ -8,6 +8,7 @@ const POLICY_FILE = "core/inverse-coverage-policy.yml";
 
 export type CartaCoverageRole =
   | "value-type"
+  | "nested-covered"
   | "alternate"
   | "report-rollup"
   | "vendor-family"
@@ -16,6 +17,7 @@ export type CartaCoverageRole =
 
 const ROLES = new Set<CartaCoverageRole>([
   "value-type",
+  "nested-covered",
   "alternate",
   "report-rollup",
   "vendor-family",

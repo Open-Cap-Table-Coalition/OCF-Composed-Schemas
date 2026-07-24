@@ -654,34 +654,38 @@ A missing root target is therefore not automatically a missing concept.
 | implicit constant slots | 3 |
 | deferred slots | 4 |
 | empty slots | 401 |
-| nested-covered defs | 9 |
+| nested-covered defs | 10 |
 | expected report roll-ups | 17 |
 | curated value-type policy entries | 7 |
 | object-like value-type/non-target defs | 1 |
 | alternate/unreachable shapes | 3 |
-| vendor-only family candidates | 6 |
+| vendor-only family candidates | 5 |
 | workflow/data-shape gap candidates | 4 |
-| actionable inverse gap candidates | 11 |
+| actionable inverse gap candidates | 10 |
 | unresolved role-review candidates | 0 |
 
-### CARTA object-definition coverage story
+### CARTA inverse coverage: the simple story
 
-The 86 object-like Carta definitions are partitioned into three mutually exclusive buckets:
-mapped by OCF evidence, non-entity object definitions, and requiring role follow-up.
-The accounting check makes the denominator explicit; slot counts above are a separate diagnostic dimension.
+1. Carta defines **139** total definitions.
+2. **86** of them are object-shaped.
+3. **11** object-shaped support definitions plus **6** scalar support types are packaging pieces, not standalone objects.
+4. That leaves **75** standalone mapping candidates.
+5. We have mapping evidence for **45**: **9** fully mapped and **36** partially mapped.
+6. **30** standalone candidates have no mapping evidence yet; their inventory role tells us whether that is expected or actionable.
 
-| coverage bucket | count | breakdown |
-| --- | ---: | --- |
-| mapped by OCF evidence | 45 | direct 39 + type-only 6 + deferred 0 |
-| non-entity object definitions | 10 | nested-covered 9 + value-type object 1 |
-| require role follow-up | 31 | report roll-up 17 + alternate 3 + vendor 6 + workflow 4 + actionable 1 + review 0 |
-| **total object-like definitions** | **86** | **45 + 10 + 31** |
+**Checks:** 75 = 45 + 30; 86 = 75 + 11.
 
-### CARTA objects/types intentionally excluded from entity-level inverse coverage (16)
+| mapping evidence detail | count |
+| --- | ---: |
+| direct executable | 39 |
+| type-only | 6 |
+| deferred | 0 |
 
-9 nested CARTA objects and 7 curated value-type entries are intentionally not gaps.
+### Supporting CARTA definitions excluded from standalone mapping targets (17)
+
+10 nested object definitions and 7 curated value types are intentionally not standalone targets.
 6 scalar wrappers are outside the object-like definition denominator; 1 value-type definition is object-like.
-These definitions are not entity-level inverse gaps; their mapping/type evidence remains valid.
+These definitions are packaging/support types, not standalone mapping targets; their mapping/type evidence remains valid.
 The nested-parent column names the Carta object(s) that provide their coverage.
 
 | role | Carta `$def` | covered through | reason |
@@ -702,12 +706,13 @@ The nested-parent column names the Carta object(s) that provide their coverage.
 | nested-covered | `#/$defs/RestrictedStockUnitVestingEvent` | RestrictedStockUnit | Structural child of directly mapped parent(s). |
 | nested-covered | `#/$defs/ShareClassDividendDetails` | PreferredShareClassDetails | Structural child of directly mapped parent(s). |
 | nested-covered | `#/$defs/VestingSchedule` | OptionGrant, RestrictedStockAward, RestrictedStockUnit | Structural child of directly mapped parent(s). |
+| nested-covered | `#/$defs/ThresholdDetails` | Interest | Nested under Interest; supporting threshold details are not a standalone target. |
 
-### Definitions requiring role follow-up (31)
+### Unmapped standalone candidates by inventory role (30)
 
-These definitions are not direct executable roots and are not value-type or nested-type
-exclusions. Use the status and reason columns to distinguish derived containers, alternate
-schema shapes, and actual inverse candidates.
+These definitions are not counted as mapped targets yet. The status and reason columns
+explain whether each is a read-model roll-up, alternate shape, CARTA-specific family
+without an OCF source, workflow/data gap, or actionable mapping candidate.
 
 | Carta `$def` | status | structural parent(s) | reason |
 | --- | --- | --- | --- |
@@ -739,7 +744,6 @@ schema shapes, and actual inverse candidates.
 | `#/$defs/StakeholderOptionPoolSummary` | report-rollup | — | Carta read-model aggregate; OCF records the underlying leaf facts instead. |
 | `#/$defs/StakeholderShareClassSummary` | report-rollup | — | Carta read-model aggregate; OCF records the underlying leaf facts instead. |
 | `#/$defs/StakeholderWarrantBlockSummary` | report-rollup | — | Carta read-model aggregate; OCF records the underlying leaf facts instead. |
-| `#/$defs/ThresholdDetails` | vendor-family | — | Nested profits-interest threshold details have no OCF source. |
 | `#/$defs/Vesting` | alternate | — | Unreachable option-grant vesting shape; mapped OCF vesting uses schedule/event defs. |
 | `#/$defs/WarrantBlockSummary` | report-rollup | — | Carta read-model aggregate; OCF records the underlying leaf facts instead. |
 
@@ -776,5 +780,4 @@ role policy excludes expected roll-ups and alternate schema shapes.
 | `#/$defs/PhantomIssuanceTransaction` | vendor-family | Carta phantom-equity transaction family has no OCF route. |
 | `#/$defs/PiuCancellationTransaction` | vendor-family | Carta profits-interest-unit transaction family has no OCF route. |
 | `#/$defs/PiuIssuanceTransaction` | vendor-family | Carta profits-interest-unit transaction family has no OCF route. |
-| `#/$defs/ThresholdDetails` | vendor-family | Nested profits-interest threshold details have no OCF source. |
 

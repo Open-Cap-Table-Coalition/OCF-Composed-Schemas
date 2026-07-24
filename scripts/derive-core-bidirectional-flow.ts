@@ -177,28 +177,26 @@ function renderInverseCoverageStory(
   const story = inverseCoverageStory(inverse);
   const counts = inverse.metrics.definitionRoleCounts;
   return [
-    "### CARTA object-definition coverage story",
+    "### CARTA inverse coverage: the simple story",
     "",
-    `The ${story.objectDefs} object-like Carta definitions are partitioned into three mutually exclusive buckets:`,
-    "mapped by OCF evidence, non-entity object definitions, and requiring role follow-up.",
-    "The accounting check makes the denominator explicit; slot counts above are a separate diagnostic dimension.",
+    `1. Carta defines **${story.totalDefs}** total definitions.`,
+    `2. **${story.objectDefs}** of them are object-shaped.`,
+    `3. **${story.nonEntityObjectDefs}** object-shaped support definitions plus **${story.scalarValueTypeDefs}** scalar support types are packaging pieces, not standalone objects.`,
+    `4. That leaves **${story.standaloneCandidateDefs}** standalone mapping candidates.`,
+    `5. We have mapping evidence for **${story.mappedDefs}**: **${story.fullyMappedDefs}** fully mapped and **${story.partiallyMappedDefs}** partially mapped.`,
+    `6. **${story.unmappedCandidateDefs}** standalone candidates have no mapping evidence yet; their inventory role tells us whether that is expected or actionable.`,
     "",
-    "| coverage bucket | count | breakdown |",
-    "| --- | ---: | --- |",
-    `| mapped by OCF evidence | ${story.mappedDefs} | direct ${counts.direct} + type-only ${counts["type-only"]} + deferred ${counts.deferred} |`,
-    `| non-entity object definitions | ${story.nonEntityObjectDefs} | nested-covered ${counts["nested-covered"]} + value-type object ${counts["value-type"]} |`,
-    `| require role follow-up | ${story.followUpDefs} | report roll-up ${counts["report-rollup"]} + alternate ${counts.alternate} + vendor ${counts["vendor-family"]} + workflow ${counts["workflow-gap"]} + actionable ${counts.gap} + review ${counts.review} |`,
-    `| **total object-like definitions** | **${story.objectDefs}** | **${story.mappedDefs} + ${story.nonEntityObjectDefs} + ${story.followUpDefs}** |`,
+    `**Checks:** ${story.standaloneCandidateDefs} = ${story.mappedDefs} + ${story.unmappedCandidateDefs}; ${story.objectDefs} = ${story.standaloneCandidateDefs} + ${story.nonEntityObjectDefs}.`,
     "",
-    `### CARTA objects/types intentionally excluded from entity-level inverse coverage (${excludedDefinitions.length})`,
+    `### Supporting CARTA definitions excluded from standalone mapping targets (${excludedDefinitions.length})`,
     "",
     `${
       excludedDefinitions.filter((row) => row.role === "nested-covered").length
-    } nested CARTA objects and ${
+    } nested object definitions and ${
       excludedDefinitions.filter((row) => row.role === "value-type").length
-    } curated value-type entries are intentionally not gaps.`,
+    } curated value types are intentionally not standalone targets.`,
     `${story.scalarValueTypeDefs} scalar wrappers are outside the object-like definition denominator; ${counts["value-type"]} value-type definition is object-like.`,
-    "These definitions are not entity-level inverse gaps; their mapping/type evidence remains valid.",
+    "These definitions are packaging/support types, not standalone mapping targets; their mapping/type evidence remains valid.",
     "The nested-parent column names the Carta object(s) that provide their coverage.",
     "",
   ];

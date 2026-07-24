@@ -33,13 +33,19 @@ describe("core reports (the markdown drift gate's premise)", () => {
     expect(psiRow).not.toContain("no-payload");
   });
 
-  it("explains inverse coverage as an additive three-bucket story", async () => {
+  it("explains inverse coverage as a plain-language standalone-target story", async () => {
     const report = renderGapReport(await deriveCore(process.cwd()));
-    expect(report).toContain("### CARTA object-definition coverage story");
-    expect(report).toContain("| **total object-like definitions** | **86** | **45 + 10 + 31** |");
+    expect(report).toContain("### CARTA inverse coverage: the simple story");
+    expect(report).toContain("4. That leaves **75** standalone mapping candidates.");
     expect(report).toContain(
-      "### CARTA objects/types intentionally excluded from entity-level inverse coverage (16)"
+      "5. We have mapping evidence for **45**: **9** fully mapped and **36** partially mapped."
     );
-    expect(report).not.toContain("### Object-definition role accounting");
+    expect(report).toContain(
+      "6. **30** standalone candidates have no mapping evidence yet; their inventory role tells us whether that is expected or actionable."
+    );
+    expect(report).toContain(
+      "### Supporting CARTA definitions excluded from standalone mapping targets (17)"
+    );
+    expect(report).not.toContain("### CARTA object-definition coverage story");
   });
 });

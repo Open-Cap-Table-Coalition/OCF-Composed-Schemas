@@ -13,11 +13,11 @@ describe("Carta inverse coverage", () => {
         direct: 39,
         "type-only": 6,
         deferred: 0,
-        "nested-covered": 9,
+        "nested-covered": 10,
         "value-type": 1,
         "report-rollup": 17,
         alternate: 3,
-        "vendor-family": 6,
+        "vendor-family": 5,
         "workflow-gap": 4,
         gap: 1,
         review: 0,
@@ -28,12 +28,12 @@ describe("Carta inverse coverage", () => {
       typeOnlySlots: 34,
       implicitSlots: 3,
       deferredSlots: 4,
-      nestedCoveredDefs: 9,
+      nestedCoveredDefs: 10,
       reportRollupDefs: 17,
       curatedValueTypeEntries: 7,
       valueTypeDefs: 1,
       alternateDefs: 3,
-      actionableGapDefs: 11,
+      actionableGapDefs: 10,
       reviewDefs: 0,
     });
 
@@ -41,25 +41,35 @@ describe("Carta inverse coverage", () => {
     expect(byDef.get("Date")?.status).toBe("value-type");
     expect(byDef.get("Vesting")?.status).toBe("alternate");
     expect(byDef.get("DividendDetails")?.status).toBe("nested-covered");
+    expect(byDef.get("Interest")?.status).toBe("vendor-family");
+    expect(byDef.get("ThresholdDetails")?.status).toBe("nested-covered");
     expect(byDef.get("OptionGrantDocuments")?.status).toBe("gap");
     expect(corpus.coveragePolicy.cartaDefs.get("Iso8601CompleteCalendarDateTime")).toMatchObject({
       role: "value-type",
     });
 
     const excluded = inverse.excludedRoleRows;
-    expect(excluded).toHaveLength(16);
+    expect(excluded).toHaveLength(17);
     expect(excluded.find((row) => row.name === "Date")).toMatchObject({ role: "value-type" });
     expect(excluded.find((row) => row.name === "VestingSchedule")).toMatchObject({
       role: "nested-covered",
       coveredThrough: "OptionGrant, RestrictedStockAward, RestrictedStockUnit",
     });
+    expect(excluded.find((row) => row.name === "ThresholdDetails")).toMatchObject({
+      role: "nested-covered",
+      coveredThrough: "Interest",
+    });
 
     expect(inverseCoverageStory(inverse)).toEqual({
-      mappedDefs: 45,
-      followUpDefs: 31,
+      totalDefs: 139,
       objectDefs: 86,
-      nonEntityDefs: 16,
-      nonEntityObjectDefs: 10,
+      standaloneCandidateDefs: 75,
+      mappedDefs: 45,
+      fullyMappedDefs: 9,
+      partiallyMappedDefs: 36,
+      unmappedCandidateDefs: 30,
+      nonEntityDefs: 17,
+      nonEntityObjectDefs: 11,
       scalarValueTypeDefs: 6,
     });
   });

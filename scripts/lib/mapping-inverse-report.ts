@@ -2,6 +2,7 @@ import {
   CartaDefCoverage,
   InverseCoverageLedger,
   InverseExcludedRoleRow,
+  isInverseMappedDefinition,
   inverseCoverageStory,
 } from "./inverse-coverage.js";
 import { MappingEdge } from "./core-corpus.js";
@@ -119,7 +120,7 @@ function targetObjectNames(inverse: InverseCoverageLedger): string[] {
 
 function mappedDefinitions(inverse: InverseCoverageLedger): CartaDefCoverage[] {
   return inverse.defs
-    .filter((row) => ["direct", "type-only", "deferred"].includes(row.status))
+    .filter(isInverseMappedDefinition)
     .sort((a, b) => a.name.localeCompare(b.name));
 }
 
@@ -207,9 +208,7 @@ function renderObjectPanel(
 ): string[] {
   const hasMappings = group.flows.size > 0;
   const fields = sortedTargetFields(row.name, group, inverse);
-  const unmappedProperties = hasMappings
-    ? fields.filter((field) => (group.flows.get(field) ?? []).length === 0).length
-    : 0;
+  const unmappedProperties = hasMappings ? row.emptySlots.length : 0;
   const metadata = [
     `name: ${row.name}`,
     `id: "#/$defs/${row.name}"`,
@@ -248,22 +247,27 @@ function renderCoverageStory(inverse: InverseCoverageLedger): string[] {
   const counts = inverse.metrics.definitionRoleCounts;
   return [
     "",
-    `Coverage story (${story.objectDefs} CARTA object-like definitions)`,
-    `  Mapped by OCF evidence: ${story.mappedDefs}`,
-    `    direct executable: ${counts.direct}`,
-    `    type-only: ${counts["type-only"]}`,
-    `    deferred: ${counts.deferred}`,
-    `  Non-entity object definitions (not inverse gaps): ${story.nonEntityObjectDefs}`,
-    `    nested-covered: ${counts["nested-covered"]}`,
-    `    value-type / non-target object: ${counts["value-type"]}`,
-    `  Require role follow-up: ${story.followUpDefs}`,
-    `    report roll-up: ${counts["report-rollup"]}`,
-    `    alternate shape: ${counts.alternate}`,
-    `    vendor family: ${counts["vendor-family"]}`,
-    `    workflow/data gap: ${counts["workflow-gap"]}`,
-    `    actionable gap: ${counts.gap}`,
-    `    review required: ${counts.review}`,
-    `  Accounting check: ${story.mappedDefs} + ${story.nonEntityObjectDefs} + ${story.followUpDefs} = ${story.objectDefs}`,
+    "Simple story",
+    `  Carta defines ${story.totalDefs} total definitions.`,
+    `  ${story.objectDefs} are object-shaped definitions.`,
+    `  ${story.nonEntityObjectDefs} object-shaped support definitions + ${story.scalarValueTypeDefs} scalar support types are not standalone objects.`,
+    `  That leaves ${story.standaloneCandidateDefs} standalone mapping candidates.`,
+    `  ${story.mappedDefs} have OCF mapping evidence: ${story.fullyMappedDefs} fully mapped, ${story.partiallyMappedDefs} partially mapped.`,
+    `  ${story.unmappedCandidateDefs} standalone candidates have no mapping evidence yet; their inventory role says whether that is expected or actionable.`,
+    `  Check: ${story.standaloneCandidateDefs} = ${story.mappedDefs} + ${story.unmappedCandidateDefs}; ${story.objectDefs} = ${story.standaloneCandidateDefs} + ${story.nonEntityObjectDefs}.`,
+    "",
+    "Mapping evidence detail",
+    `  direct executable: ${counts.direct}`,
+    `  type-only: ${counts["type-only"]}`,
+    `  deferred: ${counts.deferred}`,
+    "",
+    `Unmapped candidates by inventory role (${story.unmappedCandidateDefs})`,
+    `  report/read-model roll-up: ${counts["report-rollup"]}`,
+    `  alternate shape: ${counts.alternate}`,
+    `  CARTA-specific family (no OCF source): ${counts["vendor-family"]}`,
+    `  workflow/data gap: ${counts["workflow-gap"]}`,
+    `  actionable gap: ${counts.gap}`,
+    `  review required: ${counts.review}`,
   ];
 }
 
@@ -276,9 +280,9 @@ function renderExcludedRows(
   const scalarValueTypes = Math.max(0, valueTypes - inverse.metrics.valueTypeDefs);
   const lines = [
     "",
-    `CARTA objects/types intentionally excluded from entity-level inverse coverage (${rows.length})`,
-    `  ${nested} nested CARTA objects + ${valueTypes} curated value-type entries (${scalarValueTypes} scalar wrappers, ${inverse.metrics.valueTypeDefs} object-like value type).`,
-    `  These ${rows.length} definitions are not entity-level inverse gaps; their mapping/type evidence remains valid.`,
+    `Supporting CARTA definitions excluded from standalone mapping targets (${rows.length})`,
+    `  ${nested} nested object definitions + ${valueTypes} curated value types (${scalarValueTypes} scalar wrappers, ${inverse.metrics.valueTypeDefs} object-shaped value type).`,
+    `  These ${rows.length} definitions are packaging/support types, not standalone mapping targets; their mapping/type evidence remains valid.`,
   ];
   for (const row of rows) {
     lines.push(`  - ${row.role}: #/$defs/${row.name} — ${row.coveredThrough}`);
@@ -308,11 +312,14 @@ export function renderMappingInverseReport(options: MappingInverseReportOptions)
   const lines = renderBox("Carta inverse coverage report", [
     `source_documents: ${sourceDocuments}`,
     `green_carta_documents: ${greenDocuments}`,
-    `carta_object_defs: ${story.objectDefs}`,
-    `mapped_object_defs: ${story.mappedDefs}`,
-    `non_entity_object_defs: ${story.nonEntityObjectDefs}`,
-    `follow_up_object_defs: ${story.followUpDefs}`,
-    `excluded_non_entity_defs: ${story.nonEntityDefs}`,
+    `carta_defs_total: ${story.totalDefs}`,
+    `object_like_defs: ${story.objectDefs}`,
+    `standalone_candidate_defs: ${story.standaloneCandidateDefs}`,
+    `supporting_defs_excluded: ${story.nonEntityDefs}`,
+    `mapped_targets: ${story.mappedDefs}`,
+    `fully_mapped_targets: ${story.fullyMappedDefs}`,
+    `partially_mapped_targets: ${story.partiallyMappedDefs}`,
+    `unmapped_candidates: ${story.unmappedCandidateDefs}`,
   ]);
 
   lines.push(...renderCoverageStory(inverse), ...renderExcludedRows(excluded, inverse));
@@ -326,7 +333,7 @@ export function renderMappingInverseReport(options: MappingInverseReportOptions)
     if (row.status === "value-type" || row.status === "nested-covered") {
       lines.push(
         "",
-        `Carta definition ${options.targetObject} is intentionally excluded from entity-level inverse coverage (${row.status}).`
+        `Carta definition ${options.targetObject} is a supporting definition, not a standalone mapping target (${row.status}).`
       );
     }
     lines.push(
@@ -341,12 +348,20 @@ export function renderMappingInverseReport(options: MappingInverseReportOptions)
   }
 
   if (mapped.length > 0) {
-    lines.push("", ...renderSection("Carta targets with mappings", mapped, groups, inverse));
+    lines.push(
+      "",
+      ...renderSection("Standalone Carta targets with mapping evidence", mapped, groups, inverse)
+    );
   }
   if (followUp.length > 0) {
     lines.push(
       "",
-      ...renderSection("Carta definitions requiring role follow-up", followUp, groups, inverse)
+      ...renderSection(
+        "Unmapped standalone candidates by inventory role",
+        followUp,
+        groups,
+        inverse
+      )
     );
   }
   if (allObjects.length === 0) lines.push("", "(no object-like Carta definitions found)");

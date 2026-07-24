@@ -125,7 +125,7 @@ describe("validate-mappings CLI (temp tree)", () => {
     const { stdout } = await runCli(root, ["--inverse"]);
     expect(stdout).toContain("name: EmptyObject");
     expect(stdout).toContain("status: NO MAPPINGS");
-    expect(stdout).toContain("Carta definitions requiring role follow-up (1)");
+    expect(stdout).toContain("Unmapped standalone candidates by inventory role (1)");
   });
 
   it("exits 1 and reports field-level errors on a broken mapping", async () => {

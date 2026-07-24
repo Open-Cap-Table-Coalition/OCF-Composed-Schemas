@@ -11,9 +11,10 @@
 
 # Role vocabulary:
 #   value-type   reusable scalar/value wrapper; never a standalone business entity
+#   nested-covered supporting object intentionally treated as part of another definition
 #   alternate    alternate or unreachable schema shape
 #   report-rollup derived/read-model aggregate rather than an OCF source fact
-#   vendor-family Carta-specific security family with no OCF source object
+#   vendor-family CARTA-specific family with no OCF source object
 #   workflow-gap workflow/data shape absent from OCF's event model
 #   gap          concrete inverse candidate requiring follow-up
 
@@ -60,8 +61,8 @@ carta_defs:
     role: vendor-family
     reason: Carta profits-interest security family has no OCF source object.
   ThresholdDetails:
-    role: vendor-family
-    reason: Nested profits-interest threshold details have no OCF source.
+    role: nested-covered
+    reason: Nested under Interest; supporting threshold details are not a standalone target.
   PhantomCancellationTransaction:
     role: vendor-family
     reason: Carta phantom-equity transaction family has no OCF route.
