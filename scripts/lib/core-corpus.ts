@@ -22,6 +22,7 @@ import {
 } from "./mapping-validator.js";
 import { classifyType, TypeVerdict } from "./core-classifier.js";
 import { ReferenceGraph } from "./core-admissibility.js";
+import { CoveragePolicy, loadCoveragePolicy, validateCoveragePolicy } from "./coverage-policy.js";
 
 const REFERENCE_GRAPH = "core/reference-graph.yml";
 
@@ -231,6 +232,8 @@ export interface GreenObject {
 export interface Corpus {
   registry: Registry;
   bundle: unknown;
+  /** Shared hand-curated roles for Carta definitions that shape-only inference cannot classify. */
+  coveragePolicy: CoveragePolicy;
   typeLib: Map<string, TypeVerdict>;
   objects: GreenObject[];
   /** Root Carta `$def` names targeted by any green mapping (for gap report b). */
@@ -719,6 +722,8 @@ export async function loadGreenCorpus(repoRoot: string): Promise<Corpus> {
   const bundle = JSON.parse(
     await readFile(path.join(repoRoot, TARGET_BUNDLES.Carta as string), "utf8")
   );
+  const coveragePolicy = await loadCoveragePolicy(repoRoot);
+  validateCoveragePolicy(coveragePolicy, bundle);
   const typeLib = new Map<string, TypeVerdict>();
   const targetedDefs = new Set<string>();
   const targetedPointers = new Set<string>();
@@ -879,6 +884,7 @@ export async function loadGreenCorpus(repoRoot: string): Promise<Corpus> {
   return {
     registry,
     bundle,
+    coveragePolicy,
     typeLib,
     objects,
     deferredTargets,

@@ -9,7 +9,11 @@
  */
 import { Derived } from "./core-pipeline.js";
 import { BOOKKEEPING, buildTargetIndex } from "./report-helpers.js";
-import { buildInverseCoverage } from "./inverse-coverage.js";
+import {
+  buildInverseCoverage,
+  CARTA_DEF_STATUS_LABELS,
+  CARTA_DEF_STATUS_ORDER,
+} from "./inverse-coverage.js";
 import {
   FlowRow,
   byObjectTables,
@@ -223,8 +227,8 @@ export function renderGapReport(d: Derived): string {
   lines.push(
     "The inverse ledger separates executable slot coverage, reusable type mappings,",
     "structural `$ref` reachability, deferred extraction, expected derived objects,",
-    "alternate/unreachable shapes, and actionable gap candidates. A missing root target",
-    "is therefore not automatically a missing concept.",
+    "curated value-type roles, alternate/unreachable shapes, and actionable gap candidates.",
+    "A missing root target is therefore not automatically a missing concept.",
     "",
     "| Carta-side dimension | count |",
     "| --- | ---: |",
@@ -241,11 +245,30 @@ export function renderGapReport(d: Derived): string {
     `| empty slots | ${inverse.metrics.emptySlots} |`,
     `| nested-covered defs | ${inverse.metrics.nestedCoveredDefs} |`,
     `| expected report roll-ups | ${inverse.metrics.reportRollupDefs} |`,
+    `| curated value-type policy entries | ${inverse.metrics.curatedValueTypeEntries} |`,
+    `| object-like value-type/non-target defs | ${inverse.metrics.valueTypeDefs} |`,
     `| alternate/unreachable shapes | ${inverse.metrics.alternateDefs} |`,
     `| vendor-only family candidates | ${inverse.metrics.vendorFamilyDefs} |`,
     `| workflow/data-shape gap candidates | ${inverse.metrics.workflowGapDefs} |`,
     `| actionable inverse gap candidates | ${inverse.metrics.actionableGapDefs} |`,
     `| unresolved role-review candidates | ${inverse.metrics.reviewDefs} |`,
+    ""
+  );
+
+  lines.push(
+    "### Object-definition role accounting",
+    "",
+    "Primary definition role is mutually exclusive and accounts for every object-like Carta definition.",
+    "Slot-level evidence can overlap: for example, a direct definition may also contain deferred or",
+    "type-only slots.",
+    "",
+    "| primary role | object-like defs |",
+    "| --- | ---: |",
+    ...CARTA_DEF_STATUS_ORDER.map(
+      (status) =>
+        `| ${CARTA_DEF_STATUS_LABELS[status]} | ${inverse.metrics.definitionRoleCounts[status]} |`
+    ),
+    `| **total** | **${inverse.metrics.objectDefs}** |`,
     ""
   );
 

@@ -893,8 +893,8 @@ flowchart LR
 
 The inverse ledger separates executable slot coverage, reusable type mappings,
 structural `$ref` reachability, deferred extraction, expected derived objects,
-alternate/unreachable shapes, and actionable gap candidates. A missing root target
-is therefore not automatically a missing concept.
+curated value-type roles, alternate/unreachable shapes, and actionable gap candidates.
+A missing root target is therefore not automatically a missing concept.
 
 | Carta-side dimension | count |
 | --- | ---: |
@@ -911,11 +911,34 @@ is therefore not automatically a missing concept.
 | empty slots | 401 |
 | nested-covered defs | 9 |
 | expected report roll-ups | 17 |
-| alternate/unreachable shapes | 4 |
+| curated value-type policy entries | 7 |
+| object-like value-type/non-target defs | 1 |
+| alternate/unreachable shapes | 3 |
 | vendor-only family candidates | 6 |
 | workflow/data-shape gap candidates | 4 |
 | actionable inverse gap candidates | 11 |
 | unresolved role-review candidates | 0 |
+
+### Object-definition role accounting
+
+Primary definition role is mutually exclusive and accounts for every object-like Carta definition.
+Slot-level evidence can overlap: for example, a direct definition may also contain deferred or
+type-only slots.
+
+| primary role | object-like defs |
+| --- | ---: |
+| direct executable | 39 |
+| type-only | 6 |
+| deferred | 0 |
+| nested-covered | 9 |
+| value-type / non-target | 1 |
+| report roll-up | 17 |
+| alternate shape | 3 |
+| vendor family | 6 |
+| workflow/data gap | 4 |
+| actionable gap | 1 |
+| review required | 0 |
+| **total** | **86** |
 
 ### Definitions without direct executable coverage (41)
 
@@ -928,7 +951,7 @@ nested coverage, derived containers, alternate schema shapes, and actual inverse
 | `#/$defs/CapitalizationTableSummary` | report-rollup | — | Carta read-model aggregate; OCF records the underlying leaf facts instead. |
 | `#/$defs/CertificateTransactionItem` | report-rollup | — | Carta read-model aggregate; OCF records the underlying leaf facts instead. |
 | `#/$defs/Corporation` | alternate | — | Unused alternate issuer shape; OCF Issuer maps to Carta Issuer. |
-| `#/$defs/Date` | alternate | — | Partial-date helper; OCF Date maps to the Iso8601 date wrappers. |
+| `#/$defs/Date` | value-type | — | Partial-date value helper; OCF Date maps to the Iso8601 date wrappers. |
 | `#/$defs/DividendDetails` | nested-covered | ShareClassDividendDetails | — |
 | `#/$defs/Exercise` | nested-covered | OptionGrant | — |
 | `#/$defs/Interest` | vendor-family | — | Carta profits-interest security family has no OCF source object. |

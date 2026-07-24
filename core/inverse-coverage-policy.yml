@@ -1,0 +1,92 @@
+# OCF Core — inverse-coverage schema roles (curated; hand-edited).
+#
+# This is role metadata, not a target denylist. Definitions remain in the raw
+# Carta denominator and can still appear in type correspondences, but their
+# role controls whether an unrooted object-like definition is presented as an
+# actionable inverse gap.
+#
+# Unlisted definitions are inferred from mapping evidence and structural
+# reachability. A new unclassified object-like definition is intentionally
+# reported as `review` rather than silently omitted.
+
+# Role vocabulary:
+#   value-type   reusable scalar/value wrapper; never a standalone business entity
+#   alternate    alternate or unreachable schema shape
+#   report-rollup derived/read-model aggregate rather than an OCF source fact
+#   vendor-family Carta-specific security family with no OCF source object
+#   workflow-gap workflow/data shape absent from OCF's event model
+#   gap          concrete inverse candidate requiring follow-up
+
+carta_defs:
+  # Carta's partial-date helper is structurally object-like, but it is not the
+  # correspondent for OCF Date. OCF Date lands on the Iso8601* wrappers below.
+  Date:
+    role: value-type
+    reason: Partial-date value helper; OCF Date maps to the Iso8601 date wrappers.
+
+  # These are intentionally listed even though their one-property shape already
+  # keeps them out of the object-like candidate denominator. The explicit role
+  # makes the policy reusable if a future bundle changes their shape.
+  Decimal:
+    role: value-type
+    reason: Reusable scalar value wrapper, not a standalone Carta entity.
+  Iso3166Set1Alpha3Code:
+    role: value-type
+    reason: Reusable scalar value wrapper, not a standalone Carta entity.
+  Iso3166Set2Code:
+    role: value-type
+    reason: Reusable scalar value wrapper, not a standalone Carta entity.
+  Iso4217CurrencyAlphaCode:
+    role: value-type
+    reason: Reusable scalar value wrapper, not a standalone Carta entity.
+  Iso8601CompleteCalendarDate:
+    role: value-type
+    reason: Reusable calendar-date wrapper, populated through owning object properties.
+  Iso8601CompleteCalendarDateTime:
+    role: value-type
+    reason: Reusable datetime wrapper, populated through owning object properties.
+
+  Corporation:
+    role: alternate
+    reason: Unused alternate issuer shape; OCF Issuer maps to Carta Issuer.
+  Vesting:
+    role: alternate
+    reason: Unreachable option-grant vesting shape; mapped OCF vesting uses schedule/event defs.
+  Acceleration:
+    role: alternate
+    reason: Child of the unreachable Carta Vesting shape.
+
+  Interest:
+    role: vendor-family
+    reason: Carta profits-interest security family has no OCF source object.
+  ThresholdDetails:
+    role: vendor-family
+    reason: Nested profits-interest threshold details have no OCF source.
+  PhantomCancellationTransaction:
+    role: vendor-family
+    reason: Carta phantom-equity transaction family has no OCF route.
+  PhantomIssuanceTransaction:
+    role: vendor-family
+    reason: Carta phantom-equity transaction family has no OCF route.
+  PiuCancellationTransaction:
+    role: vendor-family
+    reason: Carta profits-interest-unit transaction family has no OCF route.
+  PiuIssuanceTransaction:
+    role: vendor-family
+    reason: Carta profits-interest-unit transaction family has no OCF route.
+
+  OptionExercise:
+    role: workflow-gap
+    reason: Carta exercise-request workflow object; OCF maps the realized transaction instead.
+  OptionExerciseMoneyMovement:
+    role: workflow-gap
+    reason: Nested Carta exercise-funding workflow data has no OCF source.
+  OptionExerciseTaxWithholdingLineItem:
+    role: workflow-gap
+    reason: Nested Carta tax-withholding workflow data has no OCF source.
+  Jurisdiction:
+    role: workflow-gap
+    reason: Carta tax-withholding jurisdiction; OCF address/exemption jurisdictions are different concepts.
+  OptionGrantDocuments:
+    role: gap
+    reason: Carta grant-document relationship has no OCF source relationship.

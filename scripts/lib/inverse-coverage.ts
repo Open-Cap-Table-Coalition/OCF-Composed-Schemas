@@ -7,15 +7,10 @@
  * keeps those dimensions separate so every report can render the same ledger.
  */
 import { Corpus, GreenObject, MappingEdge } from "./core-corpus.js";
+import { CartaCoverageRole, CartaCoveragePolicyEntry } from "./coverage-policy.js";
 import { isPlainObject } from "./mapping-validator.js";
 
-export type CartaDefDisposition =
-  | "report-rollup"
-  | "alternate"
-  | "vendor-family"
-  | "workflow-gap"
-  | "gap"
-  | "review";
+export type CartaDefDisposition = CartaCoverageRole | "review";
 
 export type CartaDefStatus =
   | "direct"
@@ -23,6 +18,35 @@ export type CartaDefStatus =
   | "nested-covered"
   | "deferred"
   | CartaDefDisposition;
+
+/** Mutually exclusive primary roles used to account for every object-like definition. */
+export const CARTA_DEF_STATUS_ORDER: CartaDefStatus[] = [
+  "direct",
+  "type-only",
+  "deferred",
+  "nested-covered",
+  "value-type",
+  "report-rollup",
+  "alternate",
+  "vendor-family",
+  "workflow-gap",
+  "gap",
+  "review",
+];
+
+export const CARTA_DEF_STATUS_LABELS: Record<CartaDefStatus, string> = {
+  direct: "direct executable",
+  "type-only": "type-only",
+  deferred: "deferred",
+  "nested-covered": "nested-covered",
+  "value-type": "value-type / non-target",
+  "report-rollup": "report roll-up",
+  alternate: "alternate shape",
+  "vendor-family": "vendor family",
+  "workflow-gap": "workflow/data gap",
+  gap: "actionable gap",
+  review: "review required",
+};
 
 export interface CartaRefSite {
   from: string;
@@ -78,6 +102,8 @@ export interface TypeCorrespondence {
 export interface InverseCoverageMetrics {
   totalDefs: number;
   objectDefs: number;
+  /** Mutually exclusive primary role for every object-like Carta definition. */
+  definitionRoleCounts: Record<CartaDefStatus, number>;
   objectSlots: number;
   directDefs: number;
   directSlots: number;
@@ -91,6 +117,8 @@ export interface InverseCoverageMetrics {
   emptySlots: number;
   nestedCoveredDefs: number;
   reportRollupDefs: number;
+  curatedValueTypeEntries: number;
+  valueTypeDefs: number;
   alternateDefs: number;
   vendorFamilyDefs: number;
   workflowGapDefs: number;
@@ -105,83 +133,9 @@ export interface InverseCoverageLedger {
   defs: CartaDefCoverage[];
   typeCorrespondences: TypeCorrespondence[];
   metrics: InverseCoverageMetrics;
-  /** Object-like Carta defs with no direct/type/deferred evidence or mapped-parent reachability. */
+  /** Object-like Carta defs needing role review or follow-up after policy exclusions. */
   candidates: CartaDefCoverage[];
 }
-
-interface DispositionPolicy {
-  disposition: CartaDefDisposition;
-  reason: string;
-}
-
-/**
- * Exceptions that cannot be inferred reliably from JSON Schema shape alone.
- * The rest of the classification is derived from target pointers and `$ref`
- * reachability. Keeping this policy in one place avoids report-specific lists.
- */
-const CARTA_DEF_POLICY: Record<string, DispositionPolicy> = {
-  Corporation: {
-    disposition: "alternate",
-    reason: "Unused alternate issuer shape; OCF Issuer maps to Carta Issuer.",
-  },
-  Date: {
-    disposition: "alternate",
-    reason: "Partial-date helper; OCF Date maps to the Iso8601 date wrappers.",
-  },
-  Vesting: {
-    disposition: "alternate",
-    reason: "Unreachable option-grant vesting shape; mapped OCF vesting uses schedule/event defs.",
-  },
-  Acceleration: {
-    disposition: "alternate",
-    reason: "Child of the unreachable Carta Vesting shape.",
-  },
-  Interest: {
-    disposition: "vendor-family",
-    reason: "Carta profits-interest security family has no OCF source object.",
-  },
-  ThresholdDetails: {
-    disposition: "vendor-family",
-    reason: "Nested profits-interest threshold details have no OCF source.",
-  },
-  PhantomCancellationTransaction: {
-    disposition: "vendor-family",
-    reason: "Carta phantom-equity transaction family has no OCF route.",
-  },
-  PhantomIssuanceTransaction: {
-    disposition: "vendor-family",
-    reason: "Carta phantom-equity transaction family has no OCF route.",
-  },
-  PiuCancellationTransaction: {
-    disposition: "vendor-family",
-    reason: "Carta profits-interest-unit transaction family has no OCF route.",
-  },
-  PiuIssuanceTransaction: {
-    disposition: "vendor-family",
-    reason: "Carta profits-interest-unit transaction family has no OCF route.",
-  },
-  OptionExercise: {
-    disposition: "workflow-gap",
-    reason: "Carta exercise-request workflow object; OCF maps the realized transaction instead.",
-  },
-  OptionExerciseMoneyMovement: {
-    disposition: "workflow-gap",
-    reason: "Nested Carta exercise-funding workflow data has no OCF source.",
-  },
-  OptionExerciseTaxWithholdingLineItem: {
-    disposition: "workflow-gap",
-    reason: "Nested Carta tax-withholding workflow data has no OCF source.",
-  },
-  Jurisdiction: {
-    disposition: "workflow-gap",
-    reason:
-      "Carta tax-withholding jurisdiction; OCF address/exemption jurisdictions are different concepts.",
-  },
-  OptionGrantDocuments: {
-    disposition: "gap",
-    reason: "Carta grant-document relationship has no OCF source relationship.",
-  },
-};
 
 export function isCartaObjectLike(def: unknown): boolean {
   if (!isPlainObject(def) || !isPlainObject(def.properties)) return false;
@@ -306,16 +260,12 @@ function isDirect(edge: MappingEdge): boolean {
   return edge.scope === "object" || edge.scope === "composite";
 }
 
-function reportRollupPolicy(name: string): DispositionPolicy | undefined {
+function reportRollupPolicy(name: string): CartaCoveragePolicyEntry | undefined {
   if (!/(?:Summary|TransactionItem)$/.test(name) && name !== "StakeholderGroup") return undefined;
   return {
-    disposition: "report-rollup",
+    role: "report-rollup",
     reason: "Carta read-model aggregate; OCF records the underlying leaf facts instead.",
   };
-}
-
-function isPointerForDef(pointer: string, name: string): boolean {
-  return pointer === `#/$defs/${name}` || pointer.startsWith(`#/$defs/${name}/`);
 }
 
 function slotPointer(name: string, property: string): string {
@@ -463,7 +413,7 @@ export function buildInverseCoverage(corpus: Corpus): InverseCoverageLedger {
       .map((slot) => slot.property);
     const directRoot = directRoots.has(info.name);
     const structuralParents = [...(parents.get(info.name) ?? new Set<string>())].sort();
-    const policy = CARTA_DEF_POLICY[info.name] ?? reportRollupPolicy(info.name);
+    const policy = corpus.coveragePolicy.cartaDefs.get(info.name) ?? reportRollupPolicy(info.name);
     let status: CartaDefStatus;
     let disposition: CartaDefDisposition | undefined;
     let reason: string | undefined;
@@ -481,8 +431,8 @@ export function buildInverseCoverage(corpus: Corpus): InverseCoverageLedger {
       status = "deferred";
     else if (structuralParents.length > 0) status = "nested-covered";
     else if (policy) {
-      status = policy.disposition;
-      disposition = policy.disposition;
+      status = policy.role;
+      disposition = policy.role;
       reason = policy.reason;
     } else {
       status = "review";
@@ -513,9 +463,13 @@ export function buildInverseCoverage(corpus: Corpus): InverseCoverageLedger {
   );
   const countStatus = (status: CartaDefStatus) =>
     defRows.filter((row) => row.status === status).length;
+  const definitionRoleCounts = Object.fromEntries(
+    CARTA_DEF_STATUS_ORDER.map((status) => [status, countStatus(status)])
+  ) as Record<CartaDefStatus, number>;
   const metrics: InverseCoverageMetrics = {
     totalDefs: schema.defs.size,
     objectDefs: defRows.length,
+    definitionRoleCounts,
     objectSlots: slots.length,
     directDefs: countStatus("direct"),
     directSlots: slots.filter((slot) => slot.status === "direct").length,
@@ -527,6 +481,10 @@ export function buildInverseCoverage(corpus: Corpus): InverseCoverageLedger {
     emptySlots: slots.filter((slot) => slot.status === "empty").length,
     nestedCoveredDefs: countStatus("nested-covered"),
     reportRollupDefs: countStatus("report-rollup"),
+    curatedValueTypeEntries: [...corpus.coveragePolicy.cartaDefs.values()].filter(
+      (entry) => entry.role === "value-type"
+    ).length,
+    valueTypeDefs: countStatus("value-type"),
     alternateDefs: countStatus("alternate"),
     vendorFamilyDefs: countStatus("vendor-family"),
     workflowGapDefs: countStatus("workflow-gap"),

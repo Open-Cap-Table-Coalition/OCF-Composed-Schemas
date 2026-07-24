@@ -24,7 +24,12 @@ import { pathToFileURL } from "node:url";
 
 import { deriveCore, Derived, isMember, RICH_PROFILE } from "./lib/core-pipeline.js";
 import { BOOKKEEPING, buildTargetIndex } from "./lib/report-helpers.js";
-import { buildInverseCoverage, InverseCoverageLedger } from "./lib/inverse-coverage.js";
+import {
+  buildInverseCoverage,
+  CARTA_DEF_STATUS_LABELS,
+  CARTA_DEF_STATUS_ORDER,
+  InverseCoverageLedger,
+} from "./lib/inverse-coverage.js";
 import {
   EntityGroup,
   FlowRow,
@@ -221,7 +226,8 @@ function render(
     "  type-only slots are reusable correspondences whose concrete object context is supplied",
     "  separately; implicit slots come from deterministic constants. Empty slots are reported",
     "  separately from unmapped `$defs` so root shape, nested coverage, and semantic type coverage",
-    "  are not conflated.",
+    "  are not conflated. Curated value-type roles (for example, date/datetime wrappers) remain",
+    "  available for type correspondences but are not treated as standalone inverse entities.",
     "",
     "## Inverse metrics",
     "",
@@ -241,11 +247,27 @@ function render(
     `| deferred slots | ${inverse.metrics.deferredSlots} |`,
     `| structurally nested-covered defs | ${inverse.metrics.nestedCoveredDefs} |`,
     `| expected report roll-ups | ${inverse.metrics.reportRollupDefs} |`,
+    `| curated value-type policy entries | ${inverse.metrics.curatedValueTypeEntries} |`,
+    `| object-like value-type/non-target defs | ${inverse.metrics.valueTypeDefs} |`,
     `| alternate/unreachable shapes | ${inverse.metrics.alternateDefs} |`,
     `| vendor-only family candidates | ${inverse.metrics.vendorFamilyDefs} |`,
     `| workflow/data-shape gap candidates | ${inverse.metrics.workflowGapDefs} |`,
     `| actionable inverse gap candidates | ${inverse.metrics.actionableGapDefs} |`,
     `| unresolved role-review candidates | ${inverse.metrics.reviewDefs} |`,
+    "",
+    "### Object-definition role accounting",
+    "",
+    "Primary definition role is mutually exclusive and accounts for every object-like Carta definition.",
+    "Slot-level evidence can overlap: for example, a direct definition may also contain deferred or",
+    "type-only slots.",
+    "",
+    "| primary role | object-like defs |",
+    "| --- | ---: |",
+    ...CARTA_DEF_STATUS_ORDER.map(
+      (status) =>
+        `| ${CARTA_DEF_STATUS_LABELS[status]} | ${inverse.metrics.definitionRoleCounts[status]} |`
+    ),
+    `| **total** | **${inverse.metrics.objectDefs}** |`,
     "",
     "## Hub flow — per related group (what flows in vs is lost, both sides)",
     "",

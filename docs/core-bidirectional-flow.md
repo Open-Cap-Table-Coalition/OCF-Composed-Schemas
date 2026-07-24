@@ -28,7 +28,8 @@ flowchart LR
   type-only slots are reusable correspondences whose concrete object context is supplied
   separately; implicit slots come from deterministic constants. Empty slots are reported
   separately from unmapped `$defs` so root shape, nested coverage, and semantic type coverage
-  are not conflated.
+  are not conflated. Curated value-type roles (for example, date/datetime wrappers) remain
+  available for type correspondences but are not treated as standalone inverse entities.
 
 ## Inverse metrics
 
@@ -48,11 +49,34 @@ These counts are mutually descriptive dimensions of the same ledger, not a singl
 | deferred slots | 4 |
 | structurally nested-covered defs | 9 |
 | expected report roll-ups | 17 |
-| alternate/unreachable shapes | 4 |
+| curated value-type policy entries | 7 |
+| object-like value-type/non-target defs | 1 |
+| alternate/unreachable shapes | 3 |
 | vendor-only family candidates | 6 |
 | workflow/data-shape gap candidates | 4 |
 | actionable inverse gap candidates | 11 |
 | unresolved role-review candidates | 0 |
+
+### Object-definition role accounting
+
+Primary definition role is mutually exclusive and accounts for every object-like Carta definition.
+Slot-level evidence can overlap: for example, a direct definition may also contain deferred or
+type-only slots.
+
+| primary role | object-like defs |
+| --- | ---: |
+| direct executable | 39 |
+| type-only | 6 |
+| deferred | 0 |
+| nested-covered | 9 |
+| value-type / non-target | 1 |
+| report roll-up | 17 |
+| alternate shape | 3 |
+| vendor family | 6 |
+| workflow/data gap | 4 |
+| actionable gap | 1 |
+| review required | 0 |
+| **total** | **86** |
 
 ## Hub flow — per related group (what flows in vs is lost, both sides)
 
