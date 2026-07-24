@@ -641,10 +641,23 @@ structural `$ref` reachability, deferred extraction, expected derived objects,
 curated value-type roles, alternate/unreachable shapes, and actionable gap candidates.
 A missing root target is therefore not automatically a missing concept.
 
+### CARTA inverse coverage: the simple story
+
+1. Carta defines **139** total definitions.
+2. **86** of them are object-shaped.
+3. Of those **86**, **54** are support definitions, not standalone objects (**53** nested objects + **1** object-shaped value type).
+4. That leaves **32** standalone mapping candidates.
+5. Separately, **6** scalar support types are also excluded; they are outside the **86** object-shaped definitions.
+6. Total support definitions excluded: **60**.
+7. We have mapping evidence for **15**: **0** fully mapped and **15** partially mapped (**14** direct executable, **1** type-only, **0** deferred).
+8. **17** standalone candidates have no mapping evidence yet; their inventory role tells us whether that is expected or actionable (**12** report/read-model roll-ups, **2** alternate shapes, **1** CARTA-specific families without OCF sources, **1** workflow/data gaps, **1** actionable gaps, **0** requiring review).
+
+**Checks:** 32 = 15 + 17; 86 = 32 + 54.
+
+### Technical slot diagnostics
+
 | Carta-side dimension | count |
 | --- | ---: |
-| Carta `$defs` total | 139 |
-| object-like Carta `$defs` | 86 |
 | object slots | 588 |
 | defs with direct executable coverage | 14 |
 | direct executable slots | 146 |
@@ -654,34 +667,6 @@ A missing root target is therefore not automatically a missing concept.
 | implicit constant slots | 3 |
 | deferred slots | 4 |
 | empty slots | 401 |
-| nested object defs | 53 |
-| expected report roll-ups | 12 |
-| curated value-type policy entries | 7 |
-| object-like value-type/non-target defs | 1 |
-| alternate/unreachable shapes | 2 |
-| vendor-only family candidates | 1 |
-| workflow/data-shape gap candidates | 1 |
-| actionable inverse gap candidates | 3 |
-| unresolved role-review candidates | 0 |
-
-### CARTA inverse coverage: the simple story
-
-1. Carta defines **139** total definitions.
-2. **86** of them are object-shaped.
-3. Of those **86**, **54** are support definitions, not standalone objects (**53** nested objects + **1** object-shaped value type).
-4. That leaves **32** standalone mapping candidates.
-5. Separately, **6** scalar support types are also excluded; they are outside the **86** object-shaped definitions.
-6. Total support definitions excluded: **60**.
-7. We have mapping evidence for **15**: **0** fully mapped and **15** partially mapped.
-8. **17** standalone candidates have no mapping evidence yet; their inventory role tells us whether that is expected or actionable.
-
-**Checks:** 32 = 15 + 17; 86 = 32 + 54.
-
-| mapping evidence detail | count |
-| --- | ---: |
-| direct executable | 14 |
-| type-only | 1 |
-| deferred | 0 |
 
 ### Supporting CARTA definitions excluded from standalone mapping targets (60)
 
@@ -753,9 +738,9 @@ The parent column names the immediate parent(s); the reason says whether mapped-
 | nested-obj | `#/$defs/WarrantIssuanceTransaction` | WarrantTransactionItem | Nested object; covered through mapped parent(s). |
 | nested-obj | `#/$defs/WarrantTransferTransaction` | WarrantTransactionItem | Nested object; covered through mapped parent(s). |
 
-### Unmapped standalone candidates by inventory role (17)
+### Standalone candidates requiring inventory detail (17)
 
-These definitions are not counted as mapped targets yet. The status and reason columns
+The summary above counts these definitions once. The status and reason columns below
 explain whether each is a read-model roll-up, alternate shape, CARTA-specific family
 without an OCF source, workflow/data gap, or actionable mapping candidate.
 

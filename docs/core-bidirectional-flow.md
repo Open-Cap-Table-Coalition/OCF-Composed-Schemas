@@ -31,14 +31,12 @@ flowchart LR
   are not conflated. Curated value-type roles (for example, date/datetime wrappers) remain
   available for type correspondences but are not treated as standalone inverse entities.
 
-## Inverse metrics
+## Technical slot diagnostics
 
 These counts are mutually descriptive dimensions of the same ledger, not a single loss total.
 
 | Carta-side dimension | count |
 | --- | ---: |
-| Carta `$defs` total | 139 |
-| object-like Carta `$defs` | 86 |
 | Carta object slots | 588 |
 | defs with direct executable coverage | 14 |
 | direct executable slots | 146 |
@@ -47,15 +45,6 @@ These counts are mutually descriptive dimensions of the same ledger, not a singl
 | type-only slots | 34 |
 | implicit constant slots | 3 |
 | deferred slots | 4 |
-| nested object defs | 53 |
-| expected report roll-ups | 12 |
-| curated value-type policy entries | 7 |
-| object-like value-type/non-target defs | 1 |
-| alternate/unreachable shapes | 2 |
-| vendor-only family candidates | 1 |
-| workflow/data-shape gap candidates | 1 |
-| actionable inverse gap candidates | 3 |
-| unresolved role-review candidates | 0 |
 
 ### CARTA inverse coverage: the simple story
 
@@ -65,8 +54,8 @@ These counts are mutually descriptive dimensions of the same ledger, not a singl
 4. That leaves **32** standalone mapping candidates.
 5. Separately, **6** scalar support types are also excluded; they are outside the **86** object-shaped definitions.
 6. Total support definitions excluded: **60**.
-7. We have mapping evidence for **15**: **0** fully mapped and **15** partially mapped.
-8. **17** standalone candidates have no mapping evidence yet; their inventory role tells us whether that is expected or actionable.
+7. We have mapping evidence for **15**: **0** fully mapped and **15** partially mapped (**14** direct executable, **1** type-only, **0** deferred).
+8. **17** standalone candidates have no mapping evidence yet; their inventory role tells us whether that is expected or actionable (**12** report/read-model roll-ups, **2** alternate shapes, **1** CARTA-specific families without OCF sources, **1** workflow/data gaps, **1** actionable gaps, **0** requiring review).
 
 **Checks:** 32 = 15 + 17; 86 = 32 + 54.
 

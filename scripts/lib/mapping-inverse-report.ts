@@ -256,22 +256,14 @@ function renderCoverageStory(inverse: InverseCoverageLedger): string[] {
     `  4. Separately:`,
     `       ${story.scalarValueTypeDefs} scalar support types are also excluded; they are outside the ${story.objectDefs} object-shaped definitions.`,
     `       Total support definitions excluded: ${story.nonEntityDefs}.`,
-    `  5. ${story.mappedDefs} standalone candidates have OCF mapping evidence (${story.fullyMappedDefs} fully mapped, ${story.partiallyMappedDefs} partially mapped).`,
-    `  6. ${story.unmappedCandidateDefs} standalone candidates have no mapping evidence yet; their inventory role says whether that is expected or actionable.`,
+    `  5. ${story.mappedDefs} standalone candidates have OCF mapping evidence:`,
+    `       ${counts.direct} direct executable, ${counts["type-only"]} type-only, ${counts.deferred} deferred.`,
+    `       Completeness: ${story.fullyMappedDefs} fully mapped, ${story.partiallyMappedDefs} partially mapped.`,
+    `  6. ${story.unmappedCandidateDefs} standalone candidates have no mapping evidence yet; their inventory role says whether that is expected or actionable:`,
+    `       ${counts["report-rollup"]} report/read-model roll-ups, ${counts.alternate} alternate shapes,`,
+    `       ${counts["vendor-family"]} CARTA-specific families without OCF sources, ${counts["workflow-gap"]} workflow/data gaps,`,
+    `       ${counts.gap} actionable gaps, ${counts.review} requiring review.`,
     `  Check: ${story.standaloneCandidateDefs} = ${story.mappedDefs} + ${story.unmappedCandidateDefs}; ${story.objectDefs} = ${story.standaloneCandidateDefs} + ${story.nonEntityObjectDefs}.`,
-    "",
-    "Mapping evidence detail",
-    `  direct executable: ${counts.direct}`,
-    `  type-only: ${counts["type-only"]}`,
-    `  deferred: ${counts.deferred}`,
-    "",
-    `Unmapped candidates by inventory role (${story.unmappedCandidateDefs})`,
-    `  report/read-model roll-up: ${counts["report-rollup"]}`,
-    `  alternate shape: ${counts.alternate}`,
-    `  CARTA-specific family (no OCF source): ${counts["vendor-family"]}`,
-    `  workflow/data gap: ${counts["workflow-gap"]}`,
-    `  actionable gap: ${counts.gap}`,
-    `  review required: ${counts.review}`,
   ];
 }
 
@@ -307,7 +299,6 @@ export function renderMappingInverseReport(options: MappingInverseReportOptions)
   const allObjects = targetObjectNames(inverse);
   const mapped = mappedDefinitions(inverse);
   const followUp = followUpDefinitions(inverse);
-  const story = inverseCoverageStory(inverse);
   const excluded = inverse.excludedRoleRows;
   const sourceDocuments =
     options.sourceDocuments ?? new Set(inverse.edges.map((edge) => edge.rel)).size;
@@ -316,14 +307,6 @@ export function renderMappingInverseReport(options: MappingInverseReportOptions)
   const lines = renderBox("Carta inverse coverage report", [
     `source_documents: ${sourceDocuments}`,
     `green_carta_documents: ${greenDocuments}`,
-    `carta_defs_total: ${story.totalDefs}`,
-    `object_like_defs: ${story.objectDefs}`,
-    `standalone_candidate_defs: ${story.standaloneCandidateDefs}`,
-    `supporting_defs_excluded: ${story.nonEntityDefs}`,
-    `mapped_targets: ${story.mappedDefs}`,
-    `fully_mapped_targets: ${story.fullyMappedDefs}`,
-    `partially_mapped_targets: ${story.partiallyMappedDefs}`,
-    `unmapped_candidates: ${story.unmappedCandidateDefs}`,
   ]);
 
   lines.push(...renderCoverageStory(inverse), ...renderExcludedRows(excluded, inverse));
@@ -361,7 +344,7 @@ export function renderMappingInverseReport(options: MappingInverseReportOptions)
     lines.push(
       "",
       ...renderSection(
-        "Unmapped standalone candidates by inventory role",
+        "Standalone candidates requiring inventory detail",
         followUp,
         groups,
         inverse

@@ -224,6 +224,9 @@ export function renderGapReport(d: Derived): string {
     lines.push("");
   }
 
+  const story = inverseCoverageStory(inverse);
+  const roleCounts = inverse.metrics.definitionRoleCounts;
+
   lines.push("## (b) Carta inverse coverage by object definition", "");
   lines.push(
     "The inverse ledger separates executable slot coverage, reusable type mappings,",
@@ -231,10 +234,23 @@ export function renderGapReport(d: Derived): string {
     "curated value-type roles, alternate/unreachable shapes, and actionable gap candidates.",
     "A missing root target is therefore not automatically a missing concept.",
     "",
+    "### CARTA inverse coverage: the simple story",
+    "",
+    `1. Carta defines **${story.totalDefs}** total definitions.`,
+    `2. **${story.objectDefs}** of them are object-shaped.`,
+    `3. Of those **${story.objectDefs}**, **${story.nonEntityObjectDefs}** are support definitions, not standalone objects (**${roleCounts["nested-obj"]}** nested objects + **${roleCounts["value-type"]}** object-shaped value type).`,
+    `4. That leaves **${story.standaloneCandidateDefs}** standalone mapping candidates.`,
+    `5. Separately, **${story.scalarValueTypeDefs}** scalar support types are also excluded; they are outside the **${story.objectDefs}** object-shaped definitions.`,
+    `6. Total support definitions excluded: **${story.nonEntityDefs}**.`,
+    `7. We have mapping evidence for **${story.mappedDefs}**: **${story.fullyMappedDefs}** fully mapped and **${story.partiallyMappedDefs}** partially mapped (**${roleCounts.direct}** direct executable, **${roleCounts["type-only"]}** type-only, **${roleCounts.deferred}** deferred).`,
+    `8. **${story.unmappedCandidateDefs}** standalone candidates have no mapping evidence yet; their inventory role tells us whether that is expected or actionable (**${roleCounts["report-rollup"]}** report/read-model roll-ups, **${roleCounts.alternate}** alternate shapes, **${roleCounts["vendor-family"]}** CARTA-specific families without OCF sources, **${roleCounts["workflow-gap"]}** workflow/data gaps, **${roleCounts.gap}** actionable gaps, **${roleCounts.review}** requiring review).`,
+    "",
+    `**Checks:** ${story.standaloneCandidateDefs} = ${story.mappedDefs} + ${story.unmappedCandidateDefs}; ${story.objectDefs} = ${story.standaloneCandidateDefs} + ${story.nonEntityObjectDefs}.`,
+    "",
+    "### Technical slot diagnostics",
+    "",
     "| Carta-side dimension | count |",
     "| --- | ---: |",
-    `| Carta \`$defs\` total | ${inverse.metrics.totalDefs} |`,
-    `| object-like Carta \`$defs\` | ${inverse.metrics.objectDefs} |`,
     `| object slots | ${inverse.metrics.objectSlots} |`,
     `| defs with direct executable coverage | ${inverse.metrics.directDefs} |`,
     `| direct executable slots | ${inverse.metrics.directSlots} |`,
@@ -244,39 +260,6 @@ export function renderGapReport(d: Derived): string {
     `| implicit constant slots | ${inverse.metrics.implicitSlots} |`,
     `| deferred slots | ${inverse.metrics.deferredSlots} |`,
     `| empty slots | ${inverse.metrics.emptySlots} |`,
-    `| nested object defs | ${inverse.metrics.nestedObjDefs} |`,
-    `| expected report roll-ups | ${inverse.metrics.reportRollupDefs} |`,
-    `| curated value-type policy entries | ${inverse.metrics.curatedValueTypeEntries} |`,
-    `| object-like value-type/non-target defs | ${inverse.metrics.valueTypeDefs} |`,
-    `| alternate/unreachable shapes | ${inverse.metrics.alternateDefs} |`,
-    `| vendor-only family candidates | ${inverse.metrics.vendorFamilyDefs} |`,
-    `| workflow/data-shape gap candidates | ${inverse.metrics.workflowGapDefs} |`,
-    `| actionable inverse gap candidates | ${inverse.metrics.actionableGapDefs} |`,
-    `| unresolved role-review candidates | ${inverse.metrics.reviewDefs} |`,
-    ""
-  );
-
-  const story = inverseCoverageStory(inverse);
-  const roleCounts = inverse.metrics.definitionRoleCounts;
-  lines.push(
-    "### CARTA inverse coverage: the simple story",
-    "",
-    `1. Carta defines **${story.totalDefs}** total definitions.`,
-    `2. **${story.objectDefs}** of them are object-shaped.`,
-    `3. Of those **${story.objectDefs}**, **${story.nonEntityObjectDefs}** are support definitions, not standalone objects (**${roleCounts["nested-obj"]}** nested objects + **${roleCounts["value-type"]}** object-shaped value type).`,
-    `4. That leaves **${story.standaloneCandidateDefs}** standalone mapping candidates.`,
-    `5. Separately, **${story.scalarValueTypeDefs}** scalar support types are also excluded; they are outside the **${story.objectDefs}** object-shaped definitions.`,
-    `6. Total support definitions excluded: **${story.nonEntityDefs}**.`,
-    `7. We have mapping evidence for **${story.mappedDefs}**: **${story.fullyMappedDefs}** fully mapped and **${story.partiallyMappedDefs}** partially mapped.`,
-    `8. **${story.unmappedCandidateDefs}** standalone candidates have no mapping evidence yet; their inventory role tells us whether that is expected or actionable.`,
-    "",
-    `**Checks:** ${story.standaloneCandidateDefs} = ${story.mappedDefs} + ${story.unmappedCandidateDefs}; ${story.objectDefs} = ${story.standaloneCandidateDefs} + ${story.nonEntityObjectDefs}.`,
-    "",
-    "| mapping evidence detail | count |",
-    "| --- | ---: |",
-    `| direct executable | ${roleCounts.direct} |`,
-    `| type-only | ${roleCounts["type-only"]} |`,
-    `| deferred | ${roleCounts.deferred} |`,
     ""
   );
 
@@ -304,9 +287,9 @@ export function renderGapReport(d: Derived): string {
     (row) => !isInverseMappedDefinition(row) && !isInverseNonEntityDefinition(row)
   );
   lines.push(
-    `### Unmapped standalone candidates by inventory role (${rawUntargeted.length})`,
+    `### Standalone candidates requiring inventory detail (${rawUntargeted.length})`,
     "",
-    "These definitions are not counted as mapped targets yet. The status and reason columns",
+    "The summary above counts these definitions once. The status and reason columns below",
     "explain whether each is a read-model roll-up, alternate shape, CARTA-specific family",
     "without an OCF source, workflow/data gap, or actionable mapping candidate.",
     "",

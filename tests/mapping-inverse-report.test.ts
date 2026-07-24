@@ -65,10 +65,9 @@ describe("renderMappingInverseReport", () => {
     });
 
     expect(out).toContain("source_documents: 2");
-    expect(out).toContain("mapped_targets: 1");
-    expect(out).toContain(
-      "5. 1 standalone candidates have OCF mapping evidence (0 fully mapped, 1 partially mapped)."
-    );
+    expect(out).toContain("Simple story");
+    expect(out).toContain("5. 1 standalone candidates have OCF mapping evidence:");
+    expect(out).toContain("Completeness: 0 fully mapped, 1 partially mapped.");
     expect(out).toContain('id: "#/$defs/ConvertibleNote"');
     expect(out).toContain("types/SAFE.mapping.md :: discount (rename)");
     expect(out).toContain("types/Note.mapping.md :: conversion_discount (rename)");
@@ -126,7 +125,8 @@ describe("renderMappingInverseReport", () => {
 
     const out = renderMappingInverseReport({ inverse });
 
-    expect(out).toContain("Unmapped standalone candidates by inventory role (2)");
+    expect(out).toContain("6. 2 standalone candidates have no mapping evidence yet");
+    expect(out).toContain("0 report/read-model roll-ups, 0 alternate shapes");
     expect(out).toContain("Supporting CARTA definitions excluded from standalone mapping targets");
     expect(out).toContain("name: EmptyObject");
     expect(out).toContain("name: EmptyWithProperties");
