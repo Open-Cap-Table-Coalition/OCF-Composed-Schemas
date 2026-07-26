@@ -1,6 +1,7 @@
 import { Corpus, MappingEdge } from "../scripts/lib/core-corpus.js";
 import { buildInverseCoverage, InverseCoverageLedger } from "../scripts/lib/inverse-coverage.js";
 import { renderMappingInverseReport } from "../scripts/lib/mapping-inverse-report.js";
+import type { RawSchema } from "../scripts/lib/registry.js";
 
 function ledger(
   defs: Record<string, Record<string, unknown>>,
@@ -20,7 +21,8 @@ function fieldEdge(
   source: string,
   field: string,
   target: string,
-  variant = "—"
+  variant = "—",
+  kind = "rename"
 ): MappingEdge {
   return {
     rel: file,
@@ -30,7 +32,7 @@ function fieldEdge(
     field,
     scope: "type",
     target,
-    kind: "rename",
+    kind,
   };
 }
 
@@ -39,7 +41,8 @@ function objectFieldEdge(
   source: string,
   field: string,
   target: string,
-  variant = "—"
+  variant = "—",
+  kind = "rename"
 ): MappingEdge {
   return {
     rel: file,
@@ -49,7 +52,7 @@ function objectFieldEdge(
     field,
     scope: "object",
     target,
-    kind: "rename",
+    kind,
   };
 }
 
@@ -141,6 +144,120 @@ describe("renderMappingInverseReport", () => {
     expect(out).toContain("direct OCF object mapping");
     expect(out).toContain("reusable type-mapping detail");
     expect(out.match(/:: discount \[shared\] \(rename\)/g)).toHaveLength(1);
+  });
+
+  it("renders the outer and inner discriminator chain for nested convertible mechanisms", () => {
+    const inverse = ledger(
+      {
+        ConvertibleNote: {
+          properties: { dayCountBasis: {} },
+        },
+      },
+      [
+        objectFieldEdge(
+          "objects/transactions/issuance/ConvertibleIssuance.mapping.md",
+          "ConvertibleIssuance",
+          "conversion_triggers",
+          "#/$defs/ConvertibleNote/properties/dayCountBasis",
+          "—",
+          "sequential_transform"
+        ),
+        fieldEdge(
+          "types/conversion_rights/ConvertibleConversionRight.mapping.md",
+          "ConvertibleConversionRight",
+          "conversion_mechanism",
+          "#/$defs/ConvertibleNote/properties/dayCountBasis",
+          "—",
+          "split"
+        ),
+        fieldEdge(
+          "types/conversion_mechanisms/NoteConversionMechanism.mapping.md",
+          "NoteConversionMechanism",
+          "day_count_convention",
+          "#/$defs/ConvertibleNote/properties/dayCountBasis",
+          "—",
+          "enum-remap"
+        ),
+      ]
+    );
+    const out = renderMappingInverseReport({
+      inverse,
+      targetObject: "ConvertibleNote",
+      mappingDocuments: new Map<
+        string,
+        { mapping?: Record<string, unknown>; sourceSchema?: RawSchema }
+      >([
+        [
+          "objects/transactions/issuance/ConvertibleIssuance.mapping.md",
+          {
+            mapping: {
+              fields: {
+                conversion_triggers: {
+                  kind: "sequential_transform",
+                  steps: [
+                    {
+                      kind: "select",
+                      source: "/conversion_right",
+                      where: { path: "/type", equals: "CONVERTIBLE_CONVERSION_RIGHT" },
+                    },
+                    {
+                      kind: "apply_mapping",
+                      mapping: "types/conversion_rights/ConvertibleConversionRight.mapping.md",
+                    },
+                  ],
+                },
+              },
+            },
+          },
+        ],
+        [
+          "types/conversion_rights/ConvertibleConversionRight.mapping.md",
+          {
+            sourceSchema: {
+              properties: {
+                type: { const: "CONVERTIBLE_CONVERSION_RIGHT" },
+                conversion_mechanism: {
+                  oneOf: [
+                    {
+                      $ref: "https://raw.githubusercontent.com/Open-Cap-Table-Coalition/Open-Cap-Format-OCF/main/schema/types/conversion_mechanisms/SAFEConversionMechanism.schema.json",
+                    },
+                    {
+                      $ref: "https://raw.githubusercontent.com/Open-Cap-Table-Coalition/Open-Cap-Format-OCF/main/schema/types/conversion_mechanisms/NoteConversionMechanism.schema.json",
+                    },
+                  ],
+                },
+              },
+            },
+          },
+        ],
+        [
+          "types/conversion_mechanisms/SAFEConversionMechanism.mapping.md",
+          {
+            sourceSchema: {
+              $id: "https://example.test/SAFEConversionMechanism.schema.json",
+              properties: { type: { const: "SAFE_CONVERSION" } },
+            },
+          },
+        ],
+        [
+          "types/conversion_mechanisms/NoteConversionMechanism.mapping.md",
+          {
+            sourceSchema: {
+              $id: "https://example.test/NoteConversionMechanism.schema.json",
+              properties: { type: { const: "CONVERTIBLE_NOTE_CONVERSION" } },
+            },
+          },
+        ],
+      ]),
+    });
+
+    expect(out).toContain(
+      "selects ConvertibleConversionRight where conversion_right.type = CONVERTIBLE_CONVERSION_RIGHT"
+    );
+    expect(out).toContain("active when type = CONVERTIBLE_CONVERSION_RIGHT");
+    expect(out).toContain("dispatches conversion_mechanism.type");
+    expect(out).toContain("SAFEConversionMechanism when type = SAFE_CONVERSION");
+    expect(out).toContain("NoteConversionMechanism when type = CONVERTIBLE_NOTE_CONVERSION");
   });
 
   it("renders only open questions beneath the related target property", () => {

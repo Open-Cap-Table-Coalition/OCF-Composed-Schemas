@@ -29,7 +29,10 @@ derived coverage stays reviewable, and enum remaps are checked value-by-value.
   child records rather than by a source field aimed at the parent property.
   Within each target property, direct `[object]` routes are shown first. `[type]` entries are
   grouped beneath `reusable type-mapping detail`; they explain the nested mapping expansion and
-  are not additional independent source records.
+  are not additional independent source records. When the source is nested and polymorphic, the
+  report also prints the discriminator chain: the selected nested wrapper, its outer `type`
+  guard, and the inner union branches such as `NoteConversionMechanism` versus
+  `SAFEConversionMechanism`.
   Target properties with no mapped OCF source remain explicit in each panel.
 - CI runs the equivalent `npm run mapping:inverse` command on every pull request and push to `main`.
   That command renders the same shared inverse-coverage ledger and role policy used by the
