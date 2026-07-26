@@ -19,6 +19,12 @@ interface InverseFlow {
   kind: string;
   pointer: string;
   context?: string;
+  /**
+   * The route variants that produced this flow. The main report deliberately
+   * collapses identical destinations to `[shared]`, but subtype projections
+   * need to know that the same flow applies to each branch.
+   */
+  routeVariants?: string[];
 }
 
 interface TargetGroup {
@@ -42,6 +48,25 @@ interface MappingQuestionDocument {
   questions?: readonly MappingQuestion[];
   mapping?: Record<string, unknown>;
   sourceSchema?: RawSchema;
+}
+
+interface RouteBranch {
+  label: string;
+  when: string[];
+}
+
+interface RouteAxis {
+  file: string;
+  discriminator: string;
+  branches: RouteBranch[];
+}
+
+interface RouteFlavor {
+  file: string;
+  label: string;
+  discriminator: string;
+  when: string[];
+  properties: string[];
 }
 
 function isPlainObject(value: unknown): value is Record<string, unknown> {
@@ -325,7 +350,8 @@ function sameFlow(left: InverseFlow, right: InverseFlow): boolean {
     left.sourceField === right.sourceField &&
     left.kind === right.kind &&
     left.pointer === right.pointer &&
-    left.context === right.context
+    left.context === right.context &&
+    JSON.stringify(left.routeVariants ?? []) === JSON.stringify(right.routeVariants ?? [])
   );
 }
 
@@ -351,6 +377,7 @@ function addEdge(
   if (!info?.isObjectLike) return;
 
   const field = parts.relative === parts.object ? "(object route)" : parts.relative;
+  const routeVariant = edge.variant === "—" ? undefined : edge.variant;
   const flow: InverseFlow = {
     file: edge.rel,
     sourceKind: edge.sourceKind,
@@ -358,13 +385,20 @@ function addEdge(
     kind: edgeKind(edge),
     pointer: edge.target,
     ...(edgeContext(edge) ? { context: edgeContext(edge) } : {}),
+    ...(routeVariant ? { routeVariants: [routeVariant] } : {}),
   };
   const group = groups.get(parts.object) ?? { object: parts.object, flows: new Map() };
   const flows: InverseFlow[] = group.flows.get(field) ?? [];
   if (!flows.some((existing) => sameFlow(existing, flow))) {
     const sameDestinationFlow = flows.find((existing) => sameDestination(existing, flow));
-    if (sameDestinationFlow) sameDestinationFlow.context = "shared";
-    else flows.push(flow);
+    if (sameDestinationFlow) {
+      const routeVariants = new Set([
+        ...(sameDestinationFlow.routeVariants ?? []),
+        ...(flow.routeVariants ?? []),
+      ]);
+      if (routeVariants.size > 0) sameDestinationFlow.routeVariants = [...routeVariants].sort();
+      sameDestinationFlow.context = "shared";
+    } else flows.push(flow);
   }
   group.flows.set(field, flows);
   groups.set(parts.object, group);
@@ -403,15 +437,203 @@ function targetProperties(inverse: InverseCoverageLedger, object: string): strin
 function sortedTargetFields(
   object: string,
   group: TargetGroup,
-  inverse: InverseCoverageLedger
+  inverse: InverseCoverageLedger,
+  includeUnmappedProperties = true
 ): string[] {
-  const fields = new Set(targetProperties(inverse, object));
+  const fields = new Set(includeUnmappedProperties ? targetProperties(inverse, object) : []);
   for (const field of group.flows.keys()) fields.add(field);
   return [...fields].sort((left, right) => {
     if (left === "(object route)") return -1;
     if (right === "(object route)") return 1;
     return left.localeCompare(right);
   });
+}
+
+function routeDiscriminator(mapping: Record<string, unknown>): string | undefined {
+  const route = mapping.route_by_property;
+  if (!isPlainObject(route)) return undefined;
+  if (typeof route.on_property === "string") return route.on_property;
+  if (!isPlainObject(route.lookup_by)) return undefined;
+  const key = typeof route.lookup_by.key === "string" ? route.lookup_by.key : "?";
+  const through = route.lookup_by.through;
+  const property =
+    isPlainObject(through) && typeof through.on_property === "string" ? through.on_property : "?";
+  return `${key} → ${property} (lookup)`;
+}
+
+function mappingSourceName(file: string): string {
+  return (
+    file
+      .split("/")
+      .pop()
+      ?.replace(/\.mapping\.md$/, "") ?? file
+  );
+}
+
+function targetContainsObject(target: unknown, object: string): boolean {
+  if (typeof target === "string") return target === `#/$defs/${object}`;
+  if (Array.isArray(target)) return target.some((value) => targetContainsObject(value, object));
+  if (!isPlainObject(target)) return false;
+  return Object.values(target).some((value) => targetContainsObject(value, object));
+}
+
+function routeAxesForGroup(
+  group: TargetGroup,
+  mappingDocuments: ReadonlyMap<string, MappingQuestionDocument> | undefined
+): RouteAxis[] {
+  if (!mappingDocuments) return [];
+  const flows = [...group.flows.values()].flat();
+  const axes: RouteAxis[] = [];
+
+  for (const [file, document] of mappingDocuments) {
+    const discriminator = document.mapping ? routeDiscriminator(document.mapping) : undefined;
+    const variants = document.mapping?.variants;
+    if (!discriminator || !isPlainObject(variants)) continue;
+
+    const branches = Object.entries(variants)
+      .map(([label, raw]) => {
+        if (!isPlainObject(raw) || !Array.isArray(raw.when)) return undefined;
+        const when = raw.when.filter((value): value is string => typeof value === "string");
+        if (when.length === 0) return undefined;
+        const relevant = flows.some(
+          (flow) => flow.file === file && flow.routeVariants?.includes(label)
+        );
+        return relevant ? { label, when } : undefined;
+      })
+      .filter((branch): branch is RouteBranch => branch !== undefined);
+
+    // A single surviving branch is still useful for coverage, but it is not a
+    // subtype split. Keep the ordinary object panel for that case.
+    if (branches.length < 2) continue;
+    axes.push({ file, discriminator, branches });
+  }
+
+  return axes.sort(
+    (left, right) =>
+      left.discriminator.localeCompare(right.discriminator) || left.file.localeCompare(right.file)
+  );
+}
+
+function flowsForRouteVariant(group: TargetGroup, file: string, label: string): TargetGroup {
+  const flows = new Map<string, InverseFlow[]>();
+  for (const [field, fieldFlows] of group.flows) {
+    const selected = fieldFlows.filter(
+      (flow) => flow.file === file && flow.routeVariants?.includes(label)
+    );
+    if (selected.length > 0) flows.set(field, selected);
+  }
+  return { object: group.object, flows };
+}
+
+function routeFlavorsForGroup(
+  object: string,
+  group: TargetGroup,
+  inverse: InverseCoverageLedger,
+  mappingDocuments: ReadonlyMap<string, MappingQuestionDocument>
+): RouteFlavor[] {
+  const flavors: RouteFlavor[] = [];
+  for (const [file, document] of mappingDocuments) {
+    const mapping = document.mapping;
+    const discriminator = mapping ? routeDiscriminator(mapping) : undefined;
+    const variants = mapping?.variants;
+    if (!discriminator || !isPlainObject(variants)) continue;
+
+    for (const [label, raw] of Object.entries(variants)) {
+      if (!isPlainObject(raw) || !Array.isArray(raw.when)) continue;
+      const when = raw.when.filter((value): value is string => typeof value === "string");
+      if (when.length === 0 || !targetContainsObject(raw.primary_targets, object)) continue;
+      const variantGroup = flowsForRouteVariant(group, file, label);
+      const properties = sortedTargetFields(object, variantGroup, inverse, false).filter(
+        (field) => field !== "(object route)"
+      );
+      flavors.push({ file, label, discriminator, when, properties });
+    }
+  }
+  return flavors.sort(
+    (left, right) => left.file.localeCompare(right.file) || left.label.localeCompare(right.label)
+  );
+}
+
+function routeVariantProperties(
+  object: string,
+  group: TargetGroup,
+  inverse: InverseCoverageLedger,
+  file: string,
+  label: string
+): string[] {
+  return sortedTargetFields(
+    object,
+    flowsForRouteVariant(group, file, label),
+    inverse,
+    false
+  ).filter((field) => field !== "(object route)");
+}
+
+function renderObjectSummary(
+  object: string,
+  group: TargetGroup,
+  inverse: InverseCoverageLedger,
+  mappingDocuments: ReadonlyMap<string, MappingQuestionDocument>
+): string[] {
+  const flavors = routeFlavorsForGroup(object, group, inverse, mappingDocuments);
+  const flavorFiles = new Set(flavors.map((flavor) => flavor.file));
+  const axes = routeAxesForGroup(group, mappingDocuments).filter(
+    (axis) => !flavorFiles.has(axis.file)
+  );
+  const lines: string[] = [];
+
+  if (flavors.length > 0) {
+    lines.push(`resulting Carta object flavors (${flavors.length})`);
+    flavors.forEach((flavor, index) => {
+      const last = index === flavors.length - 1;
+      const prefix = last ? "└── " : "├── ";
+      const childPrefix = last ? "    " : "│   ";
+      lines.push(`${prefix}${mappingSourceName(flavor.file)}.${flavor.label} → ${object}`);
+      lines.push(
+        `${childPrefix}├── when: ${mappingSourceName(flavor.file)}.${
+          flavor.discriminator
+        } = [${flavor.when.join(", ")}]`
+      );
+      lines.push(
+        `${childPrefix}└── properties: ${
+          flavor.properties.length > 0 ? flavor.properties.join(", ") : "(none directly mapped)"
+        }`
+      );
+    });
+  }
+
+  if (axes.length > 0) {
+    if (lines.length > 0) lines.push("");
+    lines.push(`conditional property flows (${axes.length} discriminators)`);
+    axes.forEach((axis, axisIndex) => {
+      const lastAxis = axisIndex === axes.length - 1;
+      const axisPrefix = lastAxis ? "    " : "│   ";
+      lines.push(
+        `${lastAxis ? "└── " : "├── "}${mappingSourceName(axis.file)} :: ${axis.discriminator}`
+      );
+      const groups = new Map<string, RouteBranch[]>();
+      for (const branch of axis.branches) {
+        const properties = routeVariantProperties(object, group, inverse, axis.file, branch.label);
+        const key = properties.join("\u0000");
+        const branches = groups.get(key) ?? [];
+        branches.push(branch);
+        groups.set(key, branches);
+      }
+      const entries = [...groups.entries()];
+      entries.forEach(([key, branches], entryIndex) => {
+        const properties = key.length > 0 ? key.split("\u0000") : ["(route only)"];
+        const condition = branches
+          .map((branch) => `${branch.label} [${branch.when.join(", ")}]`)
+          .join(" or ");
+        const lastEntry = entryIndex === entries.length - 1;
+        lines.push(
+          `${axisPrefix}${lastEntry ? "└── " : "├── "}${condition} → ${properties.join(", ")}`
+        );
+      });
+    });
+  }
+
+  return lines;
 }
 
 function renderFlowNode(
@@ -458,15 +680,19 @@ function renderMappingTree(
   object: string,
   group: TargetGroup,
   inverse: InverseCoverageLedger,
-  mappingDocuments?: ReadonlyMap<string, MappingQuestionDocument>
+  mappingDocuments?: ReadonlyMap<string, MappingQuestionDocument>,
+  includeUnmappedProperties = true,
+  includeMappingQuestions = true
 ): string[] {
-  const fields = sortedTargetFields(object, group, inverse);
+  const fields = sortedTargetFields(object, group, inverse, includeUnmappedProperties);
   const allFlows = [...group.flows.values()].flat();
-  const mappingQuestions = openQuestionsForFlows(
-    allFlows,
-    mappingDocuments,
-    (question) => question.property === null && question.target === null
-  );
+  const mappingQuestions = includeMappingQuestions
+    ? openQuestionsForFlows(
+        allFlows,
+        mappingDocuments,
+        (question) => question.property === null && question.target === null
+      )
+    : [];
   const renderedFields = mappingQuestions.length > 0 ? [...fields, "(mapping questions)"] : fields;
   const lines: string[] = [];
   renderedFields.forEach((field, fieldIndex) => {
@@ -568,8 +794,17 @@ function renderObjectPanel(
   ];
   if (hasMappings) metadata.push(`unmapped_properties: ${unmappedProperties}`);
   if (!hasMappings && row.reason) metadata.push(`reason: ${row.reason}`);
+  const summary =
+    mappingDocuments && hasMappings
+      ? renderObjectSummary(row.name, group, inverse, mappingDocuments)
+      : [];
+  const mappingDetail = renderMappingTree(row.name, group, inverse, mappingDocuments);
   const body = hasMappings
-    ? renderMappingTree(row.name, group, inverse, mappingDocuments)
+    ? [
+        ...summary,
+        ...(summary.length > 0 ? ["", "aggregate mapping detail"] : []),
+        ...mappingDetail,
+      ]
     : ["(empty mapping)"];
   return renderBox(`Carta object: ${row.name}`, metadata, body);
 }

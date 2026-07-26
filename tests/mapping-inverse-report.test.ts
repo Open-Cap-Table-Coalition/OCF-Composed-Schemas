@@ -145,6 +145,175 @@ describe("renderMappingInverseReport", () => {
     expect(out.match(/:: discount \[shared\] \(rename\)/g)).toHaveLength(1);
   });
 
+  it("renders mutually exclusive target subtype projections while retaining shared flows", () => {
+    const inverse = ledger(
+      {
+        ShareClass: {
+          properties: { name: {}, type: {}, issuerId: {} },
+        },
+      },
+      [
+        objectFieldEdge(
+          "objects/StockClass.mapping.md",
+          "StockClass",
+          "name",
+          "#/$defs/ShareClass/properties/name",
+          "Common"
+        ),
+        objectFieldEdge(
+          "objects/StockClass.mapping.md",
+          "StockClass",
+          "name",
+          "#/$defs/ShareClass/properties/name",
+          "Preferred"
+        ),
+        objectFieldEdge(
+          "objects/StockClass.mapping.md",
+          "StockClass",
+          "class_type",
+          "#/$defs/ShareClass/properties/type",
+          "Common",
+          "computed"
+        ),
+        objectFieldEdge(
+          "objects/StockClass.mapping.md",
+          "StockClass",
+          "class_type",
+          "#/$defs/ShareClass/properties/type",
+          "Preferred",
+          "computed"
+        ),
+      ]
+    );
+
+    const out = renderMappingInverseReport({
+      inverse,
+      targetObject: "ShareClass",
+      mappingDocuments: new Map([
+        [
+          "objects/StockClass.mapping.md",
+          {
+            mapping: {
+              route_by_property: { on_property: "class_type" },
+              variants: {
+                Common: {
+                  when: ["COMMON"],
+                  primary_targets: ["#/$defs/ShareClass"],
+                },
+                Preferred: {
+                  when: ["PREFERRED"],
+                  primary_targets: ["#/$defs/ShareClass"],
+                },
+              },
+            },
+          },
+        ],
+      ]),
+    });
+
+    expect(out).toContain("resulting Carta object flavors (2)");
+    expect(out).toContain("StockClass.Common → ShareClass");
+    expect(out).toContain("when: StockClass.class_type = [COMMON]");
+    expect(out).toContain("properties: name, type");
+    expect(out).toContain("StockClass.Preferred → ShareClass");
+    expect(out).toContain("when: StockClass.class_type = [PREFERRED]");
+    expect(out).not.toContain("conditional property flows");
+    expect(
+      out.match(/\[object\] objects\/StockClass\.mapping\.md :: name \[shared\]/g)
+    ).toHaveLength(1);
+  });
+
+  it("keeps independent route axes separate instead of forming Cartesian subtype combinations", () => {
+    const inverse = ledger(
+      {
+        Certificate: {
+          properties: { issueDate: {}, shareClassName: {}, securityId: {} },
+        },
+      },
+      [
+        objectFieldEdge(
+          "objects/transactions/issuance/StockIssuance.mapping.md",
+          "StockIssuance",
+          "date",
+          "#/$defs/Certificate/properties/issueDate"
+        ),
+        objectFieldEdge(
+          "objects/StockClass.mapping.md",
+          "StockClass",
+          "name",
+          "#/$defs/Certificate/properties/shareClassName",
+          "Common"
+        ),
+        objectFieldEdge(
+          "objects/StockClass.mapping.md",
+          "StockClass",
+          "name",
+          "#/$defs/Certificate/properties/shareClassName",
+          "Preferred"
+        ),
+        objectFieldEdge(
+          "objects/transactions/exercise/EquityCompensationExercise.mapping.md",
+          "EquityCompensationExercise",
+          "security_id",
+          "#/$defs/Certificate/properties/securityId",
+          "Option"
+        ),
+        objectFieldEdge(
+          "objects/transactions/exercise/EquityCompensationExercise.mapping.md",
+          "EquityCompensationExercise",
+          "security_id",
+          "#/$defs/Certificate/properties/securityId",
+          "Sar"
+        ),
+      ]
+    );
+
+    const out = renderMappingInverseReport({
+      inverse,
+      targetObject: "Certificate",
+      mappingDocuments: new Map([
+        [
+          "objects/StockClass.mapping.md",
+          {
+            mapping: {
+              route_by_property: { on_property: "class_type" },
+              variants: {
+                Common: { when: ["COMMON"] },
+                Preferred: { when: ["PREFERRED"] },
+              },
+            },
+          },
+        ],
+        [
+          "objects/transactions/exercise/EquityCompensationExercise.mapping.md",
+          {
+            mapping: {
+              route_by_property: {
+                lookup_by: {
+                  key: "security_id",
+                  through: { on_property: "compensation_type" },
+                },
+              },
+              variants: {
+                Option: { when: ["OPTION"] },
+                Sar: { when: ["CSAR"] },
+              },
+            },
+          },
+        ],
+      ]),
+    });
+
+    expect(out).toContain("conditional property flows (2 discriminators)");
+    expect(out).toContain("StockClass :: class_type");
+    expect(out).toContain("EquityCompensationExercise :: security_id → compensation_type (lookup)");
+    expect(out).toContain("Common [COMMON] or Preferred [PREFERRED] → shareClassName");
+    expect(out).toContain("Option [OPTION] or Sar [CSAR] → securityId");
+    expect(out.match(/:: date \(rename\)/g)).toHaveLength(1);
+    expect(out.match(/:: name \[shared\] \(rename\)/g)).toHaveLength(1);
+    expect(out.match(/:: security_id \[shared\] \(rename\)/g)).toHaveLength(1);
+  });
+
   it("renders the outer and inner discriminator chain for nested convertible mechanisms", () => {
     const inverse = ledger(
       {
