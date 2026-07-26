@@ -33,6 +33,14 @@ derived coverage stays reviewable, and enum remaps are checked value-by-value.
   source records. When the source is nested and polymorphic, the report also prints the
   discriminator chain: the selected nested wrapper, its outer `type` guard, and the inner union
   branches such as `NoteConversionMechanism` versus `SAFEConversionMechanism`.
+  When the same Carta object also receives flows from two or more branches of one
+  `route_by_property` mapping, the panel retains the ordinary aggregate view and adds
+  **polymorphic subtype projections**. Each projection names the mapping and discriminator,
+  lists the branch's `when:` values, and re-renders the target properties that apply to that
+  branch. Flows independent of that route axis are repeated in every branch; this makes shared
+  issuance/security fields explicit without turning independent axes into a false Cartesian
+  product. The projections are a report-only recut of the existing mapping evidence — they do
+  not change coverage counts or mapping semantics.
   Target properties with no mapped OCF source remain explicit in each panel.
 - CI runs the equivalent `npm run mapping:inverse` command on every pull request and push to `main`.
   That command renders the same shared inverse-coverage ledger and role policy used by the

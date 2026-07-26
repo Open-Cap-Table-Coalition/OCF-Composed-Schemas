@@ -145,6 +145,171 @@ describe("renderMappingInverseReport", () => {
     expect(out.match(/:: discount \[shared\] \(rename\)/g)).toHaveLength(1);
   });
 
+  it("renders mutually exclusive target subtype projections while retaining shared flows", () => {
+    const inverse = ledger(
+      {
+        ShareClass: {
+          properties: { name: {}, type: {}, issuerId: {} },
+        },
+      },
+      [
+        objectFieldEdge(
+          "objects/StockClass.mapping.md",
+          "StockClass",
+          "name",
+          "#/$defs/ShareClass/properties/name",
+          "Common"
+        ),
+        objectFieldEdge(
+          "objects/StockClass.mapping.md",
+          "StockClass",
+          "name",
+          "#/$defs/ShareClass/properties/name",
+          "Preferred"
+        ),
+        objectFieldEdge(
+          "objects/StockClass.mapping.md",
+          "StockClass",
+          "class_type",
+          "#/$defs/ShareClass/properties/type",
+          "Common",
+          "computed"
+        ),
+        objectFieldEdge(
+          "objects/StockClass.mapping.md",
+          "StockClass",
+          "class_type",
+          "#/$defs/ShareClass/properties/type",
+          "Preferred",
+          "computed"
+        ),
+      ]
+    );
+
+    const out = renderMappingInverseReport({
+      inverse,
+      targetObject: "ShareClass",
+      mappingDocuments: new Map([
+        [
+          "objects/StockClass.mapping.md",
+          {
+            mapping: {
+              route_by_property: { on_property: "class_type" },
+              variants: {
+                Common: { when: ["COMMON"] },
+                Preferred: { when: ["PREFERRED"] },
+              },
+            },
+          },
+        ],
+      ]),
+    });
+
+    expect(out).toContain(
+      "polymorphic subtype projections (1 independent route axes; branches not cross-producted)"
+    );
+    expect(out).toContain("discriminator: objects/StockClass.mapping.md :: class_type");
+    expect(out).toContain("Common when [COMMON]");
+    expect(out).toContain("Preferred when [PREFERRED]");
+    expect(out).toContain("name");
+    expect(out).toContain("type");
+    expect(
+      out.match(/\[object\] objects\/StockClass\.mapping\.md :: name \[shared\]/g)
+    ).toHaveLength(3);
+  });
+
+  it("keeps independent route axes separate instead of forming Cartesian subtype combinations", () => {
+    const inverse = ledger(
+      {
+        Certificate: {
+          properties: { issueDate: {}, shareClassName: {}, securityId: {} },
+        },
+      },
+      [
+        objectFieldEdge(
+          "objects/transactions/issuance/StockIssuance.mapping.md",
+          "StockIssuance",
+          "date",
+          "#/$defs/Certificate/properties/issueDate"
+        ),
+        objectFieldEdge(
+          "objects/StockClass.mapping.md",
+          "StockClass",
+          "name",
+          "#/$defs/Certificate/properties/shareClassName",
+          "Common"
+        ),
+        objectFieldEdge(
+          "objects/StockClass.mapping.md",
+          "StockClass",
+          "name",
+          "#/$defs/Certificate/properties/shareClassName",
+          "Preferred"
+        ),
+        objectFieldEdge(
+          "objects/transactions/exercise/EquityCompensationExercise.mapping.md",
+          "EquityCompensationExercise",
+          "security_id",
+          "#/$defs/Certificate/properties/securityId",
+          "Option"
+        ),
+        objectFieldEdge(
+          "objects/transactions/exercise/EquityCompensationExercise.mapping.md",
+          "EquityCompensationExercise",
+          "security_id",
+          "#/$defs/Certificate/properties/securityId",
+          "Sar"
+        ),
+      ]
+    );
+
+    const out = renderMappingInverseReport({
+      inverse,
+      targetObject: "Certificate",
+      mappingDocuments: new Map([
+        [
+          "objects/StockClass.mapping.md",
+          {
+            mapping: {
+              route_by_property: { on_property: "class_type" },
+              variants: {
+                Common: { when: ["COMMON"] },
+                Preferred: { when: ["PREFERRED"] },
+              },
+            },
+          },
+        ],
+        [
+          "objects/transactions/exercise/EquityCompensationExercise.mapping.md",
+          {
+            mapping: {
+              route_by_property: {
+                lookup_by: {
+                  key: "security_id",
+                  through: { on_property: "compensation_type" },
+                },
+              },
+              variants: {
+                Option: { when: ["OPTION"] },
+                Sar: { when: ["CSAR"] },
+              },
+            },
+          },
+        ],
+      ]),
+    });
+
+    expect(out).toContain(
+      "polymorphic subtype projections (2 independent route axes; branches not cross-producted)"
+    );
+    expect(out).toContain("discriminator: objects/StockClass.mapping.md :: class_type");
+    expect(out).toContain(
+      "discriminator: objects/transactions/exercise/EquityCompensationExercise.mapping.md :: security_id → compensation_type (lookup)"
+    );
+    expect(out.match(/ when \[/g)).toHaveLength(4);
+    expect(out.match(/:: date \(rename\)/g)).toHaveLength(5);
+  });
+
   it("renders the outer and inner discriminator chain for nested convertible mechanisms", () => {
     const inverse = ledger(
       {

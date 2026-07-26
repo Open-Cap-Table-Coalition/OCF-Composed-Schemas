@@ -19,6 +19,12 @@ interface InverseFlow {
   kind: string;
   pointer: string;
   context?: string;
+  /**
+   * The route variants that produced this flow. The main report deliberately
+   * collapses identical destinations to `[shared]`, but subtype projections
+   * need to know that the same flow applies to each branch.
+   */
+  routeVariants?: string[];
 }
 
 interface TargetGroup {
@@ -42,6 +48,17 @@ interface MappingQuestionDocument {
   questions?: readonly MappingQuestion[];
   mapping?: Record<string, unknown>;
   sourceSchema?: RawSchema;
+}
+
+interface RouteBranch {
+  label: string;
+  when: string[];
+}
+
+interface RouteAxis {
+  file: string;
+  discriminator: string;
+  branches: RouteBranch[];
 }
 
 function isPlainObject(value: unknown): value is Record<string, unknown> {
@@ -325,7 +342,8 @@ function sameFlow(left: InverseFlow, right: InverseFlow): boolean {
     left.sourceField === right.sourceField &&
     left.kind === right.kind &&
     left.pointer === right.pointer &&
-    left.context === right.context
+    left.context === right.context &&
+    JSON.stringify(left.routeVariants ?? []) === JSON.stringify(right.routeVariants ?? [])
   );
 }
 
@@ -351,6 +369,7 @@ function addEdge(
   if (!info?.isObjectLike) return;
 
   const field = parts.relative === parts.object ? "(object route)" : parts.relative;
+  const routeVariant = edge.variant === "—" ? undefined : edge.variant;
   const flow: InverseFlow = {
     file: edge.rel,
     sourceKind: edge.sourceKind,
@@ -358,13 +377,20 @@ function addEdge(
     kind: edgeKind(edge),
     pointer: edge.target,
     ...(edgeContext(edge) ? { context: edgeContext(edge) } : {}),
+    ...(routeVariant ? { routeVariants: [routeVariant] } : {}),
   };
   const group = groups.get(parts.object) ?? { object: parts.object, flows: new Map() };
   const flows: InverseFlow[] = group.flows.get(field) ?? [];
   if (!flows.some((existing) => sameFlow(existing, flow))) {
     const sameDestinationFlow = flows.find((existing) => sameDestination(existing, flow));
-    if (sameDestinationFlow) sameDestinationFlow.context = "shared";
-    else flows.push(flow);
+    if (sameDestinationFlow) {
+      const routeVariants = new Set([
+        ...(sameDestinationFlow.routeVariants ?? []),
+        ...(flow.routeVariants ?? []),
+      ]);
+      if (routeVariants.size > 0) sameDestinationFlow.routeVariants = [...routeVariants].sort();
+      sameDestinationFlow.context = "shared";
+    } else flows.push(flow);
   }
   group.flows.set(field, flows);
   groups.set(parts.object, group);
@@ -403,15 +429,76 @@ function targetProperties(inverse: InverseCoverageLedger, object: string): strin
 function sortedTargetFields(
   object: string,
   group: TargetGroup,
-  inverse: InverseCoverageLedger
+  inverse: InverseCoverageLedger,
+  includeUnmappedProperties = true
 ): string[] {
-  const fields = new Set(targetProperties(inverse, object));
+  const fields = new Set(includeUnmappedProperties ? targetProperties(inverse, object) : []);
   for (const field of group.flows.keys()) fields.add(field);
   return [...fields].sort((left, right) => {
     if (left === "(object route)") return -1;
     if (right === "(object route)") return 1;
     return left.localeCompare(right);
   });
+}
+
+function routeDiscriminator(mapping: Record<string, unknown>): string | undefined {
+  const route = mapping.route_by_property;
+  if (!isPlainObject(route)) return undefined;
+  if (typeof route.on_property === "string") return route.on_property;
+  if (!isPlainObject(route.lookup_by)) return undefined;
+  const key = typeof route.lookup_by.key === "string" ? route.lookup_by.key : "?";
+  const through = route.lookup_by.through;
+  const property =
+    isPlainObject(through) && typeof through.on_property === "string" ? through.on_property : "?";
+  return `${key} → ${property} (lookup)`;
+}
+
+function routeAxesForGroup(
+  group: TargetGroup,
+  mappingDocuments: ReadonlyMap<string, MappingQuestionDocument> | undefined
+): RouteAxis[] {
+  if (!mappingDocuments) return [];
+  const flows = [...group.flows.values()].flat();
+  const axes: RouteAxis[] = [];
+
+  for (const [file, document] of mappingDocuments) {
+    const discriminator = document.mapping ? routeDiscriminator(document.mapping) : undefined;
+    const variants = document.mapping?.variants;
+    if (!discriminator || !isPlainObject(variants)) continue;
+
+    const branches = Object.entries(variants)
+      .map(([label, raw]) => {
+        if (!isPlainObject(raw) || !Array.isArray(raw.when)) return undefined;
+        const when = raw.when.filter((value): value is string => typeof value === "string");
+        if (when.length === 0) return undefined;
+        const relevant = flows.some(
+          (flow) => flow.file === file && flow.routeVariants?.includes(label)
+        );
+        return relevant ? { label, when } : undefined;
+      })
+      .filter((branch): branch is RouteBranch => branch !== undefined);
+
+    // A single surviving branch is still useful for coverage, but it is not a
+    // subtype split. Keep the ordinary object panel for that case.
+    if (branches.length < 2) continue;
+    axes.push({ file, discriminator, branches });
+  }
+
+  return axes.sort(
+    (left, right) =>
+      left.discriminator.localeCompare(right.discriminator) || left.file.localeCompare(right.file)
+  );
+}
+
+function flowsForRouteBranch(group: TargetGroup, file: string, label: string): TargetGroup {
+  const flows = new Map<string, InverseFlow[]>();
+  for (const [field, fieldFlows] of group.flows) {
+    const selected = fieldFlows.filter(
+      (flow) => flow.file !== file || !flow.routeVariants || flow.routeVariants.includes(label)
+    );
+    if (selected.length > 0) flows.set(field, selected);
+  }
+  return { object: group.object, flows };
 }
 
 function renderFlowNode(
@@ -458,15 +545,19 @@ function renderMappingTree(
   object: string,
   group: TargetGroup,
   inverse: InverseCoverageLedger,
-  mappingDocuments?: ReadonlyMap<string, MappingQuestionDocument>
+  mappingDocuments?: ReadonlyMap<string, MappingQuestionDocument>,
+  includeUnmappedProperties = true,
+  includeMappingQuestions = true
 ): string[] {
-  const fields = sortedTargetFields(object, group, inverse);
+  const fields = sortedTargetFields(object, group, inverse, includeUnmappedProperties);
   const allFlows = [...group.flows.values()].flat();
-  const mappingQuestions = openQuestionsForFlows(
-    allFlows,
-    mappingDocuments,
-    (question) => question.property === null && question.target === null
-  );
+  const mappingQuestions = includeMappingQuestions
+    ? openQuestionsForFlows(
+        allFlows,
+        mappingDocuments,
+        (question) => question.property === null && question.target === null
+      )
+    : [];
   const renderedFields = mappingQuestions.length > 0 ? [...fields, "(mapping questions)"] : fields;
   const lines: string[] = [];
   renderedFields.forEach((field, fieldIndex) => {
@@ -510,6 +601,45 @@ function renderMappingTree(
     children.forEach((child, childIndex) => {
       const lastChild = childIndex === children.length - 1;
       lines.push(`${flowPrefix}${lastChild ? "└── " : "├── "}${child}`);
+    });
+  });
+  return lines;
+}
+
+function renderSubtypeProjections(
+  object: string,
+  group: TargetGroup,
+  inverse: InverseCoverageLedger,
+  mappingDocuments: ReadonlyMap<string, MappingQuestionDocument>
+): string[] {
+  const axes = routeAxesForGroup(group, mappingDocuments);
+  if (axes.length === 0) return [];
+
+  const lines = [
+    `polymorphic subtype projections (${axes.length} independent route axes; branches not cross-producted)`,
+  ];
+  axes.forEach((axis, axisIndex) => {
+    const lastAxis = axisIndex === axes.length - 1;
+    const axisPrefix = lastAxis ? "    " : "│   ";
+    lines.push(`${lastAxis ? "└── " : "├── "}discriminator: ${axis.file} :: ${axis.discriminator}`);
+    axis.branches.forEach((branch, branchIndex) => {
+      const branchLast = branchIndex === axis.branches.length - 1;
+      const branchPrefix = `${axisPrefix}${branchLast ? "    " : "│   "}`;
+      const branchGroup = flowsForRouteBranch(group, axis.file, branch.label);
+      lines.push(
+        `${axisPrefix}${branchLast ? "└── " : "├── "}${branch.label} when [${branch.when.join(
+          ", "
+        )}]`
+      );
+      lines.push(`${branchPrefix}└── applies:`);
+      const tree = renderMappingTree(object, branchGroup, inverse, mappingDocuments, false, false);
+      if (tree.length === 0) {
+        lines.push(`${branchPrefix}    └── (no mapped target properties)`);
+      } else {
+        tree.forEach((line) => {
+          lines.push(`${branchPrefix}    ${line}`);
+        });
+      }
     });
   });
   return lines;
@@ -568,8 +698,15 @@ function renderObjectPanel(
   ];
   if (hasMappings) metadata.push(`unmapped_properties: ${unmappedProperties}`);
   if (!hasMappings && row.reason) metadata.push(`reason: ${row.reason}`);
+  const subtypeProjections =
+    mappingDocuments && hasMappings
+      ? renderSubtypeProjections(row.name, group, inverse, mappingDocuments)
+      : [];
   const body = hasMappings
-    ? renderMappingTree(row.name, group, inverse, mappingDocuments)
+    ? [
+        ...renderMappingTree(row.name, group, inverse, mappingDocuments),
+        ...(subtypeProjections.length > 0 ? ["", ...subtypeProjections] : []),
+      ]
     : ["(empty mapping)"];
   return renderBox(`Carta object: ${row.name}`, metadata, body);
 }
