@@ -16,7 +16,7 @@ drops only for Sar), so "no Carta home" is a per-flavor statement here, not obje
 magnitude diagrams split flavors apart; `core-bidirectional-flow.md` gives the distinct-field,
 best-landing view (its lower "left behind" count).
 
-## Magnitude — unmapped properties per OCF object (163 distinct across 46 objects; 237 per-flavor rows, 143 OCF-required)
+## Magnitude — unmapped properties per OCF object (163 distinct across 46 objects; 240 per-flavor rows, 144 OCF-required)
 
 Each OCF object → the void, edge labelled with how many of its properties are dropped.
 Green = the object is in strict Core (we carry it but lose these fields); dashed grey = the
@@ -45,16 +45,17 @@ flowchart LR
     o11["Issuer"]:::adm
     o12["Stakeholder"]:::adm
     o13["StakeholderRelationshipChangeEvent"]:::adm
-    o14["StockClass"]:::adm
-    o15["StockClassAuthorizedSharesAdjustment"]:::adm
-    o16["StockPlan"]:::adm
-    o17["StockPlanReturnToPool [Option]"]:::adm
-    o18["StockPlanReturnToPool [Rsu]"]:::adm
-    o19["StockTransfer [Default]"]:::adm
-    o20["StockTransfer [Rsa]"]:::adm
-    o21["Valuation"]:::adm
-    o22["WarrantCancellation"]:::adm
-    o23["WarrantTransfer"]:::adm
+    o14["StockClass [Common]"]:::adm
+    o15["StockClass [Preferred]"]:::adm
+    o16["StockClassAuthorizedSharesAdjustment"]:::adm
+    o17["StockPlan"]:::adm
+    o18["StockPlanReturnToPool [Option]"]:::adm
+    o19["StockPlanReturnToPool [Rsu]"]:::adm
+    o20["StockTransfer [Default]"]:::adm
+    o21["StockTransfer [Rsa]"]:::adm
+    o22["Valuation"]:::adm
+    o23["WarrantCancellation"]:::adm
+    o24["WarrantTransfer"]:::adm
   end
   void["⌀ not mapped (no Carta home)"]:::sink
   o0 -->|1| void
@@ -74,13 +75,14 @@ flowchart LR
   o14 -->|3| void
   o15 -->|3| void
   o16 -->|3| void
-  o17 -->|2| void
+  o17 -->|3| void
   o18 -->|2| void
   o19 -->|2| void
   o20 -->|2| void
-  o21 -->|5| void
-  o22 -->|1| void
-  o23 -->|2| void
+  o21 -->|2| void
+  o22 -->|5| void
+  o23 -->|1| void
+  o24 -->|2| void
 ```
 
 **Not-yet-admissible objects**

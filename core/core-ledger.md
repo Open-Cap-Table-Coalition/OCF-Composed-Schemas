@@ -60,9 +60,10 @@ mapping lives in `X`. The core/payload counts are the wrapper's own (only
 | StockAcceptance | Rsa | 1 | 0 | ✗ | no-payload |
 | StockCancellation | Default | 3 | 1 | ✓ | — |
 | StockCancellation | Rsa | 3 | 1 | ✓ | — |
-| StockClass | — | 7 | 6 | ✓ | — |
 | StockClassAuthorizedSharesAdjustment | — | 2 | 1 | ✓ | — |
+| StockClass | Common | 7 | 6 | ✓ | — |
 | StockClassConversionRatioAdjustment | — | 1 | 0 | ✗ | no-payload |
+| StockClass | Preferred | 7 | 6 | ✓ | — |
 | StockClassSplit | — | 0 | 0 | ✗ | no-payload |
 | StockConsolidation | Default | 0 | 0 | ✗ | no-payload |
 | StockConsolidation | Rsa | 0 | 0 | ✗ | no-payload |
@@ -151,22 +152,38 @@ values its `const:` supplies implicitly (the reason codes we always know).
 | Stakeholder | — | contact_info | out | heuristic | kind combine |
 | Stakeholder | — | addresses | out | existence-loss | select (first_address_country) |
 | Stakeholder | — | tax_ids | out | no-destination | kind unmappable |
-| StockClass | — | id | core | direct |  |
-| StockClass | — | comments | out | no-destination | kind unmappable |
-| StockClass | — | object_type | out | no-destination | kind unmappable |
-| StockClass | — | name | core | direct |  |
-| StockClass | — | class_type | out | heuristic | kind computed |
-| StockClass | — | default_id_prefix | core | direct |  |
-| StockClass | — | initial_shares_authorized | out | partial | AuthorizedShares: unmapped members NOT APPLICABLE, UNLIMITED; Numeric: widening |
-| StockClass | — | board_approval_date | out | no-destination | kind unmappable |
-| StockClass | — | stockholder_approval_date | out | no-destination | kind unmappable |
-| StockClass | — | votes_per_share | out | no-destination | kind unmappable |
-| StockClass | — | par_value | core | direct |  |
-| StockClass | — | price_per_share | core | direct |  |
-| StockClass | — | seniority | out | heuristic | kind computed |
-| StockClass | — | conversion_rights | out | heuristic | sequential_transform (select first_ratio_conversion_right) |
-| StockClass | — | liquidation_preference_multiple | core | widening |  |
-| StockClass | — | participation_cap_multiple | core | widening |  |
+| StockClass | Common | id | core | direct |  |
+| StockClass | Common | comments | out | no-destination | kind unmappable |
+| StockClass | Common | object_type | out | no-destination | kind unmappable |
+| StockClass | Common | name | core | direct |  |
+| StockClass | Common | class_type | out | heuristic | kind computed |
+| StockClass | Common | default_id_prefix | core | direct |  |
+| StockClass | Common | initial_shares_authorized | out | partial | AuthorizedShares: unmapped members NOT APPLICABLE, UNLIMITED; Numeric: widening |
+| StockClass | Common | board_approval_date | out | no-destination | kind unmappable |
+| StockClass | Common | stockholder_approval_date | out | no-destination | kind unmappable |
+| StockClass | Common | votes_per_share | out | no-destination | kind unmappable |
+| StockClass | Common | par_value | core | direct |  |
+| StockClass | Common | price_per_share | core | direct |  |
+| StockClass | Common | seniority | out | heuristic | kind computed |
+| StockClass | Common | conversion_rights | out | heuristic | sequential_transform (select first_ratio_conversion_right) |
+| StockClass | Common | liquidation_preference_multiple | core | widening |  |
+| StockClass | Common | participation_cap_multiple | core | widening |  |
+| StockClass | Preferred | id | core | direct |  |
+| StockClass | Preferred | comments | out | no-destination | kind unmappable |
+| StockClass | Preferred | object_type | out | no-destination | kind unmappable |
+| StockClass | Preferred | name | core | direct |  |
+| StockClass | Preferred | class_type | out | heuristic | kind computed |
+| StockClass | Preferred | default_id_prefix | core | direct |  |
+| StockClass | Preferred | initial_shares_authorized | out | partial | AuthorizedShares: unmapped members NOT APPLICABLE, UNLIMITED; Numeric: widening |
+| StockClass | Preferred | board_approval_date | out | no-destination | kind unmappable |
+| StockClass | Preferred | stockholder_approval_date | out | no-destination | kind unmappable |
+| StockClass | Preferred | votes_per_share | out | no-destination | kind unmappable |
+| StockClass | Preferred | par_value | core | direct |  |
+| StockClass | Preferred | price_per_share | core | direct |  |
+| StockClass | Preferred | seniority | out | heuristic | kind computed |
+| StockClass | Preferred | conversion_rights | out | heuristic | sequential_transform (select first_ratio_conversion_right) |
+| StockClass | Preferred | liquidation_preference_multiple | core | widening |  |
+| StockClass | Preferred | participation_cap_multiple | core | widening |  |
 | StockLegendTemplate  | — | id | out | no-destination | kind unmappable |
 | StockLegendTemplate  | — | comments | out | no-destination | kind unmappable |
 | StockLegendTemplate  | — | object_type | out | no-destination | kind unmappable |

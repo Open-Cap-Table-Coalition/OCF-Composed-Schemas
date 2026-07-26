@@ -141,9 +141,16 @@ Source: [`StockClass.schema.json`](./StockClass.schema.json)
 
 ```yaml
 # kind vocabulary: rename | select | split | sequential_transform | combine | enum-remap | union-map | computed | unmappable | TODO
+# routing: class_type selects the common/preferred target shape. Both variants
+# populate ShareClass; only PREFERRED instantiates the preferred-only wrapper
+# whose rights-and-preferences children are populated below.
 status: complete
 
-fields:
+route_by_property:
+  on_property: class_type
+  exhaustive: true
+
+shared:
   id:
     kind: rename
     target: "#/$defs/ShareClass/properties/id"
@@ -232,6 +239,20 @@ fields:
   participation_cap_multiple:
     kind: rename
     target: "#/$defs/ShareClassRightsAndPreferences/properties/participationCap"
+
+variants:
+  Common:
+    when: [COMMON]
+    primary_targets:
+      - "#/$defs/ShareClass"
+    fields: {}
+
+  Preferred:
+    when: [PREFERRED]
+    primary_targets:
+      - "#/$defs/ShareClass"
+      - "#/$defs/PreferredShareClassDetails"
+    fields: {}
 ```
 
 ## Ask a mapping question
@@ -267,6 +288,7 @@ Use a link below to open a prefilled GitHub issue. The issue can be copied into 
 ## Notes / open questions
 
 - `id` → `ShareClass.id`: the OCF stock-class identifier is the identifier referenced by issuance `stock_class_id` and therefore the same share-class identity represented by Carta's `id`.
+- **Conditional target shape.** `class_type` routes `COMMON` to `ShareClass` alone and `PREFERRED` to `ShareClass` plus `PreferredShareClassDetails`. This makes the preferred-only wrapper explicit; the nested rights-and-preferences leaves below are populated from the corresponding preferred-class source fields.
 - `name` fans out to the direct `ShareClass.name` plus Carta's denormalized `ShareClassValuation.shareClassName`, `Certificate.shareClassName`, and `RestrictedStockAward.shareClassName` fields.
 - `class_type` → `ShareClass.type` and `ShareClassValuation.common`: the two OCF enum values are preserved on `type`, while `COMMON`/`PREFERRED` are explicitly derived into the valuation boolean (`true`/`false`).
 - `default_id_prefix` → `prefix`: OCF allows a trailing dash (e.g. `CS-` when certificate IDs look like `CS-1`); Carta's `prefix` is constrained to numbers and letters only (e.g. `CS`). Any trailing dash should be stripped on transfer.
@@ -280,4 +302,4 @@ Use a link below to open a prefilled GitHub issue. The issue can be copied into 
 - `board_approval_date` / `stockholder_approval_date`: unmappable. Carta has a `BoardApproval` *enum* (`BOARD_APPROVAL_APPROVED` / `BOARD_APPROVAL_NOT_APPROVED`) but no field that carries the approval *date*. There is no Carta concept for stockholder approval at all on `ShareClass`.
 - `votes_per_share`: unmappable. Carta's `ShareClass` has no voting-rights field. (Carta's `ShareClassType` description does mention "PREFERRED: with no voting rights" — implying a categorical assumption rather than a per-class field — but there is no slot to express anything other than the type-level default.)
 - `comments`, `object_type`: unmappable OCF object scaffolding.
-- Carta-side `ShareClass` fields with no OCF source: `issuerId` (back-reference; OCF has one issuer per file), `preferredShareClassDetails.dividendDetails` (OCF `StockClass` carries no dividend information), and `preferredShareClassDetails.rightsAndPreferences.participating` (in OCF, "participating" is implied by whether `participation_cap_multiple` is set; not an explicit field).
+- Carta-side `ShareClass` fields with no OCF source: `issuerId` (back-reference; OCF has one issuer per file), `preferredShareClassDetails.dividendDetails` (OCF `StockClass` carries no dividend information), and `preferredShareClassDetails.rightsAndPreferences.participating` (in OCF, "participating" is implied by whether `participation_cap_multiple` is set; not an explicit field). The `preferredShareClassDetails` wrapper itself is explicitly anchored by the `PREFERRED` route.

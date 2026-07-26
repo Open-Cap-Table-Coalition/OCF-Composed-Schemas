@@ -39,7 +39,7 @@ flowchart LR
   o0 -->|"primary_contact → email"| t0
 ```
 
-**StockClass → ShareClass, ShareClassRightsAndPreferences, ShareClassValuation**
+**StockClass [Common] → ShareClass, ShareClassRightsAndPreferences, ShareClassValuation**
 
 ```mermaid
 flowchart LR
@@ -49,7 +49,32 @@ flowchart LR
   classDef sink fill:#fce8e6,stroke:#d93025,color:#5c0d06;
   subgraph SRC["OCF source objects"]
     direction TB
-    o0["StockClass"]:::adm
+    o0["StockClass [Common]"]:::adm
+  end
+  subgraph TGT["Carta target objects"]
+    direction TB
+    t0["ShareClass"]:::carta
+    t1["ShareClassRightsAndPreferences"]:::carta
+    t2["ShareClassValuation"]:::carta
+  end
+  o0 -->|"class_type → type"| t0
+  o0 -->|"class_type → common"| t2
+  o0 -->|"conversion_rights → conversionRatio / conversionPrice"| t1
+  o0 -->|"initial_shares_authorized → authorizedShareCount"| t0
+  o0 -->|"seniority → seniority / pariPassu"| t0
+```
+
+**StockClass [Preferred] → ShareClass, ShareClassRightsAndPreferences, ShareClassValuation**
+
+```mermaid
+flowchart LR
+  classDef adm fill:#e6f4ea,stroke:#34a853,color:#0b3d20;
+  classDef notadm fill:#f1f3f4,stroke:#9aa0a6,color:#5f6368,stroke-dasharray:4 3;
+  classDef carta fill:#e8f0fe,stroke:#1a73e8,color:#0d2b66;
+  classDef sink fill:#fce8e6,stroke:#d93025,color:#5c0d06;
+  subgraph SRC["OCF source objects"]
+    direction TB
+    o0["StockClass [Preferred]"]:::adm
   end
   subgraph TGT["Carta target objects"]
     direction TB
@@ -745,7 +770,7 @@ flowchart LR
 ```
 
 
-## A. Lossy home — by OCF object, flowing to Carta (55 (entity,variant,field) rows across 23 objects; 39 OCF-required)
+## A. Lossy home — by OCF object, flowing to Carta (59 (entity,variant,field) rows across 23 objects; 42 OCF-required)
 
 Each field HAS a Carta home but the fold loses fidelity: `existence-loss` = the shape
 collapses (object/array → scalar); `heuristic` = a non-1:1 transform (combine/split/computed).
@@ -830,10 +855,10 @@ is a direct predecessor→`securities` landing.
 
 | field | OCF-req | variant(s) | flows to (Carta) | loss |
 | --- | :---: | --- | --- | --- |
-| class_type | **yes** |  | ShareClass.type + ShareClassValuation.common | heuristic (computed) |
-| conversion_rights |  |  | ShareClassRightsAndPreferences.{conversionRatio, conversionPrice} | heuristic (sequential_transform (select first_ratio_conversion_right)) |
-| initial_shares_authorized | **yes** |  | ShareClass.authorizedShareCount | partial (AuthorizedShares: unmapped members NOT APPLICABLE, UNLIMITED; Numeric: widening) |
-| seniority | **yes** |  | ShareClass.{seniority, pariPassu} | heuristic (computed) |
+| class_type | **yes** | Common, Preferred | ShareClass.type + ShareClassValuation.common | heuristic (computed) |
+| conversion_rights |  | Common, Preferred | ShareClassRightsAndPreferences.{conversionRatio, conversionPrice} | heuristic (sequential_transform (select first_ratio_conversion_right)) |
+| initial_shares_authorized | **yes** | Common, Preferred | ShareClass.authorizedShareCount | partial (AuthorizedShares: unmapped members NOT APPLICABLE, UNLIMITED; Numeric: widening) |
+| seniority | **yes** | Common, Preferred | ShareClass.{seniority, pariPassu} | heuristic (computed) |
 
 ### StockClassConversionRatioAdjustment — not yet admissible
 
@@ -937,8 +962,8 @@ onto one Carta field — most visibly the reverse-edge lineage collapsing onto `
 - `RestrictedStockAward.securityId` ← 8: `StockCancellation.balance_security_id [Rsa]`, `StockConsolidation.resulting_security_id [Rsa]`, `StockConversion.balance_security_id [Rsa]`, `StockConversion.resulting_security_ids [Rsa]`, `StockReissuance.resulting_security_ids [Rsa]`, `StockRepurchase.balance_security_id [Rsa]`, `StockTransfer.balance_security_id [Rsa]`, `StockTransfer.resulting_security_ids [Rsa]`
 - `Compliance.federalExemption` ← 4: `ConvertibleIssuance.security_law_exemptions`, `EquityCompensationIssuance.security_law_exemptions [Option, Rsu, Sar]`, `StockIssuance.security_law_exemptions [Rsa, Default]`, `WarrantIssuance.security_law_exemptions`
 - `Document.fileId` ← 2: `Document.path`, `Document.uri`
-- `ShareClassRightsAndPreferences.conversionPrice` ← 2: `StockClass.conversion_rights`, `StockClassConversionRatioAdjustment.new_ratio_conversion_mechanism`
-- `ShareClassRightsAndPreferences.conversionRatio` ← 2: `StockClass.conversion_rights`, `StockClassConversionRatioAdjustment.new_ratio_conversion_mechanism`
+- `ShareClassRightsAndPreferences.conversionPrice` ← 2: `StockClass.conversion_rights [Common, Preferred]`, `StockClassConversionRatioAdjustment.new_ratio_conversion_mechanism`
+- `ShareClassRightsAndPreferences.conversionRatio` ← 2: `StockClass.conversion_rights [Common, Preferred]`, `StockClassConversionRatioAdjustment.new_ratio_conversion_mechanism`
 - `Stakeholder.email` ← 2: `Stakeholder.contact_info`, `Stakeholder.primary_contact`
 - `Certificate.returnedToTreasuryQuantity` ← 1: `StockRepurchase.quantity [Default]`
 - `CertificateCancellationTransaction.reason` ← 1: `StockCancellation.reason_text [Default]`
@@ -965,11 +990,11 @@ onto one Carta field — most visibly the reverse-edge lineage collapsing onto `
 - `RsaCancellationTransaction.reason` ← 1: `StockCancellation.reason_text [Rsa]`
 - `RsuCancellationTransaction.reason` ← 1: `EquityCompensationCancellation.reason_text [Rsu]`
 - `SarCancellationTransaction.reason` ← 1: `EquityCompensationCancellation.reason_text [Sar]`
-- `ShareClass.authorizedShareCount` ← 1: `StockClass.initial_shares_authorized`
-- `ShareClass.pariPassu` ← 1: `StockClass.seniority`
-- `ShareClass.seniority` ← 1: `StockClass.seniority`
-- `ShareClass.type` ← 1: `StockClass.class_type`
-- `ShareClassValuation.common` ← 1: `StockClass.class_type`
+- `ShareClass.authorizedShareCount` ← 1: `StockClass.initial_shares_authorized [Common, Preferred]`
+- `ShareClass.pariPassu` ← 1: `StockClass.seniority [Common, Preferred]`
+- `ShareClass.seniority` ← 1: `StockClass.seniority [Common, Preferred]`
+- `ShareClass.type` ← 1: `StockClass.class_type [Common, Preferred]`
+- `ShareClassValuation.common` ← 1: `StockClass.class_type [Common, Preferred]`
 - `Stakeholder.address` ← 1: `Stakeholder.addresses`
 - `Stakeholder.fullName` ← 1: `Stakeholder.name`
 - `Stakeholder.relationship` ← 1: `Stakeholder.current_relationships`
@@ -978,7 +1003,7 @@ onto one Carta field — most visibly the reverse-edge lineage collapsing onto `
 - `WarrantExerciseTransaction.resultingSecurityId` ← 1: `WarrantExercise.resulting_security_ids`
 - `WarrantTransferTransaction.resultingSecurityId` ← 1: `WarrantTransfer.resulting_security_ids`
 
-## C. No home — no Carta target at all (237 across 46 objects)
+## C. No home — no Carta target at all (240 across 46 objects)
 
 A different animal: Carta has no field to hold these (also in core-gaps.md §a). NOT what
 rich-Core recovers — listed for contrast.

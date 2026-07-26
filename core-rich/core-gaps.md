@@ -281,7 +281,7 @@ flowchart LR
   o0 -->|"termination_exercise_windows → exercisePeriods"| t0
 ```
 
-**StockClass → ShareClass**
+**StockClass [Common] → ShareClass**
 
 ```mermaid
 flowchart LR
@@ -291,7 +291,30 @@ flowchart LR
   classDef sink fill:#fce8e6,stroke:#d93025,color:#5c0d06;
   subgraph SRC["OCF source objects"]
     direction TB
-    o0["StockClass"]:::adm
+    o0["StockClass [Common]"]:::adm
+  end
+  subgraph TGT["Carta target objects"]
+    direction TB
+    t0["ShareClass"]:::carta
+    sink["⌀ no Carta home"]:::sink
+  end
+  o0 -->|"board_approval_date"| sink
+  o0 -->|"initial_shares_authorized → authorizedShareCount"| t0
+  o0 -->|"stockholder_approval_date"| sink
+  o0 -->|"votes_per_share"| sink
+```
+
+**StockClass [Preferred] → ShareClass**
+
+```mermaid
+flowchart LR
+  classDef adm fill:#e6f4ea,stroke:#34a853,color:#0b3d20;
+  classDef notadm fill:#f1f3f4,stroke:#9aa0a6,color:#5f6368,stroke-dasharray:4 3;
+  classDef carta fill:#e8f0fe,stroke:#1a73e8,color:#0d2b66;
+  classDef sink fill:#fce8e6,stroke:#d93025,color:#5c0d06;
+  subgraph SRC["OCF source objects"]
+    direction TB
+    o0["StockClass [Preferred]"]:::adm
   end
   subgraph TGT["Carta target objects"]
     direction TB
@@ -842,7 +865,13 @@ flowchart LR
 ### StakeholderRelationshipChangeEvent
 - **date** (OCF-required): no-destination — kind unmappable
 
-### StockClass
+### StockClass [Common]
+- board_approval_date: no-destination — kind unmappable
+- **initial_shares_authorized** (OCF-required): partial — AuthorizedShares: unmapped members NOT APPLICABLE, UNLIMITED; Numeric: widening
+- stockholder_approval_date: no-destination — kind unmappable
+- **votes_per_share** (OCF-required): no-destination — kind unmappable
+
+### StockClass [Preferred]
 - board_approval_date: no-destination — kind unmappable
 - **initial_shares_authorized** (OCF-required): partial — AuthorizedShares: unmapped members NOT APPLICABLE, UNLIMITED; Numeric: widening
 - stockholder_approval_date: no-destination — kind unmappable
@@ -960,8 +989,8 @@ A missing root target is therefore not automatically a missing concept.
 | reusable type-only slots | 28 |
 | implicit constant slots | 1 |
 | deferred slots | 0 |
-| structural child-container slots | 26 |
-| empty slots | 308 |
+| structural child-container slots | 28 |
+| empty slots | 306 |
 
 ### Supporting CARTA definitions excluded from standalone mapping targets (60)
 
@@ -1079,7 +1108,7 @@ These rows explain why a source-side complex/scalar type may have no same-named 
 | `Date` | `Iso8601CompleteCalendarDateTime` | 30 |
 | `Monetary` | `Decimal` | 1 |
 | `Monetary` | `Iso4217CurrencyAlphaCode` | 1 |
-| `Monetary` | `Money` | 18 |
+| `Monetary` | `Money` | 20 |
 
 ### Actionable inverse candidates
 

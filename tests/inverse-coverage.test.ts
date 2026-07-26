@@ -32,7 +32,7 @@ describe("Carta inverse coverage", () => {
       typeOnlySlots: 28,
       implicitSlots: 1,
       deferredSlots: 0,
-      structuralSlots: 26,
+      structuralSlots: 28,
       nestedObjDefs: 53,
       reportRollupDefs: 7,
       curatedValueTypeEntries: 7,
