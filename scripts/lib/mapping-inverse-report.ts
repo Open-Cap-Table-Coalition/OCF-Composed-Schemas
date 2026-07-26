@@ -72,6 +72,24 @@ interface RouteFlavor {
   properties: string[];
 }
 
+interface TargetChildRef {
+  name: string;
+  cardinality: "object" | "array";
+}
+
+interface TargetVariant {
+  property: string;
+  child: TargetChildRef;
+  flows: InverseFlow[];
+}
+
+interface SourceRoute {
+  file: string;
+  label: string;
+  discriminator?: string;
+  when?: string[];
+}
+
 function isPlainObject(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
@@ -494,6 +512,216 @@ function targetContainsObject(target: unknown, object: string): boolean {
   return Object.values(target).some((value) => targetContainsObject(value, object));
 }
 
+function directTargetChildRefs(
+  node: unknown,
+  cardinality: "object" | "array" = "object"
+): TargetChildRef[] {
+  if (!isPlainObject(node)) return [];
+  if (typeof node.$ref === "string") {
+    const name = schemaLabel(node.$ref);
+    return name ? [{ name, cardinality }] : [];
+  }
+
+  if (node.items !== undefined) return directTargetChildRefs(node.items, "array");
+
+  const refs: TargetChildRef[] = [];
+  for (const key of ["oneOf", "anyOf", "allOf"] as const) {
+    const branches = node[key];
+    if (!Array.isArray(branches)) continue;
+    for (const branch of branches) refs.push(...directTargetChildRefs(branch, cardinality));
+  }
+  return refs.filter(
+    (ref, index) =>
+      refs.findIndex(
+        (candidate) => candidate.name === ref.name && candidate.cardinality === ref.cardinality
+      ) === index
+  );
+}
+
+function targetVariantLabel(variant: TargetVariant): string {
+  const suffix = variant.child.cardinality === "array" ? "[]" : "";
+  return `${variant.property}${suffix} → ${variant.child.name}`;
+}
+
+function targetVariantsForGroup(
+  object: string,
+  group: TargetGroup,
+  inverse: InverseCoverageLedger
+): TargetVariant[] {
+  const info = inverse.schema.defs.get(object);
+  if (!info) return [];
+
+  const variants: TargetVariant[] = [];
+  for (const [property, rawProperty] of Object.entries(info.properties)) {
+    const children = directTargetChildRefs(rawProperty);
+    if (children.length === 0) continue;
+    const structuralFlows = (group.flows.get(property) ?? []).filter(
+      (flow) => flow.sourceKind === "object" && flow.kind === "structural"
+    );
+    for (const child of children) {
+      const flows =
+        children.length === 1
+          ? structuralFlows
+          : structuralFlows.filter((flow) => flow.sourceField.endsWith(`→ ${child.name})`));
+      if (flows.length > 0) variants.push({ property, child, flows });
+    }
+  }
+
+  return variants.sort(
+    (left, right) =>
+      left.property.localeCompare(right.property) || left.child.name.localeCompare(right.child.name)
+  );
+}
+
+function routeLabelsForFlow(flow: InverseFlow): string[] {
+  if (flow.routeVariants && flow.routeVariants.length > 0) return flow.routeVariants;
+  if (flow.context && flow.context !== "shared") return [flow.context];
+  return ["—"];
+}
+
+function sourceRouteFor(
+  flow: InverseFlow,
+  label: string,
+  mappingDocuments: ReadonlyMap<string, MappingQuestionDocument>
+): SourceRoute {
+  const document = mappingDocuments.get(flow.file);
+  const mapping = document?.mapping;
+  const discriminator = mapping ? routeDiscriminator(mapping) : undefined;
+  const rawVariant =
+    label === "—" || !isPlainObject(mapping?.variants) ? undefined : mapping.variants[label];
+  const when =
+    isPlainObject(rawVariant) && Array.isArray(rawVariant.when)
+      ? rawVariant.when.filter((value): value is string => typeof value === "string")
+      : undefined;
+  return {
+    file: flow.file,
+    label,
+    ...(discriminator ? { discriminator } : {}),
+    ...(when && when.length > 0 ? { when } : {}),
+  };
+}
+
+function sourceRouteKey(route: SourceRoute): string {
+  return `${route.file}\u0000${route.label}`;
+}
+
+function sourceRoutesForFlows(
+  flows: readonly InverseFlow[],
+  mappingDocuments: ReadonlyMap<string, MappingQuestionDocument>
+): SourceRoute[] {
+  const routes = new Map<string, SourceRoute>();
+  for (const flow of flows) {
+    if (flow.sourceKind !== "object") continue;
+    for (const label of routeLabelsForFlow(flow)) {
+      const route = sourceRouteFor(flow, label, mappingDocuments);
+      routes.set(sourceRouteKey(route), route);
+    }
+  }
+  return [...routes.values()].sort(
+    (left, right) =>
+      mappingSourceName(left.file).localeCompare(mappingSourceName(right.file)) ||
+      left.label.localeCompare(right.label)
+  );
+}
+
+function sourceRouteName(route: SourceRoute): string {
+  const source = mappingSourceName(route.file);
+  return route.label === "—" ? source : `${source}.${route.label}`;
+}
+
+function flowAppliesToRoute(flow: InverseFlow, route: SourceRoute): boolean {
+  return flow.file === route.file && routeLabelsForFlow(flow).includes(route.label);
+}
+
+function sourceFieldsInTargetVariant(
+  variant: TargetVariant,
+  route: SourceRoute,
+  groups: Map<string, TargetGroup>
+): string[] {
+  const childGroup = groups.get(variant.child.name);
+  if (!childGroup) return [];
+  const fields = new Set<string>();
+  for (const flows of childGroup.flows.values()) {
+    for (const flow of flows) {
+      if (
+        flow.sourceKind === "object" &&
+        flow.kind !== "structural" &&
+        flowAppliesToRoute(flow, route) &&
+        !flow.sourceField.startsWith("(")
+      ) {
+        fields.add(flow.sourceField);
+      }
+    }
+  }
+  return [...fields].sort();
+}
+
+function parentSlotsForRoute(
+  variant: TargetVariant,
+  route: SourceRoute,
+  group: TargetGroup
+): string[] {
+  const slots = new Set<string>();
+  for (const [field, flows] of group.flows) {
+    if (field === variant.property || field === "(object route)") continue;
+    for (const flow of flows) {
+      if (
+        flow.sourceKind === "object" &&
+        flow.kind !== "structural" &&
+        flowAppliesToRoute(flow, route)
+      ) {
+        slots.add(field);
+      }
+    }
+  }
+  return [...slots].sort();
+}
+
+function renderTargetVariantFlows(
+  object: string,
+  group: TargetGroup,
+  inverse: InverseCoverageLedger,
+  mappingDocuments: ReadonlyMap<string, MappingQuestionDocument>,
+  groups: Map<string, TargetGroup>
+): string[] {
+  const variants = targetVariantsForGroup(object, group, inverse);
+  if (variants.length < 2) return [];
+
+  const lines = [
+    `Carta target variants (${variants.length}; each row is one OCF source route → one nested variant)`,
+    "  Separate OCF records can contribute to the same parent Carta item; source routes stay split below.",
+  ];
+  variants.forEach((variant, variantIndex) => {
+    const lastVariant = variantIndex === variants.length - 1;
+    const variantPrefix = lastVariant ? "└── " : "├── ";
+    const routePrefix = lastVariant ? "    " : "│   ";
+    lines.push(`${variantPrefix}${targetVariantLabel(variant)}`);
+    const routes = sourceRoutesForFlows(variant.flows, mappingDocuments);
+    routes.forEach((route, routeIndex) => {
+      const lastRoute = routeIndex === routes.length - 1;
+      const detailPrefix = `${routePrefix}${lastRoute ? "    " : "│   "}`;
+      lines.push(`${routePrefix}${lastRoute ? "└── " : "├── "}from OCF ${sourceRouteName(route)}`);
+      const details: string[] = [];
+      if (route.discriminator && route.when && route.when.length > 0) {
+        details.push(
+          `when: ${mappingSourceName(route.file)}.${route.discriminator} = [${route.when.join(
+            ", "
+          )}]`
+        );
+      }
+      const childFields = sourceFieldsInTargetVariant(variant, route, groups);
+      if (childFields.length > 0) details.push(`child source fields: ${childFields.join(", ")}`);
+      const parentSlots = parentSlotsForRoute(variant, route, group);
+      if (parentSlots.length > 0) details.push(`parent slots: ${parentSlots.join(", ")}`);
+      details.forEach((detail, detailIndex) => {
+        const lastDetail = detailIndex === details.length - 1;
+        lines.push(`${detailPrefix}${lastDetail ? "└── " : "├── "}${detail}`);
+      });
+    });
+  });
+  return lines;
+}
+
 function routeAxesForGroup(
   group: TargetGroup,
   mappingDocuments: ReadonlyMap<string, MappingQuestionDocument> | undefined
@@ -590,19 +818,44 @@ function renderObjectSummary(
   object: string,
   group: TargetGroup,
   inverse: InverseCoverageLedger,
-  mappingDocuments: ReadonlyMap<string, MappingQuestionDocument>
+  mappingDocuments: ReadonlyMap<string, MappingQuestionDocument>,
+  groups: Map<string, TargetGroup>
 ): string[] {
   const flavors = routeFlavorsForGroup(object, group, inverse, mappingDocuments);
+  const targetVariants = targetVariantsForGroup(object, group, inverse);
+  const targetVariantLines =
+    targetVariants.length >= 2
+      ? renderTargetVariantFlows(object, group, inverse, mappingDocuments, groups)
+      : [];
+  const targetVariantRoutes = sourceRoutesForFlows(
+    targetVariants.flatMap((variant) => variant.flows),
+    mappingDocuments
+  );
+  const targetVariantRouteKeys = new Set(targetVariantRoutes.map(sourceRouteKey));
+  const remainingFlavors =
+    targetVariantLines.length > 0
+      ? flavors.filter(
+          (flavor) =>
+            !targetVariantRouteKeys.has(sourceRouteKey({ file: flavor.file, label: flavor.label }))
+        )
+      : flavors;
   const flavorFiles = new Set(flavors.map((flavor) => flavor.file));
   const axes = routeAxesForGroup(group, mappingDocuments).filter(
     (axis) => !flavorFiles.has(axis.file)
   );
-  const lines: string[] = [];
+  const lines = targetVariantLines;
 
-  if (flavors.length > 0) {
-    lines.push(`resulting Carta object flavors (${flavors.length})`);
-    flavors.forEach((flavor, index) => {
-      const last = index === flavors.length - 1;
+  if (remainingFlavors.length > 0) {
+    if (lines.length > 0) lines.push("");
+    lines.push(
+      `${
+        targetVariantLines.length > 0
+          ? "additional OCF source routes reaching parent object"
+          : "resulting Carta object flavors"
+      } (${remainingFlavors.length})`
+    );
+    remainingFlavors.forEach((flavor, index) => {
+      const last = index === remainingFlavors.length - 1;
       const prefix = last ? "└── " : "├── ";
       const childPrefix = last ? "    " : "│   ";
       lines.push(`${prefix}${mappingSourceName(flavor.file)}.${flavor.label} → ${object}`);
@@ -794,7 +1047,8 @@ function renderObjectPanel(
   row: CartaDefCoverage,
   group: TargetGroup,
   inverse: InverseCoverageLedger,
-  mappingDocuments?: ReadonlyMap<string, MappingQuestionDocument>
+  mappingDocuments: ReadonlyMap<string, MappingQuestionDocument> | undefined,
+  groups: Map<string, TargetGroup>
 ): string[] {
   const hasMappings = group.flows.size > 0;
   const fields = sortedTargetFields(row.name, group, inverse);
@@ -813,7 +1067,7 @@ function renderObjectPanel(
   if (!hasMappings && row.reason) metadata.push(`reason: ${row.reason}`);
   const summary =
     mappingDocuments && hasMappings
-      ? renderObjectSummary(row.name, group, inverse, mappingDocuments)
+      ? renderObjectSummary(row.name, group, inverse, mappingDocuments, groups)
       : [];
   const mappingDetail = renderMappingTree(row.name, group, inverse, mappingDocuments);
   const body = hasMappings
@@ -840,7 +1094,8 @@ function renderSection(
         row,
         groups.get(row.name) ?? { object: row.name, flows: new Map() },
         inverse,
-        mappingDocuments
+        mappingDocuments,
+        groups
       )
     );
     if (index < rows.length - 1) lines.push("");
@@ -998,7 +1253,8 @@ export function renderMappingInverseReport(options: MappingInverseReportOptions)
         row,
         groups.get(row.name) ?? { object: row.name, flows: new Map() },
         inverse,
-        options.mappingDocuments
+        options.mappingDocuments,
+        groups
       )
     );
     return lines.join("\n");

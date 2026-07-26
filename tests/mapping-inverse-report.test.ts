@@ -56,6 +56,25 @@ function objectFieldEdge(
   };
 }
 
+function structuralEdge(
+  file: string,
+  source: string,
+  target: string,
+  variant = "—",
+  detail = "contains → Child"
+): MappingEdge {
+  return {
+    rel: file,
+    sourceKind: "object",
+    source,
+    variant,
+    scope: "structural",
+    target,
+    kind: "structural",
+    detail,
+  };
+}
+
 describe("renderMappingInverseReport", () => {
   it("renders ledger edges into target properties and shows unmapped target properties", () => {
     const inverse = ledger(
@@ -244,6 +263,126 @@ describe("renderMappingInverseReport", () => {
     expect(
       out.match(/\[object\] objects\/StockClass\.mapping\.md :: name \[shared\]/g)
     ).toHaveLength(1);
+  });
+
+  it("renders Carta child variants as explicit OCF-to-target flows", () => {
+    const inverse = ledger(
+      {
+        TransactionItem: {
+          type: "object",
+          properties: {
+            securityId: { type: "string" },
+            issuance: { $ref: "#/$defs/IssuanceTransaction" },
+            cancellations: {
+              type: "array",
+              items: { $ref: "#/$defs/CancellationTransaction" },
+            },
+          },
+        },
+        IssuanceTransaction: {
+          type: "object",
+          properties: { date: { type: "string" } },
+        },
+        CancellationTransaction: {
+          type: "object",
+          properties: { date: { type: "string" } },
+        },
+      },
+      [
+        structuralEdge(
+          "objects/SharedSource.mapping.md",
+          "SharedSource",
+          "#/$defs/TransactionItem/properties/issuance",
+          "Issue",
+          "contains → IssuanceTransaction"
+        ),
+        structuralEdge(
+          "objects/SharedSource.mapping.md",
+          "SharedSource",
+          "#/$defs/TransactionItem/properties/cancellations",
+          "Cancel",
+          "contains items → CancellationTransaction"
+        ),
+        structuralEdge(
+          "objects/OtherCancellation.mapping.md",
+          "OtherCancellation",
+          "#/$defs/TransactionItem/properties/cancellations",
+          "—",
+          "contains items → CancellationTransaction"
+        ),
+        objectFieldEdge(
+          "objects/SharedSource.mapping.md",
+          "SharedSource",
+          "date",
+          "#/$defs/IssuanceTransaction/properties/date",
+          "Issue"
+        ),
+        objectFieldEdge(
+          "objects/SharedSource.mapping.md",
+          "SharedSource",
+          "date",
+          "#/$defs/CancellationTransaction/properties/date",
+          "Cancel"
+        ),
+        objectFieldEdge(
+          "objects/OtherCancellation.mapping.md",
+          "OtherCancellation",
+          "date",
+          "#/$defs/CancellationTransaction/properties/date"
+        ),
+        objectFieldEdge(
+          "objects/SharedSource.mapping.md",
+          "SharedSource",
+          "security_id",
+          "#/$defs/TransactionItem/properties/securityId",
+          "Issue"
+        ),
+        objectFieldEdge(
+          "objects/SharedSource.mapping.md",
+          "SharedSource",
+          "security_id",
+          "#/$defs/TransactionItem/properties/securityId",
+          "Cancel"
+        ),
+        objectFieldEdge(
+          "objects/OtherCancellation.mapping.md",
+          "OtherCancellation",
+          "security_id",
+          "#/$defs/TransactionItem/properties/securityId"
+        ),
+      ]
+    );
+
+    const out = renderMappingInverseReport({
+      inverse,
+      targetObject: "TransactionItem",
+      mappingDocuments: new Map([
+        [
+          "objects/SharedSource.mapping.md",
+          {
+            mapping: {
+              route_by_property: { on_property: "kind" },
+              variants: {
+                Issue: { when: ["ISSUE"] },
+                Cancel: { when: ["CANCEL"] },
+              },
+            },
+          },
+        ],
+        ["objects/OtherCancellation.mapping.md", { mapping: {} }],
+      ]),
+    });
+
+    expect(out).toContain("Carta target variants (2; each row is one OCF source route");
+    expect(out).toContain("cancellations[] → CancellationTransaction");
+    expect(out).toContain("from OCF OtherCancellation");
+    expect(out).toContain("from OCF SharedSource.Cancel");
+    expect(out).toContain("from OCF SharedSource.Issue");
+    expect(out).toContain("when: SharedSource.kind = [CANCEL]");
+    expect(out).toContain("when: SharedSource.kind = [ISSUE]");
+    expect(out).toContain("child source fields: date");
+    expect(out).toContain("parent slots: securityId");
+    expect(out.match(/from OCF SharedSource\.(Issue|Cancel)/g)).toHaveLength(2);
   });
 
   it("keeps independent route axes separate instead of forming Cartesian subtype combinations", () => {
