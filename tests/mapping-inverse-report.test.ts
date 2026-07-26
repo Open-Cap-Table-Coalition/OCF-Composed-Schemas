@@ -167,7 +167,7 @@ describe("renderMappingInverseReport", () => {
           "conversion_mechanism",
           "#/$defs/ConvertibleNote/properties/discountPercentage",
           "—",
-          "split"
+          "union-map"
         ),
         fieldEdge(
           "types/conversion_mechanisms/NoteConversionMechanism.mapping.md",
@@ -262,7 +262,12 @@ describe("renderMappingInverseReport", () => {
       "selects ConvertibleConversionRight where conversion_right.type = CONVERTIBLE_CONVERSION_RIGHT"
     );
     expect(out).toContain("active when type = CONVERTIBLE_CONVERSION_RIGHT");
-    expect(out).toContain("dispatches conversion_mechanism.type");
+    expect(out).toContain(
+      "[type] types/conversion_rights/ConvertibleConversionRight.mapping.md :: conversion_mechanism (union-map)"
+    );
+    expect(out).toContain(
+      "dispatches exactly one conversion_mechanism.type branch (mutually exclusive)"
+    );
     expect(out).toContain(
       "[type] types/conversion_mechanisms/SAFEConversionMechanism.mapping.md :: conversion_discount (rename)"
     );

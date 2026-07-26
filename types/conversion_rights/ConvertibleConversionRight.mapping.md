@@ -81,7 +81,7 @@ Source: [`ConvertibleConversionRight.schema.json`](./ConvertibleConversionRight.
 ## Mapping
 
 ```yaml
-# kind vocabulary: rename | select | split | combine | enum-remap | computed | unmappable | TODO
+# kind vocabulary: rename | select | split | combine | enum-remap | union-map | computed | unmappable | TODO
 status: complete
 
 fields:
@@ -92,20 +92,47 @@ fields:
     values:
       CONVERTIBLE_CONVERSION_RIGHT: null
   conversion_mechanism:
-    kind: split
-    target:
-      - "#/$defs/ConvertibleNote/properties/discountPercentage"
-      - "#/$defs/ConvertibleNote/properties/priceCap"
-      - "#/$defs/ConvertibleNote/properties/interestRate"
-      - "#/$defs/ConvertibleNote/properties/interestAccrualPeriod"
-      - "#/$defs/ConvertibleNote/properties/interestCompoundingPeriod"
-      - "#/$defs/ConvertibleNote/properties/dayCountBasis"
-      - "#/$defs/ConvertibleIssuanceTransaction/properties/discountPercentage"
-      - "#/$defs/ConvertibleIssuanceTransaction/properties/valuationCap"
-      - "#/$defs/ConvertibleIssuanceTransaction/properties/interestRate"
-      - "#/$defs/ConvertibleIssuanceTransaction/properties/interestAccrualPeriod"
-      - "#/$defs/ConvertibleIssuanceTransaction/properties/interestCompoundingPeriod"
-      - "#/$defs/ConvertibleIssuanceTransaction/properties/dayCountBasis"
+    kind: union-map
+    cases:
+      - source_schema: "https://raw.githubusercontent.com/Open-Cap-Table-Coalition/Open-Cap-Format-OCF/main/schema/types/conversion_mechanisms/SAFEConversionMechanism.schema.json"
+        mapping:
+          kind: split
+          target:
+            - "#/$defs/ConvertibleNote/properties/discountPercentage"
+            - "#/$defs/ConvertibleNote/properties/priceCap"
+            - "#/$defs/ConvertibleIssuanceTransaction/properties/discountPercentage"
+            - "#/$defs/ConvertibleIssuanceTransaction/properties/valuationCap"
+      - source_schema: "https://raw.githubusercontent.com/Open-Cap-Table-Coalition/Open-Cap-Format-OCF/main/schema/types/conversion_mechanisms/NoteConversionMechanism.schema.json"
+        mapping:
+          kind: split
+          target:
+            - "#/$defs/ConvertibleNote/properties/discountPercentage"
+            - "#/$defs/ConvertibleNote/properties/priceCap"
+            - "#/$defs/ConvertibleNote/properties/interestRate"
+            - "#/$defs/ConvertibleNote/properties/interestAccrualPeriod"
+            - "#/$defs/ConvertibleNote/properties/interestCompoundingPeriod"
+            - "#/$defs/ConvertibleNote/properties/dayCountBasis"
+            - "#/$defs/ConvertibleIssuanceTransaction/properties/discountPercentage"
+            - "#/$defs/ConvertibleIssuanceTransaction/properties/valuationCap"
+            - "#/$defs/ConvertibleIssuanceTransaction/properties/interestRate"
+            - "#/$defs/ConvertibleIssuanceTransaction/properties/interestAccrualPeriod"
+            - "#/$defs/ConvertibleIssuanceTransaction/properties/interestCompoundingPeriod"
+            - "#/$defs/ConvertibleIssuanceTransaction/properties/dayCountBasis"
+      - source_schema: "https://raw.githubusercontent.com/Open-Cap-Table-Coalition/Open-Cap-Format-OCF/main/schema/types/conversion_mechanisms/CustomConversionMechanism.schema.json"
+        mapping:
+          kind: unmappable
+          target: null
+          reason: no-equivalent
+      - source_schema: "https://raw.githubusercontent.com/Open-Cap-Table-Coalition/Open-Cap-Format-OCF/main/schema/types/conversion_mechanisms/PercentCapitalizationConversionMechanism.schema.json"
+        mapping:
+          kind: unmappable
+          target: null
+          reason: no-equivalent
+      - source_schema: "https://raw.githubusercontent.com/Open-Cap-Table-Coalition/Open-Cap-Format-OCF/main/schema/types/conversion_mechanisms/FixedAmountConversionMechanism.schema.json"
+        mapping:
+          kind: unmappable
+          target: null
+          reason: no-equivalent
   converts_to_future_round:
     kind: unmappable
     target: null
@@ -138,7 +165,7 @@ Use a link below to open a prefilled GitHub issue. The issue can be copied into 
 
 - **Bucket 1 (type-to-type, with mirrored Carta homes).** `ConvertibleConversionRight` is OCF's polymorphic *conversion-right wrapper* for a convertible — a discriminated container (`type` + a `conversion_mechanism` `oneOf`) that bundles the conversion economics and logic/state-machine of a convertible together with its conversion target. Carta has no reusable `$def` literally named "conversion right," but a convertible's economic terms have two mirrored Carta homes: the persistent `#/$defs/ConvertibleNote` and the issuance event `#/$defs/ConvertibleIssuanceTransaction`. Both inline the discount, valuation/price cap, interest rate, accrual/compounding period, and day-count basis that this type's mechanisms carry; the note is the canonical home and the issuance transaction is the contextual alternate. Per the Carta structured-target surface ("Convertible economics → `#/$defs/ConvertibleNote/...`") and the directly analogous sibling `StockClassConversionRight.mapping.md` (whose single mechanism maps onto `ShareClassRightsAndPreferences`), this is bucket 1, not bucket 3: the `conversion_mechanism` payload is mapped to its Carta leaves and only the genuinely-absent structural fields are marked `unmappable`. (It is deliberately NOT treated like the sibling `WarrantConversionRight`, whose mechanisms describe *warrant* economics that Carta's `WarrantIssuanceTransaction` does not carry; here the relevant `oneOf` members are convertible mechanisms with clean convertible homes.)
 - `type` is the `CONVERTIBLE_CONVERSION_RIGHT` discriminator const drawn from OCF's `ConversionRightType` enum (`CONVERTIBLE_CONVERSION_RIGHT` / `WARRANT_CONVERSION_RIGHT` / `STOCK_CLASS_CONVERSION_RIGHT`). It selects which OCF conversion-right subtype is in play. Carta has no "conversion right type" enum or analog — convertible-ness is implied positionally by being a `ConvertibleNote` rather than recorded as a typed discriminator — so this is `no-equivalent` rather than `enum-remap` (there is no Carta enum to remap onto).
-- `conversion_mechanism` is a `oneOf` over five OCF mechanism types (`SAFEConversionMechanism`, `NoteConversionMechanism`, `CustomConversionMechanism`, `PercentCapitalizationConversionMechanism`, `FixedAmountConversionMechanism`). It is a polymorphic *container*, not a single leaf, so — exactly like the single mechanism on `StockClassConversionRight` — it is mapped as a `split` that fans the convertible's economic terms out to both Carta homes: `ConvertibleNote` (`discountPercentage`, `priceCap`, `interestRate`, `interestAccrualPeriod`, `interestCompoundingPeriod`, `dayCountBasis`) and the mirrored `ConvertibleIssuanceTransaction` terms (`discountPercentage`, `valuationCap`, `interestRate`, `interestAccrualPeriod`, `interestCompoundingPeriod`, `dayCountBasis`). These are precisely the targets the two convertible-economics members route to in their own bucket-1 mapping files — `SAFEConversionMechanism.mapping.md` (`conversion_discount → discountPercentage`, `conversion_valuation_cap → priceCap`) and `NoteConversionMechanism.mapping.md` (the same two plus `interest_rates → interestRate`, `interest_accrual_period → interestAccrualPeriod`, `compounding_type → interestCompoundingPeriod`, `day_count_convention → dayCountBasis`). The per-field routing of each nested mechanism lives in its own mapping file; this `split` records both the persistent note home and the issuance-transaction home. NOT every `oneOf` member contributes economics: `CustomConversionMechanism` (free-text), `PercentCapitalizationConversionMechanism` (percent-of-cap + cap-definition rules), and `FixedAmountConversionMechanism` (`converts_to_quantity`) are each entirely unmappable in their own files — when one of those is the active mechanism, the `split` simply writes no values. Likewise the structural/event logic the container carries (MFN, AND/OR conditions, EARLIER_OF/LATER_OF triggers, pre/post-money timing, capitalization-definition prose and rule booleans, `exit_multiple`, `conversion_trigger` amount) is OCF conversion state-machine that Carta does not model; those nested fields stay `unmappable` at the mechanism level and are dropped.
+- `conversion_mechanism` is a `oneOf` over five OCF mechanism types (`SAFEConversionMechanism`, `NoteConversionMechanism`, `CustomConversionMechanism`, `PercentCapitalizationConversionMechanism`, `FixedAmountConversionMechanism`). Those branches are mutually exclusive: one value is either a SAFE mechanism or a Note mechanism (or one of the three other mechanism types), never both. The mapping therefore uses the branch-aware `union-map` operator, with one exact case for every source `$ref`; it is not a plain `split`. The SAFE case fans its two economic terms to the Carta homes `ConvertibleNote.discountPercentage` / `priceCap` and the mirrored `ConvertibleIssuanceTransaction.discountPercentage` / `valuationCap`. The Note case fans those same terms plus interest rate, accrual period, compounding period, and day-count basis to the corresponding leaves on both Carta homes. The nested `SAFEConversionMechanism.mapping.md` and `NoteConversionMechanism.mapping.md` files remain the field-level source of truth for which properties supply those leaves; this wrapper mapping records which mutually-exclusive mechanism branch is allowed to supply them. The `CustomConversionMechanism`, `PercentCapitalizationConversionMechanism`, and `FixedAmountConversionMechanism` cases are explicit `unmappable` branches because their mechanism-specific economics have no Carta equivalent. Thus a SAFE cannot acquire Note-only interest fields, and a Note cannot acquire SAFE-only terms by accidental sibling fan-out; the branch discriminator is applied before the target fan-out.
 - `converts_to_future_round` is a boolean flag for convertibility into a future, as-yet-undetermined stock class (e.g. Founder Preferred). Carta records no "converts into a not-yet-defined future round" flag — its convertible/preferred records reference concrete instruments and terms — so `no-equivalent`.
 - `converts_to_stock_class_id` is the identifier of the known destination stock class. Carta's `ConvertibleNote` / `ConvertibleIssuanceTransaction` carry no pointer to a target share class, and `ShareClassRightsAndPreferences` records the conversion economics OF the preferred class itself (`conversionRatio`, `conversionPrice`) rather than a *source-security → destination-stock-class* reference. There is no Carta field for the conversion-target id, so `no-equivalent`. (This is also consistent with `StockParent.mapping.md`, where OCF's generic cross-security lineage references have no single Carta home.)
 - OCF objects that `$ref` this type: it is referenced (alongside its sibling conversion-right types) only by the OCF conversion-*trigger* types (`AutomaticConversionOnDateTrigger`, `AutomaticConversionOnConditionTrigger`, `ElectiveConversionAtWillTrigger`, `ElectiveConversionOnConditionTrigger`, `ElectiveConversionInDateRangeTrigger`, `UnspecifiedConversionTrigger`) and via the `ConversionRight` primitive. Those triggers are themselves OCF conversion state-machine constructs; at the object level the convertible economics that the `conversion_mechanism` carries land on `#/$defs/ConvertibleNote` / `#/$defs/ConvertibleIssuanceTransaction` (the discount, cap, interest, accrual/compounding, and day-count leaves mapped above), while the trigger/mechanism wrapper *logic* — the discriminator, the future-round flag, the conversion-target pointer, and the trigger state machine — is dropped.

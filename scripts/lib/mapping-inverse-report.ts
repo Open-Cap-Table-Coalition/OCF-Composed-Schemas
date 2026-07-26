@@ -76,6 +76,8 @@ function flowLabel(flow: InverseFlow): string {
 interface FlowDetail {
   label: string;
   children?: string[];
+  childNodes?: FlowNode[];
+  kind?: "union-dispatch";
 }
 
 function mappingEntryForFlow(
@@ -109,7 +111,8 @@ function unionBranchDetails(
   const branches = [property.oneOf, property.anyOf].find(Array.isArray);
   if (!Array.isArray(branches) || branches.length < 2) return undefined;
   return {
-    label: `dispatches ${field}.type`,
+    label: `dispatches exactly one ${field}.type branch (mutually exclusive)`,
+    kind: "union-dispatch",
   };
 }
 
@@ -420,9 +423,11 @@ function renderFlowNode(
 ): void {
   lines.push(`${prefix}${last ? "└── " : "├── "}${flowLabel(node.flow)}`);
   const details = flowDetails(node.flow, mappingDocuments);
+  const unionDetail = details.find((detail) => detail.kind === "union-dispatch");
   const items: Array<{ detail: FlowDetail } | { node: FlowNode }> = [
-    ...details.map((detail) => ({ detail })),
-    ...node.children.map((child) => ({ node: child })),
+    ...details.filter((detail) => detail !== unionDetail).map((detail) => ({ detail })),
+    ...(unionDetail ? [{ detail: { ...unionDetail, childNodes: node.children } }] : []),
+    ...(unionDetail ? [] : node.children.map((child) => ({ node: child }))),
   ];
   const childPrefix = `${prefix}${last ? "    " : "│   "}`;
   items.forEach((item, index) => {
@@ -434,6 +439,13 @@ function renderFlowNode(
         item.detail.children.forEach((child, childIndex) => {
           const childLast = childIndex === item.detail.children!.length - 1;
           lines.push(`${detailPrefix}${childLast ? "└── " : "├── "}${child}`);
+        });
+      }
+      if (item.detail.childNodes && item.detail.childNodes.length > 0) {
+        const detailPrefix = `${childPrefix}${itemLast ? "    " : "│   "}`;
+        item.detail.childNodes.forEach((child, childIndex) => {
+          const childLast = childIndex === item.detail.childNodes!.length - 1;
+          renderFlowNode(child, detailPrefix, childLast, mappingDocuments, lines);
         });
       }
     } else {
