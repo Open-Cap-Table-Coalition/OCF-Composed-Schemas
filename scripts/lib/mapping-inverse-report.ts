@@ -677,22 +677,13 @@ function parentSlotsForRoute(
   return [...slots].sort();
 }
 
-function routeCondition(route: SourceRoute): string | undefined {
-  if (!route.discriminator) return undefined;
-  if (!route.when || route.when.length === 0) return `route by ${route.discriminator}`;
-  return `${mappingSourceName(route.file)}.${route.discriminator} = [${route.when.join(", ")}]`;
-}
-
 function markdownCell(value: string): string {
   return value.replaceAll("|", "\\|");
 }
 
 function markdownRouteLabel(route: SourceRoute): string {
   const name = sourceRouteDisplayName(route);
-  const condition = routeCondition(route);
-  return condition
-    ? `<code>${markdownCell(name)}</code><br><small>${markdownCell(condition)}</small>`
-    : `<code>${markdownCell(name)}</code>`;
+  return `<code>${markdownCell(name)}</code>`;
 }
 
 interface PropertyFlowRow {
@@ -770,14 +761,14 @@ function renderPropertyFlowTable(
   const lines = [
     `#### ${title}`,
     "",
-    "| OCF route | OCF property | Carta property |",
-    "| --- | --- | --- |",
+    "| OCF route | OCF property | → | Carta property |",
+    "| --- | --- | --- | --- |",
   ];
   for (const row of rows) {
     lines.push(
       `| ${markdownRouteLabel(row.route)} | \`${markdownCell(
         row.flow.sourceField
-      )}\` | \`${markdownCell(`${propertyPrefix}${targetLabel(row.flow.targetField)}`)}\` |`
+      )}\` | → | \`${markdownCell(`${propertyPrefix}${targetLabel(row.flow.targetField)}`)}\` |`
     );
   }
   return lines;

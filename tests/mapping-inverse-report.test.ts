@@ -384,12 +384,10 @@ describe("renderMappingInverseReport", () => {
     expect(out).toContain("### TransactionItem");
     expect(out).toContain("#### cancellations[] → CancellationTransaction");
     expect(out).toContain("#### issuance → IssuanceTransaction");
-    expect(out).toContain("| OCF route | OCF property | Carta property |");
+    expect(out).toContain("| OCF route | OCF property | → | Carta property |");
     expect(out).toContain("SharedSource [Issue]");
     expect(out).toContain("SharedSource [Cancel]");
     expect(out).toContain("OtherCancellation");
-    expect(out).toContain("SharedSource.kind = [CANCEL]");
-    expect(out).toContain("SharedSource.kind = [ISSUE]");
     expect(out).toContain("TransactionItem.cancellations[].date");
     expect(out).toContain("TransactionItem.issuance.date");
     expect(out).toContain("TransactionItem.securityId");
