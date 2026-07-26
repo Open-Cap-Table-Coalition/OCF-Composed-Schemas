@@ -81,10 +81,14 @@ jobs:
           ' ci-artifacts/mapping-inverse-report.txt >> "$GITHUB_STEP_SUMMARY"
           echo '' >> "$GITHUB_STEP_SUMMARY"
           echo '### Inline related-object flow previews' >> "$GITHUB_STEP_SUMMARY"
+          # Keep the image host on github.com so the authenticated Actions UI can
+          # read private-repository assets; raw.githubusercontent.com returns 404
+          # for private repositories without a signed download URL.
+          preview_ref="${GITHUB_HEAD_REF:-${GITHUB_REF_NAME}}"
           for svg in ci-artifacts/mapping-flows/*.svg; do
             [ -e "$svg" ] || continue
             name=$(basename "$svg" .svg)
-            echo "![${name}](https://raw.githubusercontent.com/${GITHUB_REPOSITORY}/${GITHUB_SHA}/docs/generated/mapping-flows/${name}.svg)" >> "$GITHUB_STEP_SUMMARY"
+            echo "![${name}](${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/blob/${preview_ref}/docs/generated/mapping-flows/${name}.svg?raw=true)" >> "$GITHUB_STEP_SUMMARY"
           done
           exit "$status"
       - name: Upload inverse coverage report
