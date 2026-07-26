@@ -335,3 +335,9 @@ Use a link below to open a prefilled GitHub issue. The issue can be copied into 
 - `board_approval_date`, `stockholder_approval_date`: **unmappable / no-equivalent.** Carta's convertible issuance/note objects record only the economic and lifecycle datetimes (`issueDatetime`, `maturityDatetime`, `conversionDatetime`, `canceledDatetime`); there is no board- or stockholder-approval date anywhere on the convertible objects.
 - `consideration_text`: **unmappable / no-equivalent.** OCF's free-text consideration description has no slot on either the issuance transaction or the note (the only monetary fields are typed `Money`/`Decimal`), so the prose is dropped.
 - `id`, `comments`, `object_type`: OCF object scaffolding. `id` is OCF's own identifier (Carta assigns ids server-side and positions the issuance inside `ConvertibleTransactionItem`); `comments` has no Carta slot; `object_type` is a positional discriminator (`TX_CONVERTIBLE_ISSUANCE`) Carta does not store as a field — its placement as the `issuance` member of `ConvertibleTransactionItem` is the discriminator, not a mappable value, so the `values` entry is null.
+
+- [ ] `id`: Should OCF `ConvertibleIssuance.id` populate Carta `ConvertibleNote.id`, or is Carta's object `id` server-generated while `security_id` should remain mapped only to `ConvertibleNote.securityId`?
+  - Target: ConvertibleNote.id
+  - Asked by: @johnscrudato
+  - Answer: Open: confirm whether Carta's `id` is an externally assignable security identifier or a server-generated object identifier distinct from `securityId`.
+  - Answered by: —

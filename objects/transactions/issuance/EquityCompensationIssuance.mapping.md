@@ -448,3 +448,14 @@ Use a link below to open a prefilled GitHub issue. The issue can be copied into 
   `vesting_terms_id` into `vesting_template_id` (the reusable template ref, mapped above like the
   old field) plus this per-grant anchor. It lands on the resolved family's security object
   (`OptionGrant` / `RestrictedStockUnit`), mirroring `vestings`; SAR has no security object so `Sar: null`.
+
+- [ ] `id`: For an `OPTION` route, should OCF `EquityCompensationIssuance.id` populate Carta `OptionGrant.id`, or is Carta's object `id` server-generated while `security_id` should remain mapped only to `OptionGrant.securityId`?
+  - Target: OptionGrant.id
+  - Asked by: @johnscrudato
+  - Answer: Open: confirm whether Carta's `id` is an externally assignable security identifier or a server-generated object identifier distinct from `securityId`.
+  - Answered by: —
+- [ ] `id`: For the `RSU` route, should OCF `EquityCompensationIssuance.id` populate Carta `RestrictedStockUnit.id`, or is Carta's object `id` server-generated while `security_id` should remain mapped only to `RestrictedStockUnit.securityId`?
+  - Target: RestrictedStockUnit.id
+  - Asked by: @johnscrudato
+  - Answer: Open: confirm whether Carta's `id` is an externally assignable security identifier or a server-generated object identifier distinct from `securityId`.
+  - Answered by: —

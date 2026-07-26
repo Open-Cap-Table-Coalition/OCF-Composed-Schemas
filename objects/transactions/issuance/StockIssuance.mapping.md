@@ -370,3 +370,14 @@ Use a link below to open a prefilled GitHub issue. The issue can be copied into 
   (OCF-required; no Carta legend store), and `issuance_type` itself (no Carta field records the
   RSA/founders flavor; `CertificateIssuanceReason` is a *why-issued* enum, a different concept) have
   no Carta home in either variant.
+
+- [ ] `id`: For the `FOUNDERS_STOCK`/Default route, should OCF `StockIssuance.id` populate Carta `Certificate.id`, or is Carta's object `id` server-generated while `security_id` should remain mapped only to `Certificate.securityId`?
+  - Target: Certificate.id
+  - Asked by: @johnscrudato
+  - Answer: Open: confirm whether Carta's `id` is an externally assignable security identifier or a server-generated object identifier distinct from `securityId`.
+  - Answered by: —
+- [ ] `id`: For the `RSA` route, should OCF `StockIssuance.id` populate Carta `RestrictedStockAward.id`, or is Carta's object `id` server-generated while `security_id` should remain mapped only to `RestrictedStockAward.securityId`?
+  - Target: RestrictedStockAward.id
+  - Asked by: @johnscrudato
+  - Answer: Open: confirm whether Carta's `id` is an externally assignable security identifier or a server-generated object identifier distinct from `securityId`.
+  - Answered by: —
