@@ -123,6 +123,12 @@ describe("renderMappingInverseReport", () => {
           "#/$defs/ConvertibleNote/properties/priceCap",
           "Note"
         ),
+        fieldEdge(
+          "types/NoteConversionMechanism.mapping.md",
+          "NoteConversionMechanism",
+          "conversion_valuation_cap",
+          "#/$defs/ConvertibleNote/properties/priceCap"
+        ),
       ]
     );
 
@@ -132,6 +138,8 @@ describe("renderMappingInverseReport", () => {
       "[object] objects/ConvertibleIssuance.mapping.md :: discount [shared] (rename)"
     );
     expect(out).toContain("[object] objects/ConvertibleIssuance.mapping.md :: cap [Note] (rename)");
+    expect(out).toContain("direct OCF object mapping");
+    expect(out).toContain("reusable type-mapping detail");
     expect(out.match(/:: discount \[shared\] \(rename\)/g)).toHaveLength(1);
   });
 

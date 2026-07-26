@@ -263,18 +263,37 @@ function renderMappingTree(
     }
 
     const targetQuestions = openQuestionsForTargetField(object, field, mappingDocuments);
-    const children: string[] = [];
-    if (flows.length === 0) children.push("✗ no mapped OCF source");
-    else {
-      flows.sort((left, right) => flowLabel(left).localeCompare(flowLabel(right)));
-      children.push(...flows.map(flowLabel));
-    }
     const propertyQuestions = openQuestionsForFlows(
       flows,
       mappingDocuments,
       (question, flow) =>
         question.property !== null && questionMatchesSourceField(question, flow.sourceField)
     );
+    const children: string[] = [];
+    const objectFlows = flows.filter((flow) => flow.sourceKind === "object");
+    const typeFlows = flows.filter((flow) => flow.sourceKind === "type");
+    const sections = [
+      ...(objectFlows.length > 0
+        ? [{ label: "direct OCF object mapping", flows: objectFlows }]
+        : []),
+      ...(typeFlows.length > 0
+        ? [{ label: "reusable type-mapping detail", flows: typeFlows }]
+        : []),
+    ];
+    if (sections.length === 0) children.push("✗ no mapped OCF source");
+    else {
+      const hasTrailingChildren = propertyQuestions.length > 0 || targetQuestions.length > 0;
+      sections.forEach((section, sectionIndex) => {
+        const lastSection = sectionIndex === sections.length - 1 && !hasTrailingChildren;
+        lines.push(`${flowPrefix}${lastSection ? "└── " : "├── "}${section.label}`);
+        const sectionPrefix = `${flowPrefix}${lastSection ? "    " : "│   "}`;
+        section.flows.sort((left, right) => flowLabel(left).localeCompare(flowLabel(right)));
+        section.flows.forEach((flow, flowIndex) => {
+          const lastFlow = flowIndex === section.flows.length - 1;
+          lines.push(`${sectionPrefix}${lastFlow ? "└── " : "├── "}${flowLabel(flow)}`);
+        });
+      });
+    }
     children.push(...propertyQuestions.map(questionLabel));
     children.push(...targetQuestions.map(questionLabel));
     children.forEach((child, childIndex) => {
@@ -331,10 +350,10 @@ function renderObjectPanel(
     `id: "#/$defs/${row.name}"`,
     `inverse_role: ${row.status}`,
     `status: ${hasMappings ? (unmappedProperties > 0 ? "PARTIAL" : "MAPPED") : "NO MAPPINGS"}`,
-    `incoming_mappings: ${flowCount(group)} (object: ${flowCountBySourceKind(
+    `mapping_evidence: ${flowCount(group)} (direct object: ${flowCountBySourceKind(
       group,
       "object"
-    )}, type: ${flowCountBySourceKind(group, "type")})`,
+    )}, reusable type detail: ${flowCountBySourceKind(group, "type")})`,
   ];
   if (hasMappings) metadata.push(`unmapped_properties: ${unmappedProperties}`);
   if (!hasMappings && row.reason) metadata.push(`reason: ${row.reason}`);
@@ -488,6 +507,12 @@ export function renderMappingInverseReport(options: MappingInverseReportOptions)
     `source_documents: ${sourceDocuments}`,
     `green_carta_documents: ${greenDocuments}`,
   ]);
+
+  lines.push(
+    "",
+    "Evidence legend",
+    "  [object] direct OCF object route; [type] reusable mapping detail used by that route, not a separate source record."
+  );
 
   lines.push(...renderCoverageStory(inverse), ...renderExcludedRows(excluded));
 

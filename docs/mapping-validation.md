@@ -27,6 +27,9 @@ derived coverage stays reviewable, and enum remaps are checked value-by-value.
   property whose `$ref`/`items.$ref` child definition has executable mapping evidence and whose
   same mapping also carries executable evidence for the containing parent; it is populated through
   child records rather than by a source field aimed at the parent property.
+  Within each target property, direct `[object]` routes are shown first. `[type]` entries are
+  grouped beneath `reusable type-mapping detail`; they explain the nested mapping expansion and
+  are not additional independent source records.
   Target properties with no mapped OCF source remain explicit in each panel.
 - CI runs the equivalent `npm run mapping:inverse` command on every pull request and push to `main`.
   That command renders the same shared inverse-coverage ledger and role policy used by the
