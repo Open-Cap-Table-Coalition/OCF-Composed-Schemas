@@ -24,6 +24,7 @@ ratified:
   - StockClassAuthorizedSharesAdjustment
   - StockIssuance
   - StockPlan
+  - StockPlanReturnToPool
   - StockTransfer
   - Valuation
   - VestingTerms

@@ -155,9 +155,8 @@ status: complete
 
 fields:
   id:
-    kind: unmappable
-    target: null
-    reason: ocf-internal
+    kind: rename
+    target: "#/$defs/Issuer/properties/id"
   comments:
     kind: unmappable
     target: null
@@ -244,9 +243,9 @@ Use a link below to open a prefilled GitHub issue. The issue can be copied into 
 
 - Carta's `Issuer` is the cap-table-owning entity. The bundled schema's description says it's "derived from the **Carta Issuer API** OpenAPI spec," `issuerId` appears 11× as a foreign key across Stakeholder/Certificate/ConvertibleNote/OptionGrant/Interest/etc., and `corporationId` does not appear at all — so OCF Issuer maps to Carta `Issuer`, not Carta `Corporation`.
 - Carta also defines a near-identical 4-field `Corporation` type (same fields as `Issuer`: `id`, `legalName`, `doingBusinessAsName`, `website`), but it is not `$ref`'d from anywhere in the bundle and no other type carries a `corporationId`. It may be vestigial or used by API surfaces excluded from this snapshot. The token `CORPORATION` does appear in the schema — only as a value of the `StakeholderEntityType` enum (alongside `LIMITED_LIABILITY_CORPORATION`, etc.) — i.e., "corporation" in Carta is a *category of stakeholder*, not the cap-table-owning entity.
-- Carta's `Issuer` carries only `id`, `legalName`, `doingBusinessAsName`, `website`. That leaves 12 of OCF's 14 fields with no Carta counterpart at the Issuer level:
+- Carta's `Issuer` carries only `id`, `legalName`, `doingBusinessAsName`, `website`. OCF `id` maps directly to Carta `Issuer.id`; the remaining 11 of OCF's 14 fields have no Carta counterpart at the Issuer level:
     - `formation_date`, `country_of_formation`, `country_subdivision_of_formation`, `country_subdivision_name_of_formation`: Carta's `Issuer` records no formation info. Nothing Issuer-adjacent in the bundle stores it.
     - `tax_ids`, `email`, `phone`, `address`: no contact/identity fields on Carta's `Issuer`. (Carta has `StakeholderAddress` for stakeholders, not for the issuer entity.)
     - `initial_shares_authorized`: OCF stores a single number-or-sentinel at the Issuer level (the corporate-charter total, `oneOf [AuthorizedShares enum, Numeric]` where the enum values `NOT APPLICABLE` and `UNLIMITED` are sentinels). Carta exposes authorized counts only at lower levels — `ShareClass.authorizedShareCount` and `OptionPoolSummary.authorizedShares` — both `$ref: Decimal` with no description and no Issuer-level rollup. The schema doesn't document the temporal semantics of those counts (initial vs. current vs. as-of-amendment), nor precisely how `OptionPool` authorizations relate to their parent `ShareClass` (the bundle only says `OptionPoolSummary.shareClassId` is "the share class used by the option pool to issue equity"). So no deterministic computation can be constructed from the schema, and even if it could, the OCF sentinel values cannot be produced from a numeric aggregation.
-    - `id`, `comments`, `object_type`: boilerplate OCF object scaffolding. `id` is OCF's identifier and Carta assigns its own server-side; `object_type` is a discriminator Carta doesn't need (positional typing per endpoint); `comments` has no Carta slot.
+    - `comments`, `object_type`: boilerplate OCF object scaffolding. `object_type` is a discriminator Carta doesn't need (positional typing per endpoint); `comments` has no Carta slot.
 - Carta's `Issuer.website` has no OCF counterpart on `Issuer`.

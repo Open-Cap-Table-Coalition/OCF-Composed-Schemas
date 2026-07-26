@@ -131,8 +131,12 @@ shared:
   security_id:
     kind: rename
     target:
-      Option: "#/$defs/OptionTransactionItem/properties/securityId"
-      Rsu:    "#/$defs/RsuTransactionItem/properties/securityId"
+      Option:
+        - "#/$defs/OptionTransactionItem/properties/securityId"
+        - "#/$defs/OptionGrant/properties/securityId"
+      Rsu:
+        - "#/$defs/RsuTransactionItem/properties/securityId"
+        - "#/$defs/RestrictedStockUnit/properties/securityId"
       Sar:    "#/$defs/SarTransactionItem/properties/securityId"
   balance_security_id: { kind: unmappable, target: null, reason: no-equivalent }
   reason_text:
@@ -144,14 +148,22 @@ shared:
   date:
     kind: rename
     target:
-      Option: "#/$defs/OptionCancellationTransaction/properties/effectiveDatetime"
-      Rsu:    "#/$defs/RsuCancellationTransaction/properties/effectiveDatetime"
+      Option:
+        - "#/$defs/OptionCancellationTransaction/properties/effectiveDatetime"
+        - "#/$defs/OptionGrant/properties/canceledDate"
+      Rsu:
+        - "#/$defs/RsuCancellationTransaction/properties/effectiveDatetime"
+        - "#/$defs/RestrictedStockUnit/properties/canceledDate"
       Sar:    "#/$defs/SarCancellationTransaction/properties/effectiveDatetime"
   quantity:
     kind: rename
     target:
-      Option: "#/$defs/OptionCancellationTransaction/properties/quantity"
-      Rsu:    "#/$defs/RsuCancellationTransaction/properties/quantity"
+      Option:
+        - "#/$defs/OptionCancellationTransaction/properties/quantity"
+        - "#/$defs/OptionGrant/properties/canceledQuantity"
+      Rsu:
+        - "#/$defs/RsuCancellationTransaction/properties/quantity"
+        - "#/$defs/RestrictedStockUnit/properties/canceledQuantity"
       Sar:    "#/$defs/SarCancellationTransaction/properties/quantity"
 
 variants:
@@ -209,9 +221,9 @@ Use a link below to open a prefilled GitHub issue. The issue can be copied into 
   instrument family fixed at issuance. The record itself carries no discriminator,
   only `security_id`, so an importer must resolve `compensation_type` from the joined
   `EquityCompensationIssuance` first (the two-pass requirement, §2.2).
-- **`date` / `quantity`** are the only mappable fields; each lands on the resolved
-  family's cancellation tx (`effectiveDatetime` / `quantity`) via a per-variant
-  target map.
+- **`date` / `quantity`** land on both the resolved family's cancellation tx
+  (`effectiveDatetime` / `quantity`) and the Option/RSU security's cancellation aggregates
+  (`canceledDate` / `canceledQuantity`) via explicit per-variant target arrays.
 - **`reason_text` lands lossily (kind `computed`).** Carta's cancellation `reason` is
   an enum (`OptionCancellationReason` / `RsuCancellationReason` / `SarCancellationReason`)
   and OCF `reason_text` is free text, so this is not a member-for-member `enum-remap`:
@@ -219,9 +231,9 @@ Use a link below to open a prefilled GitHub issue. The issue can be copied into 
   bucket and dropping the prose. It lands on the family's cancellation tx `reason` via
   a per-variant target map, mirroring `date`/`quantity` — and matching the
   `ConvertibleCancellation` / `WarrantCancellation` siblings.
-- **`security_id`** is the join key (`route_by_property.lookup_by.key`) and is also copied to the
-  resolved parent `*TransactionItem.securityId` to anchor the cancellation inside that item's
-  `cancellations[]` collection. The cancellation leaf itself still carries no security id.
+- **`security_id`** is the join key (`route_by_property.lookup_by.key`) and is copied to both the
+  resolved parent `*TransactionItem.securityId` and the Option/RSU security `securityId` to anchor
+  the security-level projections. The cancellation leaf itself still carries no id.
   **`balance_security_id`** (partial-cancel remainder) has no Carta equivalent on any cancellation tx.
 - **Lineage asymmetry — why `balance_security_id` stays unmappable here.** A partial
   equity-comp cancellation mints a new balance security in the *same* family — an

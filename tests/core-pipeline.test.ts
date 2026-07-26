@@ -81,13 +81,17 @@ describe("deriveCore (determinism — the drift gate's premise)", () => {
   it("does not admit StockClass.initial_shares_authorized to strict Core", async () => {
     const strict = await deriveCore(process.cwd());
     const rich = await deriveCore(process.cwd(), RICH_PROFILE);
-    const row = strict.rows.find(
-      (r) =>
-        r.entity === "StockClass" && r.variant === "—" && r.field === "initial_shares_authorized"
-    );
-    expect(row?.verdict).toMatchObject({ class: "out", reason: "partial" });
-    expect(row?.verdict.detail).toContain("AuthorizedShares: unmapped members");
-    expect(row?.verdict.detail).toContain("Numeric: widening");
+    for (const variant of ["Common", "Preferred"]) {
+      const row = strict.rows.find(
+        (r) =>
+          r.entity === "StockClass" &&
+          r.variant === variant &&
+          r.field === "initial_shares_authorized"
+      );
+      expect(row?.verdict).toMatchObject({ class: "out", reason: "partial" });
+      expect(row?.verdict.detail).toContain("AuthorizedShares: unmapped members");
+      expect(row?.verdict.detail).toContain("Numeric: widening");
+    }
     const strictStockClass = strict.package.get("files/StockClassesFile.schema.json") as any;
     const richStockClass = rich.package.get("files/StockClassesFile.schema.json") as any;
     expect(

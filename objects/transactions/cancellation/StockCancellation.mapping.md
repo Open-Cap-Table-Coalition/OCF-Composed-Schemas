@@ -131,28 +131,44 @@ shared:
   security_id:
     kind: rename
     target:
-      Rsa: "#/$defs/RsaTransactionItem/properties/securityId"
-      Default: "#/$defs/CertificateTransactionItem/properties/securityId"
+      Rsa:
+        - "#/$defs/RsaTransactionItem/properties/securityId"
+        - "#/$defs/RestrictedStockAward/properties/securityId"
+      Default:
+        - "#/$defs/CertificateTransactionItem/properties/securityId"
+        - "#/$defs/Certificate/properties/securityId"
   reason_text:
     kind: computed                 # free text classified into the family's cancellation reason enum
     target:
       Rsa:     "#/$defs/RsaCancellationTransaction/properties/reason"
       Default: "#/$defs/CertificateCancellationTransaction/properties/reason"
   balance_security_id:
-    kind: computed                 # lineage: the partial-cancel remainder security precededBy
+    kind: computed                 # remainder identity + lineage on the partial-cancel security
     target:
-      Rsa:     "#/$defs/RestrictedStockAwardPrecededBy/properties/securities"
-      Default: "#/$defs/CertificatePrecededBy/properties/securities"
+      Rsa:
+        - "#/$defs/RestrictedStockAward/properties/securityId"
+        - "#/$defs/RestrictedStockAwardPrecededBy/properties/securities"
+      Default:
+        - "#/$defs/Certificate/properties/securityId"
+        - "#/$defs/CertificatePrecededBy/properties/securities"
   date:
     kind: rename
     target:
-      Rsa:     "#/$defs/RsaCancellationTransaction/properties/effectiveDatetime"
-      Default: "#/$defs/CertificateCancellationTransaction/properties/effectiveDatetime"
+      Rsa:
+        - "#/$defs/RsaCancellationTransaction/properties/effectiveDatetime"
+        - "#/$defs/RestrictedStockAward/properties/canceledDate"
+      Default:
+        - "#/$defs/CertificateCancellationTransaction/properties/effectiveDatetime"
+        - "#/$defs/Certificate/properties/canceledDate"
   quantity:
     kind: rename
     target:
-      Rsa:     "#/$defs/RsaCancellationTransaction/properties/quantity"
-      Default: "#/$defs/CertificateCancellationTransaction/properties/quantity"
+      Rsa:
+        - "#/$defs/RsaCancellationTransaction/properties/quantity"
+        - "#/$defs/RestrictedStockAward/properties/canceledQuantity"
+      Default:
+        - "#/$defs/CertificateCancellationTransaction/properties/quantity"
+        - "#/$defs/Certificate/properties/canceledQuantity"
 
 variants:
 
@@ -204,11 +220,11 @@ Use a link below to open a prefilled GitHub issue. The issue can be copied into 
   the joined `StockIssuance` first (the two-pass requirement, §2.2). Routing an RSA
   cancel into the Certificate family would be the bug-#219 misroute; the
   `route_by_property` join prevents it.
-- **`date` / `quantity`** are the mappable tx-level fields; each lands on the resolved
-  family's cancellation tx (`effectiveDatetime` / `quantity`) via a per-variant target
-  map. **Granularity to flag:** OCF `date` is a calendar date and Carta
-  `effectiveDatetime` is a full datetime, so an importer must widen the OCF date
-  (the reverse is lossy).
+- **`date` / `quantity`** land on both the resolved family's cancellation tx
+  (`effectiveDatetime` / `quantity`) and security aggregate (`canceledDate` /
+  `canceledQuantity`) via explicit per-variant target arrays. **Granularity to flag:** OCF
+  `date` is a calendar date and Carta `effectiveDatetime` is a full datetime, so an importer
+  must widen the OCF date (the reverse is lossy).
 - **`reason_text` lands lossily (kind `computed`).** Carta's cancellation `reason` is
   an enum (`CertificateCancellationReason` / the RSA equivalent) and OCF `reason_text`
   is free text, so this is not a member-for-member `enum-remap`: an importer must
@@ -216,16 +232,16 @@ Use a link below to open a prefilled GitHub issue. The issue can be copied into 
   prose. It lands on the resolved family's cancellation tx `reason` via a per-variant
   target map, mirroring `date`/`quantity` — and matching the `ConvertibleCancellation`
   / `WarrantCancellation` siblings, which map the identical field the same way.
-- **`security_id`** is the join key (`route_by_property.lookup_by.key`) and is also copied to the
-  resolved parent `*TransactionItem.securityId` to anchor the cancellation inside that item's
-  `cancellations[]` collection. The cancellation leaf itself still carries no security id.
-- **`balance_security_id` round-trips as lineage (kind `computed`).** The remainder
+- **`security_id`** is the join key (`route_by_property.lookup_by.key`) and is copied to both the
+  resolved parent `*TransactionItem.securityId` and security `securityId`; the latter anchors the
+  cancellation's security-level projections. The cancellation leaf itself still carries no id.
+- **`balance_security_id` round-trips as identity plus lineage (kind `computed`).** The remainder
   security minted by a partial cancellation is itself a stock security —
   `RestrictedStockAward` for the RSA family, `Certificate` for the default family — and
   both carry `precededBy.securities` (a `PrecededBySecurity` array). The remainder
-  records the cancelled security as its predecessor, so an importer writes the cancelled
-  `security_id` into the remainder's `precededBy.securities`: this reverse lineage edge
-  round-trips losslessly, it is not unmappable. (The cancellation tx *itself* still
+  records the cancelled security as its predecessor, so an importer writes the remainder id to
+  the security and the cancelled `security_id` into its `precededBy.securities`: this reverse
+  lineage edge round-trips losslessly, it is not unmappable. (The cancellation tx *itself* still
   holds no balance field — only the security lineage carries it.)
 - **`id`, `comments`, `object_type`** are OCF scaffolding with no Carta home: `id`
   is OCF's own object identifier, `comments` is free-text metadata, and `object_type`

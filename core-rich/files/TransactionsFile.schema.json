@@ -5818,6 +5818,64 @@
           },
           {
             "type": "object",
+            "title": "StockPlanReturnToPool",
+            "properties": {
+              "id": {
+                "type": "string",
+                "description": "Identifier for the object"
+              },
+              "object_type": {
+                "const": "TX_STOCK_PLAN_RETURN_TO_POOL"
+              },
+              "quantity": {
+                "type": "string",
+                "pattern": "^[+-]?[0-9]+(\\.[0-9]{1,10})?$",
+                "description": "How many shares were returned to the pool?"
+              },
+              "security_id": {
+                "type": "string",
+                "description": "Identifier for the security (stock, plan security, warrant, or convertible) by which it can be referenced by other transaction objects. N…"
+              },
+              "stock_plan_id": {
+                "type": "string",
+                "description": "Id of the Stock Plan whose pool the reserved shares should return to. This does not have to be the same pool the securities were issued f…"
+              }
+            },
+            "required": [
+              "object_type",
+              "id"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "title": "StockRepurchase",
+            "properties": {
+              "balance_security_id": {
+                "type": "string",
+                "description": "Identifier for the security that holds the remainder balance (for partial repurchases)"
+              },
+              "id": {
+                "type": "string",
+                "description": "Identifier for the object"
+              },
+              "object_type": {
+                "const": "TX_STOCK_REPURCHASE"
+              },
+              "quantity": {
+                "type": "string",
+                "pattern": "^[+-]?[0-9]+(\\.[0-9]{1,10})?$",
+                "description": "Number of shares of stock repurchased"
+              }
+            },
+            "required": [
+              "object_type",
+              "id"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
             "title": "StockTransfer",
             "properties": {
               "balance_security_id": {

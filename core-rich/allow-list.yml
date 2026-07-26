@@ -25,6 +25,8 @@ ratified:
   - StockClassConversionRatioAdjustment
   - StockIssuance
   - StockPlan
+  - StockPlanReturnToPool
+  - StockRepurchase
   - StockTransfer
   - Valuation
   - VestingTerms

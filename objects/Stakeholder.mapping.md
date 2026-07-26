@@ -127,9 +127,8 @@ status: complete
 
 fields:
   id:
-    kind: unmappable
-    target: null
-    reason: ocf-internal
+    kind: rename
+    target: "#/$defs/Stakeholder/properties/id"
   comments:
     kind: unmappable
     target: null
@@ -269,5 +268,5 @@ Use a link below to open a prefilled GitHub issue. The issue can be copied into 
   - Asked by: @johnscrudato
   - Answer: Open: determine whether `Stakeholder.addresses[].country_subdivision` is the intended OCF source for stakeholder residency, or whether another stakeholder-level field should be used.
   - Answered by: —
-- `id`, `comments`, `object_type`: unmappable boilerplate OCF object scaffolding (same as `Document`/`Issuer`).
+- `id` → `Stakeholder.id`: the OCF stakeholder identifier is the identity referenced by transaction `stakeholder_id` and represented by Carta's stakeholder `id`. `comments` and `object_type` remain unmappable boilerplate.
 - Carta-side fields with no OCF counterpart: `issuerId` (a back-reference; in OCF the issuer is implicit because each OCF file represents one issuer), `group` (an arbitrary tag with no OCF analogue).
