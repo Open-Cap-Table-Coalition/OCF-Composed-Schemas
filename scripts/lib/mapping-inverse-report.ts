@@ -629,6 +629,11 @@ function sourceRouteName(route: SourceRoute): string {
   return route.label === "—" ? source : `${source}.${route.label}`;
 }
 
+function sourceRouteDiagramName(route: SourceRoute): string {
+  const source = mappingSourceName(route.file);
+  return route.label === "—" ? source : `${source} [${route.label}]`;
+}
+
 function flowAppliesToRoute(flow: InverseFlow, route: SourceRoute): boolean {
   return flow.file === route.file && routeLabelsForFlow(flow).includes(route.label);
 }
@@ -677,6 +682,16 @@ function parentSlotsForRoute(
   return [...slots].sort();
 }
 
+function mermaidText(value: string): string {
+  return value.replaceAll("&", "&amp;").replaceAll('"', "&quot;");
+}
+
+function routeCondition(route: SourceRoute): string | undefined {
+  if (!route.discriminator) return undefined;
+  if (!route.when || route.when.length === 0) return `route by ${route.discriminator}`;
+  return `${mappingSourceName(route.file)}.${route.discriminator} = [${route.when.join(", ")}]`;
+}
+
 function renderTargetVariantFlows(
   object: string,
   group: TargetGroup,
@@ -687,38 +702,70 @@ function renderTargetVariantFlows(
   const variants = targetVariantsForGroup(object, group, inverse);
   if (variants.length < 2) return [];
 
+  const routes = sourceRoutesForFlows(
+    variants.flatMap((variant) => variant.flows),
+    mappingDocuments
+  );
+  const routeIds = new Map(routes.map((route, index) => [sourceRouteKey(route), `ocf${index}`]));
+  const variantIds = new Map(
+    variants.map((variant, index) => [targetVariantLabel(variant), `variant${index}`])
+  );
   const lines = [
-    `Carta target variants (${variants.length}; each row is one OCF source route → one nested variant)`,
-    "  Separate OCF records can contribute to the same parent Carta item; source routes stay split below.",
+    `Carta target class/data flow (${variants.length} nested variants)`,
+    "  Solid arrows carry OCF fields into Carta classes; dotted arrows show parent-child containment.",
+    "```mermaid",
+    "flowchart LR",
+    "  classDef ocf fill:#e6f4ea,stroke:#34a853,color:#0b3d20;",
+    "  classDef carta fill:#e8f0fe,stroke:#1a73e8,color:#0d2b66;",
+    "  classDef variant fill:#f3e8fd,stroke:#9334e6,color:#3b1266;",
+    '  subgraph SRC["OCF source routes"]',
+    "    direction TB",
   ];
-  variants.forEach((variant, variantIndex) => {
-    const lastVariant = variantIndex === variants.length - 1;
-    const variantPrefix = lastVariant ? "└── " : "├── ";
-    const routePrefix = lastVariant ? "    " : "│   ";
-    lines.push(`${variantPrefix}${targetVariantLabel(variant)}`);
-    const routes = sourceRoutesForFlows(variant.flows, mappingDocuments);
-    routes.forEach((route, routeIndex) => {
-      const lastRoute = routeIndex === routes.length - 1;
-      const detailPrefix = `${routePrefix}${lastRoute ? "    " : "│   "}`;
-      lines.push(`${routePrefix}${lastRoute ? "└── " : "├── "}from OCF ${sourceRouteName(route)}`);
-      const details: string[] = [];
-      if (route.discriminator && route.when && route.when.length > 0) {
-        details.push(
-          `when: ${mappingSourceName(route.file)}.${route.discriminator} = [${route.when.join(
-            ", "
-          )}]`
-        );
-      }
+  routes.forEach((route) => {
+    const condition = routeCondition(route);
+    const label = condition
+      ? `${sourceRouteDiagramName(route)}<br/>${condition}`
+      : sourceRouteDiagramName(route);
+    lines.push(`    ${routeIds.get(sourceRouteKey(route))}["${mermaidText(label)}"]:::ocf`);
+  });
+  lines.push("  end", `  subgraph TGT["Carta target: ${mermaidText(object)}"]`, "    direction TB");
+  lines.push(`    parent["«Carta parent»<br/>${mermaidText(object)}"]:::carta`);
+  variants.forEach((variant) => {
+    const childLabel = `${variant.property}${variant.child.cardinality === "array" ? "[]" : ""} : ${
+      variant.child.name
+    }`;
+    lines.push(
+      `    ${variantIds.get(targetVariantLabel(variant))}["${mermaidText(childLabel)}"]:::variant`
+    );
+  });
+  lines.push("  end");
+
+  variants.forEach((variant) => {
+    lines.push(`  parent -.->|contains| ${variantIds.get(targetVariantLabel(variant))}`);
+  });
+
+  routes.forEach((route) => {
+    const routeId = routeIds.get(sourceRouteKey(route));
+    const parentSlots = [
+      ...new Set(variants.flatMap((variant) => parentSlotsForRoute(variant, route, group))),
+    ].sort();
+    if (parentSlots.length > 0) {
+      lines.push(`  ${routeId} -->|${mermaidText(`parent: ${parentSlots.join(", ")}`)}| parent`);
+    }
+    variants.forEach((variant) => {
+      if (!variant.flows.some((flow) => flowAppliesToRoute(flow, route))) return;
       const childFields = sourceFieldsInTargetVariant(variant, route, groups);
-      if (childFields.length > 0) details.push(`child source fields: ${childFields.join(", ")}`);
-      const parentSlots = parentSlotsForRoute(variant, route, group);
-      if (parentSlots.length > 0) details.push(`parent slots: ${parentSlots.join(", ")}`);
-      details.forEach((detail, detailIndex) => {
-        const lastDetail = detailIndex === details.length - 1;
-        lines.push(`${detailPrefix}${lastDetail ? "└── " : "├── "}${detail}`);
-      });
+      const label =
+        childFields.length > 0 ? `child: ${childFields.join(", ")}` : "child: structural route";
+      lines.push(
+        `  ${routeId} -->|${mermaidText(label)}| ${variantIds.get(targetVariantLabel(variant))}`
+      );
     });
   });
+  lines.push(
+    "```",
+    "  Separate OCF records can contribute to the same parent Carta item; each source route remains distinct."
+  );
   return lines;
 }
 
@@ -1069,15 +1116,24 @@ function renderObjectPanel(
     mappingDocuments && hasMappings
       ? renderObjectSummary(row.name, group, inverse, mappingDocuments, groups)
       : [];
+  const diagramStart = summary.indexOf("```mermaid");
+  const diagramEnd = diagramStart < 0 ? -1 : summary.indexOf("```", diagramStart + 3);
+  const diagrams =
+    diagramStart >= 0 && diagramEnd >= 0 ? summary.slice(diagramStart, diagramEnd + 1) : [];
+  const panelSummary =
+    diagrams.length > 0
+      ? [...summary.slice(0, diagramStart), ...summary.slice(diagramEnd + 1)]
+      : summary;
   const mappingDetail = renderMappingTree(row.name, group, inverse, mappingDocuments);
   const body = hasMappings
     ? [
-        ...summary,
-        ...(summary.length > 0 ? ["", "aggregate mapping detail"] : []),
+        ...panelSummary,
+        ...(panelSummary.length > 0 ? ["", "aggregate mapping detail"] : []),
         ...mappingDetail,
       ]
     : ["(empty mapping)"];
-  return renderBox(`Carta object: ${row.name}`, metadata, body);
+  const panel = renderBox(`Carta object: ${row.name}`, metadata, body);
+  return diagrams.length > 0 ? [...panel, "", ...diagrams] : panel;
 }
 
 function renderSection(

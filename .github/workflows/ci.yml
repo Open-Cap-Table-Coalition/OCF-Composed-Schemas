@@ -27,9 +27,43 @@ jobs:
           set +e
           npm run --silent mapping:inverse > ci-artifacts/mapping-inverse-report.txt 2>&1
           status=$?
-          echo '```text' >> "$GITHUB_STEP_SUMMARY"
-          cat ci-artifacts/mapping-inverse-report.txt >> "$GITHUB_STEP_SUMMARY"
-          echo '```' >> "$GITHUB_STEP_SUMMARY"
+          echo '## Inverse coverage report' >> "$GITHUB_STEP_SUMMARY"
+          awk '
+            function close_text() {
+              if (in_text) {
+                print "```"
+                in_text = 0
+              }
+            }
+            function open_text() {
+              if (!in_text) {
+                print "```text"
+                in_text = 1
+              }
+            }
+            /^```mermaid$/ {
+              close_text()
+              print
+              in_mermaid = 1
+              next
+            }
+            /^```$/ && in_mermaid {
+              print
+              in_mermaid = 0
+              next
+            }
+            in_mermaid {
+              print
+              next
+            }
+            {
+              open_text()
+              print
+            }
+            END {
+              close_text()
+            }
+          ' ci-artifacts/mapping-inverse-report.txt >> "$GITHUB_STEP_SUMMARY"
           exit "$status"
       - name: Upload inverse coverage report
         if: always()

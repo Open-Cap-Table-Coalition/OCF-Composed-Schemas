@@ -373,16 +373,21 @@ describe("renderMappingInverseReport", () => {
       ]),
     });
 
-    expect(out).toContain("Carta target variants (2; each row is one OCF source route");
-    expect(out).toContain("cancellations[] → CancellationTransaction");
-    expect(out).toContain("from OCF OtherCancellation");
-    expect(out).toContain("from OCF SharedSource.Cancel");
-    expect(out).toContain("from OCF SharedSource.Issue");
-    expect(out).toContain("when: SharedSource.kind = [CANCEL]");
-    expect(out).toContain("when: SharedSource.kind = [ISSUE]");
-    expect(out).toContain("child source fields: date");
-    expect(out).toContain("parent slots: securityId");
-    expect(out.match(/from OCF SharedSource\.(Issue|Cancel)/g)).toHaveLength(2);
+    expect(out).toContain("Carta target class/data flow (2 nested variants)");
+    expect(out).toContain("\n```mermaid\nflowchart LR\n");
+    expect(out).not.toContain("│ ```mermaid");
+    expect(out).toContain('subgraph SRC["OCF source routes"]');
+    expect(out).toContain('subgraph TGT["Carta target: TransactionItem"]');
+    expect(out).toContain("SharedSource [Issue]");
+    expect(out).toContain("SharedSource [Cancel]");
+    expect(out).toContain("OtherCancellation");
+    expect(out).toContain("issuance : IssuanceTransaction");
+    expect(out).toContain("cancellations[] : CancellationTransaction");
+    expect(out).toContain("SharedSource.kind = [CANCEL]");
+    expect(out).toContain("SharedSource.kind = [ISSUE]");
+    expect(out).toContain("child: date");
+    expect(out).toContain("parent: securityId");
+    expect(out.match(/SharedSource \[(Issue|Cancel)\]/g)).toHaveLength(2);
   });
 
   it("keeps independent route axes separate instead of forming Cartesian subtype combinations", () => {
