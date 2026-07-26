@@ -5,7 +5,6 @@
       "object_type": "STOCK_CLASS",
       "id": "sc-common",
       "name": "Common Stock",
-      "class_type": "COMMON",
       "default_id_prefix": "CS-",
       "par_value": { "amount": "0.0001", "currency": "USD" },
       "price_per_share": { "amount": "0.0001", "currency": "USD" },
