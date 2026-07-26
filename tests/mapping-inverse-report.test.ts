@@ -379,29 +379,27 @@ describe("renderMappingInverseReport", () => {
       ]),
     });
 
-    expect(out).toContain("Related object class/data-flow diagrams (1)");
-    expect(out).toContain(
-      "Related object group: TransactionItem — Carta target class/data flow (2 nested variants)"
-    );
-    expect(out).toContain("\n```mermaid\nflowchart LR\n");
-    expect(out).not.toContain("│ ```mermaid");
-    expect(out).toContain('subgraph SRC["OCF source routes"]');
-    expect(out).toContain('subgraph TGT["Carta target: TransactionItem"]');
+    expect(out).toContain("<!-- mapping-flow:start -->");
+    expect(out).toContain("## Related object property flows (1 groups)");
+    expect(out).toContain("### TransactionItem");
+    expect(out).toContain("#### cancellations[] → CancellationTransaction");
+    expect(out).toContain("#### issuance → IssuanceTransaction");
+    expect(out).toContain("| OCF route | OCF property | Carta property |");
     expect(out).toContain("SharedSource [Issue]");
     expect(out).toContain("SharedSource [Cancel]");
     expect(out).toContain("OtherCancellation");
-    expect(out).toContain("issuance : IssuanceTransaction");
-    expect(out).toContain("cancellations[] : CancellationTransaction");
     expect(out).toContain("SharedSource.kind = [CANCEL]");
     expect(out).toContain("SharedSource.kind = [ISSUE]");
-    expect(out).toContain("child: date");
-    expect(out).toContain("parent: securityId");
-    expect(out.match(/SharedSource \[(Issue|Cancel)\]/g)).toHaveLength(2);
-    expect(out.indexOf("```mermaid")).toBeLessThan(out.indexOf("╭ Carta object: TransactionItem"));
-    const diagramStart = out.indexOf("```mermaid");
-    const diagramEnd = out.indexOf("```", diagramStart + 3);
-    expect(out.slice(diagramStart, diagramEnd)).not.toContain("ParentOnly");
-    expect(out).not.toContain("Separate OCF records can contribute");
+    expect(out).toContain("TransactionItem.cancellations[].date");
+    expect(out).toContain("TransactionItem.issuance.date");
+    expect(out).toContain("TransactionItem.securityId");
+    expect(out).toContain("<!-- mapping-flow:end -->");
+    const flowStart = out.indexOf("<!-- mapping-flow:start -->");
+    const flowEnd = out.indexOf("<!-- mapping-flow:end -->");
+    const flowBlock = out.slice(flowStart, flowEnd);
+    expect(flowBlock.match(/SharedSource \[(Issue|Cancel)\]/g)).toHaveLength(4);
+    expect(flowBlock).not.toContain("ParentOnly");
+    expect(out).not.toContain("```mermaid");
   });
 
   it("keeps independent route axes separate instead of forming Cartesian subtype combinations", () => {

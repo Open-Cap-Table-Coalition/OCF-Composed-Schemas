@@ -41,6 +41,21 @@ jobs:
                 in_text = 1
               }
             }
+            /^<!-- mapping-flow:start -->$/ {
+              close_text()
+              print
+              in_mapping_flow = 1
+              next
+            }
+            /^<!-- mapping-flow:end -->$/ {
+              print
+              in_mapping_flow = 0
+              next
+            }
+            in_mapping_flow {
+              print
+              next
+            }
             /^```mermaid$/ {
               close_text()
               print

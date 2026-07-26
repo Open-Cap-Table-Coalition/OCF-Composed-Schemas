@@ -624,7 +624,7 @@ function sourceRoutesForFlows(
   );
 }
 
-function sourceRouteDiagramName(route: SourceRoute): string {
+function sourceRouteDisplayName(route: SourceRoute): string {
   const source = mappingSourceName(route.file);
   return route.label === "—" ? source : `${source} [${route.label}]`;
 }
@@ -677,17 +677,113 @@ function parentSlotsForRoute(
   return [...slots].sort();
 }
 
-function mermaidText(value: string): string {
-  return value.replaceAll("&", "&amp;").replaceAll('"', "&quot;");
-}
-
 function routeCondition(route: SourceRoute): string | undefined {
   if (!route.discriminator) return undefined;
   if (!route.when || route.when.length === 0) return `route by ${route.discriminator}`;
   return `${mappingSourceName(route.file)}.${route.discriminator} = [${route.when.join(", ")}]`;
 }
 
-function renderTargetVariantFlows(
+function markdownCell(value: string): string {
+  return value.replaceAll("|", "\\|");
+}
+
+function markdownRouteLabel(route: SourceRoute): string {
+  const name = sourceRouteDisplayName(route);
+  const condition = routeCondition(route);
+  return condition
+    ? `<code>${markdownCell(name)}</code><br><small>${markdownCell(condition)}</small>`
+    : `<code>${markdownCell(name)}</code>`;
+}
+
+interface PropertyFlowRow {
+  sourceField: string;
+  targetField: string;
+}
+
+function propertyFlowsForVariant(
+  variant: TargetVariant,
+  route: SourceRoute,
+  groups: Map<string, TargetGroup>
+): PropertyFlowRow[] {
+  const childGroup = groups.get(variant.child.name);
+  if (!childGroup) return [];
+  const rows = new Map<string, PropertyFlowRow>();
+  for (const [targetField, flows] of childGroup.flows) {
+    for (const flow of flows) {
+      if (
+        flow.sourceKind !== "object" ||
+        flow.kind === "structural" ||
+        !flowAppliesToRoute(flow, route) ||
+        flow.sourceField.startsWith("(")
+      ) {
+        continue;
+      }
+      rows.set(`${flow.sourceField}\u0000${targetField}`, {
+        sourceField: flow.sourceField,
+        targetField,
+      });
+    }
+  }
+  return [...rows.values()].sort(
+    (left, right) =>
+      left.targetField.localeCompare(right.targetField) ||
+      left.sourceField.localeCompare(right.sourceField)
+  );
+}
+
+function parentPropertyFlowsForRoute(
+  route: SourceRoute,
+  group: TargetGroup,
+  nestedProperties: ReadonlySet<string>
+): PropertyFlowRow[] {
+  const rows = new Map<string, PropertyFlowRow>();
+  for (const [targetField, flows] of group.flows) {
+    if (targetField === "(object route)" || nestedProperties.has(targetField)) continue;
+    for (const flow of flows) {
+      if (
+        flow.sourceKind !== "object" ||
+        flow.kind === "structural" ||
+        !flowAppliesToRoute(flow, route) ||
+        flow.sourceField.startsWith("(")
+      ) {
+        continue;
+      }
+      rows.set(`${flow.sourceField}\u0000${targetField}`, {
+        sourceField: flow.sourceField,
+        targetField,
+      });
+    }
+  }
+  return [...rows.values()].sort(
+    (left, right) =>
+      left.targetField.localeCompare(right.targetField) ||
+      left.sourceField.localeCompare(right.sourceField)
+  );
+}
+
+function renderPropertyFlowTable(
+  title: string,
+  propertyPrefix: string,
+  rows: readonly { route: SourceRoute; flow: PropertyFlowRow }[],
+  targetLabel: (field: string) => string
+): string[] {
+  const lines = [
+    `#### ${title}`,
+    "",
+    "| OCF route | OCF property | Carta property |",
+    "| --- | --- | --- |",
+  ];
+  for (const row of rows) {
+    lines.push(
+      `| ${markdownRouteLabel(row.route)} | \`${markdownCell(
+        row.flow.sourceField
+      )}\` | \`${markdownCell(`${propertyPrefix}${targetLabel(row.flow.targetField)}`)}\` |`
+    );
+  }
+  return lines;
+}
+
+function renderTargetVariantTables(
   object: string,
   group: TargetGroup,
   inverse: InverseCoverageLedger,
@@ -701,67 +797,38 @@ function renderTargetVariantFlows(
     variants.flatMap((variant) => variant.flows),
     mappingDocuments
   );
-  const routeIds = new Map(routes.map((route, index) => [sourceRouteKey(route), `ocf${index}`]));
-  const variantIds = new Map(
-    variants.map((variant, index) => [targetVariantLabel(variant), `variant${index}`])
-  );
-  const lines = [
-    `Related object group: ${object} — Carta target class/data flow (${variants.length} nested variants)`,
-    "  Solid arrows carry OCF fields into Carta classes; dotted arrows show parent-child containment.",
-    "```mermaid",
-    "flowchart LR",
-    "  classDef ocf fill:#e6f4ea,stroke:#34a853,color:#0b3d20;",
-    "  classDef carta fill:#e8f0fe,stroke:#1a73e8,color:#0d2b66;",
-    "  classDef variant fill:#f3e8fd,stroke:#9334e6,color:#3b1266;",
-    '  subgraph SRC["OCF source routes"]',
-    "    direction TB",
-  ];
-  routes.forEach((route) => {
-    const condition = routeCondition(route);
-    const label = condition
-      ? `${sourceRouteDiagramName(route)}<br/>${condition}`
-      : sourceRouteDiagramName(route);
-    lines.push(`    ${routeIds.get(sourceRouteKey(route))}["${mermaidText(label)}"]:::ocf`);
-  });
-  lines.push("  end", `  subgraph TGT["Carta target: ${mermaidText(object)}"]`, "    direction TB");
-  lines.push(`    parent["«Carta parent»<br/>${mermaidText(object)}"]:::carta`);
+  const nestedProperties = new Set(variants.map((variant) => variant.property));
+  const lines = [`### ${object}`, "", `Carta parent: \`${object}\``];
   variants.forEach((variant) => {
-    const childLabel = `${variant.property}${variant.child.cardinality === "array" ? "[]" : ""} : ${
-      variant.child.name
-    }`;
+    const cardinality = variant.child.cardinality === "array" ? "[]" : "";
+    const variantLabel = `${variant.property}${cardinality} → ${variant.child.name}`;
+    const rows = routes.flatMap((route) =>
+      propertyFlowsForVariant(variant, route, groups).map((flow) => ({ route, flow }))
+    );
     lines.push(
-      `    ${variantIds.get(targetVariantLabel(variant))}["${mermaidText(childLabel)}"]:::variant`
+      ...renderPropertyFlowTable(
+        variantLabel,
+        `${object}.${variant.property}${cardinality}.`,
+        rows,
+        (field) => field
+      ),
+      ""
     );
   });
-  lines.push("  end");
 
-  variants.forEach((variant) => {
-    lines.push(`  parent -.->|contains| ${variantIds.get(targetVariantLabel(variant))}`);
-  });
-
-  routes.forEach((route) => {
-    const routeId = routeIds.get(sourceRouteKey(route));
-    let hasOutgoingEdge = false;
-    const parentSlots = [
-      ...new Set(variants.flatMap((variant) => parentSlotsForRoute(variant, route, group))),
-    ].sort();
-    if (parentSlots.length > 0) {
-      lines.push(`  ${routeId} -->|${mermaidText(`parent: ${parentSlots.join(", ")}`)}| parent`);
-      hasOutgoingEdge = true;
-    }
-    variants.forEach((variant) => {
-      if (!variant.flows.some((flow) => flowAppliesToRoute(flow, route))) return;
-      hasOutgoingEdge = true;
-      const childFields = sourceFieldsInTargetVariant(variant, route, groups);
-      const label =
-        childFields.length > 0 ? `child: ${childFields.join(", ")}` : "child: structural route";
-      lines.push(
-        `  ${routeId} -->|${mermaidText(label)}| ${variantIds.get(targetVariantLabel(variant))}`
-      );
-    });
-    if (!hasOutgoingEdge) lines.push(`  ${routeId} -->|object route| parent`);
-  });
-  lines.push("```");
+  const parentRows = routes.flatMap((route) =>
+    parentPropertyFlowsForRoute(route, group, nestedProperties).map((flow) => ({ route, flow }))
+  );
+  if (parentRows.length > 0) {
+    lines.push(
+      ...renderPropertyFlowTable(
+        "Shared parent properties",
+        `${object}.`,
+        parentRows,
+        (field) => field
+      )
+    );
+  }
   return lines;
 }
 
@@ -954,7 +1021,7 @@ function renderRelatedObjectDiagrams(
 ): string[] {
   const diagrams = rows
     .map((row) =>
-      renderTargetVariantFlows(
+      renderTargetVariantTables(
         row.name,
         groups.get(row.name) ?? { object: row.name, flows: new Map() },
         inverse,
@@ -967,10 +1034,12 @@ function renderRelatedObjectDiagrams(
 
   const lines = [
     "",
-    `Related object class/data-flow diagrams (${diagrams.length})`,
-    "  Each diagram is one Carta parent plus its nested variants and only the OCF routes that populate those variants; parent-only routes remain in the audit panels.",
+    "<!-- mapping-flow:start -->",
+    `## Related object property flows (${diagrams.length} groups)`,
+    "Only OCF routes that populate a nested variant are shown. Each row is one explicit source-property → target-property mapping; parent-only routes remain in the audit panels.",
   ];
   diagrams.forEach((diagram) => lines.push("", ...diagram));
+  lines.push("<!-- mapping-flow:end -->");
   return lines;
 }
 
