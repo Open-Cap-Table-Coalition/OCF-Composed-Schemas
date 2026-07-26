@@ -37,15 +37,17 @@ derived coverage stays reviewable, and enum remaps are checked value-by-value.
   compact **resulting Carta object flavors** summary. Each flavor names the source route, the
   discriminator condition, and the target properties mapped by that route. Conditional property
   flows that enrich an object without creating a new object flavor are shown separately. The
-  report also renders a Mermaid **Carta target class/data flow** when standalone OCF object
-  mappings populate multiple child slots on the same Carta object (for example, `issuance` versus
-  `cancellations[]` on a transaction item). OCF source routes are classes on the left; the Carta
-  parent and nested child classes are on the right. Solid arrows label child fields and parent
-  slots, while dotted arrows show parent-child containment. This is a per-source-record flow view:
-  a routed OCF record follows its matching branch, while distinct lifecycle records may still
-  aggregate into one parent Carta item. The full aggregate mapping detail remains below as the
-  audit trail; the diagram is a report-only recut of the existing mapping evidence and does not
-  change coverage counts or mapping semantics.
+  report also renders a dedicated Mermaid **related object class/data-flow diagrams** section when
+  standalone OCF object mappings populate multiple child slots on the same Carta object (for
+  example, `issuance` versus `cancellations[]` on a transaction item). It emits one diagram per
+  related group: the Carta parent and nested child classes are on the right, while every contributing
+  OCF route—including routes that fill parent-only slots—is on the left. Solid arrows label child
+  fields and parent slots, while dotted arrows show parent-child containment. This is a
+  per-source-record flow view: a routed OCF record follows its matching branch, while distinct
+  lifecycle records may still aggregate into one parent Carta item. The diagrams appear before the
+  object panels; the full aggregate mapping detail remains below as the audit trail. The diagrams
+  are a report-only recut of the existing mapping evidence and do not change coverage counts or
+  mapping semantics.
   Target properties with no mapped OCF source remain explicit in each panel.
 - CI runs the equivalent `npm run mapping:inverse` command on every pull request and push to `main`.
   That command renders the same shared inverse-coverage ledger and role policy used by the

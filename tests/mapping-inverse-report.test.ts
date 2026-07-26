@@ -350,6 +350,12 @@ describe("renderMappingInverseReport", () => {
           "security_id",
           "#/$defs/TransactionItem/properties/securityId"
         ),
+        objectFieldEdge(
+          "objects/ParentOnly.mapping.md",
+          "ParentOnly",
+          "security_id",
+          "#/$defs/TransactionItem/properties/securityId"
+        ),
       ]
     );
 
@@ -373,7 +379,10 @@ describe("renderMappingInverseReport", () => {
       ]),
     });
 
-    expect(out).toContain("Carta target class/data flow (2 nested variants)");
+    expect(out).toContain("Related object class/data-flow diagrams (1)");
+    expect(out).toContain(
+      "Related object group: TransactionItem — Carta target class/data flow (2 nested variants)"
+    );
     expect(out).toContain("\n```mermaid\nflowchart LR\n");
     expect(out).not.toContain("│ ```mermaid");
     expect(out).toContain('subgraph SRC["OCF source routes"]');
@@ -381,6 +390,7 @@ describe("renderMappingInverseReport", () => {
     expect(out).toContain("SharedSource [Issue]");
     expect(out).toContain("SharedSource [Cancel]");
     expect(out).toContain("OtherCancellation");
+    expect(out).toContain("ParentOnly");
     expect(out).toContain("issuance : IssuanceTransaction");
     expect(out).toContain("cancellations[] : CancellationTransaction");
     expect(out).toContain("SharedSource.kind = [CANCEL]");
@@ -388,6 +398,7 @@ describe("renderMappingInverseReport", () => {
     expect(out).toContain("child: date");
     expect(out).toContain("parent: securityId");
     expect(out.match(/SharedSource \[(Issue|Cancel)\]/g)).toHaveLength(2);
+    expect(out.indexOf("```mermaid")).toBeLessThan(out.indexOf("╭ Carta object: TransactionItem"));
   });
 
   it("keeps independent route axes separate instead of forming Cartesian subtype combinations", () => {

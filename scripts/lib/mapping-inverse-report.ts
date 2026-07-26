@@ -624,11 +624,6 @@ function sourceRoutesForFlows(
   );
 }
 
-function sourceRouteName(route: SourceRoute): string {
-  const source = mappingSourceName(route.file);
-  return route.label === "—" ? source : `${source}.${route.label}`;
-}
-
 function sourceRouteDiagramName(route: SourceRoute): string {
   const source = mappingSourceName(route.file);
   return route.label === "—" ? source : `${source} [${route.label}]`;
@@ -703,7 +698,7 @@ function renderTargetVariantFlows(
   if (variants.length < 2) return [];
 
   const routes = sourceRoutesForFlows(
-    variants.flatMap((variant) => variant.flows),
+    [...group.flows.values()].flat().filter((flow) => flow.sourceKind === "object"),
     mappingDocuments
   );
   const routeIds = new Map(routes.map((route, index) => [sourceRouteKey(route), `ocf${index}`]));
@@ -711,7 +706,7 @@ function renderTargetVariantFlows(
     variants.map((variant, index) => [targetVariantLabel(variant), `variant${index}`])
   );
   const lines = [
-    `Carta target class/data flow (${variants.length} nested variants)`,
+    `Related object group: ${object} — Carta target class/data flow (${variants.length} nested variants)`,
     "  Solid arrows carry OCF fields into Carta classes; dotted arrows show parent-child containment.",
     "```mermaid",
     "flowchart LR",
@@ -746,14 +741,17 @@ function renderTargetVariantFlows(
 
   routes.forEach((route) => {
     const routeId = routeIds.get(sourceRouteKey(route));
+    let hasOutgoingEdge = false;
     const parentSlots = [
       ...new Set(variants.flatMap((variant) => parentSlotsForRoute(variant, route, group))),
     ].sort();
     if (parentSlots.length > 0) {
       lines.push(`  ${routeId} -->|${mermaidText(`parent: ${parentSlots.join(", ")}`)}| parent`);
+      hasOutgoingEdge = true;
     }
     variants.forEach((variant) => {
       if (!variant.flows.some((flow) => flowAppliesToRoute(flow, route))) return;
+      hasOutgoingEdge = true;
       const childFields = sourceFieldsInTargetVariant(variant, route, groups);
       const label =
         childFields.length > 0 ? `child: ${childFields.join(", ")}` : "child: structural route";
@@ -761,6 +759,7 @@ function renderTargetVariantFlows(
         `  ${routeId} -->|${mermaidText(label)}| ${variantIds.get(targetVariantLabel(variant))}`
       );
     });
+    if (!hasOutgoingEdge) lines.push(`  ${routeId} -->|object route| parent`);
   });
   lines.push(
     "```",
@@ -870,17 +869,15 @@ function renderObjectSummary(
 ): string[] {
   const flavors = routeFlavorsForGroup(object, group, inverse, mappingDocuments);
   const targetVariants = targetVariantsForGroup(object, group, inverse);
-  const targetVariantLines =
-    targetVariants.length >= 2
-      ? renderTargetVariantFlows(object, group, inverse, mappingDocuments, groups)
-      : [];
   const targetVariantRoutes = sourceRoutesForFlows(
-    targetVariants.flatMap((variant) => variant.flows),
+    targetVariants.length >= 2
+      ? [...group.flows.values()].flat().filter((flow) => flow.sourceKind === "object")
+      : [],
     mappingDocuments
   );
   const targetVariantRouteKeys = new Set(targetVariantRoutes.map(sourceRouteKey));
   const remainingFlavors =
-    targetVariantLines.length > 0
+    targetVariantRoutes.length > 0
       ? flavors.filter(
           (flavor) =>
             !targetVariantRouteKeys.has(sourceRouteKey({ file: flavor.file, label: flavor.label }))
@@ -890,13 +887,12 @@ function renderObjectSummary(
   const axes = routeAxesForGroup(group, mappingDocuments).filter(
     (axis) => !flavorFiles.has(axis.file)
   );
-  const lines = targetVariantLines;
+  const lines: string[] = [];
 
   if (remainingFlavors.length > 0) {
-    if (lines.length > 0) lines.push("");
     lines.push(
       `${
-        targetVariantLines.length > 0
+        targetVariantRoutes.length > 0
           ? "additional OCF source routes reaching parent object"
           : "resulting Carta object flavors"
       } (${remainingFlavors.length})`
@@ -950,6 +946,34 @@ function renderObjectSummary(
     });
   }
 
+  return lines;
+}
+
+function renderRelatedObjectDiagrams(
+  rows: readonly CartaDefCoverage[],
+  groups: Map<string, TargetGroup>,
+  inverse: InverseCoverageLedger,
+  mappingDocuments: ReadonlyMap<string, MappingQuestionDocument>
+): string[] {
+  const diagrams = rows
+    .map((row) =>
+      renderTargetVariantFlows(
+        row.name,
+        groups.get(row.name) ?? { object: row.name, flows: new Map() },
+        inverse,
+        mappingDocuments,
+        groups
+      )
+    )
+    .filter((diagram) => diagram.length > 0);
+  if (diagrams.length === 0) return [];
+
+  const lines = [
+    "",
+    `Related object class/data-flow diagrams (${diagrams.length})`,
+    "  Each diagram is one Carta parent plus its nested variants and all OCF routes that contribute to that group.",
+  ];
+  diagrams.forEach((diagram) => lines.push("", ...diagram));
   return lines;
 }
 
@@ -1116,24 +1140,15 @@ function renderObjectPanel(
     mappingDocuments && hasMappings
       ? renderObjectSummary(row.name, group, inverse, mappingDocuments, groups)
       : [];
-  const diagramStart = summary.indexOf("```mermaid");
-  const diagramEnd = diagramStart < 0 ? -1 : summary.indexOf("```", diagramStart + 3);
-  const diagrams =
-    diagramStart >= 0 && diagramEnd >= 0 ? summary.slice(diagramStart, diagramEnd + 1) : [];
-  const panelSummary =
-    diagrams.length > 0
-      ? [...summary.slice(0, diagramStart), ...summary.slice(diagramEnd + 1)]
-      : summary;
   const mappingDetail = renderMappingTree(row.name, group, inverse, mappingDocuments);
   const body = hasMappings
     ? [
-        ...panelSummary,
-        ...(panelSummary.length > 0 ? ["", "aggregate mapping detail"] : []),
+        ...summary,
+        ...(summary.length > 0 ? ["", "aggregate mapping detail"] : []),
         ...mappingDetail,
       ]
     : ["(empty mapping)"];
-  const panel = renderBox(`Carta object: ${row.name}`, metadata, body);
-  return diagrams.length > 0 ? [...panel, "", ...diagrams] : panel;
+  return renderBox(`Carta object: ${row.name}`, metadata, body);
 }
 
 function renderSection(
@@ -1289,7 +1304,7 @@ export function renderMappingInverseReport(options: MappingInverseReportOptions)
     "  inverse semantics are orthogonal: record-construction (default), reference-only, state-projection, aggregate-projection, or event-reconstruction."
   );
 
-  lines.push(...renderCoverageStory(inverse), ...renderExcludedRows(excluded));
+  lines.push(...renderCoverageStory(inverse));
 
   if (options.targetObject) {
     const row = rowForTarget(inverse, options.targetObject);
@@ -1303,6 +1318,10 @@ export function renderMappingInverseReport(options: MappingInverseReportOptions)
         `Carta definition ${options.targetObject} is a supporting definition, not a standalone mapping target (${row.status}).`
       );
     }
+    if (options.mappingDocuments) {
+      lines.push(...renderRelatedObjectDiagrams([row], groups, inverse, options.mappingDocuments));
+    }
+    lines.push(...renderExcludedRows(excluded));
     lines.push(
       "",
       ...renderObjectPanel(
@@ -1315,6 +1334,12 @@ export function renderMappingInverseReport(options: MappingInverseReportOptions)
     );
     return lines.join("\n");
   }
+
+  if (options.mappingDocuments) {
+    lines.push(...renderRelatedObjectDiagrams(mapped, groups, inverse, options.mappingDocuments));
+  }
+
+  lines.push(...renderExcludedRows(excluded));
 
   if (mapped.length > 0) {
     lines.push(
