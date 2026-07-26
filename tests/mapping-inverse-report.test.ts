@@ -205,9 +205,7 @@ describe("renderMappingInverseReport", () => {
       ]),
     });
 
-    expect(out).toContain(
-      "polymorphic subtype projections (1 independent route axes; branches not cross-producted)"
-    );
+    expect(out).toContain("polymorphic subtype projections (1 independent axes)");
     expect(out).toContain("discriminator: objects/StockClass.mapping.md :: class_type");
     expect(out).toContain("Common when [COMMON]");
     expect(out).toContain("Preferred when [PREFERRED]");
@@ -299,15 +297,15 @@ describe("renderMappingInverseReport", () => {
       ]),
     });
 
-    expect(out).toContain(
-      "polymorphic subtype projections (2 independent route axes; branches not cross-producted)"
-    );
+    expect(out).toContain("polymorphic subtype projections (2 independent axes)");
     expect(out).toContain("discriminator: objects/StockClass.mapping.md :: class_type");
     expect(out).toContain(
       "discriminator: objects/transactions/exercise/EquityCompensationExercise.mapping.md :: security_id → compensation_type (lookup)"
     );
     expect(out.match(/ when \[/g)).toHaveLength(4);
-    expect(out.match(/:: date \(rename\)/g)).toHaveLength(5);
+    expect(out.match(/:: date \(rename\)/g)).toHaveLength(1);
+    expect(out.match(/:: name \[shared\] \(rename\)/g)).toHaveLength(3);
+    expect(out.match(/:: security_id \[shared\] \(rename\)/g)).toHaveLength(3);
   });
 
   it("renders the outer and inner discriminator chain for nested convertible mechanisms", () => {

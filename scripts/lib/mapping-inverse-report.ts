@@ -490,11 +490,11 @@ function routeAxesForGroup(
   );
 }
 
-function flowsForRouteBranch(group: TargetGroup, file: string, label: string): TargetGroup {
+function flowsForRouteVariant(group: TargetGroup, file: string, label: string): TargetGroup {
   const flows = new Map<string, InverseFlow[]>();
   for (const [field, fieldFlows] of group.flows) {
     const selected = fieldFlows.filter(
-      (flow) => flow.file !== file || !flow.routeVariants || flow.routeVariants.includes(label)
+      (flow) => flow.file === file && flow.routeVariants?.includes(label)
     );
     if (selected.length > 0) flows.set(field, selected);
   }
@@ -615,9 +615,7 @@ function renderSubtypeProjections(
   const axes = routeAxesForGroup(group, mappingDocuments);
   if (axes.length === 0) return [];
 
-  const lines = [
-    `polymorphic subtype projections (${axes.length} independent route axes; branches not cross-producted)`,
-  ];
+  const lines = [`polymorphic subtype projections (${axes.length} independent axes)`];
   axes.forEach((axis, axisIndex) => {
     const lastAxis = axisIndex === axes.length - 1;
     const axisPrefix = lastAxis ? "    " : "│   ";
@@ -625,13 +623,13 @@ function renderSubtypeProjections(
     axis.branches.forEach((branch, branchIndex) => {
       const branchLast = branchIndex === axis.branches.length - 1;
       const branchPrefix = `${axisPrefix}${branchLast ? "    " : "│   "}`;
-      const branchGroup = flowsForRouteBranch(group, axis.file, branch.label);
+      const branchGroup = flowsForRouteVariant(group, axis.file, branch.label);
       lines.push(
         `${axisPrefix}${branchLast ? "└── " : "├── "}${branch.label} when [${branch.when.join(
           ", "
         )}]`
       );
-      lines.push(`${branchPrefix}└── applies:`);
+      lines.push(`${branchPrefix}└── variant mappings:`);
       const tree = renderMappingTree(object, branchGroup, inverse, mappingDocuments, false, false);
       if (tree.length === 0) {
         lines.push(`${branchPrefix}    └── (no mapped target properties)`);
