@@ -196,8 +196,14 @@ describe("renderMappingInverseReport", () => {
             mapping: {
               route_by_property: { on_property: "class_type" },
               variants: {
-                Common: { when: ["COMMON"] },
-                Preferred: { when: ["PREFERRED"] },
+                Common: {
+                  when: ["COMMON"],
+                  primary_targets: ["#/$defs/ShareClass"],
+                },
+                Preferred: {
+                  when: ["PREFERRED"],
+                  primary_targets: ["#/$defs/ShareClass"],
+                },
               },
             },
           },
@@ -205,15 +211,16 @@ describe("renderMappingInverseReport", () => {
       ]),
     });
 
-    expect(out).toContain("polymorphic subtype projections (1 independent axes)");
-    expect(out).toContain("discriminator: objects/StockClass.mapping.md :: class_type");
-    expect(out).toContain("Common when [COMMON]");
-    expect(out).toContain("Preferred when [PREFERRED]");
-    expect(out).toContain("name");
-    expect(out).toContain("type");
+    expect(out).toContain("resulting Carta object flavors (2)");
+    expect(out).toContain("StockClass.Common → ShareClass");
+    expect(out).toContain("when: StockClass.class_type = [COMMON]");
+    expect(out).toContain("properties: name, type");
+    expect(out).toContain("StockClass.Preferred → ShareClass");
+    expect(out).toContain("when: StockClass.class_type = [PREFERRED]");
+    expect(out).not.toContain("conditional property flows");
     expect(
       out.match(/\[object\] objects\/StockClass\.mapping\.md :: name \[shared\]/g)
-    ).toHaveLength(3);
+    ).toHaveLength(1);
   });
 
   it("keeps independent route axes separate instead of forming Cartesian subtype combinations", () => {
@@ -297,15 +304,14 @@ describe("renderMappingInverseReport", () => {
       ]),
     });
 
-    expect(out).toContain("polymorphic subtype projections (2 independent axes)");
-    expect(out).toContain("discriminator: objects/StockClass.mapping.md :: class_type");
-    expect(out).toContain(
-      "discriminator: objects/transactions/exercise/EquityCompensationExercise.mapping.md :: security_id → compensation_type (lookup)"
-    );
-    expect(out.match(/ when \[/g)).toHaveLength(4);
+    expect(out).toContain("conditional property flows (2 discriminators)");
+    expect(out).toContain("StockClass :: class_type");
+    expect(out).toContain("EquityCompensationExercise :: security_id → compensation_type (lookup)");
+    expect(out).toContain("Common [COMMON] or Preferred [PREFERRED] → shareClassName");
+    expect(out).toContain("Option [OPTION] or Sar [CSAR] → securityId");
     expect(out.match(/:: date \(rename\)/g)).toHaveLength(1);
-    expect(out.match(/:: name \[shared\] \(rename\)/g)).toHaveLength(3);
-    expect(out.match(/:: security_id \[shared\] \(rename\)/g)).toHaveLength(3);
+    expect(out.match(/:: name \[shared\] \(rename\)/g)).toHaveLength(1);
+    expect(out.match(/:: security_id \[shared\] \(rename\)/g)).toHaveLength(1);
   });
 
   it("renders the outer and inner discriminator chain for nested convertible mechanisms", () => {

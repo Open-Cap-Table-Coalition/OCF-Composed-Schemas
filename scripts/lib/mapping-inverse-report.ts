@@ -61,6 +61,14 @@ interface RouteAxis {
   branches: RouteBranch[];
 }
 
+interface RouteFlavor {
+  file: string;
+  label: string;
+  discriminator: string;
+  when: string[];
+  properties: string[];
+}
+
 function isPlainObject(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
@@ -453,6 +461,22 @@ function routeDiscriminator(mapping: Record<string, unknown>): string | undefine
   return `${key} → ${property} (lookup)`;
 }
 
+function mappingSourceName(file: string): string {
+  return (
+    file
+      .split("/")
+      .pop()
+      ?.replace(/\.mapping\.md$/, "") ?? file
+  );
+}
+
+function targetContainsObject(target: unknown, object: string): boolean {
+  if (typeof target === "string") return target === `#/$defs/${object}`;
+  if (Array.isArray(target)) return target.some((value) => targetContainsObject(value, object));
+  if (!isPlainObject(target)) return false;
+  return Object.values(target).some((value) => targetContainsObject(value, object));
+}
+
 function routeAxesForGroup(
   group: TargetGroup,
   mappingDocuments: ReadonlyMap<string, MappingQuestionDocument> | undefined
@@ -499,6 +523,117 @@ function flowsForRouteVariant(group: TargetGroup, file: string, label: string): 
     if (selected.length > 0) flows.set(field, selected);
   }
   return { object: group.object, flows };
+}
+
+function routeFlavorsForGroup(
+  object: string,
+  group: TargetGroup,
+  inverse: InverseCoverageLedger,
+  mappingDocuments: ReadonlyMap<string, MappingQuestionDocument>
+): RouteFlavor[] {
+  const flavors: RouteFlavor[] = [];
+  for (const [file, document] of mappingDocuments) {
+    const mapping = document.mapping;
+    const discriminator = mapping ? routeDiscriminator(mapping) : undefined;
+    const variants = mapping?.variants;
+    if (!discriminator || !isPlainObject(variants)) continue;
+
+    for (const [label, raw] of Object.entries(variants)) {
+      if (!isPlainObject(raw) || !Array.isArray(raw.when)) continue;
+      const when = raw.when.filter((value): value is string => typeof value === "string");
+      if (when.length === 0 || !targetContainsObject(raw.primary_targets, object)) continue;
+      const variantGroup = flowsForRouteVariant(group, file, label);
+      const properties = sortedTargetFields(object, variantGroup, inverse, false).filter(
+        (field) => field !== "(object route)"
+      );
+      flavors.push({ file, label, discriminator, when, properties });
+    }
+  }
+  return flavors.sort(
+    (left, right) => left.file.localeCompare(right.file) || left.label.localeCompare(right.label)
+  );
+}
+
+function routeVariantProperties(
+  object: string,
+  group: TargetGroup,
+  inverse: InverseCoverageLedger,
+  file: string,
+  label: string
+): string[] {
+  return sortedTargetFields(
+    object,
+    flowsForRouteVariant(group, file, label),
+    inverse,
+    false
+  ).filter((field) => field !== "(object route)");
+}
+
+function renderObjectSummary(
+  object: string,
+  group: TargetGroup,
+  inverse: InverseCoverageLedger,
+  mappingDocuments: ReadonlyMap<string, MappingQuestionDocument>
+): string[] {
+  const flavors = routeFlavorsForGroup(object, group, inverse, mappingDocuments);
+  const flavorFiles = new Set(flavors.map((flavor) => flavor.file));
+  const axes = routeAxesForGroup(group, mappingDocuments).filter(
+    (axis) => !flavorFiles.has(axis.file)
+  );
+  const lines: string[] = [];
+
+  if (flavors.length > 0) {
+    lines.push(`resulting Carta object flavors (${flavors.length})`);
+    flavors.forEach((flavor, index) => {
+      const last = index === flavors.length - 1;
+      const prefix = last ? "└── " : "├── ";
+      const childPrefix = last ? "    " : "│   ";
+      lines.push(`${prefix}${mappingSourceName(flavor.file)}.${flavor.label} → ${object}`);
+      lines.push(
+        `${childPrefix}├── when: ${mappingSourceName(flavor.file)}.${
+          flavor.discriminator
+        } = [${flavor.when.join(", ")}]`
+      );
+      lines.push(
+        `${childPrefix}└── properties: ${
+          flavor.properties.length > 0 ? flavor.properties.join(", ") : "(none directly mapped)"
+        }`
+      );
+    });
+  }
+
+  if (axes.length > 0) {
+    if (lines.length > 0) lines.push("");
+    lines.push(`conditional property flows (${axes.length} discriminators)`);
+    axes.forEach((axis, axisIndex) => {
+      const lastAxis = axisIndex === axes.length - 1;
+      const axisPrefix = lastAxis ? "    " : "│   ";
+      lines.push(
+        `${lastAxis ? "└── " : "├── "}${mappingSourceName(axis.file)} :: ${axis.discriminator}`
+      );
+      const groups = new Map<string, RouteBranch[]>();
+      for (const branch of axis.branches) {
+        const properties = routeVariantProperties(object, group, inverse, axis.file, branch.label);
+        const key = properties.join("\u0000");
+        const branches = groups.get(key) ?? [];
+        branches.push(branch);
+        groups.set(key, branches);
+      }
+      const entries = [...groups.entries()];
+      entries.forEach(([key, branches], entryIndex) => {
+        const properties = key.length > 0 ? key.split("\u0000") : ["(route only)"];
+        const condition = branches
+          .map((branch) => `${branch.label} [${branch.when.join(", ")}]`)
+          .join(" or ");
+        const lastEntry = entryIndex === entries.length - 1;
+        lines.push(
+          `${axisPrefix}${lastEntry ? "└── " : "├── "}${condition} → ${properties.join(", ")}`
+        );
+      });
+    });
+  }
+
+  return lines;
 }
 
 function renderFlowNode(
@@ -606,43 +741,6 @@ function renderMappingTree(
   return lines;
 }
 
-function renderSubtypeProjections(
-  object: string,
-  group: TargetGroup,
-  inverse: InverseCoverageLedger,
-  mappingDocuments: ReadonlyMap<string, MappingQuestionDocument>
-): string[] {
-  const axes = routeAxesForGroup(group, mappingDocuments);
-  if (axes.length === 0) return [];
-
-  const lines = [`polymorphic subtype projections (${axes.length} independent axes)`];
-  axes.forEach((axis, axisIndex) => {
-    const lastAxis = axisIndex === axes.length - 1;
-    const axisPrefix = lastAxis ? "    " : "│   ";
-    lines.push(`${lastAxis ? "└── " : "├── "}discriminator: ${axis.file} :: ${axis.discriminator}`);
-    axis.branches.forEach((branch, branchIndex) => {
-      const branchLast = branchIndex === axis.branches.length - 1;
-      const branchPrefix = `${axisPrefix}${branchLast ? "    " : "│   "}`;
-      const branchGroup = flowsForRouteVariant(group, axis.file, branch.label);
-      lines.push(
-        `${axisPrefix}${branchLast ? "└── " : "├── "}${branch.label} when [${branch.when.join(
-          ", "
-        )}]`
-      );
-      lines.push(`${branchPrefix}└── variant mappings:`);
-      const tree = renderMappingTree(object, branchGroup, inverse, mappingDocuments, false, false);
-      if (tree.length === 0) {
-        lines.push(`${branchPrefix}    └── (no mapped target properties)`);
-      } else {
-        tree.forEach((line) => {
-          lines.push(`${branchPrefix}    ${line}`);
-        });
-      }
-    });
-  });
-  return lines;
-}
-
 function boxLine(content: string, innerWidth: number): string {
   return `│ ${content.padEnd(innerWidth - 2)} │`;
 }
@@ -696,14 +794,16 @@ function renderObjectPanel(
   ];
   if (hasMappings) metadata.push(`unmapped_properties: ${unmappedProperties}`);
   if (!hasMappings && row.reason) metadata.push(`reason: ${row.reason}`);
-  const subtypeProjections =
+  const summary =
     mappingDocuments && hasMappings
-      ? renderSubtypeProjections(row.name, group, inverse, mappingDocuments)
+      ? renderObjectSummary(row.name, group, inverse, mappingDocuments)
       : [];
+  const mappingDetail = renderMappingTree(row.name, group, inverse, mappingDocuments);
   const body = hasMappings
     ? [
-        ...renderMappingTree(row.name, group, inverse, mappingDocuments),
-        ...(subtypeProjections.length > 0 ? ["", ...subtypeProjections] : []),
+        ...summary,
+        ...(summary.length > 0 ? ["", "aggregate mapping detail"] : []),
+        ...mappingDetail,
       ]
     : ["(empty mapping)"];
   return renderBox(`Carta object: ${row.name}`, metadata, body);
