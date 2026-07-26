@@ -972,17 +972,17 @@ A missing root target is therefore not automatically a missing concept.
 3. **86** are object-shaped definitions.
 4. Of those **86**, **54** are support definitions, not standalone objects (**53** nested objects + **1** object-shaped value type), leaving **32** standalone mapping candidates.
 5. **60** support definitions are excluded from standalone mapping: **54** object-shaped support definitions + **6** scalar support types.
-6. We have mapping evidence for **20**: **8** fully mapped and **12** partially mapped (**19** direct executable, **1** type-only, **0** deferred).
-7. **12** standalone candidates have no mapping evidence yet; their inventory role tells us whether that is expected or actionable (**7** report/read-model roll-ups, **2** alternate shapes, **1** CARTA-specific families without OCF sources, **1** workflow/data gaps, **1** actionable gaps, **0** requiring review).
+6. We have mapping evidence for **19**: **8** fully mapped and **11** partially mapped (**18** direct executable, **1** type-only, **0** deferred).
+7. **13** standalone candidates have no mapping evidence yet; their inventory role tells us whether that is expected or actionable (**8** report/read-model roll-ups, **2** alternate shapes, **1** CARTA-specific families without OCF sources, **1** workflow/data gaps, **1** actionable gaps, **0** requiring review).
 
-**Checks:** 139 = 53 non-object + 86 object-shaped; 53 = 47 scalar enum + 6 scalar support; 32 = 20 + 12; 86 = 32 + 54.
+**Checks:** 139 = 53 non-object + 86 object-shaped; 53 = 47 scalar enum + 6 scalar support; 32 = 19 + 13; 86 = 32 + 54.
 
 ### Technical slot diagnostics
 
 | Carta-side dimension | count |
 | --- | ---: |
 | object slots | 588 |
-| defs with direct executable coverage | 19 |
+| defs with direct executable coverage | 18 |
 | direct executable slots | 225 |
 | defs with type-only slots | 6 |
 | defs with only type-only coverage | 1 |
@@ -1073,7 +1073,7 @@ These definitions are packaging/support types, not standalone mapping targets; t
 | `#/$defs/StakeholderWarrantBlockSummary` | StakeholderGroup |
 | `#/$defs/ThresholdDetails` | Interest |
 
-### Standalone candidates requiring inventory detail (12)
+### Standalone candidates requiring inventory detail (13)
 
 The summary above counts these definitions once. The status and reason columns below
 explain whether each is a read-model roll-up, alternate shape, CARTA-specific family
@@ -1087,6 +1087,7 @@ without an OCF source, workflow/data gap, or actionable mapping candidate.
 | `#/$defs/NoteBlockSummary` | report-rollup | — | Carta read-model aggregate; OCF records the underlying leaf facts instead. |
 | `#/$defs/OptionExercise` | workflow-gap | — | Carta exercise-request workflow object; OCF maps the realized transaction instead. |
 | `#/$defs/OptionGrantDocuments` | gap | — | Carta grant-document relationship has no OCF source relationship. |
+| `#/$defs/OptionPoolSummary` | report-rollup | — | Carta option-pool read-model summary; the pinned API bundle has no pool ledger or standalone pool record to reconstruct. |
 | `#/$defs/PhantomTransactionItem` | report-rollup | — | Carta read-model aggregate; OCF records the underlying leaf facts instead. |
 | `#/$defs/PiuTransactionItem` | report-rollup | — | Carta read-model aggregate; OCF records the underlying leaf facts instead. |
 | `#/$defs/ShareClassSummary` | report-rollup | — | Carta read-model aggregate; OCF records the underlying leaf facts instead. |

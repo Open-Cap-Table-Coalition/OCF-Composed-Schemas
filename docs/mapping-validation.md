@@ -119,6 +119,39 @@ The axes are intentionally separate: `construct` changes a value's shape, `split
 field cardinality, and `composite` changes record cardinality. A composite step may still use
 ordinary field operators, including `construct` or `combine`, for the fields it emits.
 
+### Inverse semantics
+
+The optional `inverse:` block is a second, independent axis. It describes what a consumer can
+recover when walking a Carta target back toward OCF; it does not change the forward transform
+selected by `kind`:
+
+| Role | Inverse meaning |
+| --- | --- |
+| `record-construction` | The default: the target can participate in constructing the corresponding OCF record. |
+| `reference-only` | The target preserves an identifier or relationship used to join an existing record; it does not create the source record. |
+| `state-projection` | The target is a current/summary state value; it does not preserve the source event history or temporal qualifier. |
+| `aggregate-projection` | Multiple source facts are reduced into one target aggregate; the original records cannot be split deterministically. |
+| `event-reconstruction` | The target retains enough event identity and payload to reconstruct the source event. |
+
+For example:
+
+```yaml
+quantity:
+  kind: rename
+  target: "#/$defs/OptionGrant/properties/returnedToPoolQuantity"
+  inverse:
+    role: aggregate-projection
+    note: Repeated return events are summed into a per-security total.
+```
+
+The inverse ledger retains these roles on each target edge and renders non-default roles in the
+target-first report. This keeps ordinary slot coverage separate from round-trip recoverability:
+an aggregate or reference edge still proves that the forward mapping reaches a Carta slot, but it
+does not claim that the slot can recreate an OCF event or record. Target-definition roles such as
+`report-rollup` remain separate in `core/inverse-coverage-policy.yml`; use `override: true` only
+when curated target metadata must supersede direct shape evidence, such as an orphaned summary
+definition that is a forward conceptual target but cannot seed an inverse source record.
+
 ## Rules
 
 **Structural (every file):** required frontmatter keys; `status` ∈ `draft | partial | complete |
@@ -129,7 +162,8 @@ TODO` with the matching target shape (string; `construct` requires its construct
 `union-map`; `null` for
 `unmappable`; literal `TODO` for `TODO`). Coverage is derived from the source schema and effective
 mapping entries; it is not a mapping key and is never hand-maintained. Any entry may carry an
-optional free-text `note:` (a string), rendered under its field in `--verbose`. A `split` on an
+optional free-text `note:` (a string), rendered under its field in `--verbose`. Any entry may also
+carry the closed `inverse: { role, note? }` block described above. A `split` on an
 enum property may also carry `routes:`: a complete map of `source enum value → source field →
 target pointer|null`, which makes paired or multi-field branches explicit and lets `--verbose`
 render the branch as one grouped route. `rename` is

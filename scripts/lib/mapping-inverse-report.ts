@@ -11,6 +11,7 @@ import { targetPointerParts } from "./mapping-report.js";
 import { questionPropertyRoot, questionTargetParts } from "./mapping-questions.js";
 import type { MappingQuestion } from "./mapping-questions.js";
 import type { RawSchema } from "./registry.js";
+import type { InverseRole } from "./inverse-semantics.js";
 
 interface InverseFlow {
   file: string;
@@ -18,6 +19,8 @@ interface InverseFlow {
   sourceField: string;
   kind: string;
   pointer: string;
+  inverseRole?: InverseRole;
+  inverseNote?: string;
   context?: string;
   /**
    * The route variants that produced this flow. The main report deliberately
@@ -95,7 +98,8 @@ function edgeContext(edge: MappingEdge): string | undefined {
 
 function flowLabel(flow: InverseFlow): string {
   const context = flow.context ? ` [${flow.context}]` : "";
-  return `[${flow.sourceKind}] ${flow.file} :: ${flow.sourceField}${context} (${flow.kind})`;
+  const inverse = flow.inverseRole ? `; inverse: ${flow.inverseRole}` : "";
+  return `[${flow.sourceKind}] ${flow.file} :: ${flow.sourceField}${context} (${flow.kind}${inverse})`;
 }
 
 interface FlowDetail {
@@ -148,6 +152,13 @@ function flowDetails(
   const document = mappingDocuments?.get(flow.file);
   const entry = mappingEntryForFlow(flow, mappingDocuments);
   const details: FlowDetail[] = [];
+  if (flow.inverseRole && flow.inverseRole !== "record-construction") {
+    details.push({
+      label: `inverse semantics: ${flow.inverseRole}${
+        flow.inverseNote ? ` — ${flow.inverseNote}` : ""
+      }`,
+    });
+  }
   const sourceType = document?.sourceSchema?.properties?.type?.const;
   if (typeof sourceType === "string") {
     details.push({ label: `active when type = ${sourceType}` });
@@ -350,6 +361,8 @@ function sameFlow(left: InverseFlow, right: InverseFlow): boolean {
     left.sourceField === right.sourceField &&
     left.kind === right.kind &&
     left.pointer === right.pointer &&
+    left.inverseRole === right.inverseRole &&
+    left.inverseNote === right.inverseNote &&
     left.context === right.context &&
     JSON.stringify(left.routeVariants ?? []) === JSON.stringify(right.routeVariants ?? [])
   );
@@ -360,7 +373,9 @@ function sameDestination(left: InverseFlow, right: InverseFlow): boolean {
     left.file === right.file &&
     left.sourceField === right.sourceField &&
     left.kind === right.kind &&
-    left.pointer === right.pointer
+    left.pointer === right.pointer &&
+    left.inverseRole === right.inverseRole &&
+    left.inverseNote === right.inverseNote
   );
 }
 
@@ -384,6 +399,8 @@ function addEdge(
     sourceField: edgeSourceField(edge),
     kind: edgeKind(edge),
     pointer: edge.target,
+    ...(edge.inverseRole ? { inverseRole: edge.inverseRole } : {}),
+    ...(edge.inverseNote ? { inverseNote: edge.inverseNote } : {}),
     ...(edgeContext(edge) ? { context: edgeContext(edge) } : {}),
     ...(routeVariant ? { routeVariants: [routeVariant] } : {}),
   };
@@ -957,7 +974,8 @@ export function renderMappingInverseReport(options: MappingInverseReportOptions)
   lines.push(
     "",
     "Evidence legend",
-    "  [object] direct OCF object route; [type] reusable mapping detail used by that route, not a separate source record."
+    "  [object] direct OCF object route; [type] reusable mapping detail used by that route, not a separate source record.",
+    "  inverse semantics are orthogonal: record-construction (default), reference-only, state-projection, aggregate-projection, or event-reconstruction."
   );
 
   lines.push(...renderCoverageStory(inverse), ...renderExcludedRows(excluded));

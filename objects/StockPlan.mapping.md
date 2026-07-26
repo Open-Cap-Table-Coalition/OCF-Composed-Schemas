@@ -133,6 +133,9 @@ fields:
   id:
     kind: rename
     target: "#/$defs/OptionPoolSummary/properties/optionPoolId"
+    inverse:
+      role: reference-only
+      note: Pool identity/reference; the summary is not an inverse source record.
   comments:
     kind: unmappable
     target: null
@@ -150,6 +153,9 @@ fields:
       - "#/$defs/OptionGrant/properties/equityIncentivePlanName"
       - "#/$defs/RestrictedStockAward/properties/equityIncentivePlanName"
       - "#/$defs/RestrictedStockUnit/properties/equityIncentivePlanName"
+    inverse:
+      role: state-projection
+      note: Current/denormalized plan-name state; it carries no plan-history semantics.
   board_approval_date:
     kind: unmappable
     target: null
@@ -161,6 +167,9 @@ fields:
   initial_shares_reserved:
     kind: rename
     target: "#/$defs/OptionPoolSummary/properties/authorizedShares"
+    inverse:
+      role: state-projection
+      note: Summary authorization state; it cannot recover the initial value versus later pool adjustments.
   default_cancellation_behavior:
     kind: unmappable
     target: null
@@ -173,10 +182,16 @@ fields:
   stock_class_id:
     kind: rename
     target: "#/$defs/OptionPoolSummary/properties/shareClassId"
+    inverse:
+      role: reference-only
+      note: Identifies the backing share class; it does not construct pool-authorization history.
   stock_class_ids:
     kind: select
     target: "#/$defs/OptionPoolSummary/properties/shareClassId"
     policy: first_stock_class_id
+    inverse:
+      role: reference-only
+      note: Only the selected share-class reference survives; the full OCF relationship cannot be recovered.
 ```
 
 ## Ask a mapping question

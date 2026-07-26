@@ -9,6 +9,7 @@
 import { Corpus, GreenObject, MappingEdge } from "./core-corpus.js";
 import { CartaCoverageRole, CartaCoveragePolicyEntry, CoveragePolicy } from "./coverage-policy.js";
 import { isPlainObject } from "./mapping-validator.js";
+import type { InverseRole } from "./inverse-semantics.js";
 
 export type CartaDefDisposition = CartaCoverageRole | "review";
 
@@ -77,6 +78,8 @@ export interface CartaSlotCoverage {
   status: "direct" | "type-only" | "implicit" | "deferred" | "structural" | "empty";
   edges: MappingEdge[];
   structuralEdges: MappingEdge[];
+  /** Inverse semantics attached to executable edges reaching this slot. */
+  inverseRoles: InverseRole[];
 }
 
 export interface CartaDefCoverage {
@@ -127,6 +130,8 @@ export interface InverseCoverageMetrics {
   workflowGapDefs: number;
   actionableGapDefs: number;
   reviewDefs: number;
+  /** Count of executable mapping edges by inverse meaning. */
+  inverseRoleCounts: Record<InverseRole, number>;
 }
 
 export interface InverseCoverageStory {
@@ -383,6 +388,10 @@ function isDirect(edge: MappingEdge): boolean {
   return edge.scope === "object" || edge.scope === "composite";
 }
 
+function inverseRoleForEdge(edge: MappingEdge): InverseRole {
+  return edge.inverseRole ?? "record-construction";
+}
+
 function reportRollupPolicy(name: string): CartaCoveragePolicyEntry | undefined {
   if (!/(?:Summary|TransactionItem)$/.test(name) && name !== "StakeholderGroup") return undefined;
   return {
@@ -628,6 +637,11 @@ export function buildInverseCoverage(corpus: Corpus): InverseCoverageLedger {
         status,
         edges: slotEdges,
         structuralEdges: slotStructuralEdges,
+        inverseRoles: [
+          ...new Set(
+            slotEdges.filter((edge) => isDirect(edge)).map((edge) => inverseRoleForEdge(edge))
+          ),
+        ].sort(),
       });
     }
   }
@@ -661,7 +675,11 @@ export function buildInverseCoverage(corpus: Corpus): InverseCoverageLedger {
     let disposition: CartaDefDisposition | undefined;
     let reason: string | undefined;
 
-    if (policy?.role === "value-type") {
+    if (policy?.override === true) {
+      status = policy.role;
+      disposition = policy.role;
+      reason = policy.reason;
+    } else if (policy?.role === "value-type") {
       status = "value-type";
       disposition = policy.role;
       reason = policy.reason;
@@ -741,6 +759,20 @@ export function buildInverseCoverage(corpus: Corpus): InverseCoverageLedger {
     actionableGapDefs:
       countStatus("gap") + countStatus("vendor-family") + countStatus("workflow-gap"),
     reviewDefs: countStatus("review"),
+    inverseRoleCounts: Object.fromEntries(
+      (
+        [
+          "record-construction",
+          "reference-only",
+          "state-projection",
+          "aggregate-projection",
+          "event-reconstruction",
+        ] as InverseRole[]
+      ).map((role) => [
+        role,
+        directEdges.filter((edge) => inverseRoleForEdge(edge) === role).length,
+      ])
+    ) as Record<InverseRole, number>,
   };
 
   const typeCorrespondences = buildTypeCorrespondences(corpus, schema, edges);

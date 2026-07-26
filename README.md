@@ -105,7 +105,7 @@ If your product implements OCF v1 and you want to understand what a Carta fold-d
 2. [`docs/core-unmapped-inventory.md`](./docs/core-unmapped-inventory.md) lists OCF properties with **no Carta home at all**. These are the fields a fold cannot represent in the pinned target bundle.
 3. [`core-rich/core-upstream.md`](./core-rich/core-upstream.md) turns lossy-home fields into **proposed upstream-OCF change candidates**. OCF-required fields are highlighted because they are the strongest signal that a Core-compatible or relaxed representation may be needed.
 4. [`core/core-gaps.md`](./core/core-gaps.md) and [`core-rich/core-gaps.md`](./core-rich/core-gaps.md) group the losses by OCF object and separately call out Carta concepts for which OCF has no source concept.
-5. [`docs/core-bidirectional-flow.md`](./docs/core-bidirectional-flow.md) shows what flows into the rich interop hub from OCF and from Carta. It is a coverage report, not a Carta-to-OCF round-trip guarantee.
+5. [`docs/core-bidirectional-flow.md`](./docs/core-bidirectional-flow.md) shows what flows into the rich interop hub from OCF and from Carta. It is a coverage report, not a Carta-to-OCF round-trip guarantee; field-level inverse semantics are documented in [`docs/mapping-validation.md`](./docs/mapping-validation.md#inverse-semantics).
 
 These are proposed **fold-down differences and change candidates**, not instructions for an OCF v1 implementation to silently discard data. A full OCF consumer can continue to use the composed OCF schemas; the reports show what needs an explicit policy when that data is sent to Carta.
 

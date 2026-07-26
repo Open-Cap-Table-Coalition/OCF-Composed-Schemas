@@ -664,6 +664,50 @@ describe("validateMapping — entry shapes", () => {
   });
 });
 
+describe("inverse semantics: field-level round-trip role", () => {
+  function withInverse(inverse: unknown): ValidateInput {
+    return makeInput({
+      mapping: mapping({
+        fields: {
+          name: {
+            kind: "rename",
+            target: "#/$defs/Thing/properties/name",
+            inverse,
+          },
+          color: {
+            kind: "enum-remap",
+            target: "#/$defs/Thing/properties/color",
+            values: { RED: "red", BLUE: "blue" },
+          },
+        },
+      }),
+    });
+  }
+
+  it("accepts a documented inverse role independently of the forward kind", () => {
+    expect(
+      messages(
+        withInverse({
+          role: "aggregate-projection",
+          note: "Repeated source events are reduced into one target total.",
+        })
+      )
+    ).toEqual([]);
+  });
+
+  it("rejects unknown roles, malformed blocks, and unknown keys", () => {
+    expect(messages(withInverse({ role: "lossy" }))).toEqual([
+      'name: inverse.role "lossy" is not one of record-construction | reference-only | state-projection | aggregate-projection | event-reconstruction',
+    ]);
+    expect(messages(withInverse("aggregate-projection"))).toContain(
+      "name: inverse: must be a map with role: and optional note:"
+    );
+    expect(messages(withInverse({ role: "reference-only", extra: true }))).toContain(
+      "name: inverse: allows only role: and note:"
+    );
+  });
+});
+
 describe("validateMapping — values blocks", () => {
   it("requires a values map on enum-remap", () => {
     const m = mapping();

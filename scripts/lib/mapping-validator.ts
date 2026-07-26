@@ -10,6 +10,7 @@ import {
   questionTargetParts,
 } from "./mapping-questions.js";
 import type { MappingQuestion } from "./mapping-questions.js";
+import { validateInverseSpec } from "./inverse-semantics.js";
 
 export interface PointerResult {
   found: boolean;
@@ -449,6 +450,7 @@ function validateFieldMap(
       err(name, `kind "${String(kind)}" is not one of ${KIND_VOCABULARY.join(" | ")}`);
       continue;
     }
+    validateInverseSpec(entry, name, err);
     if (kind === "union-map") {
       validateUnionMapEntry(entry, name, properties[name], input, strict, opts, err);
       continue;
@@ -883,6 +885,7 @@ function validateUnionMapEntry(
       err(`${caseName}.mapping`, "nested union-map cases are not supported");
       continue;
     }
+    validateInverseSpec(mapping, `${caseName}.mapping`, err);
     const branch = typeof sourceSchema === "string" ? sourceByRef.get(sourceSchema) : undefined;
     const branchSource = branch?.node ?? {};
     validateEntryShape(mapping, `${caseName}.mapping`, kind, strict, opts, err);

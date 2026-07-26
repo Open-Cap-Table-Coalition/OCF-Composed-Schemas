@@ -43,13 +43,13 @@ describe("core reports (the markdown drift gate's premise)", () => {
       "4. Of those **86**, **54** are support definitions, not standalone objects (**53** nested objects + **1** object-shaped value type), leaving **32** standalone mapping candidates."
     );
     expect(report).toContain(
-      "6. We have mapping evidence for **20**: **8** fully mapped and **12** partially mapped (**19** direct executable, **1** type-only, **0** deferred)."
+      "6. We have mapping evidence for **19**: **8** fully mapped and **11** partially mapped (**18** direct executable, **1** type-only, **0** deferred)."
     );
     expect(report).toContain(
-      "7. **12** standalone candidates have no mapping evidence yet; their inventory role tells us whether that is expected or actionable (**7** report/read-model roll-ups, **2** alternate shapes, **1** CARTA-specific families without OCF sources, **1** workflow/data gaps, **1** actionable gaps, **0** requiring review)."
+      "7. **13** standalone candidates have no mapping evidence yet; their inventory role tells us whether that is expected or actionable (**8** report/read-model roll-ups, **2** alternate shapes, **1** CARTA-specific families without OCF sources, **1** workflow/data gaps, **1** actionable gaps, **0** requiring review)."
     );
     expect(report).toContain(
-      "**Checks:** 139 = 53 non-object + 86 object-shaped; 53 = 47 scalar enum + 6 scalar support; 32 = 20 + 12; 86 = 32 + 54."
+      "**Checks:** 139 = 53 non-object + 86 object-shaped; 53 = 47 scalar enum + 6 scalar support; 32 = 19 + 13; 86 = 32 + 54."
     );
     expect(report).toContain("### Technical slot diagnostics");
     expect(report).not.toContain("| mapping evidence detail | count |");

@@ -23,6 +23,8 @@ import {
 import { classifyType, TypeVerdict } from "./core-classifier.js";
 import { ReferenceGraph } from "./core-admissibility.js";
 import { CoveragePolicy, loadCoveragePolicy, validateCoveragePolicy } from "./coverage-policy.js";
+import { inverseSpecOf } from "./inverse-semantics.js";
+import type { InverseRole } from "./inverse-semantics.js";
 
 const REFERENCE_GRAPH = "core/reference-graph.yml";
 
@@ -183,6 +185,10 @@ export interface MappingEdge {
   target: string;
   /** Mapping kind, when the edge came from a field entry. */
   kind?: string;
+  /** Inverse meaning of the edge; absent means the default record-construction role. */
+  inverseRole?: InverseRole;
+  /** Human-readable qualification for the inverse role. */
+  inverseNote?: string;
   /** Composite step or const property, when applicable. */
   detail?: string;
 }
@@ -547,6 +553,7 @@ function mappingEdgesOf(
   for (const [variant, fields] of variantFieldMaps(mapping)) {
     for (const [field, rawEntry] of Object.entries(fields)) {
       if (!isPlainObject(rawEntry)) continue;
+      const inverse = inverseSpecOf(rawEntry);
       collectEntryEdges(
         rawEntry,
         {
@@ -557,6 +564,8 @@ function mappingEdgesOf(
           field,
           scope: sourceKind,
           kind: typeof rawEntry.kind === "string" ? rawEntry.kind : undefined,
+          ...(inverse?.role ? { inverseRole: inverse.role } : {}),
+          ...(inverse?.note ? { inverseNote: inverse.note } : {}),
         },
         edges
       );
@@ -654,8 +663,14 @@ function collectEntryEdges(
   base: Omit<MappingEdge, "target">,
   into: MappingEdge[]
 ): void {
+  const inverse = inverseSpecOf(entry);
+  const edgeBase: Omit<MappingEdge, "target"> = {
+    ...base,
+    ...(inverse?.role ? { inverseRole: inverse.role } : {}),
+    ...(inverse?.note ? { inverseNote: inverse.note } : {}),
+  };
   const add = (target: unknown, detail?: string) =>
-    walkTargetPointers(target, (pointer) => into.push({ ...base, target: pointer, detail }));
+    walkTargetPointers(target, (pointer) => into.push({ ...edgeBase, target: pointer, detail }));
 
   add(entry.target);
   add(entry.values);
@@ -668,7 +683,7 @@ function collectEntryEdges(
   if (entry.kind === "union-map" && Array.isArray(entry.cases)) {
     for (const rawCase of entry.cases) {
       if (!isPlainObject(rawCase) || !isPlainObject(rawCase.mapping)) continue;
-      collectEntryEdges(rawCase.mapping, base, into);
+      collectEntryEdges(rawCase.mapping, edgeBase, into);
     }
   }
 }
@@ -880,6 +895,8 @@ export async function loadGreenCorpus(repoRoot: string): Promise<Corpus> {
           edge.scope,
           edge.target,
           edge.kind ?? "",
+          edge.inverseRole ?? "",
+          edge.inverseNote ?? "",
           edge.detail ?? "",
         ].join("\u0000"),
         edge,

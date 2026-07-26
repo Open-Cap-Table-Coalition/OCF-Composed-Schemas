@@ -133,6 +133,38 @@ because it belongs to a *sibling* variant, `routed_to` names that sibling and th
 it genuinely claims the value — a machine-checked round-trip that turns "dropped here" into "handled
 over there."
 
+### Forward transforms and inverse recoverability are separate axes
+
+The mapping `kind` answers **how OCF data reaches Carta**. An optional `inverse:` block answers
+**what a consumer can recover when walking that Carta data back toward OCF**. A target can therefore
+have valid forward mapping evidence without being a reconstructible OCF record:
+
+```yaml
+quantity:
+  kind: rename
+  target: "#/$defs/OptionGrant/properties/returnedToPoolQuantity"
+  inverse:
+    role: aggregate-projection
+    note: Repeated return events are summed into one per-security total.
+```
+
+The inverse roles are `record-construction` (the default), `reference-only`, `state-projection`,
+`aggregate-projection`, and `event-reconstruction`. The inverse ledger carries these roles on its
+target edges and reports them without changing ordinary forward slot coverage. Target-level policy
+is a separate concern: a `report-rollup` definition can receive forward edges while being excluded
+from standalone inverse source construction. Curated policy uses `override: true` only when that
+classification must supersede direct shape evidence.
+
+The option-pool case demonstrates why both axes are needed. `StockPlanReturnToPool.security_id`
+and `stock_plan_id` are `reference-only`; `quantity` is an `aggregate-projection`; and
+`StockPlan.initial_shares_reserved` is a `state-projection` onto `OptionPoolSummary.authorizedShares`.
+The Carta bundle exposes no pool authorization ledger, effective-date history, available-share
+field, or return-to-pool transaction. Consequently, available pool shares may be calculated as an
+OCF-side replay/read model when the complete event stream is present, but that calculation does not
+become a writable Carta field or make the inverse event reconstruction lossless. See the detailed
+[pool mapping notes](../objects/transactions/return_to_pool/StockPlanReturnToPool.mapping.md) and
+the [inverse-semantics reference](./mapping-validation.md#inverse-semantics).
+
 ### High-level rules
 
 - **Nothing is silent.** Every source property is accounted for — it either lands somewhere or is
