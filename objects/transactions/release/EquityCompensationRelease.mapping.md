@@ -151,7 +151,9 @@ shared:
   security_id:
     kind: rename
     target:
-      Rsu:    "#/$defs/RsuTransactionItem/properties/securityId"
+      Rsu:
+        - "#/$defs/RsuTransactionItem/properties/securityId"
+        - "#/$defs/RestrictedStockUnit/properties/securityId"
       Option: null
       Sar:    null
   consideration_text: { kind: unmappable, target: null, reason: no-equivalent }
@@ -170,13 +172,18 @@ shared:
   release_price:
     kind: rename
     target:
-      Rsu:    "#/$defs/RestrictedStockUnitSettlement/properties/settlementPrice"
+      Rsu:
+        - "#/$defs/RestrictedStockUnitSettlement/properties/settlementPrice"
+        - "#/$defs/RestrictedStockUnit/properties/releasePricePerShare"
       Option: null
       Sar:    null
   quantity:
     kind: rename
     target:
-      Rsu:    "#/$defs/RsuSettlementTransaction/properties/settledQuantity"
+      Rsu:
+        - "#/$defs/RsuSettlementTransaction/properties/settledQuantity"
+        - "#/$defs/RestrictedStockUnitSettlement/properties/releaseQuantity"
+        - "#/$defs/RestrictedStockUnit/properties/releasedQuantity"
       Option: null
       Sar:    null
   resulting_security_ids:
@@ -240,7 +247,8 @@ Use a link below to open a prefilled GitHub issue. The issue can be copied into 
   `EquityCompensationIssuance` (the two-pass requirement,
   docs/polymorphic-transaction-routing.md §2.2), then route. For the valid RSU route,
   `security_id` is both the `route_by_property.lookup_by.key` and the parent transaction item's
-  stored placement key; Option/SAR remain null because they have no release surface.
+  stored placement key; it also anchors `RestrictedStockUnit.settlements[]`. Option/SAR remain
+  null because they have no release surface.
 - **Only RSUs release.** "Release" here means a vested equity-comp security settling
   into shares. Carta models this *only* as RSU settlement — there is no
   `…ReleaseTransaction` for options or SARs — so the **Option** and **Sar** variants
@@ -253,10 +261,12 @@ Use a link below to open a prefilled GitHub issue. The issue can be copied into 
 - **Mappable Rsu fields.** `date` → `RsuSettlementTransaction.settlementDatetime` (OCF
   calendar date widening to a Carta datetime); `settlement_date` →
   `RestrictedStockUnitSettlement.settlementDate` (clean calendar-date match, deliberately
-  a distinct node from the transaction `date`); `release_price` →
-  `RestrictedStockUnitSettlement.settlementPrice` (the only Carta home for the price —
-  `RsuSettlementTransaction` has no price field; Monetary ↔ Money); `quantity` →
-  `RsuSettlementTransaction.settledQuantity` (shares released; numeric-string ↔ Decimal).
+  a distinct node from the transaction `date`); `release_price` → both
+  `RestrictedStockUnitSettlement.settlementPrice` and `RestrictedStockUnit.releasePricePerShare`;
+  `quantity` → `RsuSettlementTransaction.settledQuantity`,
+  `RestrictedStockUnitSettlement.releaseQuantity`, and `RestrictedStockUnit.releasedQuantity`.
+  The security copies are aggregate read-model facts; the settlement line retains the event detail.
+  Numeric-string ↔ Decimal and Monetary ↔ Money conversions are unchanged.
 - **`resulting_security_ids` round-trips as reverse lineage (kind `computed`).** An RSU
   release/settlement produces shares — a Carta `Certificate` — and each resulting
   certificate records its origin in `Certificate.precededBy.securities` (a

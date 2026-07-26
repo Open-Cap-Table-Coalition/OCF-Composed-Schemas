@@ -139,27 +139,39 @@ shared:
   security_id:
     kind: rename
     target:
-      Option: "#/$defs/OptionTransactionItem/properties/securityId"
+      Option:
+        - "#/$defs/OptionTransactionItem/properties/securityId"
+        - "#/$defs/OptionGrant/properties/securityId"
       Sar:    "#/$defs/SarTransactionItem/properties/securityId"
       Rsu:    null
   consideration_text: { kind: unmappable, target: null, reason: no-equivalent }
   date:
     kind: rename
     target:
-      Option: "#/$defs/OptionExerciseTransaction/properties/sharesAcquiredDatetime"
+      Option:
+        - "#/$defs/OptionExerciseTransaction/properties/sharesAcquiredDatetime"
+        - "#/$defs/Exercise/properties/exerciseDate"
       Sar:    "#/$defs/SarExerciseTransaction/properties/sharesAcquiredDatetime"
       Rsu:    null
   quantity:
     kind: rename
     target:
-      Option: "#/$defs/OptionExerciseTransaction/properties/quantity"
+      Option:
+        - "#/$defs/OptionExerciseTransaction/properties/quantity"
+        - "#/$defs/Exercise/properties/quantity"
+        - "#/$defs/OptionGrant/properties/exercisedQuantity"
       Sar:    "#/$defs/SarExerciseTransaction/properties/quantity"
       Rsu:    null
   resulting_security_ids:
-    kind: computed                 # lineage: importer records each resulting security's precededBy
+    kind: computed                 # result identity plus lineage on each resulting certificate
     target:
-      Option: "#/$defs/CertificatePrecededBy/properties/securities"
-      Sar:    "#/$defs/CertificatePrecededBy/properties/securities"
+      Option:
+        - "#/$defs/Certificate/properties/securityId"
+        - "#/$defs/CertificatePrecededBy/properties/securities"
+        - "#/$defs/Exercise/properties/certificateId"
+      Sar:
+        - "#/$defs/Certificate/properties/securityId"
+        - "#/$defs/CertificatePrecededBy/properties/securities"
       Rsu:    null
 
 variants:
@@ -220,13 +232,15 @@ Use a link below to open a prefilled GitHub issue. The issue can be copied into 
   semantically invalid and has no Carta exercise transaction to receive it. The `Rsu`
   variant therefore has `primary_targets: null` and every routed field is `null` for it.
 - **`date` / `quantity` / `resulting_security_ids`** are the mappable fields; each
-  lands on the resolved family's exercise tx via a per-variant target map:
+  lands on the resolved family's exercise tx and, for Option exercises, the nested grant/result
+  records:
   - `date` → `sharesAcquiredDatetime`. OCF `date` is a calendar date (`types/Date`,
     `YYYY-MM-DD`); Carta's `sharesAcquiredDatetime` is a full datetime
     (`Iso8601CompleteCalendarDateTime`) — the standard OCF-date → Carta-datetime
     granularity widening; the same "shares acquired on exercise" event.
-  - `quantity` → `quantity`. OCF `types/Numeric` (stringified decimal) → Carta
-    `Decimal`; straight rename, representation change only.
+  - `quantity` → exercise-transaction `quantity`, nested `Exercise.quantity`, and
+    `OptionGrant.exercisedQuantity`. OCF `types/Numeric` (stringified decimal) → Carta
+    `Decimal`; the same realized quantity is retained at event and aggregate levels.
   - `resulting_security_ids` → **lineage on the resulting security** (kind `computed`).
     An exercise produces shares — a Carta `Certificate` — and each resulting
     certificate records its origin in `Certificate.precededBy.securities` (a
@@ -236,13 +250,15 @@ Use a link below to open a prefilled GitHub issue. The issue can be copied into 
     `computed` (importer-derived placement onto records the exercise *references*), not
     a `rename` — Carta's tx-level scalar `resultingSecurityId` is only a lossy
     convenience pointer (a single id), whereas `precededBy.securities` carries the full
-    set, so in any snapshot the complete lineage forest stays traceable. (Cash-settled
+    set, so in any snapshot the complete lineage forest stays traceable. The nested
+    `Exercise.certificateId` target is the deterministic first result for the
+    single-result exercise record; the certificate identity and lineage targets retain
+    the full array. (Cash-settled
     SARs settle to `cashAcquired` and produce no resulting security.)
 - **`security_id`** is the join key (`route_by_property.lookup_by.key`) and, for the valid Option
-  and SAR routes, is also copied to the resolved parent `*TransactionItem.securityId`. That parent
-  anchor is what places the exercise inside `exercises[]`; the exercise leaf itself still holds no
-  source-grant reference. The RSU route remains null because RSUs settle via Release rather than
-  Exercise.
+  and SAR routes, is copied to the resolved parent `*TransactionItem.securityId`. For Option it is
+  also copied to `OptionGrant.securityId`, which anchors the nested `Exercise` record inside
+  `exercises[]`; the RSU route remains null because RSUs settle via Release rather than Exercise.
 - **`consideration_text` has no home.** OCF stores free text describing consideration;
   the nearest Carta concept is `exerciseMethod`, a constrained enum describing *how*
   the exercise was funded (CASH / CASHLESS / …), not a free-text description — free

@@ -340,8 +340,11 @@ part of the spec):
   folds into an ordered **cancel + reissue** pair of certificate events; `quantity`/`date` land on
   those step transactions as real payload, so **`StockTransfer` (Default + Rsa) is now admissible in
   both profiles**. Its lineage-only siblings — `StockConversion`, `StockConsolidation`,
-  `StockReissuance`, `StockRepurchase` — share the shape but have no composite mapping yet, so they stay
-  `no-payload`-blocked; a composite fold would admit them without touching the non-degeneracy gate.
+  `StockReissuance` and `StockRepurchase` share the shape but have no transaction-level payload;
+  `StockReissuance` remains `no-payload`-blocked, while rich Core admits `StockRepurchase` through
+  its explicitly lossy `returnedToTreasuryQuantity` aggregate projection. `StockPlanReturnToPool`
+  similarly admits through the option/RSU security aggregates and pool identity, while its event date
+  and reason remain unmappable.
 - **Vesting under R6 lands via `VestingTerms`, not the event axis.** `VestingTerms` is admissible; the
   standalone vesting *transactions* (`VestingEvent`, `VestingAcceleration`) land no payload Carta can
   reflect and are `no-payload`-blocked, and the milestone/event-condition axis is unmapped. The
@@ -409,8 +412,9 @@ for a useful, populated Core. Both artifacts ship; neither replaces the other.
 fields:
 
 1. **Rich re-admits an entity only when a lossy-home field gives it *payload*** — a non-reference,
-   non-bookkeeping member. Today that adds exactly `Document` (via `path`/`uri`) and
-   `StockClassConversionRatioAdjustment` (via `new_ratio_conversion_mechanism`); rich is otherwise the
+   non-bookkeeping member. Today that adds `Document` (via `path`/`uri`),
+   `StockClassConversionRatioAdjustment` (via `new_ratio_conversion_mechanism`), and
+   `StockRepurchase` (via its explicit treasury-quantity aggregate projection); rich is otherwise the
    same entity set as strict, enriched with fields (`Stakeholder` gains `name`/`addresses`/`contact_info`,
    `StockClass` gains `conversion_rights`/`seniority`, …). Rich is always a **strict superset**.
 2. **Reference-only lossy-home fields resolve but are not payload.** The reverse-edge lineage links
@@ -423,8 +427,10 @@ fields:
    is the escape hatch: folding the event into an ordered pair of Carta step transactions gives the
    payload (`quantity`/`date`) a real home — which is exactly how **`StockTransfer`** is now admissible
    in **both** profiles. Its lineage-only siblings (`StockConversion`/`StockConsolidation`/
-   `StockReissuance`/`StockRepurchase`) share the shape but have no composite mapping yet, so they stay
-   **out** — a composite fold admits them via real payload, without relaxing the non-degeneracy gate.
+   `StockReissuance` remains **out** because it has no payload destination. `StockRepurchase` is **rich-only**
+   through its explicit security aggregate projection, and `StockPlanReturnToPool` is admitted in both
+   profiles through its security aggregates and destination pool identity. A future composite fold could
+   provide transaction-level homes without relaxing the non-degeneracy gate.
 
 **The upstream-OCF report (`core-rich/core-upstream.md`, rich only).** The actionable byproduct: every
 lossy-home field rich carries, with the narrowing target home and the loss kind, OCF-*required* fields

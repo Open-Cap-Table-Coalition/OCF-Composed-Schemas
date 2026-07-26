@@ -130,10 +130,14 @@ shared:
   object_type:           { kind: unmappable, target: null, reason: ocf-internal }
   date:                  { kind: unmappable, target: null, reason: no-equivalent }
   resulting_security_id:
-    kind: computed                 # lineage: the consolidated-into security whose precededBy records the inputs
+    kind: computed                 # result identity + lineage: the consolidated-into security records the inputs
     target:
-      Rsa:     "#/$defs/RestrictedStockAwardPrecededBy/properties/securities"
-      Default: "#/$defs/CertificatePrecededBy/properties/securities"
+      Rsa:
+        - "#/$defs/RestrictedStockAward/properties/securityId"
+        - "#/$defs/RestrictedStockAwardPrecededBy/properties/securities"
+      Default:
+        - "#/$defs/Certificate/properties/securityId"
+        - "#/$defs/CertificatePrecededBy/properties/securities"
   security_ids:
     kind: computed                 # lineage + via: the consolidated inputs become the resulting security precededBy
     target:
@@ -186,4 +190,3 @@ Use a link below to open a prefilled GitHub issue. The issue can be copied into 
 - **`reason_text` has no home** — free-form human-readable justification, and Carta has neither a general per-transaction reason field nor a consolidation transaction to host one (`no-equivalent`). (Even where Carta exposes a `reason`, it is an enum, and free-text → enum is unmappable, not a rename.)
 - **`date`** is an OCF calendar `Date` (`YYYY-MM-DD`); Carta's transaction timestamps are `Iso8601CompleteCalendarDateTime` on the concrete transaction objects. With no Carta consolidation transaction to carry it, it has nowhere to land (`no-equivalent`), independent of the date-vs-datetime granularity gap.
 - **`id`, `object_type`** are OCF scaffolding. `id` is OCF's identifier (Carta assigns its own server-side IDs) and `object_type` is the discriminator constant `TX_STOCK_CONSOLIDATION`, which Carta does not need because it types transactions positionally per endpoint — both `ocf-internal`. `comments` has no Carta slot (`no-equivalent`).
-

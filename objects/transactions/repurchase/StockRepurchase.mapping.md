@@ -125,10 +125,9 @@ route_by_property:
   exhaustive: true
 
 # shared: every source property. Carta has no repurchase transaction in either
-# family, so the repurchase event fields are unmappable. The exception is
-# balance_security_id: the partial-repurchase remainder is a stock security whose
-# precededBy.securities records the repurchased-from security, so it carries a
-# per-variant target map { Rsa / Default: pointer }.
+# family, so the repurchase event fields are unmappable. The security aggregate
+# quantity and partial-repurchase remainder lineage are the exceptions: they carry
+# per-variant target maps on the resolved stock security.
 shared:
   id:                  { kind: unmappable, target: null, reason: ocf-internal }
   comments:            { kind: unmappable, target: null, reason: no-equivalent }
@@ -136,13 +135,21 @@ shared:
   date:                { kind: unmappable, target: null, reason: no-equivalent }
   security_id:         { kind: unmappable, target: null, reason: ocf-internal }
   price:               { kind: unmappable, target: null, reason: no-equivalent }
-  quantity:            { kind: unmappable, target: null, reason: no-equivalent }
+  quantity:
+    kind: computed                 # repurchased shares leave the security's treasury balance
+    target:
+      Rsa:     "#/$defs/RestrictedStockAward/properties/returnedToTreasuryQuantity"
+      Default: "#/$defs/Certificate/properties/returnedToTreasuryQuantity"
   consideration_text:  { kind: unmappable, target: null, reason: no-equivalent }
   balance_security_id:
-    kind: computed                 # lineage: the post-repurchase remainder security precededBy
+    kind: computed                 # remainder identity + lineage on the post-repurchase security
     target:
-      Rsa:     "#/$defs/RestrictedStockAwardPrecededBy/properties/securities"
-      Default: "#/$defs/CertificatePrecededBy/properties/securities"
+      Rsa:
+        - "#/$defs/RestrictedStockAward/properties/securityId"
+        - "#/$defs/RestrictedStockAwardPrecededBy/properties/securities"
+      Default:
+        - "#/$defs/Certificate/properties/securityId"
+        - "#/$defs/CertificatePrecededBy/properties/securities"
 
 variants:
 
@@ -183,7 +190,7 @@ Use a link below to open a prefilled GitHub issue. The issue can be copied into 
 
 ## Notes / open questions
 
-- **Join-dependent (downstream), and unmappable in every family.** A `StockRepurchase`
+- **Join-dependent (downstream).** A `StockRepurchase`
   carries no discriminator — only `security_id` — so the repurchased stock's family
   (`RSA` vs `FOUNDERS_STOCK`) is undecidable from the record alone. An importer must
   resolve `issuance_type` from the joined `StockIssuance` first (the two-pass
@@ -191,9 +198,9 @@ Use a link below to open a prefilled GitHub issue. The issue can be copied into 
   `route_by_property` mapping rather than a plain single-target one. The routing here
   is structurally honest: **Carta has no repurchase transaction in either family**, so
   both variants have `primary_targets: null` and the repurchase *event* itself
-  (`date` / `price` / `quantity` / `consideration_text`) stays `unmappable`. The one
-  exception is `balance_security_id` — the remainder security after a partial
-  repurchase is an ordinary stock security whose lineage *does* round-trip (see below).
+  (`date` / `price` / `consideration_text`) stays `unmappable`. The security aggregate
+  `quantity` and remainder `balance_security_id` still have explicit homes on the
+  resolved stock security (see below).
 - **No Carta repurchase verb exists.** Carta's transaction surface has no
   `RepurchaseTransaction` and no repurchase `$def` on the `RestrictedStockAward` or the
   plain `Certificate` family; a buyback is not representable as its own Carta event.
@@ -201,9 +208,10 @@ Use a link below to open a prefilled GitHub issue. The issue can be copied into 
   the `CERTIFICATE_CANCELLATION_REASON_REPURCHASED` reason, but that is a
   family-agnostic certificate cancellation, not a per-family route off the repurchased
   security, so it is not a faithful target for this routed object — see the open
-  question below.) Because the entire family is unmappable, every field — including the
-  ones that would have homes on a cancellation tx (`date`, `quantity`) — is
-  `no-equivalent` here.
+  question below.) Because the event itself is unmappable, the event-only fields
+  (`date`, `price`, `consideration_text`) are `no-equivalent` here. `quantity` is
+  retained as a security aggregate rather than being presented as a fabricated Carta
+  transaction quantity.
 - **`security_id`** is the join key (`route_by_property.lookup_by.key`); it routes the family by
   joining back to the issuance, it is not itself a stored Carta field, so it is
   `ocf-internal`.
@@ -212,9 +220,10 @@ Use a link below to open a prefilled GitHub issue. The issue can be copied into 
   per-family repurchase property for the money paid in a buyback or for free-form
   consideration, so both are `no-equivalent`. (Even the cancellation-tx approximation
   carries no `Money` slot.)
-- **`date` / `quantity`** describe when the buyback happened and how many shares were
-  repurchased. Neither stock family exposes a repurchase event to land them on, so both
-  are `no-equivalent` rather than renames.
+- **`date`** has no event home, but **`quantity`** is retained as the resolved security's
+  `returnedToTreasuryQuantity` aggregate. The source `security_id` identifies the security whose
+  shares were repurchased; the event date and consideration remain unmappable because Carta has
+  no repurchase transaction.
 - **`balance_security_id` → lineage on the remainder security** (kind `computed`).
   After a *partial* repurchase the un-repurchased shares live on a remainder security,
   and in both stock families that remainder is itself a Carta stock security — an

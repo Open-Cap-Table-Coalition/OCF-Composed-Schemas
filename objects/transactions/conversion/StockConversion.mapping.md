@@ -140,15 +140,23 @@ shared:
   date:                   { kind: unmappable, target: null, reason: no-equivalent }
   security_id:            { kind: unmappable, target: null, reason: ocf-internal }
   resulting_security_ids:
-    kind: computed                 # lineage: the converted-to security precededBy
+    kind: computed                 # result identities + lineage on the converted-to certificates
     target:
-      Rsa:     "#/$defs/RestrictedStockAwardPrecededBy/properties/securities"
-      Default: "#/$defs/CertificatePrecededBy/properties/securities"
+      Rsa:
+        - "#/$defs/RestrictedStockAward/properties/securityId"
+        - "#/$defs/RestrictedStockAwardPrecededBy/properties/securities"
+      Default:
+        - "#/$defs/Certificate/properties/securityId"
+        - "#/$defs/CertificatePrecededBy/properties/securities"
   balance_security_id:
-    kind: computed                 # lineage: the unconverted-remainder security precededBy
+    kind: computed                 # remainder identity + lineage on the unconverted security
     target:
-      Rsa:     "#/$defs/RestrictedStockAwardPrecededBy/properties/securities"
-      Default: "#/$defs/CertificatePrecededBy/properties/securities"
+      Rsa:
+        - "#/$defs/RestrictedStockAward/properties/securityId"
+        - "#/$defs/RestrictedStockAwardPrecededBy/properties/securities"
+      Default:
+        - "#/$defs/Certificate/properties/securityId"
+        - "#/$defs/CertificatePrecededBy/properties/securities"
   quantity_converted:     { kind: unmappable, target: null, reason: no-equivalent }
 
 variants:

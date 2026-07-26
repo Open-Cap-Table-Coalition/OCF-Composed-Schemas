@@ -16,7 +16,7 @@ drops only for Sar), so "no Carta home" is a per-flavor statement here, not obje
 magnitude diagrams split flavors apart; `core-bidirectional-flow.md` gives the distinct-field,
 best-landing view (its lower "left behind" count).
 
-## Magnitude — unmapped properties per OCF object (166 distinct across 46 objects; 237 per-flavor rows, 143 OCF-required)
+## Magnitude — unmapped properties per OCF object (163 distinct across 46 objects; 237 per-flavor rows, 143 OCF-required)
 
 Each OCF object → the void, edge labelled with how many of its properties are dropped.
 Green = the object is in strict Core (we carry it but lose these fields); dashed grey = the
@@ -48,11 +48,13 @@ flowchart LR
     o14["StockClass"]:::adm
     o15["StockClassAuthorizedSharesAdjustment"]:::adm
     o16["StockPlan"]:::adm
-    o17["StockTransfer [Default]"]:::adm
-    o18["StockTransfer [Rsa]"]:::adm
-    o19["Valuation"]:::adm
-    o20["WarrantCancellation"]:::adm
-    o21["WarrantTransfer"]:::adm
+    o17["StockPlanReturnToPool [Option]"]:::adm
+    o18["StockPlanReturnToPool [Rsu]"]:::adm
+    o19["StockTransfer [Default]"]:::adm
+    o20["StockTransfer [Rsa]"]:::adm
+    o21["Valuation"]:::adm
+    o22["WarrantCancellation"]:::adm
+    o23["WarrantTransfer"]:::adm
   end
   void["⌀ not mapped (no Carta home)"]:::sink
   o0 -->|1| void
@@ -74,9 +76,11 @@ flowchart LR
   o16 -->|3| void
   o17 -->|2| void
   o18 -->|2| void
-  o19 -->|5| void
-  o20 -->|1| void
-  o21 -->|2| void
+  o19 -->|2| void
+  o20 -->|2| void
+  o21 -->|5| void
+  o22 -->|1| void
+  o23 -->|2| void
 ```
 
 **Not-yet-admissible objects**
@@ -123,7 +127,7 @@ flowchart LR
     o32["StockIssuance [Rsa]"]:::notadm
     o33["StockLegendTemplate"]:::notadm
     o34["StockPlanPoolAdjustment"]:::notadm
-    o35["StockPlanReturnToPool"]:::notadm
+    o35["StockPlanReturnToPool [Sar]"]:::notadm
     o36["StockReissuance [Default]"]:::notadm
     o37["StockReissuance [Rsa]"]:::notadm
     o38["StockRepurchase [Default]"]:::notadm
@@ -173,11 +177,11 @@ flowchart LR
   o32 -->|5| void
   o33 -->|2| void
   o34 -->|5| void
-  o35 -->|5| void
+  o35 -->|3| void
   o36 -->|4| void
   o37 -->|4| void
-  o38 -->|5| void
-  o39 -->|5| void
+  o38 -->|4| void
+  o39 -->|4| void
   o40 -->|3| void
   o41 -->|3| void
   o42 -->|4| void
@@ -471,15 +475,13 @@ flowchart LR
 | stock_plan_id | **yes** | Identifier of the Stock Plan object, a subject of this transaction |
 | stockholder_approval_date |  | This optional field tracks when the stockholders approved this change to the stock plan. This is intended for use by US companies that wa… |
 
-### StockPlanReturnToPool — not yet admissible (5 unmapped)
+### StockPlanReturnToPool — in Core (admissible) (3 unmapped)
 
 | property | OCF-req | what it is (OCF) |
 | --- | :---: | --- |
 | date | **yes** | Date on which the transaction occurred |
-| quantity | **yes** | How many shares were returned to the pool? |
+| quantity † | **yes** | How many shares were returned to the pool? |
 | reason_text | **yes** | Reason for the return to the pool |
-| security_id | **yes** | Identifier for the security (stock, plan security, warrant, or convertible) by which it can be referenced by other transaction objects. N… |
-| stock_plan_id | **yes** | Id of the Stock Plan whose pool the reserved shares should return to. This does not have to be the same pool the securities were issued f… |
 
 ### StockReissuance — not yet admissible (4 unmapped)
 
@@ -490,14 +492,13 @@ flowchart LR
 | security_id | **yes** | Identifier for the security (stock, plan security, warrant, or convertible) by which it can be referenced by other transaction objects. N… |
 | split_transaction_id |  | When stock is reissued as a result of a stock split, this field contains id of the respective stock class split transaction. It is not se… |
 
-### StockRepurchase — not yet admissible (5 unmapped)
+### StockRepurchase — not yet admissible (4 unmapped)
 
 | property | OCF-req | what it is (OCF) |
 | --- | :---: | --- |
 | consideration_text |  | Unstructured text description of consideration provided in exchange for security repurchase |
 | date | **yes** | Date on which the transaction occurred |
 | price | **yes** | Repurchase price per share of the stock |
-| quantity | **yes** | Number of shares of stock repurchased |
 | security_id | **yes** | Identifier for the security (stock, plan security, warrant, or convertible) by which it can be referenced by other transaction objects. N… |
 
 ### StockRetraction — not yet admissible (3 unmapped)

@@ -44,7 +44,7 @@ mapping lives in `X`. The core/payload counts are the wrapper's own (only
 | EquityCompensationTransfer | Rsu | 0 | 0 | ✗ | no-payload |
 | EquityCompensationTransfer | Sar | 0 | 0 | ✗ | no-payload |
 | Financing | — | 0 | 0 | ✗ | no-payload |
-| Issuer | — | 2 | 2 | ✓ | — |
+| Issuer | — | 3 | 2 | ✓ | — |
 | IssuerAuthorizedSharesAdjustment | — | 0 | 0 | ✗ | no-payload |
 | PlanSecurityAcceptance | — | 0 | 0 | ✗ | alias-of EquityCompensationAcceptance |
 | PlanSecurityCancellation | — | 0 | 0 | ✓ | alias-of EquityCompensationCancellation |
@@ -53,14 +53,14 @@ mapping lives in `X`. The core/payload counts are the wrapper's own (only
 | PlanSecurityRelease | — | 0 | 0 | ✓ | alias-of EquityCompensationRelease |
 | PlanSecurityRetraction | — | 0 | 0 | ✗ | alias-of EquityCompensationRetraction |
 | PlanSecurityTransfer | — | 0 | 0 | ✗ | alias-of EquityCompensationTransfer |
-| Stakeholder | — | 3 | 2 | ✓ | — |
+| Stakeholder | — | 4 | 2 | ✓ | — |
 | StakeholderRelationshipChangeEvent | — | 3 | 2 | ✓ | — |
 | StakeholderStatusChangeEvent | — | 1 | 0 | ✗ | no-payload |
 | StockAcceptance | Default | 0 | 0 | ✗ | no-payload |
 | StockAcceptance | Rsa | 1 | 0 | ✗ | no-payload |
 | StockCancellation | Default | 3 | 1 | ✓ | — |
 | StockCancellation | Rsa | 3 | 1 | ✓ | — |
-| StockClass | — | 7 | 7 | ✓ | — |
+| StockClass | — | 7 | 6 | ✓ | — |
 | StockClassAuthorizedSharesAdjustment | — | 2 | 1 | ✓ | — |
 | StockClassConversionRatioAdjustment | — | 1 | 0 | ✗ | no-payload |
 | StockClassSplit | — | 0 | 0 | ✗ | no-payload |
@@ -71,9 +71,11 @@ mapping lives in `X`. The core/payload counts are the wrapper's own (only
 | StockIssuance | Default | 10 | 3 | ✗ | vesting_terms_id→VestingTerms |
 | StockIssuance | Rsa | 12 | 5 | ✗ | vesting_terms_id→VestingTerms |
 | StockLegendTemplate | — | 0 | 0 | ✗ | no-payload |
-| StockPlan | — | 3 | 2 | ✓ | — |
+| StockPlan | — | 4 | 2 | ✓ | — |
 | StockPlanPoolAdjustment | — | 0 | 0 | ✗ | no-payload |
-| StockPlanReturnToPool | — | 0 | 0 | ✗ | no-payload |
+| StockPlanReturnToPool | Option | 3 | 1 | ✓ | — |
+| StockPlanReturnToPool | Rsu | 3 | 1 | ✓ | — |
+| StockPlanReturnToPool | Sar | 2 | 0 | ✗ | no-payload |
 | StockReissuance | Default | 0 | 0 | ✗ | no-payload |
 | StockReissuance | Rsa | 0 | 0 | ✗ | no-payload |
 | StockRepurchase | Default | 0 | 0 | ✗ | no-payload |
@@ -122,7 +124,7 @@ values its `const:` supplies implicitly (the reason codes we always know).
 | Financing  | — | name | out | no-destination | kind unmappable |
 | Financing  | — | issuance_ids | out | no-destination | kind unmappable |
 | Financing  | — | date | out | no-destination | kind unmappable |
-| Issuer | — | id | out | no-destination | kind unmappable |
+| Issuer | — | id | core | direct |  |
 | Issuer | — | comments | out | no-destination | kind unmappable |
 | Issuer | — | object_type | out | no-destination | kind unmappable |
 | Issuer | — | legal_name | core | direct |  |
@@ -136,7 +138,7 @@ values its `const:` supplies implicitly (the reason codes we always know).
 | Issuer | — | phone | out | no-destination | kind unmappable |
 | Issuer | — | address | out | no-destination | kind unmappable |
 | Issuer | — | initial_shares_authorized | out | no-destination | kind unmappable |
-| Stakeholder | — | id | out | no-destination | kind unmappable |
+| Stakeholder | — | id | core | direct |  |
 | Stakeholder | — | comments | out | no-destination | kind unmappable |
 | Stakeholder | — | object_type | out | no-destination | kind unmappable |
 | Stakeholder | — | name | out | existence-loss | select (legal_name) |
@@ -149,11 +151,11 @@ values its `const:` supplies implicitly (the reason codes we always know).
 | Stakeholder | — | contact_info | out | heuristic | kind combine |
 | Stakeholder | — | addresses | out | existence-loss | select (first_address_country) |
 | Stakeholder | — | tax_ids | out | no-destination | kind unmappable |
-| StockClass | — | id | out | no-destination | kind unmappable |
+| StockClass | — | id | core | direct |  |
 | StockClass | — | comments | out | no-destination | kind unmappable |
 | StockClass | — | object_type | out | no-destination | kind unmappable |
 | StockClass | — | name | core | direct |  |
-| StockClass | — | class_type | core | value-coarsening | enum→bucket |
+| StockClass | — | class_type | out | heuristic | kind computed |
 | StockClass | — | default_id_prefix | core | direct |  |
 | StockClass | — | initial_shares_authorized | out | partial | AuthorizedShares: unmapped members NOT APPLICABLE, UNLIMITED; Numeric: widening |
 | StockClass | — | board_approval_date | out | no-destination | kind unmappable |
@@ -170,7 +172,7 @@ values its `const:` supplies implicitly (the reason codes we always know).
 | StockLegendTemplate  | — | object_type | out | no-destination | kind unmappable |
 | StockLegendTemplate  | — | name | out | no-destination | kind unmappable |
 | StockLegendTemplate  | — | text | out | no-destination | kind unmappable |
-| StockPlan | — | id | out | no-destination | kind unmappable |
+| StockPlan | — | id | core | direct |  |
 | StockPlan | — | comments | out | no-destination | kind unmappable |
 | StockPlan | — | object_type | out | no-destination | kind unmappable |
 | StockPlan | — | plan_name | core | direct |  |
@@ -377,7 +379,7 @@ values its `const:` supplies implicitly (the reason codes we always know).
 | EquityCompensationExercise | Option | security_id | core | direct |  |
 | EquityCompensationExercise | Option | date | core | widening |  |
 | EquityCompensationExercise | Option | quantity | core | widening |  |
-| EquityCompensationExercise | Option | resulting_security_ids | out | heuristic | kind computed; ⚑ possible reverse-edge (ruling B) — target is an array; confirm lossless lineage |
+| EquityCompensationExercise | Option | resulting_security_ids | out | heuristic | kind computed |
 | EquityCompensationExercise  | Rsu | id | out | no-destination | kind unmappable |
 | EquityCompensationExercise  | Rsu | comments | out | no-destination | kind unmappable |
 | EquityCompensationExercise  | Rsu | object_type | out | no-destination | kind unmappable |
@@ -624,8 +626,8 @@ values its `const:` supplies implicitly (the reason codes we always know).
 | StockRepurchase  | Rsa | date | out | no-destination | kind unmappable |
 | StockRepurchase  | Rsa | security_id | out | no-destination | kind unmappable |
 | StockRepurchase  | Rsa | price | out | no-destination | kind unmappable |
-| StockRepurchase  | Rsa | quantity | out | no-destination | kind unmappable |
 | StockRepurchase  | Rsa | consideration_text | out | no-destination | kind unmappable |
+| StockRepurchase  | Rsa | quantity | out | heuristic | kind computed |
 | StockRepurchase  | Rsa | balance_security_id | out | heuristic | kind computed; ⚑ possible reverse-edge (ruling B) — target is an array; confirm lossless lineage |
 | StockRepurchase  | Default | id | out | no-destination | kind unmappable |
 | StockRepurchase  | Default | comments | out | no-destination | kind unmappable |
@@ -633,8 +635,8 @@ values its `const:` supplies implicitly (the reason codes we always know).
 | StockRepurchase  | Default | date | out | no-destination | kind unmappable |
 | StockRepurchase  | Default | security_id | out | no-destination | kind unmappable |
 | StockRepurchase  | Default | price | out | no-destination | kind unmappable |
-| StockRepurchase  | Default | quantity | out | no-destination | kind unmappable |
 | StockRepurchase  | Default | consideration_text | out | no-destination | kind unmappable |
+| StockRepurchase  | Default | quantity | out | heuristic | kind computed |
 | StockRepurchase  | Default | balance_security_id | out | heuristic | kind computed; ⚑ possible reverse-edge (ruling B) — target is an array; confirm lossless lineage |
 | ConvertibleRetraction  | — | id | out | no-destination | kind unmappable |
 | ConvertibleRetraction  | — | comments | out | no-destination | kind unmappable |
@@ -679,14 +681,30 @@ values its `const:` supplies implicitly (the reason codes we always know).
 | WarrantRetraction  | — | date | out | no-destination | kind unmappable |
 | WarrantRetraction  | — | security_id | out | no-destination | kind unmappable |
 | WarrantRetraction  | — | reason_text | out | no-destination | kind unmappable |
-| StockPlanReturnToPool  | — | id | out | no-destination | kind unmappable |
-| StockPlanReturnToPool  | — | comments | out | no-destination | kind unmappable |
-| StockPlanReturnToPool  | — | object_type | out | no-destination | kind unmappable |
-| StockPlanReturnToPool  | — | date | out | no-destination | kind unmappable |
-| StockPlanReturnToPool  | — | security_id | out | no-destination | kind unmappable |
-| StockPlanReturnToPool  | — | stock_plan_id | out | no-destination | kind unmappable |
-| StockPlanReturnToPool  | — | reason_text | out | no-destination | kind unmappable |
-| StockPlanReturnToPool  | — | quantity | out | no-destination | kind unmappable |
+| StockPlanReturnToPool | Option | id | out | no-destination | kind unmappable |
+| StockPlanReturnToPool | Option | comments | out | no-destination | kind unmappable |
+| StockPlanReturnToPool | Option | object_type | out | no-destination | kind unmappable |
+| StockPlanReturnToPool | Option | date | out | no-destination | kind unmappable |
+| StockPlanReturnToPool | Option | stock_plan_id | core | direct |  |
+| StockPlanReturnToPool | Option | reason_text | out | no-destination | kind unmappable |
+| StockPlanReturnToPool | Option | security_id | core | direct |  |
+| StockPlanReturnToPool | Option | quantity | core | widening |  |
+| StockPlanReturnToPool | Rsu | id | out | no-destination | kind unmappable |
+| StockPlanReturnToPool | Rsu | comments | out | no-destination | kind unmappable |
+| StockPlanReturnToPool | Rsu | object_type | out | no-destination | kind unmappable |
+| StockPlanReturnToPool | Rsu | date | out | no-destination | kind unmappable |
+| StockPlanReturnToPool | Rsu | stock_plan_id | core | direct |  |
+| StockPlanReturnToPool | Rsu | reason_text | out | no-destination | kind unmappable |
+| StockPlanReturnToPool | Rsu | security_id | core | direct |  |
+| StockPlanReturnToPool | Rsu | quantity | core | widening |  |
+| StockPlanReturnToPool  | Sar | id | out | no-destination | kind unmappable |
+| StockPlanReturnToPool  | Sar | comments | out | no-destination | kind unmappable |
+| StockPlanReturnToPool  | Sar | object_type | out | no-destination | kind unmappable |
+| StockPlanReturnToPool  | Sar | date | out | no-destination | kind unmappable |
+| StockPlanReturnToPool  | Sar | stock_plan_id | core | direct |  |
+| StockPlanReturnToPool  | Sar | reason_text | out | no-destination | kind unmappable |
+| StockPlanReturnToPool  | Sar | security_id | core | direct |  |
+| StockPlanReturnToPool  | Sar | quantity | out | no-destination | kind unmappable |
 | StockClassSplit  | — | id | out | no-destination | kind unmappable |
 | StockClassSplit  | — | comments | out | no-destination | kind unmappable |
 | StockClassSplit  | — | object_type | out | no-destination | kind unmappable |

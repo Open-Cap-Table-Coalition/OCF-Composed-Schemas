@@ -136,10 +136,14 @@ shared:
   date:                   { kind: unmappable, target: null, reason: no-equivalent }
   security_id:            { kind: unmappable, target: null, reason: ocf-internal }
   resulting_security_ids:
-    kind: computed                 # lineage: the reissued security precededBy
+    kind: computed                 # result identities + lineage on each reissued security
     target:
-      Rsa:     "#/$defs/RestrictedStockAwardPrecededBy/properties/securities"
-      Default: "#/$defs/CertificatePrecededBy/properties/securities"
+      Rsa:
+        - "#/$defs/RestrictedStockAward/properties/securityId"
+        - "#/$defs/RestrictedStockAwardPrecededBy/properties/securities"
+      Default:
+        - "#/$defs/Certificate/properties/securityId"
+        - "#/$defs/CertificatePrecededBy/properties/securities"
   split_transaction_id:   { kind: unmappable, target: null, reason: no-equivalent }
   reason_text:            { kind: unmappable, target: null, reason: no-equivalent }
 
@@ -218,4 +222,3 @@ Use a link below to open a prefilled GitHub issue. The issue can be copied into 
   OCF's own identifier (Carta assigns ids server-side), `object_type` is the fixed
   `TX_STOCK_REISSUANCE` discriminator (no Carta reissuance transaction type to
   receive it), and `comments` has no Carta slot.
-

@@ -212,8 +212,12 @@ shared:
   date:
     kind: rename
     target:
-      Option: "#/$defs/OptionIssuanceTransaction/properties/issueDatetime"
-      Rsu:    "#/$defs/RsuIssuanceTransaction/properties/issueDatetime"
+      Option:
+        - "#/$defs/OptionIssuanceTransaction/properties/issueDatetime"
+        - "#/$defs/OptionGrant/properties/issueDate"
+      Rsu:
+        - "#/$defs/RsuIssuanceTransaction/properties/issueDatetime"
+        - "#/$defs/RestrictedStockUnit/properties/issueDate"
       Sar:    "#/$defs/SarIssuanceTransaction/properties/issueDatetime"
   security_id:
     kind: rename
@@ -265,20 +269,32 @@ shared:
   stock_class_id:
     kind: rename
     target:
-      Option: "#/$defs/OptionIssuanceTransaction/properties/shareClassId"
-      Rsu:    "#/$defs/RsuIssuanceTransaction/properties/shareClassId"
+      Option:
+        - "#/$defs/OptionIssuanceTransaction/properties/shareClassId"
+        - "#/$defs/OptionGrant/properties/shareClassId"
+      Rsu:
+        - "#/$defs/RsuIssuanceTransaction/properties/shareClassId"
+        - "#/$defs/RestrictedStockUnit/properties/shareClassId"
       Sar:    "#/$defs/SarIssuanceTransaction/properties/shareClassId"
   quantity:
     kind: rename
     target:
-      Option: "#/$defs/OptionIssuanceTransaction/properties/quantity"
-      Rsu:    "#/$defs/RsuIssuanceTransaction/properties/quantity"
+      Option:
+        - "#/$defs/OptionIssuanceTransaction/properties/quantity"
+        - "#/$defs/OptionGrant/properties/quantity"
+      Rsu:
+        - "#/$defs/RsuIssuanceTransaction/properties/quantity"
+        - "#/$defs/RestrictedStockUnit/properties/quantity"
       Sar:    "#/$defs/SarIssuanceTransaction/properties/quantity"
   vesting_template_id:
     kind: rename
     target:
-      Option: "#/$defs/OptionIssuanceTransaction/properties/vestingScheduleTemplateId"
-      Rsu:    "#/$defs/RsuIssuanceTransaction/properties/vestingScheduleTemplateId"
+      Option:
+        - "#/$defs/OptionIssuanceTransaction/properties/vestingScheduleTemplateId"
+        - "#/$defs/OptionGrant/properties/vestingScheduleTemplateId"
+      Rsu:
+        - "#/$defs/RsuIssuanceTransaction/properties/vestingScheduleTemplateId"
+        - "#/$defs/RestrictedStockUnit/properties/vestingScheduleTemplateId"
       Sar:    "#/$defs/SarIssuanceTransaction/properties/vestingScheduleTemplateId"
   vestings:
     kind: rename
@@ -294,8 +310,12 @@ shared:
   vesting_start_date:
     kind: rename
     target:
-      Option: "#/$defs/OptionGrant/properties/vestingStartDate"
-      Rsu:    "#/$defs/RestrictedStockUnit/properties/vestingStartDate"
+      Option:
+        - "#/$defs/OptionGrant/properties/vestingStartDate"
+        - "#/$defs/VestingSchedule/properties/startDate"
+      Rsu:
+        - "#/$defs/RestrictedStockUnit/properties/vestingStartDate"
+        - "#/$defs/VestingSchedule/properties/startDate"
       Sar:    null
 
 variants:
@@ -319,7 +339,11 @@ variants:
       exercise_price:               { kind: rename, target: "#/$defs/OptionIssuanceTransaction/properties/exercisePrice" }
       base_price:                   { kind: unmappable, target: null, reason: no-equivalent }
       early_exercisable:            { kind: rename, target: "#/$defs/OptionGrant/properties/earlyExercisable" }
-      expiration_date:              { kind: rename, target: "#/$defs/OptionIssuanceTransaction/properties/expirationDatetime" }
+      expiration_date:
+        kind: rename
+        target:
+          - "#/$defs/OptionIssuanceTransaction/properties/expirationDatetime"
+          - "#/$defs/OptionGrant/properties/grantExpirationDate"
       termination_exercise_windows: { kind: select, target: "#/$defs/OptionGrant/properties/exercisePeriods", policy: first_termination_window }
 
   Rsu:
@@ -400,14 +424,14 @@ Use a link below to open a prefilled GitHub issue. The issue can be copied into 
   `RsuIssuanceTransaction` + `RsuTransactionItem` + `RestrictedStockUnit`; `CSAR`/`SSAR` →
   `SarIssuanceTransaction` + `SarTransactionItem`. The three `when:` sets
   partition all six `CompensationType` values (`exhaustive: true`).
-- **`shared:` fields use per-variant target maps where the home diverges.** Transaction-level
-  fields (`date`/`stock_plan_id`/`stock_class_id`/`quantity`/`vesting_template_id`) each land on the
-  resolved family's `*IssuanceTransaction`; security-level identity fields
-  (`security_id`/`custom_id`/`stakeholder_id`/`board_approval_date`/`vestings`) land on the
-  enclosing `*TransactionItem` and, where present, `OptionGrant` vs `RestrictedStockUnit`. Each
-  identity field is a `target: { Option/Rsu/Sar: pointer or pointer-list|null }` map; the
-  validator enforces the keys stay in sync with the variant set (every variant present, none
-  unknown). The remaining `shared:` fields are uniform (all `unmappable`).
+- **`shared:` fields use per-variant target maps where the home diverges.** Issuance facts are
+  projected to both the resolved family's `*IssuanceTransaction` and, for Option/RSU, the security
+  (`date` → `issueDate`, `stock_class_id` → `shareClassId`, `quantity` → `quantity`, and
+  `vesting_template_id` → `vestingScheduleTemplateId`). `vesting_start_date` also populates the
+  nested `VestingSchedule.startDate`. Identity fields (`security_id`/`custom_id`/`stakeholder_id`/
+  `board_approval_date`/`vestings`) land on the enclosing `*TransactionItem` and, where present,
+  `OptionGrant` vs `RestrictedStockUnit`. Each per-variant target map is explicit and the validator
+  enforces the keys stay in sync with the variant set.
 - **Per-variant divergence.** `exercise_price` is Option-only; OCF `base_price` → Carta
   `SarIssuanceTransaction.exercisePrice` (SAR-only); `early_exercisable` and
   `termination_exercise_windows` are Option-only; the Option mapping explicitly selects the

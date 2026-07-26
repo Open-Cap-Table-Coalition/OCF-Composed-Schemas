@@ -179,18 +179,26 @@ shared:
   security_id:            { kind: unmappable, target: null, reason: ocf-internal }
   consideration_text:     { kind: unmappable, target: null, reason: no-equivalent }
   balance_security_id:
-    kind: computed                 # lineage: the remainder security precededBy
+    kind: computed                 # remainder identity + lineage on the balance security
     target:
-      Rsa:     "#/$defs/RestrictedStockAwardPrecededBy/properties/securities"
-      Default: "#/$defs/CertificatePrecededBy/properties/securities"
+      Rsa:
+        - "#/$defs/RestrictedStockAward/properties/securityId"
+        - "#/$defs/RestrictedStockAwardPrecededBy/properties/securities"
+      Default:
+        - "#/$defs/Certificate/properties/securityId"
+        - "#/$defs/CertificatePrecededBy/properties/securities"
     const:                         # the remainder is reissued from the source — a known reason
       Rsa:     { reason: RESTRICTED_STOCK_AWARD_PRECEDED_BY_REASON_BALANCE_REISSUED }
       Default: { reason: CERTIFICATE_PRECEDED_BY_REASON_BALANCE_REISSUED }
   resulting_security_ids:
-    kind: computed                 # lineage: the transferred-in security precededBy
+    kind: computed                 # result identities + lineage on the transferred-in securities
     target:
-      Rsa:     "#/$defs/RestrictedStockAwardPrecededBy/properties/securities"
-      Default: "#/$defs/CertificatePrecededBy/properties/securities"
+      Rsa:
+        - "#/$defs/RestrictedStockAward/properties/securityId"
+        - "#/$defs/RestrictedStockAwardPrecededBy/properties/securities"
+      Default:
+        - "#/$defs/Certificate/properties/securityId"
+        - "#/$defs/CertificatePrecededBy/properties/securities"
     const:                         # the transferred-in security was preceded by a transfer
       Rsa:     { reason: RESTRICTED_STOCK_AWARD_PRECEDED_BY_REASON_TRANSFERRED }
       Default: { reason: CERTIFICATE_PRECEDED_BY_REASON_TRANSFERRED }

@@ -145,9 +145,8 @@ status: complete
 
 fields:
   id:
-    kind: unmappable
-    target: null
-    reason: ocf-internal
+    kind: rename
+    target: "#/$defs/ShareClass/properties/id"
   comments:
     kind: unmappable
     target: null
@@ -160,13 +159,19 @@ fields:
       STOCK_CLASS: null
   name:
     kind: rename
-    target: "#/$defs/ShareClass/properties/name"
+    target:
+      - "#/$defs/ShareClass/properties/name"
+      - "#/$defs/ShareClassValuation/properties/shareClassName"
+      - "#/$defs/Certificate/properties/shareClassName"
+      - "#/$defs/RestrictedStockAward/properties/shareClassName"
   class_type:
-    kind: enum-remap
-    target: "#/$defs/ShareClass/properties/type"
-    values:
-      COMMON: COMMON
-      PREFERRED: PREFERRED
+    kind: computed
+    target:
+      - "#/$defs/ShareClass/properties/type"
+      - "#/$defs/ShareClassValuation/properties/common"
+    note: >-
+      Preserve COMMON/PREFERRED on ShareClass.type and derive the valuation read-model's
+      boolean common flag (COMMON → true, PREFERRED → false).
   default_id_prefix:
     kind: rename
     target: "#/$defs/ShareClass/properties/prefix"
@@ -205,7 +210,12 @@ fields:
     target: "#/$defs/ShareClassRightsAndPreferences/properties/originalIssuePrice"
   seniority:
     kind: computed
-    target: "#/$defs/ShareClass/properties/seniority"
+    target:
+      - "#/$defs/ShareClass/properties/seniority"
+      - "#/$defs/ShareClass/properties/pariPassu"
+    note: >-
+      Rank classes as Carta seniority and derive pariPassu by comparing the OCF seniority
+      value with the other classes in the issuer.
   conversion_rights:
     kind: sequential_transform
     steps:
@@ -256,16 +266,18 @@ Use a link below to open a prefilled GitHub issue. The issue can be copied into 
 
 ## Notes / open questions
 
-- `class_type` → `type`: clean 1:1 enum-remap. Both sides use the same two values (`COMMON`, `PREFERRED`).
+- `id` → `ShareClass.id`: the OCF stock-class identifier is the identifier referenced by issuance `stock_class_id` and therefore the same share-class identity represented by Carta's `id`.
+- `name` fans out to the direct `ShareClass.name` plus Carta's denormalized `ShareClassValuation.shareClassName`, `Certificate.shareClassName`, and `RestrictedStockAward.shareClassName` fields.
+- `class_type` → `ShareClass.type` and `ShareClassValuation.common`: the two OCF enum values are preserved on `type`, while `COMMON`/`PREFERRED` are explicitly derived into the valuation boolean (`true`/`false`).
 - `default_id_prefix` → `prefix`: OCF allows a trailing dash (e.g. `CS-` when certificate IDs look like `CS-1`); Carta's `prefix` is constrained to numbers and letters only (e.g. `CS`). Any trailing dash should be stripped on transfer.
 - `initial_shares_authorized` → `authorizedShareCount`: represented as a `union-map`. The `Numeric` source-schema case maps to Carta's `$ref: Decimal`; the `AuthorizedShares` case explicitly records that `NOT APPLICABLE` and `UNLIMITED` have no Carta target. As on `Issuer`, Carta's field carries no description and doesn't document temporal semantics, so we can't tell from the schema whether it reflects initial vs current authorization.
 - `par_value` → `parValue`: clean rename, OCF `Monetary` → Carta `Money` (both carry an amount + currency).
-- `seniority` → `seniority`: `kind: computed` because the value is inverted and rebased. OCF: higher number means higher priority (and decimals are allowed for inserting between classes, see the OCF description). Carta: integer where `1` is highest priority and increasing means *lower* priority. Producing the Carta value requires sorting all of an issuer's stock classes by OCF `seniority` descending and assigning Carta seniority `1, 2, 3, ...` in that order — i.e., per-record context is insufficient. The transformation is well-defined but requires the full set of stock classes for the issuer.
+- `seniority` → `seniority` and `pariPassu`: `kind: computed` because the value is inverted/rebased and also supplies the equal-rank boolean. OCF: higher number means higher priority; Carta: `1` is highest priority. Producing both values requires the full set of stock classes for the issuer: sort by OCF seniority descending for Carta's rank, and compare equal OCF ranks for `pariPassu`.
 - `price_per_share` → `preferredShareClassDetails.rightsAndPreferences.originalIssuePrice`: only meaningful for preferred classes. Common stock classes typically don't carry this in OCF, and there is no Carta target on the `ShareClass` for a common's original price.
 - `liquidation_preference_multiple` → `preferredShareClassDetails.rightsAndPreferences.multiplier`: preferred-only. Carta's field is `Decimal` (the OCF field is `Numeric`); both are numeric so this is a straightforward rename.
 - `participation_cap_multiple` → `preferredShareClassDetails.rightsAndPreferences.participationCap`: preferred-only. Same numeric correspondence as `multiplier`. Note that Carta also carries a separate `participating` boolean (whether the preferred is participating at all) which OCF does not represent explicitly; in OCF, "is participating" is implied by `participation_cap_multiple` being set.
 - `conversion_rights` → `rightsAndPreferences.conversionRatio` + `rightsAndPreferences.conversionPrice` (kind `sequential_transform`): first select the registered `first_ratio_conversion_right` from OCF's array, then apply [`StockClassConversionRight.mapping.md`](../types/conversion_rights/StockClassConversionRight.mapping.md), which splits the selected right's ratio and conversion price into Carta's two leaves. Carta has only one ratio and one price; additional rights and unsupported mechanism details are dropped.
 - `board_approval_date` / `stockholder_approval_date`: unmappable. Carta has a `BoardApproval` *enum* (`BOARD_APPROVAL_APPROVED` / `BOARD_APPROVAL_NOT_APPROVED`) but no field that carries the approval *date*. There is no Carta concept for stockholder approval at all on `ShareClass`.
 - `votes_per_share`: unmappable. Carta's `ShareClass` has no voting-rights field. (Carta's `ShareClassType` description does mention "PREFERRED: with no voting rights" — implying a categorical assumption rather than a per-class field — but there is no slot to express anything other than the type-level default.)
-- `id`, `comments`, `object_type`: unmappable OCF object scaffolding (same pattern as `Document`, `Issuer`, `Stakeholder`).
-- Carta-side `ShareClass` fields with no OCF source: `issuerId` (back-reference; OCF has one issuer per file), `pariPassu` (OCF expresses pari-passu by giving multiple classes the same `seniority` number rather than as a field), `preferredShareClassDetails.dividendDetails` (OCF `StockClass` carries no dividend information), `preferredShareClassDetails.rightsAndPreferences.participating` (in OCF, "participating" is implied by whether `participation_cap_multiple` is set; not an explicit field).
+- `comments`, `object_type`: unmappable OCF object scaffolding.
+- Carta-side `ShareClass` fields with no OCF source: `issuerId` (back-reference; OCF has one issuer per file), `preferredShareClassDetails.dividendDetails` (OCF `StockClass` carries no dividend information), and `preferredShareClassDetails.rightsAndPreferences.participating` (in OCF, "participating" is implied by whether `participation_cap_multiple` is set; not an explicit field).

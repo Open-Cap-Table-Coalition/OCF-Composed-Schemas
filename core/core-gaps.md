@@ -260,6 +260,46 @@ flowchart LR
   o0 -->|"security_id"| sink
 ```
 
+**StockPlanReturnToPool [Option]**
+
+```mermaid
+flowchart LR
+  classDef adm fill:#e6f4ea,stroke:#34a853,color:#0b3d20;
+  classDef notadm fill:#f1f3f4,stroke:#9aa0a6,color:#5f6368,stroke-dasharray:4 3;
+  classDef carta fill:#e8f0fe,stroke:#1a73e8,color:#0d2b66;
+  classDef sink fill:#fce8e6,stroke:#d93025,color:#5c0d06;
+  subgraph SRC["OCF source objects"]
+    direction TB
+    o0["StockPlanReturnToPool [Option]"]:::adm
+  end
+  subgraph TGT["Carta target objects"]
+    direction TB
+    sink["⌀ no Carta home"]:::sink
+  end
+  o0 -->|"date"| sink
+  o0 -->|"reason_text"| sink
+```
+
+**StockPlanReturnToPool [Rsu]**
+
+```mermaid
+flowchart LR
+  classDef adm fill:#e6f4ea,stroke:#34a853,color:#0b3d20;
+  classDef notadm fill:#f1f3f4,stroke:#9aa0a6,color:#5f6368,stroke-dasharray:4 3;
+  classDef carta fill:#e8f0fe,stroke:#1a73e8,color:#0d2b66;
+  classDef sink fill:#fce8e6,stroke:#d93025,color:#5c0d06;
+  subgraph SRC["OCF source objects"]
+    direction TB
+    o0["StockPlanReturnToPool [Rsu]"]:::adm
+  end
+  subgraph TGT["Carta target objects"]
+    direction TB
+    sink["⌀ no Carta home"]:::sink
+  end
+  o0 -->|"date"| sink
+  o0 -->|"reason_text"| sink
+```
+
 **StockTransfer [Default]**
 
 ```mermaid
@@ -553,6 +593,14 @@ flowchart LR
 - stock_class_ids: existence-loss — select (first_stock_class_id)
 - stockholder_approval_date: no-destination — kind unmappable
 
+### StockPlanReturnToPool [Option]
+- **date** (OCF-required): no-destination — kind unmappable
+- **reason_text** (OCF-required): no-destination — kind unmappable
+
+### StockPlanReturnToPool [Rsu]
+- **date** (OCF-required): no-destination — kind unmappable
+- **reason_text** (OCF-required): no-destination — kind unmappable
+
 ### StockTransfer [Default]
 - consideration_text: no-destination — kind unmappable
 - **security_id** (OCF-required): no-destination — kind unmappable
@@ -590,7 +638,7 @@ A missing root target is therefore not automatically a missing concept.
 3. **86** are object-shaped definitions.
 4. Of those **86**, **54** are support definitions, not standalone objects (**53** nested objects + **1** object-shaped value type), leaving **32** standalone mapping candidates.
 5. **60** support definitions are excluded from standalone mapping: **54** object-shaped support definitions + **6** scalar support types.
-6. We have mapping evidence for **20**: **7** fully mapped and **13** partially mapped (**19** direct executable, **1** type-only, **0** deferred).
+6. We have mapping evidence for **20**: **8** fully mapped and **12** partially mapped (**19** direct executable, **1** type-only, **0** deferred).
 7. **12** standalone candidates have no mapping evidence yet; their inventory role tells us whether that is expected or actionable (**7** report/read-model roll-ups, **2** alternate shapes, **1** CARTA-specific families without OCF sources, **1** workflow/data gaps, **1** actionable gaps, **0** requiring review).
 
 **Checks:** 139 = 53 non-object + 86 object-shaped; 53 = 47 scalar enum + 6 scalar support; 32 = 20 + 12; 86 = 32 + 54.
@@ -601,14 +649,14 @@ A missing root target is therefore not automatically a missing concept.
 | --- | ---: |
 | object slots | 588 |
 | defs with direct executable coverage | 19 |
-| direct executable slots | 177 |
+| direct executable slots | 225 |
 | defs with type-only slots | 6 |
 | defs with only type-only coverage | 1 |
 | reusable type-only slots | 28 |
-| implicit constant slots | 3 |
+| implicit constant slots | 1 |
 | deferred slots | 0 |
-| structural child-container slots | 20 |
-| empty slots | 360 |
+| structural child-container slots | 26 |
+| empty slots | 308 |
 
 ### Supporting CARTA definitions excluded from standalone mapping targets (60)
 
@@ -722,11 +770,11 @@ These rows explain why a source-side complex/scalar type may have no same-named 
 | `Address` | `StakeholderAddress` | 2 |
 | `ContactInfo` | `PointOfContact` | 2 |
 | `ContactInfoWithoutName` | `PointOfContact` | 1 |
-| `Date` | `Iso8601CompleteCalendarDate` | 9 |
+| `Date` | `Iso8601CompleteCalendarDate` | 21 |
 | `Date` | `Iso8601CompleteCalendarDateTime` | 30 |
 | `Monetary` | `Decimal` | 1 |
 | `Monetary` | `Iso4217CurrencyAlphaCode` | 1 |
-| `Monetary` | `Money` | 16 |
+| `Monetary` | `Money` | 18 |
 
 ### Actionable inverse candidates
 

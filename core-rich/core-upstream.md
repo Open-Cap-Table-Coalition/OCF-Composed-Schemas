@@ -7,7 +7,7 @@ narrowed form. So Core→target is lossy (expected), and a target-sourced Core d
 may not validate back as OCF without OCF relaxing a constraint. These are the
 upstream-OCF-change candidates; OCF-*required* fields (**bold**) are the strongest.
 
-## Overview — where rich-Core's lossy fields flow (39 fields, 27 OCF-required)
+## Overview — where rich-Core's lossy fields flow (44 fields, 30 OCF-required)
 
 One diagram per OCF object — each polymorphic flavor (`Object [Variant]`) fully separate — with
 the Carta objects it lands on. Edge labels = the property flowing; cross-object convergence
@@ -36,6 +36,77 @@ flowchart LR
   o0 -->|"primary_contact → email"| t0
 ```
 
+**StockClass → ShareClass, ShareClassRightsAndPreferences, ShareClassValuation**
+
+```mermaid
+flowchart LR
+  classDef adm fill:#e6f4ea,stroke:#34a853,color:#0b3d20;
+  classDef notadm fill:#f1f3f4,stroke:#9aa0a6,color:#5f6368,stroke-dasharray:4 3;
+  classDef carta fill:#e8f0fe,stroke:#1a73e8,color:#0d2b66;
+  classDef sink fill:#fce8e6,stroke:#d93025,color:#5c0d06;
+  subgraph SRC["OCF source objects"]
+    direction TB
+    o0["StockClass"]:::adm
+  end
+  subgraph TGT["Carta target objects"]
+    direction TB
+    t0["ShareClass"]:::carta
+    t1["ShareClassRightsAndPreferences"]:::carta
+    t2["ShareClassValuation"]:::carta
+  end
+  o0 -->|"class_type → type"| t0
+  o0 -->|"class_type → common"| t2
+  o0 -->|"conversion_rights → conversionRatio / conversionPrice"| t1
+  o0 -->|"initial_shares_authorized → authorizedShareCount"| t0
+  o0 -->|"seniority → seniority / pariPassu"| t0
+```
+
+**StockTransfer [Default] → Certificate, CertificatePrecededBy**
+
+```mermaid
+flowchart LR
+  classDef adm fill:#e6f4ea,stroke:#34a853,color:#0b3d20;
+  classDef notadm fill:#f1f3f4,stroke:#9aa0a6,color:#5f6368,stroke-dasharray:4 3;
+  classDef carta fill:#e8f0fe,stroke:#1a73e8,color:#0d2b66;
+  classDef sink fill:#fce8e6,stroke:#d93025,color:#5c0d06;
+  subgraph SRC["OCF source objects"]
+    direction TB
+    o0["StockTransfer [Default]"]:::adm
+  end
+  subgraph TGT["Carta target objects"]
+    direction TB
+    t0["Certificate"]:::carta
+    t1["CertificatePrecededBy"]:::carta
+  end
+  o0 -->|"balance_security_id → securityId"| t0
+  o0 -->|"balance_security_id → securities"| t1
+  o0 -->|"resulting_security_ids → securityId"| t0
+  o0 -->|"resulting_security_ids → securities"| t1
+```
+
+**StockTransfer [Rsa] → RestrictedStockAward, RestrictedStockAwardPrecededBy**
+
+```mermaid
+flowchart LR
+  classDef adm fill:#e6f4ea,stroke:#34a853,color:#0b3d20;
+  classDef notadm fill:#f1f3f4,stroke:#9aa0a6,color:#5f6368,stroke-dasharray:4 3;
+  classDef carta fill:#e8f0fe,stroke:#1a73e8,color:#0d2b66;
+  classDef sink fill:#fce8e6,stroke:#d93025,color:#5c0d06;
+  subgraph SRC["OCF source objects"]
+    direction TB
+    o0["StockTransfer [Rsa]"]:::adm
+  end
+  subgraph TGT["Carta target objects"]
+    direction TB
+    t0["RestrictedStockAward"]:::carta
+    t1["RestrictedStockAwardPrecededBy"]:::carta
+  end
+  o0 -->|"balance_security_id → securityId"| t0
+  o0 -->|"balance_security_id → securities"| t1
+  o0 -->|"resulting_security_ids → securityId"| t0
+  o0 -->|"resulting_security_ids → securities"| t1
+```
+
 **ConvertibleIssuance → Compliance, ConvertibleIssuanceTransaction, ConvertibleNote**
 
 ```mermaid
@@ -59,7 +130,7 @@ flowchart LR
   o0 -->|"security_law_exemptions → federalExemption"| t0
 ```
 
-**StockClass → ShareClass, ShareClassRightsAndPreferences**
+**EquityCompensationExercise [Option] → Certificate, CertificatePrecededBy, Exercise**
 
 ```mermaid
 flowchart LR
@@ -69,16 +140,107 @@ flowchart LR
   classDef sink fill:#fce8e6,stroke:#d93025,color:#5c0d06;
   subgraph SRC["OCF source objects"]
     direction TB
-    o0["StockClass"]:::adm
+    o0["EquityCompensationExercise [Option]"]:::adm
   end
   subgraph TGT["Carta target objects"]
     direction TB
-    t0["ShareClass"]:::carta
-    t1["ShareClassRightsAndPreferences"]:::carta
+    t0["Certificate"]:::carta
+    t1["CertificatePrecededBy"]:::carta
+    t2["Exercise"]:::carta
   end
-  o0 -->|"conversion_rights → conversionRatio / conversionPrice"| t1
-  o0 -->|"initial_shares_authorized → authorizedShareCount"| t0
-  o0 -->|"seniority → seniority"| t0
+  o0 -->|"resulting_security_ids → securityId"| t0
+  o0 -->|"resulting_security_ids → securities"| t1
+  o0 -->|"resulting_security_ids → certificateId"| t2
+```
+
+**StockCancellation [Default] → Certificate, CertificateCancellationTransaction, CertificatePrecededBy**
+
+```mermaid
+flowchart LR
+  classDef adm fill:#e6f4ea,stroke:#34a853,color:#0b3d20;
+  classDef notadm fill:#f1f3f4,stroke:#9aa0a6,color:#5f6368,stroke-dasharray:4 3;
+  classDef carta fill:#e8f0fe,stroke:#1a73e8,color:#0d2b66;
+  classDef sink fill:#fce8e6,stroke:#d93025,color:#5c0d06;
+  subgraph SRC["OCF source objects"]
+    direction TB
+    o0["StockCancellation [Default]"]:::adm
+  end
+  subgraph TGT["Carta target objects"]
+    direction TB
+    t0["Certificate"]:::carta
+    t1["CertificateCancellationTransaction"]:::carta
+    t2["CertificatePrecededBy"]:::carta
+  end
+  o0 -->|"balance_security_id → securityId"| t0
+  o0 -->|"balance_security_id → securities"| t2
+  o0 -->|"reason_text → reason"| t1
+```
+
+**StockCancellation [Rsa] → RestrictedStockAward, RestrictedStockAwardPrecededBy, RsaCancellationTransaction**
+
+```mermaid
+flowchart LR
+  classDef adm fill:#e6f4ea,stroke:#34a853,color:#0b3d20;
+  classDef notadm fill:#f1f3f4,stroke:#9aa0a6,color:#5f6368,stroke-dasharray:4 3;
+  classDef carta fill:#e8f0fe,stroke:#1a73e8,color:#0d2b66;
+  classDef sink fill:#fce8e6,stroke:#d93025,color:#5c0d06;
+  subgraph SRC["OCF source objects"]
+    direction TB
+    o0["StockCancellation [Rsa]"]:::adm
+  end
+  subgraph TGT["Carta target objects"]
+    direction TB
+    t0["RestrictedStockAward"]:::carta
+    t1["RestrictedStockAwardPrecededBy"]:::carta
+    t2["RsaCancellationTransaction"]:::carta
+  end
+  o0 -->|"balance_security_id → securityId"| t0
+  o0 -->|"balance_security_id → securities"| t1
+  o0 -->|"reason_text → reason"| t2
+```
+
+**StockRepurchase [Default] → Certificate, CertificatePrecededBy**
+
+```mermaid
+flowchart LR
+  classDef adm fill:#e6f4ea,stroke:#34a853,color:#0b3d20;
+  classDef notadm fill:#f1f3f4,stroke:#9aa0a6,color:#5f6368,stroke-dasharray:4 3;
+  classDef carta fill:#e8f0fe,stroke:#1a73e8,color:#0d2b66;
+  classDef sink fill:#fce8e6,stroke:#d93025,color:#5c0d06;
+  subgraph SRC["OCF source objects"]
+    direction TB
+    o0["StockRepurchase [Default]"]:::adm
+  end
+  subgraph TGT["Carta target objects"]
+    direction TB
+    t0["Certificate"]:::carta
+    t1["CertificatePrecededBy"]:::carta
+  end
+  o0 -->|"balance_security_id → securityId"| t0
+  o0 -->|"balance_security_id → securities"| t1
+  o0 -->|"quantity → returnedToTreasuryQuantity"| t0
+```
+
+**StockRepurchase [Rsa] → RestrictedStockAward, RestrictedStockAwardPrecededBy**
+
+```mermaid
+flowchart LR
+  classDef adm fill:#e6f4ea,stroke:#34a853,color:#0b3d20;
+  classDef notadm fill:#f1f3f4,stroke:#9aa0a6,color:#5f6368,stroke-dasharray:4 3;
+  classDef carta fill:#e8f0fe,stroke:#1a73e8,color:#0d2b66;
+  classDef sink fill:#fce8e6,stroke:#d93025,color:#5c0d06;
+  subgraph SRC["OCF source objects"]
+    direction TB
+    o0["StockRepurchase [Rsa]"]:::adm
+  end
+  subgraph TGT["Carta target objects"]
+    direction TB
+    t0["RestrictedStockAward"]:::carta
+    t1["RestrictedStockAwardPrecededBy"]:::carta
+  end
+  o0 -->|"balance_security_id → securityId"| t0
+  o0 -->|"balance_security_id → securities"| t1
+  o0 -->|"quantity → returnedToTreasuryQuantity"| t0
 ```
 
 **Document → Document**
@@ -101,6 +263,27 @@ flowchart LR
   o0 -->|"uri → fileId"| t0
 ```
 
+**EquityCompensationExercise [Sar] → Certificate, CertificatePrecededBy**
+
+```mermaid
+flowchart LR
+  classDef adm fill:#e6f4ea,stroke:#34a853,color:#0b3d20;
+  classDef notadm fill:#f1f3f4,stroke:#9aa0a6,color:#5f6368,stroke-dasharray:4 3;
+  classDef carta fill:#e8f0fe,stroke:#1a73e8,color:#0d2b66;
+  classDef sink fill:#fce8e6,stroke:#d93025,color:#5c0d06;
+  subgraph SRC["OCF source objects"]
+    direction TB
+    o0["EquityCompensationExercise [Sar]"]:::adm
+  end
+  subgraph TGT["Carta target objects"]
+    direction TB
+    t0["Certificate"]:::carta
+    t1["CertificatePrecededBy"]:::carta
+  end
+  o0 -->|"resulting_security_ids → securityId"| t0
+  o0 -->|"resulting_security_ids → securities"| t1
+```
+
 **EquityCompensationIssuance [Option] → Compliance, OptionGrant**
 
 ```mermaid
@@ -120,88 +303,6 @@ flowchart LR
   end
   o0 -->|"security_law_exemptions → federalExemption"| t0
   o0 -->|"termination_exercise_windows → exercisePeriods"| t1
-```
-
-**StockCancellation [Default] → CertificateCancellationTransaction, CertificatePrecededBy**
-
-```mermaid
-flowchart LR
-  classDef adm fill:#e6f4ea,stroke:#34a853,color:#0b3d20;
-  classDef notadm fill:#f1f3f4,stroke:#9aa0a6,color:#5f6368,stroke-dasharray:4 3;
-  classDef carta fill:#e8f0fe,stroke:#1a73e8,color:#0d2b66;
-  classDef sink fill:#fce8e6,stroke:#d93025,color:#5c0d06;
-  subgraph SRC["OCF source objects"]
-    direction TB
-    o0["StockCancellation [Default]"]:::adm
-  end
-  subgraph TGT["Carta target objects"]
-    direction TB
-    t0["CertificateCancellationTransaction"]:::carta
-    t1["CertificatePrecededBy"]:::carta
-  end
-  o0 -->|"balance_security_id → securities"| t1
-  o0 -->|"reason_text → reason"| t0
-```
-
-**StockCancellation [Rsa] → RestrictedStockAwardPrecededBy, RsaCancellationTransaction**
-
-```mermaid
-flowchart LR
-  classDef adm fill:#e6f4ea,stroke:#34a853,color:#0b3d20;
-  classDef notadm fill:#f1f3f4,stroke:#9aa0a6,color:#5f6368,stroke-dasharray:4 3;
-  classDef carta fill:#e8f0fe,stroke:#1a73e8,color:#0d2b66;
-  classDef sink fill:#fce8e6,stroke:#d93025,color:#5c0d06;
-  subgraph SRC["OCF source objects"]
-    direction TB
-    o0["StockCancellation [Rsa]"]:::adm
-  end
-  subgraph TGT["Carta target objects"]
-    direction TB
-    t0["RestrictedStockAwardPrecededBy"]:::carta
-    t1["RsaCancellationTransaction"]:::carta
-  end
-  o0 -->|"balance_security_id → securities"| t0
-  o0 -->|"reason_text → reason"| t1
-```
-
-**StockTransfer [Default] → CertificatePrecededBy**
-
-```mermaid
-flowchart LR
-  classDef adm fill:#e6f4ea,stroke:#34a853,color:#0b3d20;
-  classDef notadm fill:#f1f3f4,stroke:#9aa0a6,color:#5f6368,stroke-dasharray:4 3;
-  classDef carta fill:#e8f0fe,stroke:#1a73e8,color:#0d2b66;
-  classDef sink fill:#fce8e6,stroke:#d93025,color:#5c0d06;
-  subgraph SRC["OCF source objects"]
-    direction TB
-    o0["StockTransfer [Default]"]:::adm
-  end
-  subgraph TGT["Carta target objects"]
-    direction TB
-    t0["CertificatePrecededBy"]:::carta
-  end
-  o0 -->|"balance_security_id → securities"| t0
-  o0 -->|"resulting_security_ids → securities"| t0
-```
-
-**StockTransfer [Rsa] → RestrictedStockAwardPrecededBy**
-
-```mermaid
-flowchart LR
-  classDef adm fill:#e6f4ea,stroke:#34a853,color:#0b3d20;
-  classDef notadm fill:#f1f3f4,stroke:#9aa0a6,color:#5f6368,stroke-dasharray:4 3;
-  classDef carta fill:#e8f0fe,stroke:#1a73e8,color:#0d2b66;
-  classDef sink fill:#fce8e6,stroke:#d93025,color:#5c0d06;
-  subgraph SRC["OCF source objects"]
-    direction TB
-    o0["StockTransfer [Rsa]"]:::adm
-  end
-  subgraph TGT["Carta target objects"]
-    direction TB
-    t0["RestrictedStockAwardPrecededBy"]:::carta
-  end
-  o0 -->|"balance_security_id → securities"| t0
-  o0 -->|"resulting_security_ids → securities"| t0
 ```
 
 **ConvertibleCancellation → ConvertibleCancellationTransaction**
@@ -278,44 +379,6 @@ flowchart LR
     t0["SarCancellationTransaction"]:::carta
   end
   o0 -->|"reason_text → reason"| t0
-```
-
-**EquityCompensationExercise [Option] → CertificatePrecededBy**
-
-```mermaid
-flowchart LR
-  classDef adm fill:#e6f4ea,stroke:#34a853,color:#0b3d20;
-  classDef notadm fill:#f1f3f4,stroke:#9aa0a6,color:#5f6368,stroke-dasharray:4 3;
-  classDef carta fill:#e8f0fe,stroke:#1a73e8,color:#0d2b66;
-  classDef sink fill:#fce8e6,stroke:#d93025,color:#5c0d06;
-  subgraph SRC["OCF source objects"]
-    direction TB
-    o0["EquityCompensationExercise [Option]"]:::adm
-  end
-  subgraph TGT["Carta target objects"]
-    direction TB
-    t0["CertificatePrecededBy"]:::carta
-  end
-  o0 -->|"resulting_security_ids → securities"| t0
-```
-
-**EquityCompensationExercise [Sar] → CertificatePrecededBy**
-
-```mermaid
-flowchart LR
-  classDef adm fill:#e6f4ea,stroke:#34a853,color:#0b3d20;
-  classDef notadm fill:#f1f3f4,stroke:#9aa0a6,color:#5f6368,stroke-dasharray:4 3;
-  classDef carta fill:#e8f0fe,stroke:#1a73e8,color:#0d2b66;
-  classDef sink fill:#fce8e6,stroke:#d93025,color:#5c0d06;
-  subgraph SRC["OCF source objects"]
-    direction TB
-    o0["EquityCompensationExercise [Sar]"]:::adm
-  end
-  subgraph TGT["Carta target objects"]
-    direction TB
-    t0["CertificatePrecededBy"]:::carta
-  end
-  o0 -->|"resulting_security_ids → securities"| t0
 ```
 
 **EquityCompensationIssuance [Rsu] → Compliance**
@@ -562,7 +625,8 @@ flowchart LR
 
 | field | OCF-req | variant(s) | flows to (Carta) | loss |
 | --- | :---: | --- | --- | --- |
-| resulting_security_ids | **yes** | Option, Sar | CertificatePrecededBy.securities | heuristic (computed) |
+| resulting_security_ids | **yes** | Option | Certificate.securityId + CertificatePrecededBy.securities + Exercise.certificateId | heuristic (computed) |
+| resulting_security_ids | **yes** | Sar | Certificate.securityId + CertificatePrecededBy.securities | heuristic (computed) |
 
 ### EquityCompensationIssuance — in Core (admissible)
 
@@ -591,8 +655,8 @@ flowchart LR
 
 | field | OCF-req | variant(s) | flows to (Carta) | loss |
 | --- | :---: | --- | --- | --- |
-| balance_security_id |  | Rsa | RestrictedStockAwardPrecededBy.securities | heuristic (computed) |
-| balance_security_id |  | Default | CertificatePrecededBy.securities | heuristic (computed) |
+| balance_security_id |  | Rsa | RestrictedStockAward.securityId + RestrictedStockAwardPrecededBy.securities | heuristic (computed) |
+| balance_security_id |  | Default | Certificate.securityId + CertificatePrecededBy.securities | heuristic (computed) |
 | reason_text | **yes** | Rsa | RsaCancellationTransaction.reason | heuristic (computed) |
 | reason_text | **yes** | Default | CertificateCancellationTransaction.reason | heuristic (computed) |
 
@@ -600,9 +664,10 @@ flowchart LR
 
 | field | OCF-req | variant(s) | flows to (Carta) | loss |
 | --- | :---: | --- | --- | --- |
+| class_type | **yes** |  | ShareClass.type + ShareClassValuation.common | heuristic (computed) |
 | conversion_rights |  |  | ShareClassRightsAndPreferences.{conversionRatio, conversionPrice} | heuristic (sequential_transform (select first_ratio_conversion_right)) |
 | initial_shares_authorized | **yes** |  | ShareClass.authorizedShareCount | partial (AuthorizedShares: unmapped members NOT APPLICABLE, UNLIMITED; Numeric: widening) |
-| seniority | **yes** |  | ShareClass.seniority | heuristic (computed) |
+| seniority | **yes** |  | ShareClass.{seniority, pariPassu} | heuristic (computed) |
 
 ### StockClassConversionRatioAdjustment — in Core (admissible)
 
@@ -622,14 +687,23 @@ flowchart LR
 | --- | :---: | --- | --- | --- |
 | stock_class_ids |  |  | OptionPoolSummary.shareClassId | existence-loss (select (first_stock_class_id)) |
 
+### StockRepurchase — in Core (admissible)
+
+| field | OCF-req | variant(s) | flows to (Carta) | loss |
+| --- | :---: | --- | --- | --- |
+| balance_security_id |  | Rsa | RestrictedStockAward.securityId + RestrictedStockAwardPrecededBy.securities | heuristic (computed) |
+| balance_security_id |  | Default | Certificate.securityId + CertificatePrecededBy.securities | heuristic (computed) |
+| quantity | **yes** | Rsa | RestrictedStockAward.returnedToTreasuryQuantity | heuristic (computed) |
+| quantity | **yes** | Default | Certificate.returnedToTreasuryQuantity | heuristic (computed) |
+
 ### StockTransfer — in Core (admissible)
 
 | field | OCF-req | variant(s) | flows to (Carta) | loss |
 | --- | :---: | --- | --- | --- |
-| balance_security_id |  | Rsa | RestrictedStockAwardPrecededBy.securities | heuristic (computed) |
-| balance_security_id |  | Default | CertificatePrecededBy.securities | heuristic (computed) |
-| resulting_security_ids | **yes** | Rsa | RestrictedStockAwardPrecededBy.securities | heuristic (computed) |
-| resulting_security_ids | **yes** | Default | CertificatePrecededBy.securities | heuristic (computed) |
+| balance_security_id |  | Rsa | RestrictedStockAward.securityId + RestrictedStockAwardPrecededBy.securities | heuristic (computed) |
+| balance_security_id |  | Default | Certificate.securityId + CertificatePrecededBy.securities | heuristic (computed) |
+| resulting_security_ids | **yes** | Rsa | RestrictedStockAward.securityId + RestrictedStockAwardPrecededBy.securities | heuristic (computed) |
+| resulting_security_ids | **yes** | Default | Certificate.securityId + CertificatePrecededBy.securities | heuristic (computed) |
 
 ### VestingTerms — in Core (admissible)
 
@@ -657,13 +731,16 @@ flowchart LR
 
 ## Flow map — Carta slot ← OCF sources (the narrowest are the strongest upstream asks)
 
-- `CertificatePrecededBy.securities` ← 5: `EquityCompensationExercise.resulting_security_ids [Option, Sar]`, `EquityCompensationRelease.resulting_security_ids [Rsu]`, `StockCancellation.balance_security_id [Default]`, `StockTransfer.balance_security_id [Default]`, `StockTransfer.resulting_security_ids [Default]`
+- `CertificatePrecededBy.securities` ← 7: `EquityCompensationExercise.resulting_security_ids [Option]`, `EquityCompensationExercise.resulting_security_ids [Sar]`, `EquityCompensationRelease.resulting_security_ids [Rsu]`, `StockCancellation.balance_security_id [Default]`, `StockRepurchase.balance_security_id [Default]`, `StockTransfer.balance_security_id [Default]`, `StockTransfer.resulting_security_ids [Default]`
+- `Certificate.securityId` ← 6: `EquityCompensationExercise.resulting_security_ids [Option]`, `EquityCompensationExercise.resulting_security_ids [Sar]`, `StockCancellation.balance_security_id [Default]`, `StockRepurchase.balance_security_id [Default]`, `StockTransfer.balance_security_id [Default]`, `StockTransfer.resulting_security_ids [Default]`
 - `Compliance.federalExemption` ← 4: `ConvertibleIssuance.security_law_exemptions`, `EquityCompensationIssuance.security_law_exemptions [Option, Rsu, Sar]`, `StockIssuance.security_law_exemptions [Rsa, Default]`, `WarrantIssuance.security_law_exemptions`
-- `RestrictedStockAwardPrecededBy.securities` ← 3: `StockCancellation.balance_security_id [Rsa]`, `StockTransfer.balance_security_id [Rsa]`, `StockTransfer.resulting_security_ids [Rsa]`
+- `RestrictedStockAward.securityId` ← 4: `StockCancellation.balance_security_id [Rsa]`, `StockRepurchase.balance_security_id [Rsa]`, `StockTransfer.balance_security_id [Rsa]`, `StockTransfer.resulting_security_ids [Rsa]`
+- `RestrictedStockAwardPrecededBy.securities` ← 4: `StockCancellation.balance_security_id [Rsa]`, `StockRepurchase.balance_security_id [Rsa]`, `StockTransfer.balance_security_id [Rsa]`, `StockTransfer.resulting_security_ids [Rsa]`
 - `Document.fileId` ← 2: `Document.path`, `Document.uri`
 - `ShareClassRightsAndPreferences.conversionPrice` ← 2: `StockClass.conversion_rights`, `StockClassConversionRatioAdjustment.new_ratio_conversion_mechanism`
 - `ShareClassRightsAndPreferences.conversionRatio` ← 2: `StockClass.conversion_rights`, `StockClassConversionRatioAdjustment.new_ratio_conversion_mechanism`
 - `Stakeholder.email` ← 2: `Stakeholder.contact_info`, `Stakeholder.primary_contact`
+- `Certificate.returnedToTreasuryQuantity` ← 1: `StockRepurchase.quantity [Default]`
 - `CertificateCancellationTransaction.reason` ← 1: `StockCancellation.reason_text [Default]`
 - `ConvertibleCancellationTransaction.reason` ← 1: `ConvertibleCancellation.reason_text`
 - `ConvertibleIssuanceTransaction.conversionTrigger` ← 1: `ConvertibleIssuance.conversion_triggers`
@@ -680,14 +757,19 @@ flowchart LR
 - `ConvertibleNote.interestCompoundingPeriod` ← 1: `ConvertibleIssuance.conversion_triggers`
 - `ConvertibleNote.interestRate` ← 1: `ConvertibleIssuance.conversion_triggers`
 - `ConvertibleNote.priceCap` ← 1: `ConvertibleIssuance.conversion_triggers`
+- `Exercise.certificateId` ← 1: `EquityCompensationExercise.resulting_security_ids [Option]`
 - `OptionCancellationTransaction.reason` ← 1: `EquityCompensationCancellation.reason_text [Option]`
 - `OptionGrant.exercisePeriods` ← 1: `EquityCompensationIssuance.termination_exercise_windows [Option]`
 - `OptionPoolSummary.shareClassId` ← 1: `StockPlan.stock_class_ids`
+- `RestrictedStockAward.returnedToTreasuryQuantity` ← 1: `StockRepurchase.quantity [Rsa]`
 - `RsaCancellationTransaction.reason` ← 1: `StockCancellation.reason_text [Rsa]`
 - `RsuCancellationTransaction.reason` ← 1: `EquityCompensationCancellation.reason_text [Rsu]`
 - `SarCancellationTransaction.reason` ← 1: `EquityCompensationCancellation.reason_text [Sar]`
 - `ShareClass.authorizedShareCount` ← 1: `StockClass.initial_shares_authorized`
+- `ShareClass.pariPassu` ← 1: `StockClass.seniority`
 - `ShareClass.seniority` ← 1: `StockClass.seniority`
+- `ShareClass.type` ← 1: `StockClass.class_type`
+- `ShareClassValuation.common` ← 1: `StockClass.class_type`
 - `Stakeholder.address` ← 1: `Stakeholder.addresses`
 - `Stakeholder.fullName` ← 1: `Stakeholder.name`
 - `Stakeholder.relationship` ← 1: `Stakeholder.current_relationships`

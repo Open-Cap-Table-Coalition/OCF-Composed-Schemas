@@ -199,8 +199,12 @@ shared:
   date:
     kind: rename
     target:
-      Rsa:     "#/$defs/RsaIssuanceTransaction/properties/issueDatetime"
-      Default: "#/$defs/CertificateIssuanceTransaction/properties/issueDatetime"
+      Rsa:
+        - "#/$defs/RsaIssuanceTransaction/properties/issueDatetime"
+        - "#/$defs/RestrictedStockAward/properties/issueDate"
+      Default:
+        - "#/$defs/CertificateIssuanceTransaction/properties/issueDatetime"
+        - "#/$defs/Certificate/properties/issueDate"
   security_id:
     kind: rename
     target:
@@ -236,8 +240,12 @@ shared:
   stock_class_id:
     kind: rename
     target:
-      Rsa:     "#/$defs/RestrictedStockAward/properties/shareClassId"
-      Default: "#/$defs/Certificate/properties/shareClassId"
+      Rsa:
+        - "#/$defs/RsaIssuanceTransaction/properties/shareClassId"
+        - "#/$defs/RestrictedStockAward/properties/shareClassId"
+      Default:
+        - "#/$defs/CertificateIssuanceTransaction/properties/shareClassId"
+        - "#/$defs/Certificate/properties/shareClassId"
   stock_plan_id:
     kind: rename
     target:
@@ -247,13 +255,21 @@ shared:
   quantity:
     kind: rename
     target:
-      Rsa:     "#/$defs/RsaIssuanceTransaction/properties/quantity"
-      Default: "#/$defs/CertificateIssuanceTransaction/properties/quantity"
+      Rsa:
+        - "#/$defs/RsaIssuanceTransaction/properties/quantity"
+        - "#/$defs/RestrictedStockAward/properties/quantity"
+      Default:
+        - "#/$defs/CertificateIssuanceTransaction/properties/quantity"
+        - "#/$defs/Certificate/properties/quantity"
   vesting_terms_id:
     kind: rename
     target:
-      Rsa:     "#/$defs/RsaIssuanceTransaction/properties/vestingScheduleTemplateId"
-      Default: "#/$defs/CertificateIssuanceTransaction/properties/vestingScheduleTemplateId"
+      Rsa:
+        - "#/$defs/RsaIssuanceTransaction/properties/vestingScheduleTemplateId"
+        - "#/$defs/RestrictedStockAward/properties/vestingScheduleTemplateId"
+      Default:
+        - "#/$defs/CertificateIssuanceTransaction/properties/vestingScheduleTemplateId"
+        - "#/$defs/Certificate/properties/vestingScheduleTemplateId"
   stock_legend_ids:          { kind: unmappable, target: null, reason: no-equivalent }
 
 variants:
@@ -344,11 +360,12 @@ Use a link below to open a prefilled GitHub issue. The issue can be copied into 
   `RestrictedStockAward` but **not** on `Certificate` (which carries only
   `vestingScheduleTemplateId`), so they are RSA-only; `share_price`/`cost_basis` land on the
   resolved family's security/transaction object.
-- **`shared:` fields use per-variant target maps where the home diverges** (`date`/`security_id`/
-  `custom_id`/`stakeholder_id`/`stock_class_id`/`stock_plan_id`/`quantity`/`vesting_terms_id`): each
-  is a `target: { Rsa/Default: pointer }` map landing on the resolved family's transaction/security
-  object. Both families carry every divergent field (unlike SAR in `EquityCompensationIssuance`), so
-  no `null` columns are needed; the validator enforces the keys stay in sync with the variant set.
+- **Security projections are deliberate fan-outs.** The issuance `date`, `stock_class_id`,
+  `quantity`, and `vesting_terms_id` populate both the family transaction and the issued security
+  (`issueDate`, `shareClassId`, `quantity`, `vestingScheduleTemplateId`). The transaction remains
+  the event record, while the security carries the same facts as Carta's read model exposes them.
+  The `shared:` target maps are explicit per-variant arrays, and the validator enforces the keys stay
+  in sync with the variant set.
 - **Genuinely unmappable.** `share_numbers_issued` (no Carta range type), `stock_legend_ids`
   (OCF-required; no Carta legend store), and `issuance_type` itself (no Carta field records the
   RSA/founders flavor; `CertificateIssuanceReason` is a *why-issued* enum, a different concept) have

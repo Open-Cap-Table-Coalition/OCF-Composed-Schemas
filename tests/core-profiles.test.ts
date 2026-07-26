@@ -71,6 +71,7 @@ describe("deriveCore profiles over the real corpus", () => {
       "EquityCompensationIssuance",
       "StockClassConversionRatioAdjustment",
       "StockIssuance",
+      "StockRepurchase",
       "VestingTerms",
       "WarrantIssuance",
     ]);
