@@ -39,7 +39,7 @@ These counts are mutually descriptive dimensions of the same ledger, not a singl
 | Carta-side dimension | count |
 | --- | ---: |
 | Carta object slots | 588 |
-| defs with direct executable coverage | 19 |
+| defs with direct executable coverage | 18 |
 | direct executable slots | 225 |
 | defs with type-only slots | 6 |
 | defs with only type-only coverage | 1 |
@@ -55,10 +55,10 @@ These counts are mutually descriptive dimensions of the same ledger, not a singl
 3. **86** are object-shaped definitions.
 4. Of those **86**, **54** are support definitions, not standalone objects (**53** nested objects + **1** object-shaped value type), leaving **32** standalone mapping candidates.
 5. **60** support definitions are excluded from standalone mapping: **54** object-shaped support definitions + **6** scalar support types.
-6. We have mapping evidence for **20**: **8** fully mapped and **12** partially mapped (**19** direct executable, **1** type-only, **0** deferred).
-7. **12** standalone candidates have no mapping evidence yet; their inventory role tells us whether that is expected or actionable (**7** report/read-model roll-ups, **2** alternate shapes, **1** CARTA-specific families without OCF sources, **1** workflow/data gaps, **1** actionable gaps, **0** requiring review).
+6. We have mapping evidence for **19**: **8** fully mapped and **11** partially mapped (**18** direct executable, **1** type-only, **0** deferred).
+7. **13** standalone candidates have no mapping evidence yet; their inventory role tells us whether that is expected or actionable (**8** report/read-model roll-ups, **2** alternate shapes, **1** CARTA-specific families without OCF sources, **1** workflow/data gaps, **1** actionable gaps, **0** requiring review).
 
-**Checks:** 139 = 53 non-object + 86 object-shaped; 53 = 47 scalar enum + 6 scalar support; 32 = 20 + 12; 86 = 32 + 54.
+**Checks:** 139 = 53 non-object + 86 object-shaped; 53 = 47 scalar enum + 6 scalar support; 32 = 19 + 13; 86 = 32 + 54.
 
 ### Supporting CARTA definitions excluded from standalone mapping targets (60)
 

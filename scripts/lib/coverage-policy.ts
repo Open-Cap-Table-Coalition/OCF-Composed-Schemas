@@ -28,6 +28,8 @@ const ROLES = new Set<CartaCoverageRole>([
 export interface CartaCoveragePolicyEntry {
   role: CartaCoverageRole;
   reason: string;
+  /** When true, this curated role wins over direct mapping evidence. */
+  override?: boolean;
 }
 
 export interface CoveragePolicy {
@@ -53,7 +55,14 @@ export async function loadCoveragePolicy(repoRoot: string): Promise<CoveragePoli
     if (typeof reason !== "string" || reason.trim() === "") {
       throw new Error(`${POLICY_FILE}: carta_defs.${name}.reason is required`);
     }
-    cartaDefs.set(name, { role: role as CartaCoverageRole, reason });
+    if (rawEntry.override !== undefined && typeof rawEntry.override !== "boolean") {
+      throw new Error(`${POLICY_FILE}: carta_defs.${name}.override must be boolean when present`);
+    }
+    cartaDefs.set(name, {
+      role: role as CartaCoverageRole,
+      reason,
+      ...(rawEntry.override === true ? { override: true } : {}),
+    });
   }
 
   return { cartaDefs };

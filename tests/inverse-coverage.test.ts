@@ -14,12 +14,12 @@ describe("Carta inverse coverage", () => {
       totalDefs: 139,
       objectDefs: 86,
       definitionRoleCounts: {
-        direct: 19,
+        direct: 18,
         "type-only": 1,
         deferred: 0,
         "nested-obj": 53,
         "value-type": 1,
-        "report-rollup": 7,
+        "report-rollup": 8,
         alternate: 2,
         "vendor-family": 1,
         "workflow-gap": 1,
@@ -34,7 +34,7 @@ describe("Carta inverse coverage", () => {
       deferredSlots: 0,
       structuralSlots: 28,
       nestedObjDefs: 53,
-      reportRollupDefs: 7,
+      reportRollupDefs: 8,
       curatedValueTypeEntries: 7,
       valueTypeDefs: 1,
       alternateDefs: 2,
@@ -48,6 +48,17 @@ describe("Carta inverse coverage", () => {
     expect(byDef.get("DividendDetails")?.status).toBe("nested-obj");
     expect(byDef.get("CertificateIssuanceTransaction")?.status).toBe("nested-obj");
     expect(byDef.get("Interest")?.status).toBe("vendor-family");
+    expect(byDef.get("OptionPoolSummary")?.status).toBe("report-rollup");
+    expect(
+      inverse.slots.find(
+        (slot) => slot.def === "OptionPoolSummary" && slot.property === "authorizedShares"
+      )?.inverseRoles
+    ).toEqual(["state-projection"]);
+    expect(
+      inverse.slots.find(
+        (slot) => slot.def === "OptionGrant" && slot.property === "returnedToPoolQuantity"
+      )?.inverseRoles
+    ).toEqual(["aggregate-projection"]);
     expect(byDef.get("ThresholdDetails")?.status).toBe("nested-obj");
     expect(byDef.get("OptionGrantDocuments")?.status).toBe("gap");
     expect(byDef.get("WarrantTransactionItem")).toMatchObject({
@@ -135,10 +146,10 @@ describe("Carta inverse coverage", () => {
       otherNonObjectDefs: 0,
       objectDefs: 86,
       standaloneCandidateDefs: 32,
-      mappedDefs: 20,
+      mappedDefs: 19,
       fullyMappedDefs: 8,
-      partiallyMappedDefs: 12,
-      unmappedCandidateDefs: 12,
+      partiallyMappedDefs: 11,
+      unmappedCandidateDefs: 13,
       nonEntityDefs: 60,
       nonEntityObjectDefs: 54,
       scalarValueTypeDefs: 6,

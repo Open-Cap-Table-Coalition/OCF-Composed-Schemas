@@ -149,9 +149,15 @@ shared:
         - "#/$defs/RsuTransactionItem/properties/securityId"
         - "#/$defs/RestrictedStockUnit/properties/securityId"
       Sar: "#/$defs/SarTransactionItem/properties/securityId"
+    inverse:
+      role: reference-only
+      note: Identifies the existing cancelled security; it does not reconstruct a return event.
   stock_plan_id:
     kind: rename
     target: "#/$defs/OptionPoolSummary/properties/optionPoolId"
+    inverse:
+      role: reference-only
+      note: Carries the destination pool relationship only; it is not a Carta pool-ledger record.
   reason_text:
     kind: unmappable
     target: null
@@ -162,6 +168,9 @@ shared:
       Option: "#/$defs/OptionGrant/properties/returnedToPoolQuantity"
       Rsu:    "#/$defs/RestrictedStockUnit/properties/returnedToPoolQuantity"
       Sar:    null
+    inverse:
+      role: aggregate-projection
+      note: Repeated return events are summed into a per-security total and cannot be split back deterministically.
 
 variants:
   Option:
@@ -212,9 +221,13 @@ Use a link below to open a prefilled GitHub issue. The issue can be copied into 
 - **No Carta return transaction, but the security aggregate is mappable.** OCF `TX_STOCK_PLAN_RETURN_TO_POOL` is a discrete event recording that a quantity of plan-security shares was returned to a named pool. Carta has no return-to-pool transaction, so the event date/reason do not land on a transaction. The security id and quantity do have faithful aggregate homes: the resolved Option/RSU security's `securityId` and `returnedToPoolQuantity`; `stock_plan_id` also identifies `OptionPoolSummary.optionPoolId`.
 - **Why the mapping is aggregate, not transactional.** Carta represents an option pool as a read-model summary and has no return line item. The mapping preserves the per-security aggregate quantity and pool identity, while the importer aggregates repeated OCF return events rather than emitting a fabricated Carta transaction.
 - **The cancellation that triggers the return remains a separate event.** The nearest Carta transaction, `#/$defs/OptionCancellationTransaction`, records cancellation itself, not the destination pool. The mapping therefore does not conflate the two transactions; it places the return quantity on the security's aggregate field and preserves the explicit destination pool id.
+- **API-surface limitation.** The pinned Carta bundle is a fact-table snapshot derived from the Issuer API; its own description excludes API response wrappers and capitalization summaries. It contains no pool-authorization ledger, authorization effective dates, available-share field, pool-adjustment history, or return-to-pool transaction. `#/$defs/OptionPoolSummary` is present as an orphaned summary definition, but no included API object references it; the reachable stakeholder-scoped summary also has no authorization or available-share field. Therefore `OptionPoolSummary` is a conceptual/reporting target for the forward mapping, not a reliable inverse API source object.
+- **Cancellation history is insufficient to recover return events.** Carta's `OptionTransactionItem.cancellations[]` / `RsuTransactionItem.cancellations[]` provide cancellation timestamps, reasons, and quantities, while `OptionGrant.returnedToPoolQuantity` / `RestrictedStockUnit.returnedToPoolQuantity` provide an aggregate security total. The API does not associate a returned quantity with a particular cancellation or expose the destination pool on the return. With multiple cancellations, the aggregate cannot be deterministically split into OCF `StockPlanReturnToPool` records. Do not synthesize a return event by assigning the aggregate to the cancellation date or by copying the issuing plan id.
+- **Pool changes are not reversibly mappable from the API snapshot.** Carta's `authorizedShares` is a current summary value with no initial/effective-date/history semantics in this bundle. It cannot be inverted into OCF `StockPlan.initial_shares_reserved` or one or more `StockPlanPoolAdjustment` events without an external authorization history. The API also exposes no `available` amount that could be written back to an OCF `StockPlan` field.
+- **The only reliable availability calculation is on the OCF side.** Given a complete OCF event stream, a converter may replay the plan's reservation/adjustment events, plan-security allocations, and return-to-pool versus retire/treasury outcomes to calculate a derived available balance. That balance is a reconciliation/read-model value; it is not a new OCF `StockPlan` property and there is no corresponding writable field in the pinned Carta fact-table schema. In the forward direction, repeated OCF return events may still be summed into each security's Carta `returnedToPoolQuantity`, but that does not create a Carta pool ledger or preserve event history.
 - **Per-field justification:**
     - `quantity` (`Numeric`, shares returned) → `OptionGrant.returnedToPoolQuantity` / `RestrictedStockUnit.returnedToPoolQuantity` for the joined family. The importer aggregates repeated return events for the same security.
-    - `stock_plan_id` (target pool) → `OptionPoolSummary.optionPoolId`. If the return targets a rollover pool, the explicit destination id is retained even when it differs from the issuing plan.
+    - `stock_plan_id` (target pool) → `OptionPoolSummary.optionPoolId` as forward relationship evidence only. If the return targets a rollover pool, the explicit destination id is retained in the OCF source/converter state; Carta's issuance `equityPlanId` identifies the plan from which the security was issued and cannot establish a different return destination.
     - `security_id` (the cancelled security whose shares are returned) → the joined Option/RSU security and its transaction-item anchor. SAR has no security object, so only its item id is retained.
     - `reason_text` (free-text reason for the return): no-equivalent. Carta has no return-to-pool record and no free-text reason field for one. (`OptionCancellationTransaction.reason` is a constrained `OptionCancellationReason` enum on the *cancellation*, not a free-text return reason.)
     - `date` (calendar date of the return): no-equivalent. No Carta transaction exists to date. Note also the granularity gap: OCF transaction `date` is a calendar `Date`, whereas Carta transaction timestamps are `Iso8601CompleteCalendarDateTime` (datetime) — but moot here since there is no target transaction.

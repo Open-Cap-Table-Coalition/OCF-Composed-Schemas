@@ -17,6 +17,9 @@
 #   vendor-family CARTA-specific family with no OCF source object
 #   workflow-gap workflow/data shape absent from OCF's event model
 #   gap          concrete inverse candidate requiring follow-up
+# An entry may also set `override: true` when its curated role must supersede
+# executable shape evidence (for example, an orphaned report summary that a
+# forward mapping can mention but that cannot seed an inverse source record).
 
 carta_defs:
   # Carta's partial-date helper is structurally object-like, but it is not the
@@ -88,6 +91,10 @@ carta_defs:
   Jurisdiction:
     role: workflow-gap
     reason: Carta tax-withholding jurisdiction; OCF address/exemption jurisdictions are different concepts.
+  OptionPoolSummary:
+    role: report-rollup
+    override: true
+    reason: Carta option-pool read-model summary; the pinned API bundle has no pool ledger or standalone pool record to reconstruct.
   OptionGrantDocuments:
     role: gap
     reason: Carta grant-document relationship has no OCF source relationship.

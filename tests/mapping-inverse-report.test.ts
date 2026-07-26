@@ -97,6 +97,29 @@ describe("renderMappingInverseReport", () => {
     expect(out).toContain("✗ no mapped OCF source");
   });
 
+  it("renders inverse semantics without changing forward slot evidence", () => {
+    const edge = objectFieldEdge(
+      "objects/StockPlan.mapping.md",
+      "StockPlan",
+      "initial_shares_reserved",
+      "#/$defs/OptionPoolSummary/properties/authorizedShares"
+    );
+    edge.inverseRole = "state-projection";
+    edge.inverseNote = "Current summary state; no adjustment history.";
+    const inverse = ledger({ OptionPoolSummary: { properties: { authorizedShares: {} } } }, [edge]);
+
+    const out = renderMappingInverseReport({
+      inverse,
+      targetObject: "OptionPoolSummary",
+    });
+
+    expect(out).toContain("initial_shares_reserved (rename; inverse: state-projection)");
+    expect(out).toContain(
+      "inverse semantics: state-projection — Current summary state; no adjustment history."
+    );
+    expect(out).toContain("status: MAPPED");
+  });
+
   it("uses ledger variants without duplicating the same source edge", () => {
     const inverse = ledger(
       {
