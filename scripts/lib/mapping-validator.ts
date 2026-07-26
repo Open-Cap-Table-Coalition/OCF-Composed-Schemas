@@ -742,6 +742,8 @@ function validateSequentialTransformEntry(
     err(name, "sequential_transform select step requires a non-empty registered policy");
   } else {
     validateRegisteredPolicy(policy, "select", `${name}.steps[0]`, err);
+    const definition = getTransformPolicy(policy);
+    validateSelectGuard(selectStep, `${name}.steps[0]`, definition?.selectGuard, err);
   }
   if (
     selectStep.source !== undefined &&
@@ -784,6 +786,41 @@ function validateSequentialTransformEntry(
       null,
       input.targetBundle,
       err
+    );
+  }
+}
+
+function validateSelectGuard(
+  selectStep: Record<string, unknown>,
+  name: string,
+  required: { readonly path: string; readonly equals: string } | undefined,
+  err: ErrFn
+): void {
+  const raw = selectStep.where;
+  if (raw === undefined) {
+    if (required) {
+      err(name, `select policy requires where: ${required.path} = ${required.equals}`);
+    }
+    return;
+  }
+  if (!isPlainObject(raw)) {
+    err(name, "select where: must be a map with path: and equals:");
+    return;
+  }
+  const keys = Object.keys(raw).sort();
+  if (keys.length !== 2 || keys[0] !== "equals" || keys[1] !== "path") {
+    err(name, "select where: allows only path: and equals:");
+  }
+  if (typeof raw.path !== "string" || !raw.path.startsWith("/")) {
+    err(name, "select where.path: must be a relative JSON pointer beginning with '/'");
+  }
+  if (typeof raw.equals !== "string" || raw.equals.trim() === "") {
+    err(name, "select where.equals: must be a non-empty string");
+  }
+  if (required && (raw.path !== required.path || raw.equals !== required.equals)) {
+    err(
+      name,
+      `select where: does not match the policy guard ${required.path} = ${required.equals}`
     );
   }
 }

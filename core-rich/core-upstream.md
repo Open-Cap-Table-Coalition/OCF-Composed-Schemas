@@ -540,7 +540,7 @@ flowchart LR
 
 | field | OCF-req | variant(s) | flows to (Carta) | loss |
 | --- | :---: | --- | --- | --- |
-| conversion_triggers | **yes** |  | ConvertibleIssuanceTransaction.{conversionTrigger, discountPercentage, valuationCap, interestRate, interestAccrualPeriod, interestCompoundingPeriod, dayCountBasis} + ConvertibleNote.{conversionTrigger, discountPercentage, priceCap, interestRate, interestAccrualPeriod, interestCompoundingPeriod, dayCountBasis} | heuristic (sequential_transform (select first_trigger_with_economic_terms)) |
+| conversion_triggers | **yes** |  | ConvertibleIssuanceTransaction.{conversionTrigger, discountPercentage, valuationCap, interestRate, interestAccrualPeriod, interestCompoundingPeriod, dayCountBasis} + ConvertibleNote.{conversionTrigger, discountPercentage, priceCap, interestRate, interestAccrualPeriod, interestCompoundingPeriod, dayCountBasis} | heuristic (sequential_transform (select first_convertible_trigger_with_economic_terms)) |
 | security_law_exemptions | **yes** |  | Compliance.federalExemption | heuristic (computed) |
 
 ### Document — in Core (admissible)

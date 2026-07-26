@@ -416,7 +416,7 @@ values its `const:` supplies implicitly (the reason codes we always know).
 | ConvertibleIssuance | — | security_law_exemptions | out | heuristic | kind computed |
 | ConvertibleIssuance | — | investment_amount | core | direct |  |
 | ConvertibleIssuance | — | convertible_type | core | value-coarsening | enum→bucket |
-| ConvertibleIssuance | — | conversion_triggers | out | heuristic | sequential_transform (select first_trigger_with_economic_terms) |
+| ConvertibleIssuance | — | conversion_triggers | out | heuristic | sequential_transform (select first_convertible_trigger_with_economic_terms) |
 | ConvertibleIssuance | — | pro_rata | out | no-destination | kind unmappable |
 | ConvertibleIssuance | — | seniority | out | no-destination | kind unmappable |
 | EquityCompensationIssuance | Option | id | out | no-destination | kind unmappable |

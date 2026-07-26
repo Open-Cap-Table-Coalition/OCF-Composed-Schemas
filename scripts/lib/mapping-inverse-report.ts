@@ -13,6 +13,7 @@ import type { MappingQuestion } from "./mapping-questions.js";
 
 interface InverseFlow {
   file: string;
+  sourceKind: MappingEdge["sourceKind"];
   sourceField: string;
   kind: string;
   pointer: string;
@@ -62,7 +63,7 @@ function edgeContext(edge: MappingEdge): string | undefined {
 
 function flowLabel(flow: InverseFlow): string {
   const context = flow.context ? ` [${flow.context}]` : "";
-  return `${flow.file} :: ${flow.sourceField}${context} (${flow.kind})`;
+  return `[${flow.sourceKind}] ${flow.file} :: ${flow.sourceField}${context} (${flow.kind})`;
 }
 
 interface ReportQuestion {
@@ -137,6 +138,7 @@ function questionLabel(reportQuestion: ReportQuestion): string {
 function sameFlow(left: InverseFlow, right: InverseFlow): boolean {
   return (
     left.file === right.file &&
+    left.sourceKind === right.sourceKind &&
     left.sourceField === right.sourceField &&
     left.kind === right.kind &&
     left.pointer === right.pointer &&
@@ -168,6 +170,7 @@ function addEdge(
   const field = parts.relative === parts.object ? "(object route)" : parts.relative;
   const flow: InverseFlow = {
     file: edge.rel,
+    sourceKind: edge.sourceKind,
     sourceField: edgeSourceField(edge),
     kind: edgeKind(edge),
     pointer: edge.target,
@@ -310,6 +313,10 @@ function flowCount(group: TargetGroup): number {
   return [...group.flows.values()].reduce((count, flows) => count + flows.length, 0);
 }
 
+function flowCountBySourceKind(group: TargetGroup, sourceKind: MappingEdge["sourceKind"]): number {
+  return [...group.flows.values()].flat().filter((flow) => flow.sourceKind === sourceKind).length;
+}
+
 function renderObjectPanel(
   row: CartaDefCoverage,
   group: TargetGroup,
@@ -324,7 +331,10 @@ function renderObjectPanel(
     `id: "#/$defs/${row.name}"`,
     `inverse_role: ${row.status}`,
     `status: ${hasMappings ? (unmappedProperties > 0 ? "PARTIAL" : "MAPPED") : "NO MAPPINGS"}`,
-    `incoming_mappings: ${flowCount(group)}`,
+    `incoming_mappings: ${flowCount(group)} (object: ${flowCountBySourceKind(
+      group,
+      "object"
+    )}, type: ${flowCountBySourceKind(group, "type")})`,
   ];
   if (hasMappings) metadata.push(`unmapped_properties: ${unmappedProperties}`);
   if (!hasMappings && row.reason) metadata.push(`reason: ${row.reason}`);

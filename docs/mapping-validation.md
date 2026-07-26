@@ -127,7 +127,9 @@ require a deterministic `policy:`. Every policy name must be registered in
 [`scripts/lib/mapping-policies.ts`](../scripts/lib/mapping-policies.ts), and a policy may only be
 used with its registered host kind. `sequential_transform` is the narrow composition form for a
 field-level pipeline: its first step selects one intermediate value, and its second
-`apply_mapping` step names the reusable mapping file and its Carta target pointers. In a
+`apply_mapping` step names the reusable mapping file and its Carta target pointers. A
+select step may also carry `where: { path, equals }` when the selected intermediate value
+must satisfy a discriminator guard; registered policies may require an exact guard. In a
 polymorphic mapping (below), an entry may also carry a
 **`routed_to:`** map
 (`{ route property value → variant label }`) — a *verified round-trip edge*: a value `null`-ed in

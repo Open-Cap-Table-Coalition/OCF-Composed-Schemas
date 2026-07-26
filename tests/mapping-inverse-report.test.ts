@@ -34,12 +34,18 @@ function fieldEdge(
   };
 }
 
-function objectFieldEdge(file: string, source: string, field: string, target: string): MappingEdge {
+function objectFieldEdge(
+  file: string,
+  source: string,
+  field: string,
+  target: string,
+  variant = "—"
+): MappingEdge {
   return {
     rel: file,
     sourceKind: "object",
     source,
-    variant: "—",
+    variant,
     field,
     scope: "object",
     target,
@@ -82,8 +88,8 @@ describe("renderMappingInverseReport", () => {
     expect(out).toContain("6. 1 standalone candidates have OCF mapping evidence:");
     expect(out).toContain("Completeness: 0 fully mapped, 1 partially mapped.");
     expect(out).toContain('id: "#/$defs/ConvertibleNote"');
-    expect(out).toContain("types/SAFE.mapping.md :: discount (rename)");
-    expect(out).toContain("types/Note.mapping.md :: conversion_discount (rename)");
+    expect(out).toContain("[type] types/SAFE.mapping.md :: discount (rename)");
+    expect(out).toContain("[type] types/Note.mapping.md :: conversion_discount (rename)");
     expect(out).toContain("priceCap");
     expect(out).toContain("✗ no mapped OCF source");
   });
@@ -96,21 +102,21 @@ describe("renderMappingInverseReport", () => {
         },
       },
       [
-        fieldEdge(
+        objectFieldEdge(
           "objects/ConvertibleIssuance.mapping.md",
           "ConvertibleIssuance",
           "discount",
           "#/$defs/ConvertibleNote/properties/discountPercentage",
           "Note"
         ),
-        fieldEdge(
+        objectFieldEdge(
           "objects/ConvertibleIssuance.mapping.md",
           "ConvertibleIssuance",
           "discount",
           "#/$defs/ConvertibleNote/properties/discountPercentage",
           "Safe"
         ),
-        fieldEdge(
+        objectFieldEdge(
           "objects/ConvertibleIssuance.mapping.md",
           "ConvertibleIssuance",
           "cap",
@@ -122,8 +128,10 @@ describe("renderMappingInverseReport", () => {
 
     const out = renderMappingInverseReport({ inverse, targetObject: "ConvertibleNote" });
 
-    expect(out).toContain("objects/ConvertibleIssuance.mapping.md :: discount [shared] (rename)");
-    expect(out).toContain("objects/ConvertibleIssuance.mapping.md :: cap [Note] (rename)");
+    expect(out).toContain(
+      "[object] objects/ConvertibleIssuance.mapping.md :: discount [shared] (rename)"
+    );
+    expect(out).toContain("[object] objects/ConvertibleIssuance.mapping.md :: cap [Note] (rename)");
     expect(out.match(/:: discount \[shared\] \(rename\)/g)).toHaveLength(1);
   });
 
