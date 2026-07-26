@@ -698,7 +698,7 @@ function renderTargetVariantFlows(
   if (variants.length < 2) return [];
 
   const routes = sourceRoutesForFlows(
-    [...group.flows.values()].flat().filter((flow) => flow.sourceKind === "object"),
+    variants.flatMap((variant) => variant.flows),
     mappingDocuments
   );
   const routeIds = new Map(routes.map((route, index) => [sourceRouteKey(route), `ocf${index}`]));
@@ -761,10 +761,7 @@ function renderTargetVariantFlows(
     });
     if (!hasOutgoingEdge) lines.push(`  ${routeId} -->|object route| parent`);
   });
-  lines.push(
-    "```",
-    "  Separate OCF records can contribute to the same parent Carta item; each source route remains distinct."
-  );
+  lines.push("```");
   return lines;
 }
 
@@ -971,7 +968,7 @@ function renderRelatedObjectDiagrams(
   const lines = [
     "",
     `Related object class/data-flow diagrams (${diagrams.length})`,
-    "  Each diagram is one Carta parent plus its nested variants and all OCF routes that contribute to that group.",
+    "  Each diagram is one Carta parent plus its nested variants and only the OCF routes that populate those variants; parent-only routes remain in the audit panels.",
   ];
   diagrams.forEach((diagram) => lines.push("", ...diagram));
   return lines;

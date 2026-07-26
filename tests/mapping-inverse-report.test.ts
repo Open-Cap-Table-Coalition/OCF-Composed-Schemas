@@ -390,7 +390,6 @@ describe("renderMappingInverseReport", () => {
     expect(out).toContain("SharedSource [Issue]");
     expect(out).toContain("SharedSource [Cancel]");
     expect(out).toContain("OtherCancellation");
-    expect(out).toContain("ParentOnly");
     expect(out).toContain("issuance : IssuanceTransaction");
     expect(out).toContain("cancellations[] : CancellationTransaction");
     expect(out).toContain("SharedSource.kind = [CANCEL]");
@@ -399,6 +398,10 @@ describe("renderMappingInverseReport", () => {
     expect(out).toContain("parent: securityId");
     expect(out.match(/SharedSource \[(Issue|Cancel)\]/g)).toHaveLength(2);
     expect(out.indexOf("```mermaid")).toBeLessThan(out.indexOf("╭ Carta object: TransactionItem"));
+    const diagramStart = out.indexOf("```mermaid");
+    const diagramEnd = out.indexOf("```", diagramStart + 3);
+    expect(out.slice(diagramStart, diagramEnd)).not.toContain("ParentOnly");
+    expect(out).not.toContain("Separate OCF records can contribute");
   });
 
   it("keeps independent route axes separate instead of forming Cartesian subtype combinations", () => {
