@@ -141,8 +141,7 @@ describe("renderMappingInverseReport", () => {
       "[object] objects/ConvertibleIssuance.mapping.md :: discount [shared] (rename)"
     );
     expect(out).toContain("[object] objects/ConvertibleIssuance.mapping.md :: cap [Note] (rename)");
-    expect(out).toContain("direct OCF object mapping");
-    expect(out).toContain("reusable type-mapping detail");
+    expect(out).toContain("source path(s)");
     expect(out.match(/:: discount \[shared\] \(rename\)/g)).toHaveLength(1);
   });
 
@@ -150,7 +149,7 @@ describe("renderMappingInverseReport", () => {
     const inverse = ledger(
       {
         ConvertibleNote: {
-          properties: { dayCountBasis: {} },
+          properties: { discountPercentage: {} },
         },
       },
       [
@@ -158,7 +157,7 @@ describe("renderMappingInverseReport", () => {
           "objects/transactions/issuance/ConvertibleIssuance.mapping.md",
           "ConvertibleIssuance",
           "conversion_triggers",
-          "#/$defs/ConvertibleNote/properties/dayCountBasis",
+          "#/$defs/ConvertibleNote/properties/discountPercentage",
           "—",
           "sequential_transform"
         ),
@@ -166,17 +165,25 @@ describe("renderMappingInverseReport", () => {
           "types/conversion_rights/ConvertibleConversionRight.mapping.md",
           "ConvertibleConversionRight",
           "conversion_mechanism",
-          "#/$defs/ConvertibleNote/properties/dayCountBasis",
+          "#/$defs/ConvertibleNote/properties/discountPercentage",
           "—",
           "split"
         ),
         fieldEdge(
           "types/conversion_mechanisms/NoteConversionMechanism.mapping.md",
           "NoteConversionMechanism",
-          "day_count_convention",
-          "#/$defs/ConvertibleNote/properties/dayCountBasis",
+          "conversion_discount",
+          "#/$defs/ConvertibleNote/properties/discountPercentage",
           "—",
-          "enum-remap"
+          "rename"
+        ),
+        fieldEdge(
+          "types/conversion_mechanisms/SAFEConversionMechanism.mapping.md",
+          "SAFEConversionMechanism",
+          "conversion_discount",
+          "#/$defs/ConvertibleNote/properties/discountPercentage",
+          "—",
+          "rename"
         ),
       ]
     );
@@ -256,8 +263,12 @@ describe("renderMappingInverseReport", () => {
     );
     expect(out).toContain("active when type = CONVERTIBLE_CONVERSION_RIGHT");
     expect(out).toContain("dispatches conversion_mechanism.type");
-    expect(out).toContain("SAFEConversionMechanism when type = SAFE_CONVERSION");
-    expect(out).toContain("NoteConversionMechanism when type = CONVERTIBLE_NOTE_CONVERSION");
+    expect(out).toContain(
+      "[type] types/conversion_mechanisms/SAFEConversionMechanism.mapping.md :: conversion_discount (rename)"
+    );
+    expect(out).toContain(
+      "[type] types/conversion_mechanisms/NoteConversionMechanism.mapping.md :: conversion_discount (rename)"
+    );
   });
 
   it("renders only open questions beneath the related target property", () => {
