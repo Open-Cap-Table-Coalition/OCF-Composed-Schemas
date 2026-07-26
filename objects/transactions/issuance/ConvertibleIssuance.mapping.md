@@ -172,7 +172,7 @@ Source: [`ConvertibleIssuance.schema.json`](./ConvertibleIssuance.schema.json)
 ## Mapping
 
 ```yaml
-# kind vocabulary: rename | select | split | combine | enum-remap | computed | unmappable | TODO
+# kind vocabulary: rename | select | split | sequential_transform | combine | enum-remap | computed | unmappable | TODO
 status: complete
 
 fields:
@@ -192,7 +192,9 @@ fields:
       TX_CONVERTIBLE_ISSUANCE: null
   date:
     kind: rename
-    target: "#/$defs/ConvertibleIssuanceTransaction/properties/issueDatetime"
+    target:
+      - "#/$defs/ConvertibleIssuanceTransaction/properties/issueDatetime"
+      - "#/$defs/ConvertibleNote/properties/issueDatetime"
   security_id:
     kind: rename
     target:
@@ -234,25 +236,31 @@ fields:
       SAFE: SAFE
       CONVERTIBLE_SECURITY: CONVERTIBLE_EQUITY
   conversion_triggers:
-    kind: split
-    target:
-      - "#/$defs/ConvertibleIssuanceTransaction/properties/conversionTrigger"
-      - "#/$defs/ConvertibleIssuanceTransaction/properties/discountPercentage"
-      - "#/$defs/ConvertibleIssuanceTransaction/properties/valuationCap"
-    policy: first_trigger_with_economic_terms
-    defer:
-      note: >-
-        A note-type trigger's conversion_mechanism (NoteConversionMechanism) also carries
-        interest terms — interest_rates[].rate, interest_accrual_period, compounding_type,
-        day_count_convention — that map ~1:1 to Carta's interest fields. Extracting them needs
-        nested-path support (conversion_triggers[].conversion_right.conversion_mechanism.*) plus
-        an array/union collapse (which trigger, which rate); compounding is a combine of
-        compounding_type + accrual_period. Deferred until the derived-path mechanism exists.
-      targets:
-        - "#/$defs/ConvertibleIssuanceTransaction/properties/interestRate"
-        - "#/$defs/ConvertibleIssuanceTransaction/properties/interestAccrualPeriod"
-        - "#/$defs/ConvertibleIssuanceTransaction/properties/interestCompoundingPeriod"
-        - "#/$defs/ConvertibleIssuanceTransaction/properties/dayCountBasis"
+    kind: sequential_transform
+    steps:
+      - kind: select
+        policy: first_convertible_trigger_with_economic_terms
+        source: "/conversion_right"
+        where:
+          path: "/type"
+          equals: CONVERTIBLE_CONVERSION_RIGHT
+      - kind: apply_mapping
+        mapping: types/conversion_rights/ConvertibleConversionRight.mapping.md
+        targets:
+          - "#/$defs/ConvertibleIssuanceTransaction/properties/conversionTrigger"
+          - "#/$defs/ConvertibleIssuanceTransaction/properties/discountPercentage"
+          - "#/$defs/ConvertibleIssuanceTransaction/properties/valuationCap"
+          - "#/$defs/ConvertibleIssuanceTransaction/properties/interestRate"
+          - "#/$defs/ConvertibleIssuanceTransaction/properties/interestAccrualPeriod"
+          - "#/$defs/ConvertibleIssuanceTransaction/properties/interestCompoundingPeriod"
+          - "#/$defs/ConvertibleIssuanceTransaction/properties/dayCountBasis"
+          - "#/$defs/ConvertibleNote/properties/conversionTrigger"
+          - "#/$defs/ConvertibleNote/properties/discountPercentage"
+          - "#/$defs/ConvertibleNote/properties/priceCap"
+          - "#/$defs/ConvertibleNote/properties/interestRate"
+          - "#/$defs/ConvertibleNote/properties/interestAccrualPeriod"
+          - "#/$defs/ConvertibleNote/properties/interestCompoundingPeriod"
+          - "#/$defs/ConvertibleNote/properties/dayCountBasis"
   pro_rata:
     kind: unmappable
     target: null
@@ -295,15 +303,31 @@ Use a link below to open a prefilled GitHub issue. The issue can be copied into 
 
 ## Notes / open questions
 
-- **Object-level routing.** This OCF transaction is the initial issuance of a convertible instrument. Carta models the convertible lifecycle as a `ConvertibleTransactionItem` whose `issuance` is a `ConvertibleIssuanceTransaction` and whose holding/terms live on the parent `ConvertibleNote` (the same two-object pair the `ConvertibleConversion` mapping routes its cancellation through). So this object maps to the issuance transaction, the enclosing transaction item, and the `ConvertibleNote` it issues: identity/holder fields are deliberately replicated onto both objects, while economic/date fields land on the issuance transaction.
-- `date`: OCF's transaction date (the issuance event) maps to `ConvertibleIssuanceTransaction.issueDatetime` (the note carries the same instant on `ConvertibleNote.issueDatetime`; the transaction-level field is the one corresponding to the OCF transaction's own `date`). **Granularity note:** OCF `date` is a calendar `Date` (`YYYY-MM-DD`); Carta's `issueDatetime` is an `Iso8601CompleteCalendarDateTime`, so a time component must be synthesized on export.
+- **Object-level routing.** This OCF transaction is the initial issuance of a convertible instrument. Carta models the convertible lifecycle as a `ConvertibleTransactionItem` whose `issuance` is a `ConvertibleIssuanceTransaction` and whose holding/terms live on the parent `ConvertibleNote` (the same two-object pair the `ConvertibleConversion` mapping routes its cancellation through). So this object maps to the issuance transaction, the enclosing transaction item, and the `ConvertibleNote` it issues: identity/holder fields and duplicated lifecycle/economic terms are deliberately replicated where Carta exposes both a transaction-level and security-level slot.
+- `date`: OCF's transaction date (the issuance event) maps to both `ConvertibleIssuanceTransaction.issueDatetime` and `ConvertibleNote.issueDatetime`. **Granularity note:** OCF `date` is a calendar `Date` (`YYYY-MM-DD`); Carta's `issueDatetime` is an `Iso8601CompleteCalendarDateTime`, so a time component must be synthesized on export.
 - `security_id`: the OCF identifier by which all later transactions reference this convertible → both `ConvertibleTransactionItem.securityId` and `ConvertibleNote.securityId` ("the UUID of the convertible note … cross-reference with the List Transactions API"). The parent copy is the transaction-history join/placement key; the note copy is the security object's identity. `ConvertibleIssuanceTransaction` itself carries no security id because it is positioned inside the parent item's `issuance` slot.
 - `custom_id`: OCF's human-readable security label (e.g. `CN-1`) → both `ConvertibleTransactionItem.securityLabel` and `ConvertibleNote.securityLabel` ("the label representing this security (convertible note)"). This is the closest Carta analogue to OCF's custom display id; it is not the server UUID (`securityId`).
 - `stakeholder_id`: holder of legal title → both `ConvertibleTransactionItem.stakeholderId` and `ConvertibleNote.stakeholderId` ("the identifier of the stakeholder holding the convertible note"). The parent copy keeps the transaction item self-describing while the note copy remains the security-level holder field.
 - `investment_amount`: OCF's `Monetary` principal invested and outstanding at issuance → `ConvertibleIssuanceTransaction.principal` (`Money`). The context surface also lists `ConvertibleIssuanceTransaction.principal` as the convertible-issuance principal home, and `ConvertibleCancellationTransaction.principal` mirrors it on cancellation. (`ConvertibleNote` exposes `cashPaid`/`interest`, not principal, so the transaction-level `principal` is the correct home.) Both sides are amount-with-currency, so the OCF `Monetary {amount, currency}` maps field-for-field onto Carta `Money`.
 - `security_law_exemptions` → **computed** to `Compliance.federalExemption`. OCF carries an **array** of structured `SecurityExemption` objects, each `{description (free text), jurisdiction (free text)}`. Carta's only security-law surface is the single, closed `FederalExemption` **enum** on `Compliance.federalExemption`. The mapping is lossy and requires a transform on export: (a) the OCF array must collapse to a single value (Carta records one federal exemption, not a list); (b) each OCF `description` is free text that must be classified into a `FederalExemption` member (e.g. a Reg D 506(b) description → `REG_D_506_B`), with no clean member it falls to `OTHER`/`NON_US`; (c) the OCF `jurisdiction` free-text has no Carta slot and is dropped (Carta's federal exemption is implicitly US-federal; non-US jurisdictions would map to `NON_US`). Because the OCF source is free text (no source enum to enumerate value-by-value), this is `computed`, not `enum-remap`. Note also that `Compliance` is a *stakeholder-compliance* object in Carta, not a per-issuance field, so even the surviving value is denormalized away from the transaction.
 - `convertible_type` → **enum-remap** to `NoteBlock.noteType` (the `NoteType` enum, reached via `ConvertibleNote.noteBlock` → `NoteBlock.noteType`). OCF distinguishes `NOTE` / `SAFE` / `CONVERTIBLE_SECURITY`; Carta DOES carry an instrument-type discriminator — the `NoteType` enum `{DEBT, CONVERTIBLE_DEBT, CONVERTIBLE_EQUITY, SAFE, ASA}` on the note block every `ConvertibleNote` belongs to. Value mapping: `SAFE → SAFE` (exact); `NOTE → CONVERTIBLE_DEBT` (an interest-bearing convertible note is convertible debt — the note-centric fields `interestRate`/`interestAccrualPeriod`/`dayCountBasis`/`maturityDatetime` are exactly the debt terms); `CONVERTIBLE_SECURITY → CONVERTIBLE_EQUITY` (OCF's catch-all non-note, non-SAFE convertible security; Carta's `CONVERTIBLE_EQUITY` is the closest non-debt, non-SAFE convertible member). Carta's `DEBT` (straight, non-convertible debt) and `ASA` (advance subscription agreement) have no OCF `convertible_type` counterpart and are unused. **Granularity note:** `noteType` lives on the shared `NoteBlock` (a grouping above the individual note), so the value is denormalized off the per-issuance transaction onto the block.
-- `conversion_triggers` → **split** onto the convertible's economic terms under policy `first_trigger_with_economic_terms`. OCF's `conversion_triggers` is a `minItems: 1` array of trigger objects, while Carta stores one flat set of terms. The policy selects the first trigger carrying the relevant economic terms; those terms fan out to `conversionTrigger`, `discountPercentage`, and `valuationCap`. Trigger graph structure, additional triggers, dates, ordering, MFN, and capitalization-definition details have no Carta representation.
+- `conversion_triggers` → **sequential transform**: select the first trigger carrying convertible economic terms under policy `first_convertible_trigger_with_economic_terms`, guarded by `conversion_right.type = CONVERTIBLE_CONVERSION_RIGHT`, take its nested `conversion_right`, then apply [`ConvertibleConversionRight.mapping.md`](../../../types/conversion_rights/ConvertibleConversionRight.mapping.md). This prevents a warrant or stock-class right from being projected onto the convertible targets. The pipeline carries the nested `NoteConversionMechanism` terms: `interest_rates[].rate` (first applicable rate), accrual period, compounding type, and day-count convention populate the corresponding `ConvertibleIssuanceTransaction` and `ConvertibleNote` fields. The existing discount/cap/threshold fan-out is retained, with `valuationCap` on the issuance transaction and `priceCap` on the note. Additional trigger graph structure, trigger dates, ordering, MFN, and capitalization-definition details remain outside Carta's model.
+- **Accrued interest is a separate gap.** Carta's `ConvertibleNote.interest` is a `Money` balance, while OCF's note mechanism supplies a rate schedule rather than an accrued amount. The rate cannot be copied into that Money slot; calculating it would require principal, accrual windows, day-count/compounding rules, and an as-of date.
+- [ ] `conversion_triggers[].trigger_date` / `conversion_triggers[].end_date`: When the source metadata explicitly identifies a trigger or date-window boundary as the instrument's maturity, should that date populate `ConvertibleNote.maturityDatetime` (and the mirrored issuance-transaction slot)?
+  - Target: ConvertibleNote.maturityDatetime
+  - Asked by: @johnscrudato
+  - Answer: Open: `trigger_date` is also used for scheduled conversion and `end_date` for elective conversion windows, so a generic date-to-maturity mapping would be semantically unsafe. A conditional “explicitly maturity” policy may be appropriate.
+  - Answered by: —
+- [ ] `conversion_triggers[].trigger_date` / `conversion_triggers[].end_date`: If the source metadata explicitly identifies a maturity event, should the same date also populate the mirrored issuance transaction field?
+  - Target: ConvertibleIssuanceTransaction.maturityDatetime
+  - Asked by: @johnscrudato
+  - Answer: Open: same semantic guard as the note-level field; the source date must be identified as maturity rather than a scheduled conversion or elective-window boundary.
+  - Answered by: —
+- [ ] `conversion_triggers[].conversion_right.conversion_mechanism.interest_rates[].rate`: Should an external accrued-interest calculation populate Carta `ConvertibleNote.interest`, or is the intended mapping limited to the rate terms (`interestRate`, accrual period, compounding period, and day-count basis)?
+  - Target: ConvertibleNote.interest
+  - Asked by: @johnscrudato
+  - Answer: Open: the OCF source contains no accrued `Money` amount or as-of date, so direct mapping to Carta's `interest` balance is not currently justified.
+  - Answered by: —
 - `pro_rata` → **unmappable / no-equivalent.** OCF records the holder's pro-rata participation right at the next round (`Numeric`). Carta's `ConvertibleNote` / `ConvertibleIssuanceTransaction` expose no pro-rata / follow-on / participation-right field; the concept is absent from the convertible model, so it is dropped.
 - `seniority` → **unmappable / no-equivalent.** OCF uses an integer rank to build a seniority stack across convertibles. Carta's convertible objects carry no seniority/priority/rank field (the only ordering-ish concept, `changeInControlPercent`, is unrelated), so the seniority stack cannot be represented.
 - `board_approval_date`, `stockholder_approval_date`: **unmappable / no-equivalent.** Carta's convertible issuance/note objects record only the economic and lifecycle datetimes (`issueDatetime`, `maturityDatetime`, `conversionDatetime`, `canceledDatetime`); there is no board- or stockholder-approval date anywhere on the convertible objects.

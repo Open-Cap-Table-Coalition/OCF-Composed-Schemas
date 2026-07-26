@@ -36,6 +36,29 @@ flowchart LR
   o0 -->|"primary_contact → email"| t0
 ```
 
+**ConvertibleIssuance → Compliance, ConvertibleIssuanceTransaction, ConvertibleNote**
+
+```mermaid
+flowchart LR
+  classDef adm fill:#e6f4ea,stroke:#34a853,color:#0b3d20;
+  classDef notadm fill:#f1f3f4,stroke:#9aa0a6,color:#5f6368,stroke-dasharray:4 3;
+  classDef carta fill:#e8f0fe,stroke:#1a73e8,color:#0d2b66;
+  classDef sink fill:#fce8e6,stroke:#d93025,color:#5c0d06;
+  subgraph SRC["OCF source objects"]
+    direction TB
+    o0["ConvertibleIssuance"]:::adm
+  end
+  subgraph TGT["Carta target objects"]
+    direction TB
+    t0["Compliance"]:::carta
+    t1["ConvertibleIssuanceTransaction"]:::carta
+    t2["ConvertibleNote"]:::carta
+  end
+  o0 -->|"conversion_triggers → conversionTrigger / discountPercentage / valuationCap / interestRate / interestAccrualPeriod / interestCompoundingPeriod / dayCountBasis"| t1
+  o0 -->|"conversion_triggers → conversionTrigger / discountPercentage / priceCap / interestRate / interestAccrualPeriod / interestCompoundingPeriod / dayCountBasis"| t2
+  o0 -->|"security_law_exemptions → federalExemption"| t0
+```
+
 **StockClass → ShareClass, ShareClassRightsAndPreferences**
 
 ```mermaid
@@ -56,27 +79,6 @@ flowchart LR
   o0 -->|"conversion_rights → conversionRatio / conversionPrice"| t1
   o0 -->|"initial_shares_authorized → authorizedShareCount"| t0
   o0 -->|"seniority → seniority"| t0
-```
-
-**ConvertibleIssuance → Compliance, ConvertibleIssuanceTransaction**
-
-```mermaid
-flowchart LR
-  classDef adm fill:#e6f4ea,stroke:#34a853,color:#0b3d20;
-  classDef notadm fill:#f1f3f4,stroke:#9aa0a6,color:#5f6368,stroke-dasharray:4 3;
-  classDef carta fill:#e8f0fe,stroke:#1a73e8,color:#0d2b66;
-  classDef sink fill:#fce8e6,stroke:#d93025,color:#5c0d06;
-  subgraph SRC["OCF source objects"]
-    direction TB
-    o0["ConvertibleIssuance"]:::adm
-  end
-  subgraph TGT["Carta target objects"]
-    direction TB
-    t0["Compliance"]:::carta
-    t1["ConvertibleIssuanceTransaction"]:::carta
-  end
-  o0 -->|"conversion_triggers → conversionTrigger / discountPercentage / valuationCap"| t1
-  o0 -->|"security_law_exemptions → federalExemption"| t0
 ```
 
 **Document → Document**
@@ -538,7 +540,7 @@ flowchart LR
 
 | field | OCF-req | variant(s) | flows to (Carta) | loss |
 | --- | :---: | --- | --- | --- |
-| conversion_triggers | **yes** |  | ConvertibleIssuanceTransaction.{conversionTrigger, discountPercentage, valuationCap} | heuristic (split) |
+| conversion_triggers | **yes** |  | ConvertibleIssuanceTransaction.{conversionTrigger, discountPercentage, valuationCap, interestRate, interestAccrualPeriod, interestCompoundingPeriod, dayCountBasis} + ConvertibleNote.{conversionTrigger, discountPercentage, priceCap, interestRate, interestAccrualPeriod, interestCompoundingPeriod, dayCountBasis} | heuristic (sequential_transform (select first_convertible_trigger_with_economic_terms)) |
 | security_law_exemptions | **yes** |  | Compliance.federalExemption | heuristic (computed) |
 
 ### Document — in Core (admissible)
@@ -665,8 +667,19 @@ flowchart LR
 - `CertificateCancellationTransaction.reason` ← 1: `StockCancellation.reason_text [Default]`
 - `ConvertibleCancellationTransaction.reason` ← 1: `ConvertibleCancellation.reason_text`
 - `ConvertibleIssuanceTransaction.conversionTrigger` ← 1: `ConvertibleIssuance.conversion_triggers`
+- `ConvertibleIssuanceTransaction.dayCountBasis` ← 1: `ConvertibleIssuance.conversion_triggers`
 - `ConvertibleIssuanceTransaction.discountPercentage` ← 1: `ConvertibleIssuance.conversion_triggers`
+- `ConvertibleIssuanceTransaction.interestAccrualPeriod` ← 1: `ConvertibleIssuance.conversion_triggers`
+- `ConvertibleIssuanceTransaction.interestCompoundingPeriod` ← 1: `ConvertibleIssuance.conversion_triggers`
+- `ConvertibleIssuanceTransaction.interestRate` ← 1: `ConvertibleIssuance.conversion_triggers`
 - `ConvertibleIssuanceTransaction.valuationCap` ← 1: `ConvertibleIssuance.conversion_triggers`
+- `ConvertibleNote.conversionTrigger` ← 1: `ConvertibleIssuance.conversion_triggers`
+- `ConvertibleNote.dayCountBasis` ← 1: `ConvertibleIssuance.conversion_triggers`
+- `ConvertibleNote.discountPercentage` ← 1: `ConvertibleIssuance.conversion_triggers`
+- `ConvertibleNote.interestAccrualPeriod` ← 1: `ConvertibleIssuance.conversion_triggers`
+- `ConvertibleNote.interestCompoundingPeriod` ← 1: `ConvertibleIssuance.conversion_triggers`
+- `ConvertibleNote.interestRate` ← 1: `ConvertibleIssuance.conversion_triggers`
+- `ConvertibleNote.priceCap` ← 1: `ConvertibleIssuance.conversion_triggers`
 - `OptionCancellationTransaction.reason` ← 1: `EquityCompensationCancellation.reason_text [Option]`
 - `OptionGrant.exercisePeriods` ← 1: `EquityCompensationIssuance.termination_exercise_windows [Option]`
 - `OptionPoolSummary.shareClassId` ← 1: `StockPlan.stock_class_ids`

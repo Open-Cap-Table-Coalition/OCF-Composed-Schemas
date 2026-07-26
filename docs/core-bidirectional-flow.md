@@ -17,9 +17,8 @@ flowchart LR
   OCF["OCF"]:::in -->|"101 clean + 36 lossy"| CORE
   OCF -.->|"141 left behind"| ocfvoid["⌀ dropped (no Carta home)"]:::out
   CORE["OCF Core (rich)"]:::core
-  Carta["Carta"]:::in -->|"163 direct + 34 type-only + 3 implicit + 20 structural"| CORE
-  Carta -.->|"4 deferred"| deferbox["⏳ deferred (OCF has it, extraction TODO)"]:::defer
-  Carta -.->|"172 left behind"| cartavoid["⌀ Core can't hold"]:::out
+  Carta["Carta"]:::in -->|"177 direct + 28 type-only + 3 implicit + 20 structural"| CORE
+  Carta -.->|"168 left behind"| cartavoid["⌀ Core can't hold"]:::out
 ```
 
 - **OCF → Core**: a property flows in if it is a Core member (mapped, even lossily); it is
@@ -41,12 +40,12 @@ These counts are mutually descriptive dimensions of the same ledger, not a singl
 | --- | ---: |
 | Carta object slots | 588 |
 | defs with direct executable coverage | 19 |
-| direct executable slots | 163 |
-| defs with type-only slots | 7 |
+| direct executable slots | 177 |
+| defs with type-only slots | 6 |
 | defs with only type-only coverage | 1 |
-| type-only slots | 34 |
+| type-only slots | 28 |
 | implicit constant slots | 3 |
-| deferred slots | 4 |
+| deferred slots | 0 |
 | structural child-container slots | 20 |
 
 ### CARTA inverse coverage: the simple story
@@ -348,11 +347,13 @@ flowchart LR
   end
   ocflost["⌀ OCF lost (no Carta home)"]:::lost
   cartalost["⌀ Carta lost (no OCF source)"]:::lost
-  o0 -->|"conversion_triggers → conversionTrigger / discountPercentage / valuationCap"| t1
+  o0 -->|"conversion_triggers → conversionTrigger / discountPercentage / valuationCap / interestRate / interestAccrualPeriod / interestCompoundingPeriod / dayCountBasis"| t1
+  o0 -->|"conversion_triggers → conversionTrigger / discountPercentage / priceCap / interestRate / interestAccrualPeriod / interestCompoundingPeriod / dayCountBasis"| t2
   o0 -->|"convertible_type → noteType"| t4
   o0 -->|"custom_id → securityLabel"| t3
   o0 -->|"custom_id → securityLabel"| t2
   o0 -->|"date → issueDatetime"| t1
+  o0 -->|"date → issueDatetime"| t2
   o0 -->|"investment_amount → principal"| t1
   o0 -->|"security_id → securityId"| t3
   o0 -->|"security_id → securityId"| t2
@@ -362,7 +363,7 @@ flowchart LR
   o0 -.->|"board_approval_date, consideration_text, pro_rata, seniority, stockholder_approval_date"| ocflost
   t0 -.->|"countryOfResidency, stateOfResidency"| cartalost
   t1 -.->|"maturityDatetime, noteBlockId, precededBySecurityId"| cartalost
-  t2 -.->|"canceledDatetime, cashPaid, changeInControlPercent, conversionDatetime, conversionTrigger, id +4 more"| cartalost
+  t2 -.->|"cashPaid, changeInControlPercent, id, interest, issuerId, maturityDatetime"| cartalost
   t4 -.->|"id, name, prefix, status"| cartalost
 ```
 
@@ -600,6 +601,64 @@ flowchart LR
   t2 -.->|"shareClassId"| cartalost
 ```
 
+**ConvertibleCancellation → ConvertibleCancellationTransaction, ConvertibleNote, ConvertibleTransactionItem**
+
+```mermaid
+flowchart LR
+  classDef adm fill:#e6f4ea,stroke:#34a853,color:#0b3d20;
+  classDef notadm fill:#f1f3f4,stroke:#9aa0a6,color:#5f6368,stroke-dasharray:4 3;
+  classDef carta fill:#e8f0fe,stroke:#1a73e8,color:#0d2b66;
+  classDef lost fill:#fce8e6,stroke:#d93025,color:#5c0d06;
+  subgraph SRC["OCF (= Core, source)"]
+    direction TB
+    o0["ConvertibleCancellation"]:::adm
+  end
+  subgraph TGT["Carta"]
+    direction TB
+    t0["ConvertibleCancellationTransaction"]:::carta
+    t1["ConvertibleNote"]:::carta
+    t2["ConvertibleTransactionItem"]:::carta
+  end
+  ocflost["⌀ OCF lost (no Carta home)"]:::lost
+  cartalost["⌀ Carta lost (no OCF source)"]:::lost
+  o0 -->|"amount → principal"| t0
+  o0 -->|"date → effectiveDatetime"| t0
+  o0 -->|"date → canceledDatetime"| t1
+  o0 -->|"reason_text → reason"| t0
+  o0 -->|"security_id → securityId"| t2
+  o0 -.->|"balance_security_id"| ocflost
+  t1 -.->|"cashPaid, changeInControlPercent, id, interest, issuerId, maturityDatetime"| cartalost
+```
+
+**ConvertibleConversion → ConvertibleCancellationTransaction, ConvertibleNote, ConvertibleTransactionItem**
+
+```mermaid
+flowchart LR
+  classDef adm fill:#e6f4ea,stroke:#34a853,color:#0b3d20;
+  classDef notadm fill:#f1f3f4,stroke:#9aa0a6,color:#5f6368,stroke-dasharray:4 3;
+  classDef carta fill:#e8f0fe,stroke:#1a73e8,color:#0d2b66;
+  classDef lost fill:#fce8e6,stroke:#d93025,color:#5c0d06;
+  subgraph SRC["OCF (= Core, source)"]
+    direction TB
+    o0["ConvertibleConversion"]:::adm
+  end
+  subgraph TGT["Carta"]
+    direction TB
+    t0["ConvertibleCancellationTransaction"]:::carta
+    t1["ConvertibleNote"]:::carta
+    t2["ConvertibleTransactionItem"]:::carta
+  end
+  ocflost["⌀ OCF lost (no Carta home)"]:::lost
+  cartalost["⌀ Carta lost (no OCF source)"]:::lost
+  o0 -->|"date → effectiveDatetime"| t0
+  o0 -->|"date → conversionDatetime"| t1
+  o0 -->|"quantity_converted → canceledQuantity"| t1
+  o0 -->|"security_id → securityId"| t2
+  o0 -->|"security_id → securityId"| t1
+  o0 -.->|"balance_security_id, capitalization_definition, reason_text, resulting_security_ids, trigger_id"| ocflost
+  t1 -.->|"cashPaid, changeInControlPercent, id, interest, issuerId, maturityDatetime"| cartalost
+```
+
 **StockCancellation [Default] → CertificateCancellationTransaction, CertificatePrecededBy, CertificateTransactionItem**
 
 ```mermaid
@@ -652,59 +711,6 @@ flowchart LR
   o0 -->|"reason_text → reason"| t1
   o0 -->|"security_id → securityId"| t2
   t1 -.->|"forfeitureDatetime, terminationDatetime"| cartalost
-```
-
-**ConvertibleCancellation → ConvertibleCancellationTransaction, ConvertibleTransactionItem**
-
-```mermaid
-flowchart LR
-  classDef adm fill:#e6f4ea,stroke:#34a853,color:#0b3d20;
-  classDef notadm fill:#f1f3f4,stroke:#9aa0a6,color:#5f6368,stroke-dasharray:4 3;
-  classDef carta fill:#e8f0fe,stroke:#1a73e8,color:#0d2b66;
-  classDef lost fill:#fce8e6,stroke:#d93025,color:#5c0d06;
-  subgraph SRC["OCF (= Core, source)"]
-    direction TB
-    o0["ConvertibleCancellation"]:::adm
-  end
-  subgraph TGT["Carta"]
-    direction TB
-    t0["ConvertibleCancellationTransaction"]:::carta
-    t1["ConvertibleTransactionItem"]:::carta
-  end
-  ocflost["⌀ OCF lost (no Carta home)"]:::lost
-  o0 -->|"amount → principal"| t0
-  o0 -->|"date → effectiveDatetime"| t0
-  o0 -->|"reason_text → reason"| t0
-  o0 -->|"security_id → securityId"| t1
-  o0 -.->|"balance_security_id"| ocflost
-```
-
-**ConvertibleConversion → ConvertibleCancellationTransaction, ConvertibleNote, ConvertibleTransactionItem**
-
-```mermaid
-flowchart LR
-  classDef adm fill:#e6f4ea,stroke:#34a853,color:#0b3d20;
-  classDef notadm fill:#f1f3f4,stroke:#9aa0a6,color:#5f6368,stroke-dasharray:4 3;
-  classDef carta fill:#e8f0fe,stroke:#1a73e8,color:#0d2b66;
-  classDef lost fill:#fce8e6,stroke:#d93025,color:#5c0d06;
-  subgraph SRC["OCF (= Core, source)"]
-    direction TB
-    o0["ConvertibleConversion"]:::adm
-  end
-  subgraph TGT["Carta"]
-    direction TB
-    t0["ConvertibleCancellationTransaction"]:::carta
-    t1["ConvertibleNote"]:::carta
-    t2["ConvertibleTransactionItem"]:::carta
-  end
-  ocflost["⌀ OCF lost (no Carta home)"]:::lost
-  cartalost["⌀ Carta lost (no OCF source)"]:::lost
-  o0 -->|"date → effectiveDatetime"| t0
-  o0 -->|"quantity_converted → canceledQuantity"| t1
-  o0 -->|"security_id → securityId"| t2
-  o0 -->|"security_id → securityId"| t1
-  o0 -.->|"balance_security_id, capitalization_definition, reason_text, resulting_security_ids, trigger_id"| ocflost
-  t1 -.->|"canceledDatetime, cashPaid, changeInControlPercent, conversionDatetime, conversionTrigger, id +4 more"| cartalost
 ```
 
 **EquityCompensationCancellation [Option] → OptionCancellationTransaction, OptionTransactionItem**
@@ -1503,8 +1509,8 @@ extraction just isn't built yet (see the ledger's Deferred mappings). Not counte
 | RestrictedStockUnit | 7 | 0 | 0 | 0 | 0 | 21 | canceledDate, canceledQuantity, equityIncentivePlanName, expiredQuantity, forfeitedQuantity, id, issueDate, issuerId, lastModifiedDatetime, netSettledQuantity, quantity, releasePricePerShare, releasedQuantity, returnedToPoolQuantity, returnedToTreasuryQuantity, settlements, shareClassId, terminationDate, vestedQuantity, vestingSchedule, vestingScheduleTemplateId |
 | RestrictedStockAward | 8 | 0 | 0 | 0 | 0 | 17 | canceledDate, canceledQuantity, equityIncentivePlanName, id, issueDate, issuerId, lastModifiedDatetime, precededBy, quantity, returnedToPoolQuantity, returnedToTreasuryQuantity, shareClassName, terminationDate, vestedQuantity, vestingSchedule, vestingScheduleTemplateId, vestingStartDate |
 | Certificate | 5 | 0 | 0 | 0 | 0 | 12 | canceledDate, canceledQuantity, id, issueDate, issuerId, lastModifiedDatetime, precededBy, quantity, returnedToPoolQuantity, returnedToTreasuryQuantity, shareClassName, vestingScheduleTemplateId |
-| ConvertibleNote | 4 | 6 | 0 | 1 | 0 | 10 | canceledDatetime, cashPaid, changeInControlPercent, conversionDatetime, conversionTrigger, id, interest, issueDatetime, issuerId, maturityDatetime |
 | OptionGrantVestingEvent | 0 | 2 | 0 | 0 | 0 | 8 | id, isoQuantity, maxQuantity, nsoQuantity, performanceCondition, targetQuantity, vested, vestedQuantity |
+| ConvertibleNote | 14 | 0 | 0 | 1 | 0 | 6 | cashPaid, changeInControlPercent, id, interest, issuerId, maturityDatetime |
 | OptionExerciseTransaction | 2 | 0 | 0 | 0 | 0 | 6 | exerciseMethod, id, recordType, resultingSecurityId, resultingSecurityLabel, resultingSecurityType |
 | RestrictedStockUnitSettlement | 2 | 0 | 0 | 0 | 0 | 6 | certificateId, certificateLabel, netSettlementQuantity, releaseQuantity, saleQuantity, withholdingQuantity |
 | SarExerciseTransaction | 2 | 0 | 0 | 0 | 0 | 6 | cashAcquired, resultingSecurityId, resultingSecurityLabel, resultingSecurityType, settledQuantity, withheldQuantity |
@@ -1513,7 +1519,7 @@ extraction just isn't built yet (see the ledger's Deferred mappings). Not counte
 | VestingScheduleTemplate | 2 | 0 | 0 | 0 | 0 | 5 | description, issuerId, name, uuid, vestingScheduleType |
 | WarrantExerciseTransaction | 2 | 0 | 0 | 0 | 0 | 5 | quantity, resultingSecurityLabel, resultingSecurityType, settledQuantity, withheldQuantity |
 | NoteBlock | 1 | 0 | 0 | 0 | 0 | 4 | id, name, prefix, status |
-| ConvertibleIssuanceTransaction | 5 | 0 | 0 | 0 | 4 | 3 | maturityDatetime, noteBlockId, precededBySecurityId |
+| ConvertibleIssuanceTransaction | 9 | 0 | 0 | 0 | 0 | 3 | maturityDatetime, noteBlockId, precededBySecurityId |
 | ShareClass | 7 | 0 | 0 | 0 | 0 | 3 | issuerId, pariPassu, preferredShareClassDetails |
 | VestingPeriod | 0 | 9 | 0 | 0 | 0 | 3 | immediatePercentage, milestoneName, vestingOccurs |
 | CertificateCancellationTransaction | 3 | 0 | 0 | 0 | 0 | 2 | forfeitureDatetime, terminationDatetime |

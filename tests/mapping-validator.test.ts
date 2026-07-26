@@ -487,6 +487,54 @@ describe("validateMapping — entry shapes", () => {
     expect(messages(input)).toEqual([]);
   });
 
+  it("requires and validates the discriminator guard for guarded select policies", () => {
+    const baseSteps = [
+      {
+        kind: "select",
+        policy: "first_convertible_trigger_with_economic_terms",
+        source: "/conversion_right",
+      },
+      {
+        kind: "apply_mapping",
+        mapping: "types/Thing.mapping.md",
+        targets: ["#/$defs/Thing/properties/name"],
+      },
+    ];
+    const missingGuard = withField({ kind: "sequential_transform", steps: baseSteps });
+    missingGuard.mappingFiles = new Set(["types/Thing.mapping.md"]);
+    expect(messages(missingGuard)).toContain(
+      "name.steps[0]: select policy requires where: /type = CONVERTIBLE_CONVERSION_RIGHT"
+    );
+
+    const guarded = withField({
+      kind: "sequential_transform",
+      steps: [
+        {
+          ...baseSteps[0],
+          where: { path: "/type", equals: "CONVERTIBLE_CONVERSION_RIGHT" },
+        },
+        baseSteps[1],
+      ],
+    });
+    guarded.mappingFiles = new Set(["types/Thing.mapping.md"]);
+    expect(messages(guarded)).toEqual([]);
+
+    const mismatched = withField({
+      kind: "sequential_transform",
+      steps: [
+        {
+          ...baseSteps[0],
+          where: { path: "/type", equals: "WARRANT_CONVERSION_RIGHT" },
+        },
+        baseSteps[1],
+      ],
+    });
+    mismatched.mappingFiles = new Set(["types/Thing.mapping.md"]);
+    expect(messages(mismatched)).toContain(
+      "name.steps[0]: select where: does not match the policy guard /type = CONVERTIBLE_CONVERSION_RIGHT"
+    );
+  });
+
   it("rejects an unregistered sequential policy and mapping reference", () => {
     const input = withField({
       kind: "sequential_transform",

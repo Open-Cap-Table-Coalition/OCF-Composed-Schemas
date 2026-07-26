@@ -10,9 +10,11 @@ import { MappingEdge } from "./core-corpus.js";
 import { targetPointerParts } from "./mapping-report.js";
 import { questionPropertyRoot, questionTargetParts } from "./mapping-questions.js";
 import type { MappingQuestion } from "./mapping-questions.js";
+import type { RawSchema } from "./registry.js";
 
 interface InverseFlow {
   file: string;
+  sourceKind: MappingEdge["sourceKind"];
   sourceField: string;
   kind: string;
   pointer: string;
@@ -38,6 +40,12 @@ export interface MappingInverseReportOptions {
 
 interface MappingQuestionDocument {
   questions?: readonly MappingQuestion[];
+  mapping?: Record<string, unknown>;
+  sourceSchema?: RawSchema;
+}
+
+function isPlainObject(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
 function edgeSourceField(edge: MappingEdge): string {
@@ -62,7 +70,183 @@ function edgeContext(edge: MappingEdge): string | undefined {
 
 function flowLabel(flow: InverseFlow): string {
   const context = flow.context ? ` [${flow.context}]` : "";
-  return `${flow.file} :: ${flow.sourceField}${context} (${flow.kind})`;
+  return `[${flow.sourceKind}] ${flow.file} :: ${flow.sourceField}${context} (${flow.kind})`;
+}
+
+interface FlowDetail {
+  label: string;
+  children?: string[];
+  childNodes?: FlowNode[];
+  kind?: "union-dispatch";
+}
+
+function mappingEntryForFlow(
+  flow: InverseFlow,
+  mappingDocuments: ReadonlyMap<string, MappingQuestionDocument> | undefined
+): Record<string, unknown> | undefined {
+  const mapping = mappingDocuments?.get(flow.file)?.mapping;
+  if (!mapping || !flow.sourceField || flow.sourceField.startsWith("(")) return undefined;
+  const fields = mapping.fields;
+  if (!isPlainObject(fields)) return undefined;
+  const entry = fields[flow.sourceField];
+  return isPlainObject(entry) ? entry : undefined;
+}
+
+function schemaLabel(ref: string): string {
+  return (
+    ref
+      .split(/[/?#]/)
+      .pop()
+      ?.replace(/\.schema\.json$/, "")
+      .replace(/\.mapping\.md$/, "") ?? ref
+  );
+}
+
+function unionBranchDetails(
+  sourceSchema: RawSchema | undefined,
+  field: string
+): FlowDetail | undefined {
+  const property = sourceSchema?.properties?.[field];
+  if (!isPlainObject(property)) return undefined;
+  const branches = [property.oneOf, property.anyOf].find(Array.isArray);
+  if (!Array.isArray(branches) || branches.length < 2) return undefined;
+  return {
+    label: `dispatches exactly one ${field}.type branch (mutually exclusive)`,
+    kind: "union-dispatch",
+  };
+}
+
+function flowDetails(
+  flow: InverseFlow,
+  mappingDocuments: ReadonlyMap<string, MappingQuestionDocument> | undefined
+): FlowDetail[] {
+  const document = mappingDocuments?.get(flow.file);
+  const entry = mappingEntryForFlow(flow, mappingDocuments);
+  const details: FlowDetail[] = [];
+  const sourceType = document?.sourceSchema?.properties?.type?.const;
+  if (typeof sourceType === "string") {
+    details.push({ label: `active when type = ${sourceType}` });
+  }
+
+  if (flow.sourceKind === "object" && entry?.kind === "sequential_transform") {
+    const steps = Array.isArray(entry.steps) ? entry.steps : [];
+    const select = steps[0];
+    const apply = steps[1];
+    if (isPlainObject(select) && isPlainObject(select.where)) {
+      const source = typeof select.source === "string" ? select.source : "";
+      const path = typeof select.where.path === "string" ? select.where.path : "";
+      const equals = typeof select.where.equals === "string" ? select.where.equals : "";
+      const selectedMapping =
+        isPlainObject(apply) && typeof apply.mapping === "string"
+          ? schemaLabel(apply.mapping)
+          : "the selected nested type";
+      if (source && path && equals) {
+        details.push({
+          label: `selects ${selectedMapping} where ${[source, path]
+            .join("")
+            .replaceAll("/", ".")
+            .replace(/^\./, "")} = ${equals}`,
+        });
+      }
+    }
+  }
+
+  const union = unionBranchDetails(document?.sourceSchema, flow.sourceField);
+  if (union) details.push(union);
+  return details;
+}
+
+function flowRank(
+  flow: InverseFlow,
+  mappingDocuments: ReadonlyMap<string, MappingQuestionDocument> | undefined
+): number {
+  const document = mappingDocuments?.get(flow.file);
+  if (unionBranchDetails(document?.sourceSchema, flow.sourceField)) return 0;
+  if (typeof document?.sourceSchema?.properties?.type?.const === "string") return 1;
+  return 2;
+}
+
+function directSourceRefs(node: unknown): string[] {
+  if (!isPlainObject(node)) return [];
+  if (typeof node.$ref === "string") return [node.$ref];
+  if (node.items !== undefined) return directSourceRefs(node.items);
+  const refs: string[] = [];
+  for (const key of ["oneOf", "anyOf", "allOf"] as const) {
+    const branches = node[key];
+    if (!Array.isArray(branches)) continue;
+    for (const branch of branches) refs.push(...directSourceRefs(branch));
+  }
+  return [...new Set(refs)];
+}
+
+function mappingPathForRef(
+  ref: string,
+  mappingDocuments: ReadonlyMap<string, MappingQuestionDocument> | undefined
+): string | undefined {
+  for (const [path, document] of mappingDocuments ?? []) {
+    if (document.sourceSchema?.$id === ref) return path;
+  }
+  const label = schemaLabel(ref);
+  for (const [path, document] of mappingDocuments ?? []) {
+    if (document.sourceSchema?.$id && schemaLabel(document.sourceSchema.$id) === label) {
+      return path;
+    }
+  }
+  return undefined;
+}
+
+function nestedMappingPaths(
+  flow: InverseFlow,
+  mappingDocuments: ReadonlyMap<string, MappingQuestionDocument> | undefined
+): string[] {
+  const document = mappingDocuments?.get(flow.file);
+  const paths: string[] = [];
+  const entry = mappingEntryForFlow(flow, mappingDocuments);
+  if (flow.sourceKind === "object" && entry?.kind === "sequential_transform") {
+    const steps = Array.isArray(entry.steps) ? entry.steps : [];
+    const apply = steps[1];
+    if (isPlainObject(apply) && typeof apply.mapping === "string") paths.push(apply.mapping);
+  }
+  const sourceNode = document?.sourceSchema?.properties?.[flow.sourceField];
+  for (const ref of directSourceRefs(sourceNode)) {
+    const path = mappingPathForRef(ref, mappingDocuments);
+    if (path) paths.push(path);
+  }
+  return [...new Set(paths)];
+}
+
+interface FlowNode {
+  flow: InverseFlow;
+  children: FlowNode[];
+}
+
+function buildFlowForest(
+  flows: InverseFlow[],
+  mappingDocuments: ReadonlyMap<string, MappingQuestionDocument> | undefined
+): FlowNode[] {
+  const nodes = flows.map((flow) => ({ flow, children: [] as FlowNode[] }));
+  const parents = new Set<FlowNode>();
+  for (const node of nodes) {
+    const nestedPaths = new Set(nestedMappingPaths(node.flow, mappingDocuments));
+    if (nestedPaths.size === 0) continue;
+    for (const child of nodes) {
+      if (child === node || !nestedPaths.has(child.flow.file)) continue;
+      if (!node.children.includes(child)) node.children.push(child);
+      parents.add(child);
+    }
+  }
+  const rank = (node: FlowNode): number => flowRank(node.flow, mappingDocuments);
+  for (const node of nodes)
+    node.children.sort(
+      (left, right) =>
+        rank(left) - rank(right) || flowLabel(left.flow).localeCompare(flowLabel(right.flow))
+    );
+  return nodes
+    .filter((node) => !parents.has(node))
+    .sort(
+      (left, right) =>
+        rank(left) - rank(right) || flowLabel(left.flow).localeCompare(flowLabel(right.flow))
+    );
 }
 
 interface ReportQuestion {
@@ -137,6 +321,7 @@ function questionLabel(reportQuestion: ReportQuestion): string {
 function sameFlow(left: InverseFlow, right: InverseFlow): boolean {
   return (
     left.file === right.file &&
+    left.sourceKind === right.sourceKind &&
     left.sourceField === right.sourceField &&
     left.kind === right.kind &&
     left.pointer === right.pointer &&
@@ -168,6 +353,7 @@ function addEdge(
   const field = parts.relative === parts.object ? "(object route)" : parts.relative;
   const flow: InverseFlow = {
     file: edge.rel,
+    sourceKind: edge.sourceKind,
     sourceField: edgeSourceField(edge),
     kind: edgeKind(edge),
     pointer: edge.target,
@@ -228,6 +414,46 @@ function sortedTargetFields(
   });
 }
 
+function renderFlowNode(
+  node: FlowNode,
+  prefix: string,
+  last: boolean,
+  mappingDocuments: ReadonlyMap<string, MappingQuestionDocument> | undefined,
+  lines: string[]
+): void {
+  lines.push(`${prefix}${last ? "└── " : "├── "}${flowLabel(node.flow)}`);
+  const details = flowDetails(node.flow, mappingDocuments);
+  const unionDetail = details.find((detail) => detail.kind === "union-dispatch");
+  const items: Array<{ detail: FlowDetail } | { node: FlowNode }> = [
+    ...details.filter((detail) => detail !== unionDetail).map((detail) => ({ detail })),
+    ...(unionDetail ? [{ detail: { ...unionDetail, childNodes: node.children } }] : []),
+    ...(unionDetail ? [] : node.children.map((child) => ({ node: child }))),
+  ];
+  const childPrefix = `${prefix}${last ? "    " : "│   "}`;
+  items.forEach((item, index) => {
+    const itemLast = index === items.length - 1;
+    if ("detail" in item) {
+      lines.push(`${childPrefix}${itemLast ? "└── " : "├── "}${item.detail.label}`);
+      if (item.detail.children && item.detail.children.length > 0) {
+        const detailPrefix = `${childPrefix}${itemLast ? "    " : "│   "}`;
+        item.detail.children.forEach((child, childIndex) => {
+          const childLast = childIndex === item.detail.children!.length - 1;
+          lines.push(`${detailPrefix}${childLast ? "└── " : "├── "}${child}`);
+        });
+      }
+      if (item.detail.childNodes && item.detail.childNodes.length > 0) {
+        const detailPrefix = `${childPrefix}${itemLast ? "    " : "│   "}`;
+        item.detail.childNodes.forEach((child, childIndex) => {
+          const childLast = childIndex === item.detail.childNodes!.length - 1;
+          renderFlowNode(child, detailPrefix, childLast, mappingDocuments, lines);
+        });
+      }
+    } else {
+      renderFlowNode(item.node, childPrefix, itemLast, mappingDocuments, lines);
+    }
+  });
+}
+
 function renderMappingTree(
   object: string,
   group: TargetGroup,
@@ -260,18 +486,25 @@ function renderMappingTree(
     }
 
     const targetQuestions = openQuestionsForTargetField(object, field, mappingDocuments);
-    const children: string[] = [];
-    if (flows.length === 0) children.push("✗ no mapped OCF source");
-    else {
-      flows.sort((left, right) => flowLabel(left).localeCompare(flowLabel(right)));
-      children.push(...flows.map(flowLabel));
-    }
     const propertyQuestions = openQuestionsForFlows(
       flows,
       mappingDocuments,
       (question, flow) =>
         question.property !== null && questionMatchesSourceField(question, flow.sourceField)
     );
+    const children: string[] = [];
+    const roots = buildFlowForest(flows, mappingDocuments);
+    const hasTrailingChildren = propertyQuestions.length > 0 || targetQuestions.length > 0;
+    if (roots.length === 0) children.push("✗ no mapped OCF source");
+    else {
+      const lastSource = !hasTrailingChildren;
+      lines.push(`${flowPrefix}${lastSource ? "└── " : "├── "}source path(s)`);
+      const sourcePrefix = `${flowPrefix}${lastSource ? "    " : "│   "}`;
+      roots.forEach((root, rootIndex) => {
+        const lastRoot = rootIndex === roots.length - 1 && !hasTrailingChildren;
+        renderFlowNode(root, sourcePrefix, lastRoot, mappingDocuments, lines);
+      });
+    }
     children.push(...propertyQuestions.map(questionLabel));
     children.push(...targetQuestions.map(questionLabel));
     children.forEach((child, childIndex) => {
@@ -310,6 +543,10 @@ function flowCount(group: TargetGroup): number {
   return [...group.flows.values()].reduce((count, flows) => count + flows.length, 0);
 }
 
+function flowCountBySourceKind(group: TargetGroup, sourceKind: MappingEdge["sourceKind"]): number {
+  return [...group.flows.values()].flat().filter((flow) => flow.sourceKind === sourceKind).length;
+}
+
 function renderObjectPanel(
   row: CartaDefCoverage,
   group: TargetGroup,
@@ -324,7 +561,10 @@ function renderObjectPanel(
     `id: "#/$defs/${row.name}"`,
     `inverse_role: ${row.status}`,
     `status: ${hasMappings ? (unmappedProperties > 0 ? "PARTIAL" : "MAPPED") : "NO MAPPINGS"}`,
-    `incoming_mappings: ${flowCount(group)}`,
+    `mapping_evidence: ${flowCount(group)} (direct object: ${flowCountBySourceKind(
+      group,
+      "object"
+    )}, reusable type detail: ${flowCountBySourceKind(group, "type")})`,
   ];
   if (hasMappings) metadata.push(`unmapped_properties: ${unmappedProperties}`);
   if (!hasMappings && row.reason) metadata.push(`reason: ${row.reason}`);
@@ -478,6 +718,12 @@ export function renderMappingInverseReport(options: MappingInverseReportOptions)
     `source_documents: ${sourceDocuments}`,
     `green_carta_documents: ${greenDocuments}`,
   ]);
+
+  lines.push(
+    "",
+    "Evidence legend",
+    "  [object] direct OCF object route; [type] reusable mapping detail used by that route, not a separate source record."
+  );
 
   lines.push(...renderCoverageStory(inverse), ...renderExcludedRows(excluded));
 

@@ -1,6 +1,7 @@
 import { Corpus, MappingEdge } from "../scripts/lib/core-corpus.js";
 import { buildInverseCoverage, InverseCoverageLedger } from "../scripts/lib/inverse-coverage.js";
 import { renderMappingInverseReport } from "../scripts/lib/mapping-inverse-report.js";
+import type { RawSchema } from "../scripts/lib/registry.js";
 
 function ledger(
   defs: Record<string, Record<string, unknown>>,
@@ -20,7 +21,8 @@ function fieldEdge(
   source: string,
   field: string,
   target: string,
-  variant = "—"
+  variant = "—",
+  kind = "rename"
 ): MappingEdge {
   return {
     rel: file,
@@ -30,20 +32,27 @@ function fieldEdge(
     field,
     scope: "type",
     target,
-    kind: "rename",
+    kind,
   };
 }
 
-function objectFieldEdge(file: string, source: string, field: string, target: string): MappingEdge {
+function objectFieldEdge(
+  file: string,
+  source: string,
+  field: string,
+  target: string,
+  variant = "—",
+  kind = "rename"
+): MappingEdge {
   return {
     rel: file,
     sourceKind: "object",
     source,
-    variant: "—",
+    variant,
     field,
     scope: "object",
     target,
-    kind: "rename",
+    kind,
   };
 }
 
@@ -82,8 +91,8 @@ describe("renderMappingInverseReport", () => {
     expect(out).toContain("6. 1 standalone candidates have OCF mapping evidence:");
     expect(out).toContain("Completeness: 0 fully mapped, 1 partially mapped.");
     expect(out).toContain('id: "#/$defs/ConvertibleNote"');
-    expect(out).toContain("types/SAFE.mapping.md :: discount (rename)");
-    expect(out).toContain("types/Note.mapping.md :: conversion_discount (rename)");
+    expect(out).toContain("[type] types/SAFE.mapping.md :: discount (rename)");
+    expect(out).toContain("[type] types/Note.mapping.md :: conversion_discount (rename)");
     expect(out).toContain("priceCap");
     expect(out).toContain("✗ no mapped OCF source");
   });
@@ -96,35 +105,175 @@ describe("renderMappingInverseReport", () => {
         },
       },
       [
-        fieldEdge(
+        objectFieldEdge(
           "objects/ConvertibleIssuance.mapping.md",
           "ConvertibleIssuance",
           "discount",
           "#/$defs/ConvertibleNote/properties/discountPercentage",
           "Note"
         ),
-        fieldEdge(
+        objectFieldEdge(
           "objects/ConvertibleIssuance.mapping.md",
           "ConvertibleIssuance",
           "discount",
           "#/$defs/ConvertibleNote/properties/discountPercentage",
           "Safe"
         ),
-        fieldEdge(
+        objectFieldEdge(
           "objects/ConvertibleIssuance.mapping.md",
           "ConvertibleIssuance",
           "cap",
           "#/$defs/ConvertibleNote/properties/priceCap",
           "Note"
         ),
+        fieldEdge(
+          "types/NoteConversionMechanism.mapping.md",
+          "NoteConversionMechanism",
+          "conversion_valuation_cap",
+          "#/$defs/ConvertibleNote/properties/priceCap"
+        ),
       ]
     );
 
     const out = renderMappingInverseReport({ inverse, targetObject: "ConvertibleNote" });
 
-    expect(out).toContain("objects/ConvertibleIssuance.mapping.md :: discount [shared] (rename)");
-    expect(out).toContain("objects/ConvertibleIssuance.mapping.md :: cap [Note] (rename)");
+    expect(out).toContain(
+      "[object] objects/ConvertibleIssuance.mapping.md :: discount [shared] (rename)"
+    );
+    expect(out).toContain("[object] objects/ConvertibleIssuance.mapping.md :: cap [Note] (rename)");
+    expect(out).toContain("source path(s)");
     expect(out.match(/:: discount \[shared\] \(rename\)/g)).toHaveLength(1);
+  });
+
+  it("renders the outer and inner discriminator chain for nested convertible mechanisms", () => {
+    const inverse = ledger(
+      {
+        ConvertibleNote: {
+          properties: { discountPercentage: {} },
+        },
+      },
+      [
+        objectFieldEdge(
+          "objects/transactions/issuance/ConvertibleIssuance.mapping.md",
+          "ConvertibleIssuance",
+          "conversion_triggers",
+          "#/$defs/ConvertibleNote/properties/discountPercentage",
+          "—",
+          "sequential_transform"
+        ),
+        fieldEdge(
+          "types/conversion_rights/ConvertibleConversionRight.mapping.md",
+          "ConvertibleConversionRight",
+          "conversion_mechanism",
+          "#/$defs/ConvertibleNote/properties/discountPercentage",
+          "—",
+          "union-map"
+        ),
+        fieldEdge(
+          "types/conversion_mechanisms/NoteConversionMechanism.mapping.md",
+          "NoteConversionMechanism",
+          "conversion_discount",
+          "#/$defs/ConvertibleNote/properties/discountPercentage",
+          "—",
+          "rename"
+        ),
+        fieldEdge(
+          "types/conversion_mechanisms/SAFEConversionMechanism.mapping.md",
+          "SAFEConversionMechanism",
+          "conversion_discount",
+          "#/$defs/ConvertibleNote/properties/discountPercentage",
+          "—",
+          "rename"
+        ),
+      ]
+    );
+    const out = renderMappingInverseReport({
+      inverse,
+      targetObject: "ConvertibleNote",
+      mappingDocuments: new Map<
+        string,
+        { mapping?: Record<string, unknown>; sourceSchema?: RawSchema }
+      >([
+        [
+          "objects/transactions/issuance/ConvertibleIssuance.mapping.md",
+          {
+            mapping: {
+              fields: {
+                conversion_triggers: {
+                  kind: "sequential_transform",
+                  steps: [
+                    {
+                      kind: "select",
+                      source: "/conversion_right",
+                      where: { path: "/type", equals: "CONVERTIBLE_CONVERSION_RIGHT" },
+                    },
+                    {
+                      kind: "apply_mapping",
+                      mapping: "types/conversion_rights/ConvertibleConversionRight.mapping.md",
+                    },
+                  ],
+                },
+              },
+            },
+          },
+        ],
+        [
+          "types/conversion_rights/ConvertibleConversionRight.mapping.md",
+          {
+            sourceSchema: {
+              properties: {
+                type: { const: "CONVERTIBLE_CONVERSION_RIGHT" },
+                conversion_mechanism: {
+                  oneOf: [
+                    {
+                      $ref: "https://raw.githubusercontent.com/Open-Cap-Table-Coalition/Open-Cap-Format-OCF/main/schema/types/conversion_mechanisms/SAFEConversionMechanism.schema.json",
+                    },
+                    {
+                      $ref: "https://raw.githubusercontent.com/Open-Cap-Table-Coalition/Open-Cap-Format-OCF/main/schema/types/conversion_mechanisms/NoteConversionMechanism.schema.json",
+                    },
+                  ],
+                },
+              },
+            },
+          },
+        ],
+        [
+          "types/conversion_mechanisms/SAFEConversionMechanism.mapping.md",
+          {
+            sourceSchema: {
+              $id: "https://example.test/SAFEConversionMechanism.schema.json",
+              properties: { type: { const: "SAFE_CONVERSION" } },
+            },
+          },
+        ],
+        [
+          "types/conversion_mechanisms/NoteConversionMechanism.mapping.md",
+          {
+            sourceSchema: {
+              $id: "https://example.test/NoteConversionMechanism.schema.json",
+              properties: { type: { const: "CONVERTIBLE_NOTE_CONVERSION" } },
+            },
+          },
+        ],
+      ]),
+    });
+
+    expect(out).toContain(
+      "selects ConvertibleConversionRight where conversion_right.type = CONVERTIBLE_CONVERSION_RIGHT"
+    );
+    expect(out).toContain("active when type = CONVERTIBLE_CONVERSION_RIGHT");
+    expect(out).toContain(
+      "[type] types/conversion_rights/ConvertibleConversionRight.mapping.md :: conversion_mechanism (union-map)"
+    );
+    expect(out).toContain(
+      "dispatches exactly one conversion_mechanism.type branch (mutually exclusive)"
+    );
+    expect(out).toContain(
+      "[type] types/conversion_mechanisms/SAFEConversionMechanism.mapping.md :: conversion_discount (rename)"
+    );
+    expect(out).toContain(
+      "[type] types/conversion_mechanisms/NoteConversionMechanism.mapping.md :: conversion_discount (rename)"
+    );
   });
 
   it("renders only open questions beneath the related target property", () => {

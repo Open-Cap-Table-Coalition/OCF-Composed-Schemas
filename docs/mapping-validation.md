@@ -27,6 +27,12 @@ derived coverage stays reviewable, and enum remaps are checked value-by-value.
   property whose `$ref`/`items.$ref` child definition has executable mapping evidence and whose
   same mapping also carries executable evidence for the containing parent; it is populated through
   child records rather than by a source field aimed at the parent property.
+  Within each target property, the report builds source path(s): the direct `[object]` route is
+  the ancestor, and nested `[type]` entries appear beneath it when they are reached through an
+  explicit sequential or schema-reference relationship. They are not additional independent
+  source records. When the source is nested and polymorphic, the report also prints the
+  discriminator chain: the selected nested wrapper, its outer `type` guard, and the inner union
+  branches such as `NoteConversionMechanism` versus `SAFEConversionMechanism`.
   Target properties with no mapped OCF source remain explicit in each panel.
 - CI runs the equivalent `npm run mapping:inverse` command on every pull request and push to `main`.
   That command renders the same shared inverse-coverage ledger and role policy used by the
@@ -127,7 +133,9 @@ require a deterministic `policy:`. Every policy name must be registered in
 [`scripts/lib/mapping-policies.ts`](../scripts/lib/mapping-policies.ts), and a policy may only be
 used with its registered host kind. `sequential_transform` is the narrow composition form for a
 field-level pipeline: its first step selects one intermediate value, and its second
-`apply_mapping` step names the reusable mapping file and its Carta target pointers. In a
+`apply_mapping` step names the reusable mapping file and its Carta target pointers. A
+select step may also carry `where: { path, equals }` when the selected intermediate value
+must satisfy a discriminator guard; registered policies may require an exact guard. In a
 polymorphic mapping (below), an entry may also carry a
 **`routed_to:`** map
 (`{ route property value → variant label }`) — a *verified round-trip edge*: a value `null`-ed in
