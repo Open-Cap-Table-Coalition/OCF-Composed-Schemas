@@ -1,6 +1,9 @@
 import { Corpus, MappingEdge } from "../scripts/lib/core-corpus.js";
 import { buildInverseCoverage, InverseCoverageLedger } from "../scripts/lib/inverse-coverage.js";
-import { renderMappingInverseReport } from "../scripts/lib/mapping-inverse-report.js";
+import {
+  renderMappingFlowSvgs,
+  renderMappingInverseReport,
+} from "../scripts/lib/mapping-inverse-report.js";
 import type { RawSchema } from "../scripts/lib/registry.js";
 
 function ledger(
@@ -398,6 +401,35 @@ describe("renderMappingInverseReport", () => {
     expect(flowBlock.match(/SharedSource \[(Issue|Cancel)\]/g)).toHaveLength(4);
     expect(flowBlock).not.toContain("ParentOnly");
     expect(out).not.toContain("```mermaid");
+    const artifacts = renderMappingFlowSvgs({
+      inverse,
+      targetObject: "TransactionItem",
+      mappingDocuments: new Map([
+        [
+          "objects/SharedSource.mapping.md",
+          {
+            mapping: {
+              route_by_property: { on_property: "kind" },
+              variants: {
+                Issue: { when: ["ISSUE"] },
+                Cancel: { when: ["CANCEL"] },
+              },
+            },
+          },
+        ],
+        ["objects/OtherCancellation.mapping.md", { mapping: {} }],
+      ]),
+    });
+    const svg = artifacts.get("TransactionItem.svg");
+    expect(svg).toBeDefined();
+    expect(svg).toContain("cancellations[] → CancellationTransaction");
+    expect(svg).toContain("issuance → IssuanceTransaction");
+    expect(svg).toContain("SharedSource [Issue]");
+    expect(svg).toContain("TransactionItem.cancellations[].date");
+    expect(svg).toContain("TransactionItem.issuance.date");
+    expect(svg).toContain('marker-end="url(#arrow)"');
+    expect(svg).not.toContain("flowchart");
+    expect(svg).not.toContain("subgraph");
   });
 
   it("keeps independent route axes separate instead of forming Cartesian subtype combinations", () => {

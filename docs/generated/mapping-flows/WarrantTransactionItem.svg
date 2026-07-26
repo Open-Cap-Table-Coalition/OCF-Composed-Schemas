@@ -1,0 +1,124 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1800" height="2592" viewBox="0 0 1800 2592" role="img" aria-labelledby="title desc">
+<title id="title">WarrantTransactionItem related object property flows</title>
+<desc id="desc">Direct OCF source-property to Carta target-property mappings grouped by nested variant.</desc>
+<style>text{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}</style>
+<defs><marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto" markerUnits="strokeWidth"><path d="M0,0 L10,5 L0,10 z" fill="#64748b"/></marker></defs>
+<rect width="1800" height="2592" fill="#f8fafc"/>
+<text x="64" y="48" fill="#0f172a" font-size="32" font-weight="700"><tspan x="64" dy="0">WarrantTransactionItem</tspan></text>
+<text x="64" y="82" fill="#475569" font-size="20"><tspan x="64" dy="0">Related object property flows</tspan></text>
+<text x="64" y="112" fill="#64748b" font-size="16"><tspan x="64" dy="0">Each arrow is one explicit OCF property → Carta property mapping</tspan></text>
+<rect x="1360" y="36" width="20" height="20" rx="4" fill="#e6f4ea" stroke="#62a576"/>
+<text x="1394" y="52" fill="#166534" font-size="16"><tspan x="1394" dy="0">OCF source</tspan></text>
+<rect x="1570" y="36" width="20" height="20" rx="4" fill="#e8f0fe" stroke="#6b8fd6"/>
+<text x="1604" y="52" fill="#1e3a8a" font-size="16"><tspan x="1604" dy="0">Carta target</tspan></text>
+<rect x="64" y="132" width="1672" height="52" rx="10" fill="#ede9fe" stroke="#a78bfa"/>
+<text x="84" y="164" fill="#4c1d95" font-size="20" font-weight="700"><tspan x="84" dy="0">cancellations[] → WarrantCancellationTransaction</tspan></text>
+<rect x="64" y="196" width="620" height="86" rx="10" fill="#e6f4ea" stroke="#62a576"/>
+<text x="86" y="223" fill="#166534" font-size="15" font-weight="500"><tspan x="86" dy="0">WarrantCancellation</tspan></text><text x="86" y="241" fill="#14532d" font-size="18" font-weight="700"><tspan x="86" dy="0">date</tspan></text>
+<line x1="708" y1="239" x2="900" y2="239" stroke="#64748b" stroke-width="3" marker-end="url(#arrow)"/>
+<rect x="930" y="196" width="806" height="86" rx="10" fill="#e8f0fe" stroke="#6b8fd6"/>
+<text x="952" y="230" fill="#1e3a8a" font-size="18" font-weight="700"><tspan x="952" dy="0">WarrantTransactionItem.cancellations[].effectiveDatetime</tspan></text>
+<rect x="64" y="298" width="620" height="86" rx="10" fill="#e6f4ea" stroke="#62a576"/>
+<text x="86" y="325" fill="#166534" font-size="15" font-weight="500"><tspan x="86" dy="0">WarrantCancellation</tspan></text><text x="86" y="343" fill="#14532d" font-size="18" font-weight="700"><tspan x="86" dy="0">quantity</tspan></text>
+<line x1="708" y1="341" x2="900" y2="341" stroke="#64748b" stroke-width="3" marker-end="url(#arrow)"/>
+<rect x="930" y="298" width="806" height="86" rx="10" fill="#e8f0fe" stroke="#6b8fd6"/>
+<text x="952" y="332" fill="#1e3a8a" font-size="18" font-weight="700"><tspan x="952" dy="0">WarrantTransactionItem.cancellations[].quantity</tspan></text>
+<rect x="64" y="400" width="620" height="86" rx="10" fill="#e6f4ea" stroke="#62a576"/>
+<text x="86" y="427" fill="#166534" font-size="15" font-weight="500"><tspan x="86" dy="0">WarrantCancellation</tspan></text><text x="86" y="445" fill="#14532d" font-size="18" font-weight="700"><tspan x="86" dy="0">reason_text</tspan></text>
+<line x1="708" y1="443" x2="900" y2="443" stroke="#64748b" stroke-width="3" marker-end="url(#arrow)"/>
+<rect x="930" y="400" width="806" height="86" rx="10" fill="#e8f0fe" stroke="#6b8fd6"/>
+<text x="952" y="434" fill="#1e3a8a" font-size="18" font-weight="700"><tspan x="952" dy="0">WarrantTransactionItem.cancellations[].reason</tspan></text>
+<rect x="64" y="528" width="1672" height="52" rx="10" fill="#ede9fe" stroke="#a78bfa"/>
+<text x="84" y="560" fill="#4c1d95" font-size="20" font-weight="700"><tspan x="84" dy="0">exercises[] → WarrantExerciseTransaction</tspan></text>
+<rect x="64" y="592" width="620" height="86" rx="10" fill="#e6f4ea" stroke="#62a576"/>
+<text x="86" y="619" fill="#166534" font-size="15" font-weight="500"><tspan x="86" dy="0">WarrantExercise</tspan></text><text x="86" y="637" fill="#14532d" font-size="18" font-weight="700"><tspan x="86" dy="0">resulting_security_ids</tspan></text>
+<line x1="708" y1="635" x2="900" y2="635" stroke="#64748b" stroke-width="3" marker-end="url(#arrow)"/>
+<rect x="930" y="592" width="806" height="86" rx="10" fill="#e8f0fe" stroke="#6b8fd6"/>
+<text x="952" y="626" fill="#1e3a8a" font-size="18" font-weight="700"><tspan x="952" dy="0">WarrantTransactionItem.exercises[].resultingSecurityId</tspan></text>
+<rect x="64" y="694" width="620" height="86" rx="10" fill="#e6f4ea" stroke="#62a576"/>
+<text x="86" y="721" fill="#166534" font-size="15" font-weight="500"><tspan x="86" dy="0">WarrantExercise</tspan></text><text x="86" y="739" fill="#14532d" font-size="18" font-weight="700"><tspan x="86" dy="0">date</tspan></text>
+<line x1="708" y1="737" x2="900" y2="737" stroke="#64748b" stroke-width="3" marker-end="url(#arrow)"/>
+<rect x="930" y="694" width="806" height="86" rx="10" fill="#e8f0fe" stroke="#6b8fd6"/>
+<text x="952" y="728" fill="#1e3a8a" font-size="18" font-weight="700"><tspan x="952" dy="0">WarrantTransactionItem.exercises[].sharesAcquiredDatetime</tspan></text>
+<rect x="64" y="822" width="1672" height="52" rx="10" fill="#ede9fe" stroke="#a78bfa"/>
+<text x="84" y="854" fill="#4c1d95" font-size="20" font-weight="700"><tspan x="84" dy="0">issuance → WarrantIssuanceTransaction</tspan></text>
+<rect x="64" y="886" width="620" height="86" rx="10" fill="#e6f4ea" stroke="#62a576"/>
+<text x="86" y="913" fill="#166534" font-size="15" font-weight="500"><tspan x="86" dy="0">WarrantIssuance</tspan></text><text x="86" y="931" fill="#14532d" font-size="18" font-weight="700"><tspan x="86" dy="0">exercise_price</tspan></text>
+<line x1="708" y1="929" x2="900" y2="929" stroke="#64748b" stroke-width="3" marker-end="url(#arrow)"/>
+<rect x="930" y="886" width="806" height="86" rx="10" fill="#e8f0fe" stroke="#6b8fd6"/>
+<text x="952" y="920" fill="#1e3a8a" font-size="18" font-weight="700"><tspan x="952" dy="0">WarrantTransactionItem.issuance.exercisePrice</tspan></text>
+<rect x="64" y="988" width="620" height="86" rx="10" fill="#e6f4ea" stroke="#62a576"/>
+<text x="86" y="1015" fill="#166534" font-size="15" font-weight="500"><tspan x="86" dy="0">WarrantIssuance</tspan></text><text x="86" y="1033" fill="#14532d" font-size="18" font-weight="700"><tspan x="86" dy="0">warrant_expiration_date</tspan></text>
+<line x1="708" y1="1031" x2="900" y2="1031" stroke="#64748b" stroke-width="3" marker-end="url(#arrow)"/>
+<rect x="930" y="988" width="806" height="86" rx="10" fill="#e8f0fe" stroke="#6b8fd6"/>
+<text x="952" y="1022" fill="#1e3a8a" font-size="18" font-weight="700"><tspan x="952" dy="0">WarrantTransactionItem.issuance.expirationDatetime</tspan></text>
+<rect x="64" y="1090" width="620" height="86" rx="10" fill="#e6f4ea" stroke="#62a576"/>
+<text x="86" y="1117" fill="#166534" font-size="15" font-weight="500"><tspan x="86" dy="0">WarrantIssuance</tspan></text><text x="86" y="1135" fill="#14532d" font-size="18" font-weight="700"><tspan x="86" dy="0">date</tspan></text>
+<line x1="708" y1="1133" x2="900" y2="1133" stroke="#64748b" stroke-width="3" marker-end="url(#arrow)"/>
+<rect x="930" y="1090" width="806" height="86" rx="10" fill="#e8f0fe" stroke="#6b8fd6"/>
+<text x="952" y="1124" fill="#1e3a8a" font-size="18" font-weight="700"><tspan x="952" dy="0">WarrantTransactionItem.issuance.issueDatetime</tspan></text>
+<rect x="64" y="1192" width="620" height="86" rx="10" fill="#e6f4ea" stroke="#62a576"/>
+<text x="86" y="1219" fill="#166534" font-size="15" font-weight="500"><tspan x="86" dy="0">WarrantIssuance</tspan></text><text x="86" y="1237" fill="#14532d" font-size="18" font-weight="700"><tspan x="86" dy="0">purchase_price</tspan></text>
+<line x1="708" y1="1235" x2="900" y2="1235" stroke="#64748b" stroke-width="3" marker-end="url(#arrow)"/>
+<rect x="930" y="1192" width="806" height="86" rx="10" fill="#e8f0fe" stroke="#6b8fd6"/>
+<text x="952" y="1226" fill="#1e3a8a" font-size="18" font-weight="700"><tspan x="952" dy="0">WarrantTransactionItem.issuance.purchasePrice</tspan></text>
+<rect x="64" y="1294" width="620" height="86" rx="10" fill="#e6f4ea" stroke="#62a576"/>
+<text x="86" y="1321" fill="#166534" font-size="15" font-weight="500"><tspan x="86" dy="0">WarrantIssuance</tspan></text><text x="86" y="1339" fill="#14532d" font-size="18" font-weight="700"><tspan x="86" dy="0">quantity</tspan></text>
+<line x1="708" y1="1337" x2="900" y2="1337" stroke="#64748b" stroke-width="3" marker-end="url(#arrow)"/>
+<rect x="930" y="1294" width="806" height="86" rx="10" fill="#e8f0fe" stroke="#6b8fd6"/>
+<text x="952" y="1328" fill="#1e3a8a" font-size="18" font-weight="700"><tspan x="952" dy="0">WarrantTransactionItem.issuance.quantity</tspan></text>
+<rect x="64" y="1396" width="620" height="86" rx="10" fill="#e6f4ea" stroke="#62a576"/>
+<text x="86" y="1423" fill="#166534" font-size="15" font-weight="500"><tspan x="86" dy="0">WarrantIssuance</tspan></text><text x="86" y="1441" fill="#14532d" font-size="18" font-weight="700"><tspan x="86" dy="0">vesting_terms_id</tspan></text>
+<line x1="708" y1="1439" x2="900" y2="1439" stroke="#64748b" stroke-width="3" marker-end="url(#arrow)"/>
+<rect x="930" y="1396" width="806" height="86" rx="10" fill="#e8f0fe" stroke="#6b8fd6"/>
+<text x="952" y="1430" fill="#1e3a8a" font-size="18" font-weight="700"><tspan x="952" dy="0">WarrantTransactionItem.issuance.vestingScheduleTemplateId</tspan></text>
+<rect x="64" y="1524" width="1672" height="52" rx="10" fill="#ede9fe" stroke="#a78bfa"/>
+<text x="84" y="1556" fill="#4c1d95" font-size="20" font-weight="700"><tspan x="84" dy="0">transfers[] → WarrantTransferTransaction</tspan></text>
+<rect x="64" y="1588" width="620" height="86" rx="10" fill="#e6f4ea" stroke="#62a576"/>
+<text x="86" y="1615" fill="#166534" font-size="15" font-weight="500"><tspan x="86" dy="0">WarrantTransfer</tspan></text><text x="86" y="1633" fill="#14532d" font-size="18" font-weight="700"><tspan x="86" dy="0">quantity</tspan></text>
+<line x1="708" y1="1631" x2="900" y2="1631" stroke="#64748b" stroke-width="3" marker-end="url(#arrow)"/>
+<rect x="930" y="1588" width="806" height="86" rx="10" fill="#e8f0fe" stroke="#6b8fd6"/>
+<text x="952" y="1622" fill="#1e3a8a" font-size="18" font-weight="700"><tspan x="952" dy="0">WarrantTransactionItem.transfers[].quantity</tspan></text>
+<rect x="64" y="1690" width="620" height="86" rx="10" fill="#e6f4ea" stroke="#62a576"/>
+<text x="86" y="1717" fill="#166534" font-size="15" font-weight="500"><tspan x="86" dy="0">WarrantTransfer</tspan></text><text x="86" y="1735" fill="#14532d" font-size="18" font-weight="700"><tspan x="86" dy="0">resulting_security_ids</tspan></text>
+<line x1="708" y1="1733" x2="900" y2="1733" stroke="#64748b" stroke-width="3" marker-end="url(#arrow)"/>
+<rect x="930" y="1690" width="806" height="86" rx="10" fill="#e8f0fe" stroke="#6b8fd6"/>
+<text x="952" y="1724" fill="#1e3a8a" font-size="18" font-weight="700"><tspan x="952" dy="0">WarrantTransactionItem.transfers[].resultingSecurityId</tspan></text>
+<rect x="64" y="1792" width="620" height="86" rx="10" fill="#e6f4ea" stroke="#62a576"/>
+<text x="86" y="1819" fill="#166534" font-size="15" font-weight="500"><tspan x="86" dy="0">WarrantTransfer</tspan></text><text x="86" y="1837" fill="#14532d" font-size="18" font-weight="700"><tspan x="86" dy="0">date</tspan></text>
+<line x1="708" y1="1835" x2="900" y2="1835" stroke="#64748b" stroke-width="3" marker-end="url(#arrow)"/>
+<rect x="930" y="1792" width="806" height="86" rx="10" fill="#e8f0fe" stroke="#6b8fd6"/>
+<text x="952" y="1826" fill="#1e3a8a" font-size="18" font-weight="700"><tspan x="952" dy="0">WarrantTransactionItem.transfers[].transferredDatetime</tspan></text>
+<rect x="64" y="1920" width="1672" height="52" rx="10" fill="#ede9fe" stroke="#a78bfa"/>
+<text x="84" y="1952" fill="#4c1d95" font-size="20" font-weight="700"><tspan x="84" dy="0">Shared parent properties</tspan></text>
+<rect x="64" y="1984" width="620" height="86" rx="10" fill="#e6f4ea" stroke="#62a576"/>
+<text x="86" y="2011" fill="#166534" font-size="15" font-weight="500"><tspan x="86" dy="0">WarrantCancellation</tspan></text><text x="86" y="2029" fill="#14532d" font-size="18" font-weight="700"><tspan x="86" dy="0">security_id</tspan></text>
+<line x1="708" y1="2027" x2="900" y2="2027" stroke="#64748b" stroke-width="3" marker-end="url(#arrow)"/>
+<rect x="930" y="1984" width="806" height="86" rx="10" fill="#e8f0fe" stroke="#6b8fd6"/>
+<text x="952" y="2018" fill="#1e3a8a" font-size="18" font-weight="700"><tspan x="952" dy="0">WarrantTransactionItem.securityId</tspan></text>
+<rect x="64" y="2086" width="620" height="86" rx="10" fill="#e6f4ea" stroke="#62a576"/>
+<text x="86" y="2113" fill="#166534" font-size="15" font-weight="500"><tspan x="86" dy="0">WarrantExercise</tspan></text><text x="86" y="2131" fill="#14532d" font-size="18" font-weight="700"><tspan x="86" dy="0">security_id</tspan></text>
+<line x1="708" y1="2129" x2="900" y2="2129" stroke="#64748b" stroke-width="3" marker-end="url(#arrow)"/>
+<rect x="930" y="2086" width="806" height="86" rx="10" fill="#e8f0fe" stroke="#6b8fd6"/>
+<text x="952" y="2120" fill="#1e3a8a" font-size="18" font-weight="700"><tspan x="952" dy="0">WarrantTransactionItem.securityId</tspan></text>
+<rect x="64" y="2188" width="620" height="86" rx="10" fill="#e6f4ea" stroke="#62a576"/>
+<text x="86" y="2215" fill="#166534" font-size="15" font-weight="500"><tspan x="86" dy="0">WarrantIssuance</tspan></text><text x="86" y="2233" fill="#14532d" font-size="18" font-weight="700"><tspan x="86" dy="0">security_id</tspan></text>
+<line x1="708" y1="2231" x2="900" y2="2231" stroke="#64748b" stroke-width="3" marker-end="url(#arrow)"/>
+<rect x="930" y="2188" width="806" height="86" rx="10" fill="#e8f0fe" stroke="#6b8fd6"/>
+<text x="952" y="2222" fill="#1e3a8a" font-size="18" font-weight="700"><tspan x="952" dy="0">WarrantTransactionItem.securityId</tspan></text>
+<rect x="64" y="2290" width="620" height="86" rx="10" fill="#e6f4ea" stroke="#62a576"/>
+<text x="86" y="2317" fill="#166534" font-size="15" font-weight="500"><tspan x="86" dy="0">WarrantIssuance</tspan></text><text x="86" y="2335" fill="#14532d" font-size="18" font-weight="700"><tspan x="86" dy="0">custom_id</tspan></text>
+<line x1="708" y1="2333" x2="900" y2="2333" stroke="#64748b" stroke-width="3" marker-end="url(#arrow)"/>
+<rect x="930" y="2290" width="806" height="86" rx="10" fill="#e8f0fe" stroke="#6b8fd6"/>
+<text x="952" y="2324" fill="#1e3a8a" font-size="18" font-weight="700"><tspan x="952" dy="0">WarrantTransactionItem.securityLabel</tspan></text>
+<rect x="64" y="2392" width="620" height="86" rx="10" fill="#e6f4ea" stroke="#62a576"/>
+<text x="86" y="2419" fill="#166534" font-size="15" font-weight="500"><tspan x="86" dy="0">WarrantIssuance</tspan></text><text x="86" y="2437" fill="#14532d" font-size="18" font-weight="700"><tspan x="86" dy="0">stakeholder_id</tspan></text>
+<line x1="708" y1="2435" x2="900" y2="2435" stroke="#64748b" stroke-width="3" marker-end="url(#arrow)"/>
+<rect x="930" y="2392" width="806" height="86" rx="10" fill="#e8f0fe" stroke="#6b8fd6"/>
+<text x="952" y="2426" fill="#1e3a8a" font-size="18" font-weight="700"><tspan x="952" dy="0">WarrantTransactionItem.stakeholderId</tspan></text>
+<rect x="64" y="2494" width="620" height="86" rx="10" fill="#e6f4ea" stroke="#62a576"/>
+<text x="86" y="2521" fill="#166534" font-size="15" font-weight="500"><tspan x="86" dy="0">WarrantTransfer</tspan></text><text x="86" y="2539" fill="#14532d" font-size="18" font-weight="700"><tspan x="86" dy="0">security_id</tspan></text>
+<line x1="708" y1="2537" x2="900" y2="2537" stroke="#64748b" stroke-width="3" marker-end="url(#arrow)"/>
+<rect x="930" y="2494" width="806" height="86" rx="10" fill="#e8f0fe" stroke="#6b8fd6"/>
+<text x="952" y="2528" fill="#1e3a8a" font-size="18" font-weight="700"><tspan x="952" dy="0">WarrantTransactionItem.securityId</tspan></text>
+</svg>

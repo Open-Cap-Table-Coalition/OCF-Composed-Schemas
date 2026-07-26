@@ -47,11 +47,17 @@ derived coverage stays reviewable, and enum remaps are checked value-by-value.
   Carta item. The flow tables appear before the object panels; the full aggregate mapping detail
   remains below as the audit trail. The tables are a report-only recut of the existing mapping
   evidence and do not change coverage counts or mapping semantics.
+  The same flow ledger can render one native SVG artifact per related Carta parent via
+  `npm run mapping:inverse -- --inverse-svg-dir docs/generated/mapping-flows`. Each SVG is a direct
+  row-based source-property → target-property view grouped by nested variant; it has no graph layout
+  or container-level arrow endpoints. The checked-in gallery is [available here](generated/mapping-flows/README.md),
+  and CI uploads the SVGs alongside the text report and embeds them in the job summary when the branch
+  assets are available.
   Target properties with no mapped OCF source remain explicit in each panel.
 - CI runs the equivalent `npm run mapping:inverse` command on every pull request and push to `main`.
   That command renders the same shared inverse-coverage ledger and role policy used by the
-  generated Core reports, then uploads the object-panel view as a CI artifact.
-  The generated report is added to the GitHub Actions job summary and uploaded as the
+  generated Core reports, then uploads the object-panel view and native SVG flow artifacts as a CI artifact.
+  The generated report and inline SVG previews are added to the GitHub Actions job summary and uploaded as the
   `mapping-inverse-report` artifact, including when another mapping check fails.
 
 Each mapping page also contains a generated **Ask a mapping question** table with a prefilled

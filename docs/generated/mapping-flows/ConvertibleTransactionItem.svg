@@ -1,0 +1,110 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1800" height="2232" viewBox="0 0 1800 2232" role="img" aria-labelledby="title desc">
+<title id="title">ConvertibleTransactionItem related object property flows</title>
+<desc id="desc">Direct OCF source-property to Carta target-property mappings grouped by nested variant.</desc>
+<style>text{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}</style>
+<defs><marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto" markerUnits="strokeWidth"><path d="M0,0 L10,5 L0,10 z" fill="#64748b"/></marker></defs>
+<rect width="1800" height="2232" fill="#f8fafc"/>
+<text x="64" y="48" fill="#0f172a" font-size="32" font-weight="700"><tspan x="64" dy="0">ConvertibleTransactionItem</tspan></text>
+<text x="64" y="82" fill="#475569" font-size="20"><tspan x="64" dy="0">Related object property flows</tspan></text>
+<text x="64" y="112" fill="#64748b" font-size="16"><tspan x="64" dy="0">Each arrow is one explicit OCF property → Carta property mapping</tspan></text>
+<rect x="1360" y="36" width="20" height="20" rx="4" fill="#e6f4ea" stroke="#62a576"/>
+<text x="1394" y="52" fill="#166534" font-size="16"><tspan x="1394" dy="0">OCF source</tspan></text>
+<rect x="1570" y="36" width="20" height="20" rx="4" fill="#e8f0fe" stroke="#6b8fd6"/>
+<text x="1604" y="52" fill="#1e3a8a" font-size="16"><tspan x="1604" dy="0">Carta target</tspan></text>
+<rect x="64" y="132" width="1672" height="52" rx="10" fill="#ede9fe" stroke="#a78bfa"/>
+<text x="84" y="164" fill="#4c1d95" font-size="20" font-weight="700"><tspan x="84" dy="0">cancellations[] → ConvertibleCancellationTransaction</tspan></text>
+<rect x="64" y="196" width="620" height="86" rx="10" fill="#e6f4ea" stroke="#62a576"/>
+<text x="86" y="223" fill="#166534" font-size="15" font-weight="500"><tspan x="86" dy="0">ConvertibleCancellation</tspan></text><text x="86" y="241" fill="#14532d" font-size="18" font-weight="700"><tspan x="86" dy="0">date</tspan></text>
+<line x1="708" y1="239" x2="900" y2="239" stroke="#64748b" stroke-width="3" marker-end="url(#arrow)"/>
+<rect x="930" y="196" width="806" height="86" rx="10" fill="#e8f0fe" stroke="#6b8fd6"/>
+<text x="952" y="230" fill="#1e3a8a" font-size="18" font-weight="700"><tspan x="952" dy="0">ConvertibleTransactionItem.cancellations[].effectiveDatetime</tspan></text>
+<rect x="64" y="298" width="620" height="86" rx="10" fill="#e6f4ea" stroke="#62a576"/>
+<text x="86" y="325" fill="#166534" font-size="15" font-weight="500"><tspan x="86" dy="0">ConvertibleCancellation</tspan></text><text x="86" y="343" fill="#14532d" font-size="18" font-weight="700"><tspan x="86" dy="0">amount</tspan></text>
+<line x1="708" y1="341" x2="900" y2="341" stroke="#64748b" stroke-width="3" marker-end="url(#arrow)"/>
+<rect x="930" y="298" width="806" height="86" rx="10" fill="#e8f0fe" stroke="#6b8fd6"/>
+<text x="952" y="332" fill="#1e3a8a" font-size="18" font-weight="700"><tspan x="952" dy="0">ConvertibleTransactionItem.cancellations[].principal</tspan></text>
+<rect x="64" y="400" width="620" height="86" rx="10" fill="#e6f4ea" stroke="#62a576"/>
+<text x="86" y="427" fill="#166534" font-size="15" font-weight="500"><tspan x="86" dy="0">ConvertibleCancellation</tspan></text><text x="86" y="445" fill="#14532d" font-size="18" font-weight="700"><tspan x="86" dy="0">reason_text</tspan></text>
+<line x1="708" y1="443" x2="900" y2="443" stroke="#64748b" stroke-width="3" marker-end="url(#arrow)"/>
+<rect x="930" y="400" width="806" height="86" rx="10" fill="#e8f0fe" stroke="#6b8fd6"/>
+<text x="952" y="434" fill="#1e3a8a" font-size="18" font-weight="700"><tspan x="952" dy="0">ConvertibleTransactionItem.cancellations[].reason</tspan></text>
+<rect x="64" y="502" width="620" height="86" rx="10" fill="#e6f4ea" stroke="#62a576"/>
+<text x="86" y="529" fill="#166534" font-size="15" font-weight="500"><tspan x="86" dy="0">ConvertibleConversion</tspan></text><text x="86" y="547" fill="#14532d" font-size="18" font-weight="700"><tspan x="86" dy="0">date</tspan></text>
+<line x1="708" y1="545" x2="900" y2="545" stroke="#64748b" stroke-width="3" marker-end="url(#arrow)"/>
+<rect x="930" y="502" width="806" height="86" rx="10" fill="#e8f0fe" stroke="#6b8fd6"/>
+<text x="952" y="536" fill="#1e3a8a" font-size="18" font-weight="700"><tspan x="952" dy="0">ConvertibleTransactionItem.cancellations[].effectiveDatetime</tspan></text>
+<rect x="64" y="630" width="1672" height="52" rx="10" fill="#ede9fe" stroke="#a78bfa"/>
+<text x="84" y="662" fill="#4c1d95" font-size="20" font-weight="700"><tspan x="84" dy="0">issuance → ConvertibleIssuanceTransaction</tspan></text>
+<rect x="64" y="694" width="620" height="86" rx="10" fill="#e6f4ea" stroke="#62a576"/>
+<text x="86" y="721" fill="#166534" font-size="15" font-weight="500"><tspan x="86" dy="0">ConvertibleIssuance</tspan></text><text x="86" y="739" fill="#14532d" font-size="18" font-weight="700"><tspan x="86" dy="0">conversion_triggers</tspan></text>
+<line x1="708" y1="737" x2="900" y2="737" stroke="#64748b" stroke-width="3" marker-end="url(#arrow)"/>
+<rect x="930" y="694" width="806" height="86" rx="10" fill="#e8f0fe" stroke="#6b8fd6"/>
+<text x="952" y="728" fill="#1e3a8a" font-size="18" font-weight="700"><tspan x="952" dy="0">ConvertibleTransactionItem.issuance.conversionTrigger</tspan></text>
+<rect x="64" y="796" width="620" height="86" rx="10" fill="#e6f4ea" stroke="#62a576"/>
+<text x="86" y="823" fill="#166534" font-size="15" font-weight="500"><tspan x="86" dy="0">ConvertibleIssuance</tspan></text><text x="86" y="841" fill="#14532d" font-size="18" font-weight="700"><tspan x="86" dy="0">conversion_triggers</tspan></text>
+<line x1="708" y1="839" x2="900" y2="839" stroke="#64748b" stroke-width="3" marker-end="url(#arrow)"/>
+<rect x="930" y="796" width="806" height="86" rx="10" fill="#e8f0fe" stroke="#6b8fd6"/>
+<text x="952" y="830" fill="#1e3a8a" font-size="18" font-weight="700"><tspan x="952" dy="0">ConvertibleTransactionItem.issuance.dayCountBasis</tspan></text>
+<rect x="64" y="898" width="620" height="86" rx="10" fill="#e6f4ea" stroke="#62a576"/>
+<text x="86" y="925" fill="#166534" font-size="15" font-weight="500"><tspan x="86" dy="0">ConvertibleIssuance</tspan></text><text x="86" y="943" fill="#14532d" font-size="18" font-weight="700"><tspan x="86" dy="0">conversion_triggers</tspan></text>
+<line x1="708" y1="941" x2="900" y2="941" stroke="#64748b" stroke-width="3" marker-end="url(#arrow)"/>
+<rect x="930" y="898" width="806" height="86" rx="10" fill="#e8f0fe" stroke="#6b8fd6"/>
+<text x="952" y="932" fill="#1e3a8a" font-size="18" font-weight="700"><tspan x="952" dy="0">ConvertibleTransactionItem.issuance.discountPercentage</tspan></text>
+<rect x="64" y="1000" width="620" height="86" rx="10" fill="#e6f4ea" stroke="#62a576"/>
+<text x="86" y="1027" fill="#166534" font-size="15" font-weight="500"><tspan x="86" dy="0">ConvertibleIssuance</tspan></text><text x="86" y="1045" fill="#14532d" font-size="18" font-weight="700"><tspan x="86" dy="0">conversion_triggers</tspan></text>
+<line x1="708" y1="1043" x2="900" y2="1043" stroke="#64748b" stroke-width="3" marker-end="url(#arrow)"/>
+<rect x="930" y="1000" width="806" height="86" rx="10" fill="#e8f0fe" stroke="#6b8fd6"/>
+<text x="952" y="1034" fill="#1e3a8a" font-size="18" font-weight="700"><tspan x="952" dy="0">ConvertibleTransactionItem.issuance.interestAccrualPeriod</tspan></text>
+<rect x="64" y="1102" width="620" height="86" rx="10" fill="#e6f4ea" stroke="#62a576"/>
+<text x="86" y="1129" fill="#166534" font-size="15" font-weight="500"><tspan x="86" dy="0">ConvertibleIssuance</tspan></text><text x="86" y="1147" fill="#14532d" font-size="18" font-weight="700"><tspan x="86" dy="0">conversion_triggers</tspan></text>
+<line x1="708" y1="1145" x2="900" y2="1145" stroke="#64748b" stroke-width="3" marker-end="url(#arrow)"/>
+<rect x="930" y="1102" width="806" height="86" rx="10" fill="#e8f0fe" stroke="#6b8fd6"/>
+<text x="952" y="1136" fill="#1e3a8a" font-size="18" font-weight="700"><tspan x="952" dy="0">ConvertibleTransactionItem.issuance.interestCompoundingPeriod</tspan></text>
+<rect x="64" y="1204" width="620" height="86" rx="10" fill="#e6f4ea" stroke="#62a576"/>
+<text x="86" y="1231" fill="#166534" font-size="15" font-weight="500"><tspan x="86" dy="0">ConvertibleIssuance</tspan></text><text x="86" y="1249" fill="#14532d" font-size="18" font-weight="700"><tspan x="86" dy="0">conversion_triggers</tspan></text>
+<line x1="708" y1="1247" x2="900" y2="1247" stroke="#64748b" stroke-width="3" marker-end="url(#arrow)"/>
+<rect x="930" y="1204" width="806" height="86" rx="10" fill="#e8f0fe" stroke="#6b8fd6"/>
+<text x="952" y="1238" fill="#1e3a8a" font-size="18" font-weight="700"><tspan x="952" dy="0">ConvertibleTransactionItem.issuance.interestRate</tspan></text>
+<rect x="64" y="1306" width="620" height="86" rx="10" fill="#e6f4ea" stroke="#62a576"/>
+<text x="86" y="1333" fill="#166534" font-size="15" font-weight="500"><tspan x="86" dy="0">ConvertibleIssuance</tspan></text><text x="86" y="1351" fill="#14532d" font-size="18" font-weight="700"><tspan x="86" dy="0">date</tspan></text>
+<line x1="708" y1="1349" x2="900" y2="1349" stroke="#64748b" stroke-width="3" marker-end="url(#arrow)"/>
+<rect x="930" y="1306" width="806" height="86" rx="10" fill="#e8f0fe" stroke="#6b8fd6"/>
+<text x="952" y="1340" fill="#1e3a8a" font-size="18" font-weight="700"><tspan x="952" dy="0">ConvertibleTransactionItem.issuance.issueDatetime</tspan></text>
+<rect x="64" y="1408" width="620" height="86" rx="10" fill="#e6f4ea" stroke="#62a576"/>
+<text x="86" y="1435" fill="#166534" font-size="15" font-weight="500"><tspan x="86" dy="0">ConvertibleIssuance</tspan></text><text x="86" y="1453" fill="#14532d" font-size="18" font-weight="700"><tspan x="86" dy="0">investment_amount</tspan></text>
+<line x1="708" y1="1451" x2="900" y2="1451" stroke="#64748b" stroke-width="3" marker-end="url(#arrow)"/>
+<rect x="930" y="1408" width="806" height="86" rx="10" fill="#e8f0fe" stroke="#6b8fd6"/>
+<text x="952" y="1442" fill="#1e3a8a" font-size="18" font-weight="700"><tspan x="952" dy="0">ConvertibleTransactionItem.issuance.principal</tspan></text>
+<rect x="64" y="1510" width="620" height="86" rx="10" fill="#e6f4ea" stroke="#62a576"/>
+<text x="86" y="1537" fill="#166534" font-size="15" font-weight="500"><tspan x="86" dy="0">ConvertibleIssuance</tspan></text><text x="86" y="1555" fill="#14532d" font-size="18" font-weight="700"><tspan x="86" dy="0">conversion_triggers</tspan></text>
+<line x1="708" y1="1553" x2="900" y2="1553" stroke="#64748b" stroke-width="3" marker-end="url(#arrow)"/>
+<rect x="930" y="1510" width="806" height="86" rx="10" fill="#e8f0fe" stroke="#6b8fd6"/>
+<text x="952" y="1544" fill="#1e3a8a" font-size="18" font-weight="700"><tspan x="952" dy="0">ConvertibleTransactionItem.issuance.valuationCap</tspan></text>
+<rect x="64" y="1638" width="1672" height="52" rx="10" fill="#ede9fe" stroke="#a78bfa"/>
+<text x="84" y="1670" fill="#4c1d95" font-size="20" font-weight="700"><tspan x="84" dy="0">Shared parent properties</tspan></text>
+<rect x="64" y="1702" width="620" height="86" rx="10" fill="#e6f4ea" stroke="#62a576"/>
+<text x="86" y="1729" fill="#166534" font-size="15" font-weight="500"><tspan x="86" dy="0">ConvertibleCancellation</tspan></text><text x="86" y="1747" fill="#14532d" font-size="18" font-weight="700"><tspan x="86" dy="0">security_id</tspan></text>
+<line x1="708" y1="1745" x2="900" y2="1745" stroke="#64748b" stroke-width="3" marker-end="url(#arrow)"/>
+<rect x="930" y="1702" width="806" height="86" rx="10" fill="#e8f0fe" stroke="#6b8fd6"/>
+<text x="952" y="1736" fill="#1e3a8a" font-size="18" font-weight="700"><tspan x="952" dy="0">ConvertibleTransactionItem.securityId</tspan></text>
+<rect x="64" y="1804" width="620" height="86" rx="10" fill="#e6f4ea" stroke="#62a576"/>
+<text x="86" y="1831" fill="#166534" font-size="15" font-weight="500"><tspan x="86" dy="0">ConvertibleConversion</tspan></text><text x="86" y="1849" fill="#14532d" font-size="18" font-weight="700"><tspan x="86" dy="0">security_id</tspan></text>
+<line x1="708" y1="1847" x2="900" y2="1847" stroke="#64748b" stroke-width="3" marker-end="url(#arrow)"/>
+<rect x="930" y="1804" width="806" height="86" rx="10" fill="#e8f0fe" stroke="#6b8fd6"/>
+<text x="952" y="1838" fill="#1e3a8a" font-size="18" font-weight="700"><tspan x="952" dy="0">ConvertibleTransactionItem.securityId</tspan></text>
+<rect x="64" y="1906" width="620" height="86" rx="10" fill="#e6f4ea" stroke="#62a576"/>
+<text x="86" y="1933" fill="#166534" font-size="15" font-weight="500"><tspan x="86" dy="0">ConvertibleIssuance</tspan></text><text x="86" y="1951" fill="#14532d" font-size="18" font-weight="700"><tspan x="86" dy="0">security_id</tspan></text>
+<line x1="708" y1="1949" x2="900" y2="1949" stroke="#64748b" stroke-width="3" marker-end="url(#arrow)"/>
+<rect x="930" y="1906" width="806" height="86" rx="10" fill="#e8f0fe" stroke="#6b8fd6"/>
+<text x="952" y="1940" fill="#1e3a8a" font-size="18" font-weight="700"><tspan x="952" dy="0">ConvertibleTransactionItem.securityId</tspan></text>
+<rect x="64" y="2008" width="620" height="86" rx="10" fill="#e6f4ea" stroke="#62a576"/>
+<text x="86" y="2035" fill="#166534" font-size="15" font-weight="500"><tspan x="86" dy="0">ConvertibleIssuance</tspan></text><text x="86" y="2053" fill="#14532d" font-size="18" font-weight="700"><tspan x="86" dy="0">custom_id</tspan></text>
+<line x1="708" y1="2051" x2="900" y2="2051" stroke="#64748b" stroke-width="3" marker-end="url(#arrow)"/>
+<rect x="930" y="2008" width="806" height="86" rx="10" fill="#e8f0fe" stroke="#6b8fd6"/>
+<text x="952" y="2042" fill="#1e3a8a" font-size="18" font-weight="700"><tspan x="952" dy="0">ConvertibleTransactionItem.securityLabel</tspan></text>
+<rect x="64" y="2110" width="620" height="86" rx="10" fill="#e6f4ea" stroke="#62a576"/>
+<text x="86" y="2137" fill="#166534" font-size="15" font-weight="500"><tspan x="86" dy="0">ConvertibleIssuance</tspan></text><text x="86" y="2155" fill="#14532d" font-size="18" font-weight="700"><tspan x="86" dy="0">stakeholder_id</tspan></text>
+<line x1="708" y1="2153" x2="900" y2="2153" stroke="#64748b" stroke-width="3" marker-end="url(#arrow)"/>
+<rect x="930" y="2110" width="806" height="86" rx="10" fill="#e8f0fe" stroke="#6b8fd6"/>
+<text x="952" y="2144" fill="#1e3a8a" font-size="18" font-weight="700"><tspan x="952" dy="0">ConvertibleTransactionItem.stakeholderId</tspan></text>
+</svg>

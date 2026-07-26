@@ -47,6 +47,12 @@ export interface MappingInverseReportOptions {
   mappingDocuments?: ReadonlyMap<string, MappingQuestionDocument>;
 }
 
+export interface MappingFlowSvgOptions {
+  inverse: InverseCoverageLedger;
+  targetObject?: string;
+  mappingDocuments: ReadonlyMap<string, MappingQuestionDocument>;
+}
+
 interface MappingQuestionDocument {
   questions?: readonly MappingQuestion[];
   mapping?: Record<string, unknown>;
@@ -1032,6 +1038,259 @@ function renderRelatedObjectDiagrams(
   diagrams.forEach((diagram) => lines.push("", ...diagram));
   lines.push("<!-- mapping-flow:end -->");
   return lines;
+}
+
+interface SvgFlowRow {
+  route: SourceRoute;
+  flow: PropertyFlowRow;
+  targetPrefix: string;
+}
+
+interface SvgFlowSection {
+  title: string;
+  rows: SvgFlowRow[];
+}
+
+function svgEscape(value: string): string {
+  return value
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&apos;");
+}
+
+function svgSlug(value: string): string {
+  return value.replace(/[^A-Za-z0-9._-]+/g, "-").replace(/^-+|-+$/g, "");
+}
+
+function svgWrap(value: string, maxChars: number): string[] {
+  if (value.length <= maxChars) return [value];
+  const lines: string[] = [];
+  let remaining = value;
+  while (remaining.length > maxChars) {
+    let split = remaining.lastIndexOf(".", maxChars);
+    if (split < Math.floor(maxChars * 0.55)) split = remaining.lastIndexOf("/", maxChars);
+    if (split < Math.floor(maxChars * 0.55)) split = maxChars;
+    else split += 1;
+    lines.push(remaining.slice(0, split));
+    remaining = remaining.slice(split);
+  }
+  if (remaining.length > 0) lines.push(remaining);
+  return lines;
+}
+
+function svgText(
+  value: string,
+  x: number,
+  y: number,
+  options: {
+    className?: string;
+    fill?: string;
+    fontSize?: number;
+    fontWeight?: number;
+    lineHeight?: number;
+    maxChars?: number;
+    anchor?: "start" | "middle" | "end";
+  } = {}
+): string {
+  const lines = svgWrap(value, options.maxChars ?? 48);
+  const className = options.className ? ` class="${options.className}"` : "";
+  const fill = options.fill ? ` fill="${options.fill}"` : "";
+  const fontSize = options.fontSize ? ` font-size="${options.fontSize}"` : "";
+  const fontWeight = options.fontWeight ? ` font-weight="${options.fontWeight}"` : "";
+  const anchor = options.anchor ? ` text-anchor="${options.anchor}"` : "";
+  const lineHeight = options.lineHeight ?? 18;
+  return `<text x="${x}" y="${y}"${className}${fill}${fontSize}${fontWeight}${anchor}>${lines
+    .map(
+      (line, index) =>
+        `<tspan x="${x}" dy="${index === 0 ? 0 : lineHeight}">${svgEscape(line)}</tspan>`
+    )
+    .join("")}</text>`;
+}
+
+function svgFlowSections(
+  object: string,
+  group: TargetGroup,
+  inverse: InverseCoverageLedger,
+  mappingDocuments: ReadonlyMap<string, MappingQuestionDocument>,
+  groups: Map<string, TargetGroup>
+): SvgFlowSection[] {
+  const variants = targetVariantsForGroup(object, group, inverse);
+  if (variants.length < 2) return [];
+  const routes = sourceRoutesForFlows(
+    variants.flatMap((variant) => variant.flows),
+    mappingDocuments
+  );
+  const sections: SvgFlowSection[] = [];
+  for (const variant of variants) {
+    const cardinality = variant.child.cardinality === "array" ? "[]" : "";
+    const targetPrefix = `${object}.${variant.property}${cardinality}.`;
+    const rows = routes.flatMap((route) =>
+      propertyFlowsForVariant(variant, route, groups).map((flow) => ({
+        route,
+        flow,
+        targetPrefix,
+      }))
+    );
+    sections.push({ title: `${variant.property}${cardinality} → ${variant.child.name}`, rows });
+  }
+
+  const nestedProperties = new Set(variants.map((variant) => variant.property));
+  const parentRows = routes.flatMap((route) =>
+    parentPropertyFlowsForRoute(route, group, nestedProperties).map((flow) => ({
+      route,
+      flow,
+      targetPrefix: `${object}.`,
+    }))
+  );
+  if (parentRows.length > 0) sections.push({ title: "Shared parent properties", rows: parentRows });
+  return sections;
+}
+
+function renderMappingFlowSvg(object: string, sections: readonly SvgFlowSection[]): string {
+  const width = 1800;
+  const sourceX = 64;
+  const sourceWidth = 620;
+  const arrowX1 = sourceX + sourceWidth + 24;
+  const arrowX2 = 900;
+  const targetX = 930;
+  const targetWidth = width - targetX - 64;
+  const rowGap = 16;
+  const sectionGap = 26;
+  const rowHeight = 86;
+  const sectionHeaderHeight = 52;
+  const titleHeight = 132;
+  const height =
+    titleHeight +
+    sections.reduce(
+      (total, section) =>
+        total +
+        sectionHeaderHeight +
+        Math.max(section.rows.length, 1) * (rowHeight + rowGap) +
+        sectionGap,
+      0
+    ) +
+    30;
+  const parts = [
+    `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" role="img" aria-labelledby="title desc">`,
+    `<title id="title">${svgEscape(object)} related object property flows</title>`,
+    `<desc id="desc">Direct OCF source-property to Carta target-property mappings grouped by nested variant.</desc>`,
+    `<style>text{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}</style>`,
+    `<defs><marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto" markerUnits="strokeWidth"><path d="M0,0 L10,5 L0,10 z" fill="#64748b"/></marker></defs>`,
+    `<rect width="${width}" height="${height}" fill="#f8fafc"/>`,
+    svgText(`${object}`, sourceX, 48, {
+      fill: "#0f172a",
+      fontSize: 32,
+      fontWeight: 700,
+      maxChars: 60,
+    }),
+    svgText("Related object property flows", sourceX, 82, {
+      fill: "#475569",
+      fontSize: 20,
+      maxChars: 80,
+    }),
+    svgText("Each arrow is one explicit OCF property → Carta property mapping", sourceX, 112, {
+      fill: "#64748b",
+      fontSize: 16,
+      maxChars: 110,
+    }),
+    `<rect x="${
+      width - 440
+    }" y="36" width="20" height="20" rx="4" fill="#e6f4ea" stroke="#62a576"/>`,
+    svgText("OCF source", width - 406, 52, { fill: "#166534", fontSize: 16, maxChars: 20 }),
+    `<rect x="${
+      width - 230
+    }" y="36" width="20" height="20" rx="4" fill="#e8f0fe" stroke="#6b8fd6"/>`,
+    svgText("Carta target", width - 196, 52, { fill: "#1e3a8a", fontSize: 16, maxChars: 20 }),
+  ];
+
+  let y = titleHeight;
+  sections.forEach((section) => {
+    parts.push(
+      `<rect x="${sourceX}" y="${y}" width="${
+        width - sourceX * 2
+      }" height="${sectionHeaderHeight}" rx="10" fill="#ede9fe" stroke="#a78bfa"/>`,
+      svgText(section.title, sourceX + 20, y + 32, {
+        fill: "#4c1d95",
+        fontSize: 20,
+        fontWeight: 700,
+        maxChars: 100,
+      })
+    );
+    y += sectionHeaderHeight + 12;
+
+    if (section.rows.length === 0) {
+      parts.push(
+        svgText("No direct property flows for this variant.", sourceX + 20, y + 28, {
+          fill: "#64748b",
+          fontSize: 16,
+          maxChars: 70,
+        })
+      );
+      y += rowHeight + rowGap;
+    } else {
+      section.rows.forEach((row) => {
+        const sourceLabel = sourceRouteDisplayName(row.route);
+        const condition =
+          row.route.discriminator && row.route.when && row.route.when.length > 0
+            ? `when ${row.route.discriminator} = ${row.route.when.join(" or ")}`
+            : undefined;
+        const sourceLines = [sourceLabel, row.flow.sourceField, ...(condition ? [condition] : [])];
+        const targetLabel = `${row.targetPrefix}${row.flow.targetField}`;
+        const sourceText = sourceLines
+          .map((line, index) =>
+            svgText(line, sourceX + 22, y + 27 + index * 18, {
+              fill: index === 1 ? "#14532d" : "#166534",
+              fontSize: index === 1 ? 18 : index === 2 ? 13 : 15,
+              fontWeight: index === 1 ? 700 : 500,
+              maxChars: 58,
+            })
+          )
+          .join("");
+        const targetText = svgText(targetLabel, targetX + 22, y + 34, {
+          fill: "#1e3a8a",
+          fontSize: 18,
+          fontWeight: 700,
+          maxChars: 66,
+        });
+        parts.push(
+          `<rect x="${sourceX}" y="${y}" width="${sourceWidth}" height="${rowHeight}" rx="10" fill="#e6f4ea" stroke="#62a576"/>`,
+          sourceText,
+          `<line x1="${arrowX1}" y1="${y + rowHeight / 2}" x2="${arrowX2}" y2="${
+            y + rowHeight / 2
+          }" stroke="#64748b" stroke-width="3" marker-end="url(#arrow)"/>`,
+          `<rect x="${targetX}" y="${y}" width="${targetWidth}" height="${rowHeight}" rx="10" fill="#e8f0fe" stroke="#6b8fd6"/>`,
+          targetText
+        );
+        y += rowHeight + rowGap;
+      });
+    }
+    y += sectionGap;
+  });
+  parts.push("</svg>");
+  return parts.join("\n");
+}
+
+export function renderMappingFlowSvgs(options: MappingFlowSvgOptions): Map<string, string> {
+  const groups = buildGroups(options.inverse);
+  const rows = options.targetObject
+    ? options.inverse.defs.filter((row) => row.name === options.targetObject)
+    : mappedDefinitions(options.inverse);
+  const artifacts = new Map<string, string>();
+  for (const row of rows) {
+    const group = groups.get(row.name) ?? { object: row.name, flows: new Map() };
+    const sections = svgFlowSections(
+      row.name,
+      group,
+      options.inverse,
+      options.mappingDocuments,
+      groups
+    );
+    if (sections.length === 0) continue;
+    artifacts.set(`${svgSlug(row.name)}.svg`, renderMappingFlowSvg(row.name, sections));
+  }
+  return artifacts;
 }
 
 function renderFlowNode(

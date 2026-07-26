@@ -23,9 +23,9 @@ jobs:
       - name: Generate shared inverse coverage report
         shell: bash
         run: |
-          mkdir -p ci-artifacts
+          mkdir -p ci-artifacts/mapping-flows
           set +e
-          npm run --silent mapping:inverse > ci-artifacts/mapping-inverse-report.txt 2>&1
+          npm run --silent mapping:inverse -- --inverse-svg-dir ci-artifacts/mapping-flows > ci-artifacts/mapping-inverse-report.txt 2>&1
           status=$?
           echo '## Inverse coverage report' >> "$GITHUB_STEP_SUMMARY"
           awk '
@@ -79,13 +79,20 @@ jobs:
               close_text()
             }
           ' ci-artifacts/mapping-inverse-report.txt >> "$GITHUB_STEP_SUMMARY"
+          echo '' >> "$GITHUB_STEP_SUMMARY"
+          echo '### Inline related-object flow previews' >> "$GITHUB_STEP_SUMMARY"
+          for svg in ci-artifacts/mapping-flows/*.svg; do
+            [ -e "$svg" ] || continue
+            name=$(basename "$svg" .svg)
+            echo "![${name}](https://raw.githubusercontent.com/${GITHUB_REPOSITORY}/${GITHUB_SHA}/docs/generated/mapping-flows/${name}.svg)" >> "$GITHUB_STEP_SUMMARY"
+          done
           exit "$status"
       - name: Upload inverse coverage report
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: mapping-inverse-report
-          path: ci-artifacts/mapping-inverse-report.txt
+          path: ci-artifacts
           if-no-files-found: error
       - run: npm run mapping:coverage:check
       - run: npm run core:check
