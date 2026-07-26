@@ -850,14 +850,14 @@ A missing root target is therefore not automatically a missing concept.
 | --- | ---: |
 | object slots | 588 |
 | defs with direct executable coverage | 19 |
-| direct executable slots | 163 |
-| defs with type-only slots | 7 |
+| direct executable slots | 177 |
+| defs with type-only slots | 6 |
 | defs with only type-only coverage | 1 |
-| reusable type-only slots | 34 |
+| reusable type-only slots | 28 |
 | implicit constant slots | 3 |
-| deferred slots | 4 |
+| deferred slots | 0 |
 | structural child-container slots | 20 |
-| empty slots | 364 |
+| empty slots | 360 |
 
 ### Supporting CARTA definitions excluded from standalone mapping targets (60)
 
@@ -972,7 +972,7 @@ These rows explain why a source-side complex/scalar type may have no same-named 
 | `ContactInfo` | `PointOfContact` | 2 |
 | `ContactInfoWithoutName` | `PointOfContact` | 1 |
 | `Date` | `Iso8601CompleteCalendarDate` | 9 |
-| `Date` | `Iso8601CompleteCalendarDateTime` | 27 |
+| `Date` | `Iso8601CompleteCalendarDateTime` | 30 |
 | `Monetary` | `Decimal` | 1 |
 | `Monetary` | `Iso4217CurrencyAlphaCode` | 1 |
 | `Monetary` | `Money` | 16 |

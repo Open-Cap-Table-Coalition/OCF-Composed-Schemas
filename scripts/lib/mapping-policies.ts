@@ -47,8 +47,8 @@ export const TRANSFORM_POLICIES: Readonly<Record<string, TransformPolicyDefiniti
     description: "select the first resulting-security identifier in source order",
   },
   first_trigger_with_economic_terms: {
-    hosts: ["split"],
-    description: "select the first conversion trigger carrying economic terms",
+    hosts: ["select", "split"],
+    description: "select the first conversion trigger carrying convertible economic terms",
   },
   first_termination_window: {
     hosts: ["select"],
