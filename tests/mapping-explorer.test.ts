@@ -74,6 +74,8 @@ describe("mapping explorer", () => {
     expect(index).toContain('data-side-tab="source"');
     expect(index).toContain('data-side-tab="target"');
     expect(index).toContain('data-side-panel="target"');
+    expect(index).toMatch(/styles\.css\?v=[a-z0-9]+/);
+    expect(index).toMatch(/app\.js\?v=[a-z0-9]+/);
     expect(renderMappingExplorerAppJs()).toContain("setSide(sideFromHash())");
     const targetDirectory = index.split('data-directory="Carta targets">')[1] ?? "";
     expect(targetDirectory).not.toContain('data-status="support"');
@@ -84,6 +86,7 @@ describe("mapping explorer", () => {
 
     expect(css).toContain("grid-template-columns: repeat(3, minmax(0, 1fr))");
     expect(css).toContain(".direction-tabs");
+    expect(css).toContain("appearance: none");
     expect(css).toContain(".card { min-width: 0;");
     expect(css).toContain("overflow-wrap: anywhere");
   });
