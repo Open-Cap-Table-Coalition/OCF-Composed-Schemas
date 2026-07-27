@@ -63,6 +63,7 @@ describe("mapping explorer", () => {
     expect(index).toContain(`Mapped (${explorer.metrics.mappedTargets})`);
     expect(index).toContain(`Gaps (${explorer.metrics.noSourceTargets})`);
     expect(index).toContain(`Support (${explorer.metrics.supportTargets})`);
+    expect(index).not.toContain('data-filter-button="support"');
     expect(index).toContain("Target page scope");
     expect(index).toContain("Full inventory + analysis →");
   });

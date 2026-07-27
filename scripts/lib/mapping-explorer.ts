@@ -98,7 +98,6 @@ interface DirectoryFilterCounts {
   all: number;
   mapped: number;
   gap: number;
-  support?: number;
 }
 
 export function explorerSlug(value: string): string {
@@ -490,13 +489,7 @@ function filterBar(group: string, counts: DirectoryFilterCounts): string {
     counts.mapped
   )})</button><button class="filter-button" data-filter-button="gap" type="button">Gaps (${html(
     counts.gap
-  )})</button>${
-    counts.support === undefined
-      ? ""
-      : `<button class="filter-button" data-filter-button="support" type="button">Support (${html(
-          counts.support
-        )})</button>`
-  }</div></div>`;
+  )})</button></div></div>`;
 }
 
 function targetScopeLegend(data: MappingExplorerData): string {
@@ -625,7 +618,6 @@ export function renderMappingExplorerIndex(data: MappingExplorerData): string {
         all: data.targets.length,
         mapped: data.metrics.mappedTargets,
         gap: data.metrics.noSourceTargets,
-        support: data.metrics.supportTargets,
       }
     )}</div>${targetScopeLegend(
       data
