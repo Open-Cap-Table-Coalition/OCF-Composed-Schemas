@@ -33,30 +33,17 @@ describe("core reports (the markdown drift gate's premise)", () => {
     expect(psiRow).not.toContain("no-payload");
   });
 
-  it("explains inverse coverage as a plain-language standalone-target story", async () => {
+  it("links to the canonical inverse report and keeps only shared ledger metrics", async () => {
     const report = renderGapReport(await deriveCore(process.cwd()));
-    expect(report).toContain("### CARTA inverse coverage: the simple story");
     expect(report).toContain(
-      "2. **53** are non-object definitions: **47** scalar enum definitions (field vocabularies) + **6** curated scalar support types; neither is a standalone mapping target."
+      "The canonical target-first inverse report owns the Carta-side object panels"
     );
-    expect(report).toContain(
-      "4. Of those **86**, **54** are support definitions, not standalone objects (**53** nested objects + **1** object-shaped value type), leaving **32** standalone mapping candidates."
+    expect(report).toContain("docs/generated/mapping-inverse-report.md");
+    expect(report).toContain("| Carta definitions | 139 |");
+    expect(report).toContain("| direct executable slots | 225 |");
+    expect(report).toContain("| follow-up candidates | 13 |");
+    expect(report).not.toContain(
+      "### Supporting CARTA definitions excluded from standalone mapping targets"
     );
-    expect(report).toContain(
-      "6. We have mapping evidence for **19**: **8** fully mapped and **11** partially mapped (**18** direct executable, **1** type-only, **0** deferred)."
-    );
-    expect(report).toContain(
-      "7. **13** standalone candidates have no mapping evidence yet; their inventory role tells us whether that is expected or actionable (**8** report/read-model roll-ups, **2** alternate shapes, **1** CARTA-specific families without OCF sources, **1** workflow/data gaps, **1** actionable gaps, **0** requiring review)."
-    );
-    expect(report).toContain(
-      "**Checks:** 139 = 53 non-object + 86 object-shaped; 53 = 47 scalar enum + 6 scalar support; 32 = 19 + 13; 86 = 32 + 54."
-    );
-    expect(report).toContain("### Technical slot diagnostics");
-    expect(report).not.toContain("| mapping evidence detail | count |");
-    expect(report).not.toContain("### Unmapped standalone candidates by inventory role");
-    expect(report).toContain(
-      "### Supporting CARTA definitions excluded from standalone mapping targets (60)"
-    );
-    expect(report).not.toContain("### CARTA object-definition coverage story");
   });
 });

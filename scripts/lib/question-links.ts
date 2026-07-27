@@ -5,12 +5,12 @@ export const ISSUE_TEMPLATE = "mapping-question.yml";
 export const QUESTION_LINKS_START = "<!-- mapping-question-links:start -->";
 export const QUESTION_LINKS_END = "<!-- mapping-question-links:end -->";
 
-function mappingFileUrl(mappingRelPath: string): string {
+export function mappingFileUrl(mappingRelPath: string): string {
   const normalizedPath = mappingRelPath.replaceAll("\\", "/");
   return `${REPOSITORY_URL}/blob/main/${normalizedPath}`;
 }
 
-function issueUrl(mappingRelPath: string, property: string | null): string {
+export function mappingIssueUrl(mappingRelPath: string, property: string | null): string {
   const normalizedPath = mappingRelPath.replaceAll("\\", "/");
   const mappingName = path.posix.basename(normalizedPath, ".mapping.md");
   const params = new URLSearchParams({
@@ -23,6 +23,20 @@ function issueUrl(mappingRelPath: string, property: string | null): string {
   return `${REPOSITORY_URL}/issues/new?${params.toString()}`;
 }
 
+/** Open a general coverage issue when a Carta target has no source mapping yet. */
+export function cartaCoverageIssueUrl(target: string): string {
+  const params = new URLSearchParams({
+    title: `[Mapping question] Carta target: ${target}`,
+    body: [
+      `Carta target: ${target}`,
+      "",
+      "This target currently has no executable OCF source mapping in the generated inverse coverage report.",
+      "Please identify or propose the appropriate OCF source mapping, then record the decision in the repository's mapping documentation.",
+    ].join("\n"),
+  });
+  return `${REPOSITORY_URL}/issues/new?${params.toString()}`;
+}
+
 function tableCell(value: string): string {
   return value.replaceAll("|", "\\|").replaceAll("\n", " ");
 }
@@ -31,9 +45,12 @@ function tableCell(value: string): string {
 export function renderQuestionLinks(mappingRelPath: string, properties: readonly string[]): string {
   const rows = properties.map(
     (property) =>
-      `| \`${tableCell(property)}\` | [💬 Ask a question](${issueUrl(mappingRelPath, property)}) |`
+      `| \`${tableCell(property)}\` | [💬 Ask a question](${mappingIssueUrl(
+        mappingRelPath,
+        property
+      )}) |`
   );
-  const mappingLevel = `| _(mapping-level)_ | [💬 Ask a question](${issueUrl(
+  const mappingLevel = `| _(mapping-level)_ | [💬 Ask a question](${mappingIssueUrl(
     mappingRelPath,
     null
   )}) |`;

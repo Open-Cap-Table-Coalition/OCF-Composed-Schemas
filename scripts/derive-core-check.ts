@@ -13,10 +13,10 @@
  *      canonical key-sort), AND the generated markdown reports (core-ledger.md,
  *      core-gaps.md, and rich's core-upstream.md), byte-for-byte. Hand-edits, stale
  *      builds, and orphaned files trip this; run `npm run core:build` and commit.
- *   3. DRIFT (analysis docs) — the docs/ inventories (core-unmapped-inventory.md,
- *      core-lossy-inventory.md, core-bidirectional-flow.md) must likewise equal a
- *      fresh recompute. Not covered by the package/report gates, so a generator-only
- *      change to a doc is caught here rather than slipping through.
+ *   3. DRIFT (source-side analysis docs) — the docs/ inventories
+ *      (core-unmapped-inventory.md, core-lossy-inventory.md) must likewise equal a
+ *      fresh recompute. The target-first inverse report and visual gallery have their
+ *      own canonical artifact check.
  *
  *   npm run core:check
  */
@@ -24,10 +24,9 @@ import path from "node:path";
 import { readdir, readFile } from "node:fs/promises";
 import { parse as parseYaml } from "yaml";
 
-import { deriveCore, CoreProfile, PROFILES, RICH_PROFILE } from "./lib/core-pipeline.js";
+import { deriveCore, CoreProfile, PROFILES } from "./lib/core-pipeline.js";
 import { renderLedger, renderGapReport, renderUpstreamReport } from "./lib/core-reports.js";
 import { validateSchemaPackage } from "./lib/core-schema-validation.js";
-import { renderBidiDoc } from "./derive-core-bidirectional-flow.js";
 import { renderLossyInventory } from "./derive-core-lossy-inventory.js";
 import { renderUnmappedInventory } from "./derive-core-unmapped-inventory.js";
 
@@ -170,22 +169,14 @@ async function checkProfile(repoRoot: string, profile: CoreProfile): Promise<Pro
 }
 
 /**
- * Gate 3: the analysis docs (docs/core-{unmapped-inventory,lossy-inventory,
- * bidirectional-flow}.md) must equal a fresh recompute, byte-for-byte. They come off
- * the SAME pipeline but are profile-scoped (unmapped/lossy render the strict
- * derivation, bidi the rich one). Previously they were only refreshed by core:build,
- * NOT gated — a generator-only change (e.g. doc prose/framing) could stale them
- * without tripping the package/report gates. Gated directly here.
+ * Gate 3: the source-side analysis docs (docs/core-{unmapped-inventory,lossy-inventory}.md)
+ * must equal a fresh recompute from the strict derivation.
  */
 async function checkAnalysisDocs(repoRoot: string): Promise<{ failures: string[]; count: number }> {
-  const [strict, rich] = await Promise.all([
-    deriveCore(repoRoot),
-    deriveCore(repoRoot, RICH_PROFILE),
-  ]);
+  const strict = await deriveCore(repoRoot);
   const docs: Record<string, string> = {
     "core-unmapped-inventory.md": renderUnmappedInventory(strict),
     "core-lossy-inventory.md": renderLossyInventory(strict),
-    "core-bidirectional-flow.md": renderBidiDoc(rich),
   };
   const failures: string[] = [];
   for (const [name, expected] of Object.entries(docs)) {

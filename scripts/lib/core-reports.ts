@@ -9,13 +9,7 @@
  */
 import { Derived } from "./core-pipeline.js";
 import { BOOKKEEPING, buildTargetIndex } from "./report-helpers.js";
-import {
-  buildInverseCoverage,
-  groupInverseExcludedRoleRows,
-  inverseCoverageStory,
-  isInverseMappedDefinition,
-  isInverseNonEntityDefinition,
-} from "./inverse-coverage.js";
+import { buildInverseCoverage } from "./inverse-coverage.js";
 import {
   FlowRow,
   byObjectTables,
@@ -225,147 +219,35 @@ export function renderGapReport(d: Derived): string {
     lines.push("");
   }
 
-  const story = inverseCoverageStory(inverse);
-  const roleCounts = inverse.metrics.definitionRoleCounts;
-  const otherNonObjectText = story.otherNonObjectDefs
-    ? ` + **${story.otherNonObjectDefs}** other non-object definitions`
-    : "";
-
   lines.push("## (b) Carta inverse coverage by object definition", "");
   lines.push(
-    "The inverse ledger separates executable slot coverage, reusable type mappings,",
-    "schema-backed structural child-container coverage, deferred extraction, expected derived objects,",
-    "curated value-type roles, alternate/unreachable shapes, and actionable gap candidates.",
-    "A missing root target is therefore not automatically a missing concept.",
+    "The canonical target-first inverse report owns the Carta-side object panels, source paths,",
+    "role policy, open-question projection, and visual flow artifacts. This Core gap report keeps",
+    "only a compact shared-ledger summary so it cannot drift into a second inverse renderer.",
+    "See `docs/generated/mapping-inverse-report.md` and `docs/generated/mapping-flows/` for the",
+    "complete target-first evidence and visuals.",
     "",
-    "### CARTA inverse coverage: the simple story",
-    "",
-    `1. Carta defines **${story.totalDefs}** total definitions.`,
-    `2. **${story.nonObjectDefs}** are non-object definitions: **${story.scalarEnumDefs}** scalar enum definitions (field vocabularies) + **${story.scalarValueTypeDefs}** curated scalar support types; neither is a standalone mapping target.`,
-    `3. **${story.objectDefs}** are object-shaped definitions.`,
-    `4. Of those **${story.objectDefs}**, **${story.nonEntityObjectDefs}** are support definitions, not standalone objects (**${roleCounts["nested-obj"]}** nested objects + **${roleCounts["value-type"]}** object-shaped value type), leaving **${story.standaloneCandidateDefs}** standalone mapping candidates.`,
-    `5. **${story.nonEntityDefs}** support definitions are excluded from standalone mapping: **${story.nonEntityObjectDefs}** object-shaped support definitions + **${story.scalarValueTypeDefs}** scalar support types.`,
-    `6. We have mapping evidence for **${story.mappedDefs}**: **${story.fullyMappedDefs}** fully mapped and **${story.partiallyMappedDefs}** partially mapped (**${roleCounts.direct}** direct executable, **${roleCounts["type-only"]}** type-only, **${roleCounts.deferred}** deferred).`,
-    `7. **${story.unmappedCandidateDefs}** standalone candidates have no mapping evidence yet; their inventory role tells us whether that is expected or actionable (**${roleCounts["report-rollup"]}** report/read-model roll-ups, **${roleCounts.alternate}** alternate shapes, **${roleCounts["vendor-family"]}** CARTA-specific families without OCF sources, **${roleCounts["workflow-gap"]}** workflow/data gaps, **${roleCounts.gap}** actionable gaps, **${roleCounts.review}** requiring review).`,
-    "",
-    `**Checks:** ${story.totalDefs} = ${story.nonObjectDefs} non-object + ${story.objectDefs} object-shaped; ${story.nonObjectDefs} = ${story.scalarEnumDefs} scalar enum + ${story.scalarValueTypeDefs} scalar support${otherNonObjectText}; ${story.standaloneCandidateDefs} = ${story.mappedDefs} + ${story.unmappedCandidateDefs}; ${story.objectDefs} = ${story.standaloneCandidateDefs} + ${story.nonEntityObjectDefs}.`,
-    "",
-    "### Technical slot diagnostics",
-    "",
-    "| Carta-side dimension | count |",
+    "| Shared inverse-ledger dimension | count |",
     "| --- | ---: |",
+    `| Carta definitions | ${inverse.metrics.totalDefs} |`,
+    `| Carta object definitions | ${inverse.metrics.objectDefs} |`,
     `| object slots | ${inverse.metrics.objectSlots} |`,
-    `| defs with direct executable coverage | ${inverse.metrics.directDefs} |`,
     `| direct executable slots | ${inverse.metrics.directSlots} |`,
-    `| defs with type-only slots | ${inverse.metrics.typeOnlyDefs} |`,
-    `| defs with only type-only coverage | ${inverse.metrics.typeOnlyOnlyDefs} |`,
     `| reusable type-only slots | ${inverse.metrics.typeOnlySlots} |`,
     `| implicit constant slots | ${inverse.metrics.implicitSlots} |`,
     `| deferred slots | ${inverse.metrics.deferredSlots} |`,
     `| structural child-container slots | ${inverse.metrics.structuralSlots} |`,
     `| empty slots | ${inverse.metrics.emptySlots} |`,
+    "",
+    `| direct target definitions | ${inverse.metrics.directDefs} |`,
+    `| type-only target definitions | ${inverse.metrics.typeOnlyDefs} |`,
+    `| deferred target definitions | ${inverse.metrics.definitionRoleCounts.deferred} |`,
+    `| nested/support definitions | ${
+      inverse.metrics.nestedObjDefs + inverse.metrics.valueTypeDefs
+    } |`,
+    `| follow-up candidates | ${inverse.candidates.length} |`,
     ""
   );
-
-  const excludedDefinitions = inverse.excludedRoleRows;
-  const excludedGroups = groupInverseExcludedRoleRows(excludedDefinitions);
-  lines.push(
-    `### Supporting CARTA definitions excluded from standalone mapping targets (${excludedDefinitions.length})`,
-    "",
-    `${
-      excludedGroups.nestedWithMappedParent.length + excludedGroups.nestedWithoutMappedParent.length
-    } nested object definitions and ${
-      excludedGroups.valueTypes.length
-    } value-type support definitions are intentionally not standalone targets.`,
-    `${story.scalarValueTypeDefs} scalar wrappers are outside the object-like definition denominator; ${roleCounts["value-type"]} value-type definition is object-like.`,
-    "These definitions are packaging/support types, not standalone mapping targets; their mapping/type evidence remains valid.",
-    "",
-    `#### Value-type support definitions (${excludedGroups.valueTypes.length})`,
-    "",
-    "| Carta `$def` | covered through | note |",
-    "| --- | --- | --- |"
-  );
-  for (const row of excludedGroups.valueTypes)
-    lines.push(`| \`#/$defs/${row.name}\` | ${row.coveredThrough} | ${row.reason} |`);
-  lines.push(
-    "",
-    `#### Nested objects with mapped parent coverage (${excludedGroups.nestedWithMappedParent.length})`,
-    "",
-    "| Carta `$def` | immediate parent(s) |",
-    "| --- | --- |"
-  );
-  for (const row of excludedGroups.nestedWithMappedParent)
-    lines.push(`| \`#/$defs/${row.name}\` | ${row.coveredThrough} |`);
-  lines.push(
-    "",
-    `#### Nested objects without mapped parent coverage (${excludedGroups.nestedWithoutMappedParent.length})`,
-    "",
-    "| Carta `$def` | immediate parent(s) |",
-    "| --- | --- |"
-  );
-  for (const row of excludedGroups.nestedWithoutMappedParent)
-    lines.push(`| \`#/$defs/${row.name}\` | ${row.coveredThrough} |`);
-  lines.push("");
-
-  const rawUntargeted = inverse.defs.filter(
-    (row) => !isInverseMappedDefinition(row) && !isInverseNonEntityDefinition(row)
-  );
-  lines.push(
-    `### Standalone candidates requiring inventory detail (${rawUntargeted.length})`,
-    "",
-    "The summary above counts these definitions once. The status and reason columns below",
-    "explain whether each is a read-model roll-up, alternate shape, CARTA-specific family",
-    "without an OCF source, workflow/data gap, or actionable mapping candidate.",
-    "",
-    "| Carta `$def` | status | structural parent(s) | reason |",
-    "| --- | --- | --- | --- |"
-  );
-  for (const row of rawUntargeted.sort((a, b) => a.name.localeCompare(b.name))) {
-    const parents = row.structuralParents.length ? row.structuralParents.join(", ") : "—";
-    lines.push(`| \`#/$defs/${row.name}\` | ${row.status} | ${parents} | ${row.reason ?? "—"} |`);
-  }
-  lines.push("");
-
-  const correspondences = inverse.typeCorrespondences.filter(
-    (row) =>
-      row.sourceType === "Date" ||
-      row.sourceType === "ContactInfo" ||
-      row.sourceType === "ContactInfoWithoutName" ||
-      row.sourceType === "Address" ||
-      row.sourceType === "Monetary"
-  );
-  lines.push(
-    `### Reusable and schema-aware type correspondences (${correspondences.length} selected examples)`,
-    "",
-    "These rows explain why a source-side complex/scalar type may have no same-named Carta",
-    "`$def`: the actual destination can be a wrapped scalar or a context-specific property.",
-    "",
-    "| OCF type | Carta type/shape | evidence edges |",
-    "| --- | --- | ---: |"
-  );
-  for (const row of correspondences) {
-    lines.push(`| \`${row.sourceType}\` | \`${row.targetType}\` | ${row.edges.length} |`);
-  }
-  if (!correspondences.length) lines.push("| (none) | — | — |");
-  lines.push("");
-
-  lines.push(
-    "### Actionable inverse candidates",
-    "",
-    "These are Carta capabilities with no current executable OCF source edge after the",
-    "role policy excludes expected roll-ups and alternate schema shapes.",
-    "",
-    "| Carta `$def` | disposition | reason |",
-    "| --- | --- | --- |"
-  );
-  const actionable = inverse.candidates.filter((row) =>
-    ["vendor-family", "workflow-gap", "gap"].includes(row.status)
-  );
-  for (const row of actionable) {
-    lines.push(`| \`#/$defs/${row.name}\` | ${row.status} | ${row.reason ?? "—"} |`);
-  }
-  if (!actionable.length) lines.push("| (none) | — | — |");
-  lines.push("");
   return lines.join("\n") + "\n";
 }
 

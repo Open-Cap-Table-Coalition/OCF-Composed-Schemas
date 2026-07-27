@@ -36,21 +36,22 @@ derived coverage stays reviewable, and enum remaps are checked value-by-value.
   When the same Carta object is reached through a polymorphic mapping, the panel starts with a
   compact **resulting Carta object flavors** summary. Each flavor names the source route, the
   discriminator condition, and the target properties mapped by that route. Conditional property
-  flows that enrich an object without creating a new object flavor are shown separately. The
-  The native SVG and interactive HTML artifacts provide the detailed **related object property flows**
+  flows that enrich an object without creating a new object flavor are shown separately.
+  Native SVG and interactive HTML artifacts provide the detailed **target property flows**
   when standalone OCF object mappings populate multiple child slots on the same Carta object (for
   example, `issuance` versus `cancellations[]` on a transaction item). The CI text report omits that
   duplicated table section and uses compact target-first aggregate ledgers with explicit `parent
   properties` and `contains` sections; the SVG/HTML artifacts preserve the full per-source-record
   flow view. A routed OCF record follows its matching branch,
   while distinct lifecycle records may still aggregate into one parent Carta item.
-  The same flow ledger can render one native SVG artifact per related Carta parent via
-  `npm run mapping:inverse -- --inverse-svg-dir docs/generated/mapping-flows`. Each SVG is a direct
+  The same flow ledger can render one native SVG artifact per mapped Carta target via
+  `npm run mapping:artifacts`. Each SVG is a direct
   native UML-like source/target class graph with explicit property and containment edges; it does not
   depend on Mermaid or GitHub's graph renderer. Dense families switch to target-specific mapping lanes
   that retain exact field mappings without crossing the whole graph. Parent-level mapped properties are
-  shown in the Carta parent node, including their count. The checked-in gallery is [available here](generated/mapping-flows/README.md),
-  and CI uploads the SVGs alongside the text report. CI also uploads a self-contained interactive HTML
+  shown in the Carta parent node, including their count. The checked-in report and gallery are [available here](generated/mapping-inverse-report.md),
+  and [here](generated/mapping-flows/README.md); CI uploads the SVGs alongside the text report. The checked-in
+  artifacts are drift-checked by `npm run mapping:artifacts:check`. CI also uploads a self-contained interactive HTML
   viewer; the job summary links to it when the artifact is available. A reproducible copy is checked in
   at [generated/mapping-flows-interactive/index.html](generated/mapping-flows-interactive/index.html)
   for local serving, while GitHub renders the checked-in SVGs inline. The HTML viewer supports
@@ -62,6 +63,14 @@ derived coverage stays reviewable, and enum remaps are checked value-by-value.
   generated Core reports, then uploads the object-panel view and native SVG flow artifacts as a CI artifact.
   The generated report and inline SVG previews are added to the GitHub Actions job summary and uploaded as the
   `mapping-inverse-report` artifact, including when another mapping check fails.
+
+  The same generation step materializes the [Mapping Explorer](generated/mapping-explorer/index.html),
+  a static multi-page browse surface for all green OCF objects and all Carta object-like definitions.
+  It deliberately includes the already-derived no-target OCF objects and no-source Carta candidates;
+  it adds presentation and links only, without a second coverage calculation. Every source page links
+  to its mapping-level and field-level issue forms; every target gap page opens a prefilled coverage issue.
+  The `Mapping Explorer` workflow builds a pull-request preview artifact and deploys the `main` result
+  through GitHub Pages.
 
 Each mapping page also contains a generated **Ask a mapping question** table with a prefilled
 GitHub issue-form link for every source property. The links pass the mapping file, property path,

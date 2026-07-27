@@ -367,18 +367,19 @@ into Core.
 
 ### Shape
 
-Each report re-derives the ledger (a cheap `deriveCore` call, under the profile its question needs
-— `core:bidi` under rich, `core:unmapped` under strict) and re-cuts it into markdown tables and
-mermaid diagrams. The key discipline: **no report re-implements classification.** The loss
-semantics live in exactly one place (the classifier); reports only *read* its verdicts and render
-them. Change what "loss" means and every report follows for free. The atom here is a **flow**: one
-OCF field traced to the Carta slot(s) its mapping sends it to (or to a "no home" sink).
+The source-side loss inventories re-derive the Core ledger (a cheap `deriveCore` call under the
+strict profile) and recut its verdicts into Markdown tables and Mermaid diagrams. The canonical
+target-first inverse report and visuals load the green mapping corpus once, build the shared
+Carta-side inverse ledger, and render the text report, SVG gallery, and interactive HTML viewer.
+The key discipline is the same in both paths: **no report re-implements classification.** The loss
+semantics live in the classifier and inverse ledger; renderers only *read* those facts. Change a
+mapping or schema rule and every relevant artifact follows for free.
 
-### The three flavors, and what each asks
+### The canonical report families, and what each asks
 
 | Report | Question it answers |
 | --- | --- |
-| **bidirectional coverage** (`core:bidi`) | Treating rich Core as an interop hub, what flows *in* from each side and what's *left behind*? |
+| **inverse coverage** (`mapping:artifacts`) | Which Carta targets and properties have executable OCF mapping evidence, what remains empty, and how do source routes reach nested targets? |
 | **lossy inventory** (`core:lossy`) | Which fields fall out of Core but *do* have a (lossy) Carta home, vs none at all? |
 | **unmapped inventory** (`core:unmapped`) | Which OCF properties have *no* Carta home at all? |
 
@@ -388,38 +389,22 @@ no route). Polymorphic flavors are drawn as **separate nodes** so you can see th
 `StockIssuance [Rsa]` and `[Default]` land on different Carta objects. Fixed `const:` fills are
 credited as *filled* targets, not phantom gaps.
 
-> **These three are discussion artifacts — not drift-gated.** The membership ledger and the gap
-> report *are* gated; the bidi/lossy/unmapped inventories are analysis inputs for the rich-Core
-> conversation. Same rendering engine, two different gating contracts.
+> **The target-first inverse artifacts are drift-checked.** The OCF-side lossy/unmapped inventories
+> remain discussion artifacts derived from the Core classifier. They are intentionally separate:
+> the inverse ledger cannot answer whether an OCF field is lossy or has no destination.
 
-### Example — the generated flow diagram (`StockTransfer [Default]`)
+### Canonical target-first artifacts
 
-Trimmed straight from the generated `docs/core-bidirectional-flow.md` (the hub view):
+Run `npm run mapping:artifacts` to regenerate the checked-in
+[`mapping-inverse-report.md`](./generated/mapping-inverse-report.md),
+[native SVG gallery](./generated/mapping-flows/README.md), and
+[interactive viewer](./generated/mapping-flows-interactive/index.html). The report preserves the
+target-first audit ledger; the SVGs preserve exact source-property → target-property edges and
+containment for every mapped Carta target with executable object evidence.
 
-```mermaid
-flowchart LR
-  subgraph SRC["OCF (= Core, source)"]
-    o0["StockTransfer [Default]"]:::adm
-  end
-  subgraph TGT["Carta"]
-    t0["CertificateCancellationTransaction"]:::carta
-    t1["CertificateIssuanceTransaction"]:::carta
-  end
-  ocflost["⌀ OCF lost (no Carta home)"]:::lost
-  cartalost["⌀ Carta lost (no OCF source)"]:::lost
-  o0 -->|"quantity → quantity"| t0
-  o0 -->|"quantity → quantity"| t1
-  o0 -->|"date → effectiveDatetime"| t0
-  o0 -->|"⊙ reason=CERTIFICATE_CANCELLATION_REASON_TRANSFERRED"| t0
-  o0 -.->|"consideration_text, security_id"| ocflost
-  t1 -.->|"shareClassId, precededBySecurityId"| cartalost
-```
-
-Solid edges are property flows (`quantity` to *both* steps); the `⊙` edge is a fixed `const` reason
-code; and loss is shown *both* directions — a dashed edge to `⌀ OCF lost` for OCF fields with no
-Carta home, and one to `⌀ Carta lost` for Carta slots no OCF field fills. This is the whole
-pipeline made visible: authored mapping → validated → projected → rendered as a per-object fidelity
-picture.
+The source-side inventories remain the authoritative place for `no-destination`,
+`existence-loss`, and `heuristic` OCF fields. Those facts are intentionally not duplicated in the
+target-first report.
 
 ---
 
@@ -456,4 +441,4 @@ If you remember nothing else, remember these — they're the DNA the whole syste
 | Mapping | `objects/…`, `types/…` `*.mapping.md` | — | [mapping-validation](./mapping-validation.md), [polymorphic-transaction-routing](./polymorphic-transaction-routing.md) |
 | Validate | `npm run mapping:validate` | `scripts/lib/mapping-{parser,validator}.ts` | [mapping-validation](./mapping-validation.md) |
 | Project | `npm run core:build` / `core:check` | `scripts/lib/core-{pipeline,classifier,admissibility,schema-emitter}.ts` | [ocf-core-goal](./ocf-core-goal.md), [ocf-core-spec](./ocf-core-spec.md) |
-| Report | `core:build` emits the **gated** ledger/gap reports (`core/`, `core-rich/`); `core:bidi` / `core:lossy` / `core:unmapped` emit the **non-gated** inventories (`docs/core-*.md`) | `scripts/lib/report-flow.ts`, `scripts/derive-core-*.ts` | generated `core/core-{ledger,gaps}.md`, `docs/core-{bidirectional-flow,lossy-inventory,unmapped-inventory}.md` |
+| Report | `core:build` emits the **gated** ledger/gap reports (`core/`, `core-rich/`) and the OCF-side loss inventories; `mapping:artifacts` emits the canonical Carta-side inverse report and visuals | `scripts/lib/report-flow.ts`, `scripts/derive-core-*.ts`, `scripts/lib/mapping-inverse-report.ts`, `scripts/generate-mapping-inverse-artifacts.ts` | generated `core/core-{ledger,gaps}.md`, `docs/core-{lossy-inventory,unmapped-inventory}.md`, `docs/generated/mapping-{inverse-report,flows,flows-interactive}` |

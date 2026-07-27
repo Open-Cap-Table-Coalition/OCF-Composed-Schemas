@@ -105,7 +105,7 @@ If your product implements OCF v1 and you want to understand what a Carta fold-d
 2. [`docs/core-unmapped-inventory.md`](./docs/core-unmapped-inventory.md) lists OCF properties with **no Carta home at all**. These are the fields a fold cannot represent in the pinned target bundle.
 3. [`core-rich/core-upstream.md`](./core-rich/core-upstream.md) turns lossy-home fields into **proposed upstream-OCF change candidates**. OCF-required fields are highlighted because they are the strongest signal that a Core-compatible or relaxed representation may be needed.
 4. [`core/core-gaps.md`](./core/core-gaps.md) and [`core-rich/core-gaps.md`](./core-rich/core-gaps.md) group the losses by OCF object and separately call out Carta concepts for which OCF has no source concept.
-5. [`docs/core-bidirectional-flow.md`](./docs/core-bidirectional-flow.md) shows what flows into the rich interop hub from OCF and from Carta. It is a coverage report, not a Carta-to-OCF round-trip guarantee; field-level inverse semantics are documented in [`docs/mapping-validation.md`](./docs/mapping-validation.md#inverse-semantics).
+5. [`docs/generated/mapping-inverse-report.md`](./docs/generated/mapping-inverse-report.md) and the [mapping-flow gallery](./docs/generated/mapping-flows/README.md) are the canonical Carta-side inverse coverage report and visuals. They are target-first evidence, not a Carta-to-OCF round-trip guarantee; field-level inverse semantics are documented in [`docs/mapping-validation.md`](./docs/mapping-validation.md#inverse-semantics).
 
 These are proposed **fold-down differences and change candidates**, not instructions for an OCF v1 implementation to silently discard data. A full OCF consumer can continue to use the composed OCF schemas; the reports show what needs an explicit policy when that data is sent to Carta.
 
@@ -114,10 +114,24 @@ These reports are generated from the mapping corpus, the composed OCF registry, 
 ```bash
 npm run core:lossy
 npm run core:unmapped
-npm run core:bidi
+npm run mapping:artifacts
 ```
 
-Normally, use `npm run core:build` to regenerate the complete Core package and all three analysis documents together. `npm run core:check` detects stale generated output.
+`npm run mapping:artifacts:check` verifies that the checked-in inverse report, SVG gallery,
+interactive viewer, and generated mapping explorer match the same renderer used by CI. The Core loss inventories remain
+separate because they answer the OCF-side questions that the target-first inverse ledger does
+not model.
+
+The generated explorer lives at [`docs/generated/mapping-explorer/`](./docs/generated/mapping-explorer/)
+for local browsing. It includes one page for every green OCF object and Carta object-like
+definition, keeps no-target/no-source gaps visible, embeds the available SVGs, links the
+interactive HTML viewer, and places a prefilled GitHub issue button on each mapping page.
+The `Mapping Explorer` workflow regenerates it for every pull request (as a downloadable
+preview artifact) and publishes the `main` version to GitHub Pages.
+
+Normally, use `npm run core:build` to regenerate the complete Core package and the two OCF-side
+loss inventories together. Use `npm run mapping:artifacts` for the canonical Carta-side inverse
+report and visuals; `npm run core:check` and `npm run mapping:artifacts:check` detect stale generated output.
 
 The current schema provenance and target assumptions are always the source of truth: see [`OCF_SOURCE.md`](./OCF_SOURCE.md), the mapping front matter, and [`target-schema/Carta.schema.json`](./target-schema/Carta.schema.json).
 

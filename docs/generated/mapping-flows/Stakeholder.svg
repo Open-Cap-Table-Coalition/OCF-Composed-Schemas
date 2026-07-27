@@ -1,0 +1,94 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="2700" height="1016" viewBox="0 0 2700 1016" role="img" aria-labelledby="title desc">
+<title id="title">Stakeholder structural mapping graph</title>
+<desc id="desc">Native UML-like graph of OCF route nodes, Carta parent and nested variant nodes, containment edges, and property mappings.</desc>
+<style>text{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}.field{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}.muted{font-size:13px}</style>
+<defs>
+      <marker id="property-arrow" markerWidth="10" markerHeight="10" refX="9" refY="5" orient="auto" markerUnits="strokeWidth"><path d="M0,0 L10,5 L0,10 z" fill="#64748b"/></marker>
+      <marker id="contains-arrow" markerWidth="10" markerHeight="10" refX="9" refY="5" orient="auto" markerUnits="strokeWidth"><path d="M0,0 L10,5 L0,10 z" fill="#7c3aed"/></marker>
+      <marker id="composition-diamond" markerWidth="12" markerHeight="12" refX="2" refY="6" orient="auto" markerUnits="strokeWidth"><path d="M0,6 L6,0 L12,6 L6,12 z" fill="#7c3aed"/></marker>
+    </defs>
+<rect width="2700" height="1016" fill="#f8fafc"/>
+<text x="70" y="48" fill="#0f172a" font-size="34" font-weight="700"><tspan x="70" dy="0">Stakeholder</tspan></text>
+<text x="70" y="84" fill="#475569" font-size="20"><tspan x="70" dy="0">Native structural mapping graph · 7 parent properties · 0 nested variants</tspan></text>
+<text x="70" y="116" fill="#64748b" font-size="16"><tspan x="70" dy="0">OCF route classes map directly to Carta parent and nested variant properties; dashed purple edges show containment.</tspan></text>
+<rect x="2080" y="38" width="20" height="20" rx="4" fill="#e6f4ea" stroke="#62a576"/>
+<text x="2114" y="54" fill="#166534" font-size="16"><tspan x="2114" dy="0">OCF route node</tspan></text>
+<rect x="2310" y="38" width="20" height="20" rx="4" fill="#e8f0fe" stroke="#6b8fd6"/>
+<text x="2344" y="54" fill="#1e3a8a" font-size="16"><tspan x="2344" dy="0">Carta class node</tspan></text>
+<line x1="2080" y1="84" x2="2130" y2="84" stroke="#64748b" stroke-width="2" marker-end="url(#property-arrow)"/>
+<text x="2150" y="90" fill="#475569" font-size="14"><tspan x="2150" dy="0">property mapping</tspan></text>
+<line x1="2080" y1="112" x2="2130" y2="112" stroke="#7c3aed" stroke-width="2" stroke-dasharray="7 5" marker-end="url(#contains-arrow)"/>
+<text x="2150" y="118" fill="#6d28d9" font-size="14"><tspan x="2150" dy="0">contains</tspan></text>
+<rect x="50" y="164" width="690" height="808" rx="14" fill="#f0fdf4" stroke="#bbf7d0" stroke-dasharray="8 6"/>
+<text x="70" y="154" fill="#166534" font-size="18" font-weight="700"><tspan x="70" dy="0">OCF source routes</tspan></text>
+<rect x="1700" y="164" width="960" height="418" rx="18" fill="#f8fbff" stroke="#7c9bd3" stroke-width="3"/>
+<text x="1740" y="154" fill="#1e3a8a" font-size="18" font-weight="700"><tspan x="1740" dy="0">Carta target aggregate</tspan></text>
+<text x="1722" y="188" fill="#315a9d" font-size="13" font-weight="700"><tspan x="1722" dy="0">«Carta aggregate»</tspan></text>
+<path class="mapping-edge" data-target-key="parent" data-source-route="objects/Stakeholder.mapping.md|—" data-source-label="Stakeholder" data-flow-key="objects/Stakeholder.mapping.md|—|parent|addresses|address" d="M 720 275 C 1250.4 275, 1250.4 305, 1740 305" fill="none" stroke="#64748b" stroke-width="2" marker-end="url(#property-arrow)"><title>Stakeholder.addresses → Stakeholder.address</title></path>
+<path class="mapping-edge" data-target-key="parent" data-source-route="objects/Stakeholder.mapping.md|—" data-source-label="Stakeholder" data-flow-key="objects/Stakeholder.mapping.md|—|parent|contact_info|email" d="M 720 309 C 1250.4 309, 1250.4 339, 1740 339" fill="none" stroke="#64748b" stroke-width="2" marker-end="url(#property-arrow)"><title>Stakeholder.contact_info → Stakeholder.email</title></path>
+<path class="mapping-edge" data-target-key="parent" data-source-route="objects/Stakeholder.mapping.md|—" data-source-label="Stakeholder" data-flow-key="objects/Stakeholder.mapping.md|—|parent|current_relationship|relationship" d="M 720 343 C 1250.4 343, 1250.4 509, 1740 509" fill="none" stroke="#64748b" stroke-width="2" marker-end="url(#property-arrow)"><title>Stakeholder.current_relationship → Stakeholder.relationship</title></path>
+<path class="mapping-edge" data-target-key="parent" data-source-route="objects/Stakeholder.mapping.md|—" data-source-label="Stakeholder" data-flow-key="objects/Stakeholder.mapping.md|—|parent|current_relationships|relationship" d="M 720 377 C 1250.4 377, 1250.4 509, 1740 509" fill="none" stroke="#64748b" stroke-width="2" marker-end="url(#property-arrow)"><title>Stakeholder.current_relationships → Stakeholder.relationship</title></path>
+<path class="mapping-edge" data-target-key="parent" data-source-route="objects/Stakeholder.mapping.md|—" data-source-label="Stakeholder" data-flow-key="objects/Stakeholder.mapping.md|—|parent|id|id" d="M 720 411 C 1250.4 411, 1250.4 475, 1740 475" fill="none" stroke="#64748b" stroke-width="2" marker-end="url(#property-arrow)"><title>Stakeholder.id → Stakeholder.id</title></path>
+<path class="mapping-edge" data-target-key="parent" data-source-route="objects/Stakeholder.mapping.md|—" data-source-label="Stakeholder" data-flow-key="objects/Stakeholder.mapping.md|—|parent|issuer_assigned_id|employeeId" d="M 720 445 C 1250.4 445, 1250.4 373, 1740 373" fill="none" stroke="#64748b" stroke-width="2" marker-end="url(#property-arrow)"><title>Stakeholder.issuer_assigned_id → Stakeholder.employeeId</title></path>
+<path class="mapping-edge" data-target-key="parent" data-source-route="objects/Stakeholder.mapping.md|—" data-source-label="Stakeholder" data-flow-key="objects/Stakeholder.mapping.md|—|parent|name|fullName" d="M 720 479 C 1250.4 479, 1250.4 441, 1740 441" fill="none" stroke="#64748b" stroke-width="2" marker-end="url(#property-arrow)"><title>Stakeholder.name → Stakeholder.fullName</title></path>
+<path class="mapping-edge" data-target-key="parent" data-source-route="objects/Stakeholder.mapping.md|—" data-source-label="Stakeholder" data-flow-key="objects/Stakeholder.mapping.md|—|parent|primary_contact|email" d="M 720 513 C 1250.4 513, 1250.4 339, 1740 339" fill="none" stroke="#64748b" stroke-width="2" marker-end="url(#property-arrow)"><title>Stakeholder.primary_contact → Stakeholder.email</title></path>
+<path class="mapping-edge" data-target-key="parent" data-source-route="objects/Stakeholder.mapping.md|—" data-source-label="Stakeholder" data-flow-key="objects/Stakeholder.mapping.md|—|parent|stakeholder_type|entityType" d="M 720 547 C 1250.4 547, 1250.4 407, 1740 407" fill="none" stroke="#64748b" stroke-width="2" marker-end="url(#property-arrow)"><title>Stakeholder.stakeholder_type → Stakeholder.entityType</title></path>
+<path class="mapping-edge" data-target-key="parent" data-source-route="objects/transactions/change_event/StakeholderRelationshipChangeEvent.mapping.md|—" data-source-label="StakeholderRelationshipChangeEvent" data-flow-key="objects/transactions/change_event/StakeholderRelationshipChangeEvent.mapping.md|—|parent|relationship_ended|relationship" d="M 720 693 C 1250.4 693, 1250.4 509, 1740 509" fill="none" stroke="#64748b" stroke-width="2" marker-end="url(#property-arrow)"><title>StakeholderRelationshipChangeEvent.relationship_ended → Stakeholder.relationship</title></path>
+<path class="mapping-edge" data-target-key="parent" data-source-route="objects/transactions/change_event/StakeholderRelationshipChangeEvent.mapping.md|—" data-source-label="StakeholderRelationshipChangeEvent" data-flow-key="objects/transactions/change_event/StakeholderRelationshipChangeEvent.mapping.md|—|parent|relationship_started|relationship" d="M 720 727 C 1250.4 727, 1250.4 509, 1740 509" fill="none" stroke="#64748b" stroke-width="2" marker-end="url(#property-arrow)"><title>StakeholderRelationshipChangeEvent.relationship_started → Stakeholder.relationship</title></path>
+<path class="mapping-edge" data-target-key="parent" data-source-route="objects/transactions/change_event/StakeholderRelationshipChangeEvent.mapping.md|—" data-source-label="StakeholderRelationshipChangeEvent" data-flow-key="objects/transactions/change_event/StakeholderRelationshipChangeEvent.mapping.md|—|parent|stakeholder_id|id" d="M 720 761 C 1250.4 761, 1250.4 475, 1740 475" fill="none" stroke="#64748b" stroke-width="2" marker-end="url(#property-arrow)"><title>StakeholderRelationshipChangeEvent.stakeholder_id → Stakeholder.id</title></path>
+<path class="mapping-edge" data-target-key="parent" data-source-route="objects/transactions/change_event/StakeholderStatusChangeEvent.mapping.md|—" data-source-label="StakeholderStatusChangeEvent" data-flow-key="objects/transactions/change_event/StakeholderStatusChangeEvent.mapping.md|—|parent|stakeholder_id|id" d="M 720 907 C 1250.4 907, 1250.4 475, 1740 475" fill="none" stroke="#64748b" stroke-width="2" marker-end="url(#property-arrow)"><title>StakeholderStatusChangeEvent.stakeholder_id → Stakeholder.id</title></path>
+<rect class="source-node" data-source-route="objects/Stakeholder.mapping.md|—" data-source-label="Stakeholder" x="70" y="194" width="650" height="384" rx="10" fill="#e6f4ea" stroke="#62a576" stroke-width="2"/>
+<text x="88" y="216" fill="#166534" font-size="13" font-weight="700"><tspan x="88" dy="0">«OCF route»</tspan></text>
+<text x="88" y="238" fill="#14532d" font-size="16" font-weight="700"><tspan x="88" dy="0">Stakeholder</tspan></text>
+<line x1="70" y1="258" x2="720" y2="258" stroke="#b7d8bf"/>
+<text x="88" y="281" class="field" fill="#14532d" font-size="16" font-weight="700"><tspan x="88" dy="0">+ addresses</tspan></text>
+<line x1="70" y1="292" x2="720" y2="292" stroke="#b7d8bf"/>
+<text x="88" y="315" class="field" fill="#14532d" font-size="16" font-weight="700"><tspan x="88" dy="0">+ contact_info</tspan></text>
+<line x1="70" y1="326" x2="720" y2="326" stroke="#b7d8bf"/>
+<text x="88" y="349" class="field" fill="#14532d" font-size="16" font-weight="700"><tspan x="88" dy="0">+ current_relationship</tspan></text>
+<line x1="70" y1="360" x2="720" y2="360" stroke="#b7d8bf"/>
+<text x="88" y="383" class="field" fill="#14532d" font-size="16" font-weight="700"><tspan x="88" dy="0">+ current_relationships</tspan></text>
+<line x1="70" y1="394" x2="720" y2="394" stroke="#b7d8bf"/>
+<text x="88" y="417" class="field" fill="#14532d" font-size="16" font-weight="700"><tspan x="88" dy="0">+ id</tspan></text>
+<line x1="70" y1="428" x2="720" y2="428" stroke="#b7d8bf"/>
+<text x="88" y="451" class="field" fill="#14532d" font-size="16" font-weight="700"><tspan x="88" dy="0">+ issuer_assigned_id</tspan></text>
+<line x1="70" y1="462" x2="720" y2="462" stroke="#b7d8bf"/>
+<text x="88" y="485" class="field" fill="#14532d" font-size="16" font-weight="700"><tspan x="88" dy="0">+ name</tspan></text>
+<line x1="70" y1="496" x2="720" y2="496" stroke="#b7d8bf"/>
+<text x="88" y="519" class="field" fill="#14532d" font-size="16" font-weight="700"><tspan x="88" dy="0">+ primary_contact</tspan></text>
+<line x1="70" y1="530" x2="720" y2="530" stroke="#b7d8bf"/>
+<text x="88" y="553" class="field" fill="#14532d" font-size="16" font-weight="700"><tspan x="88" dy="0">+ stakeholder_type</tspan></text>
+<rect class="source-node" data-source-route="objects/transactions/change_event/StakeholderRelationshipChangeEvent.mapping.md|—" data-source-label="StakeholderRelationshipChangeEvent" x="70" y="612" width="650" height="180" rx="10" fill="#e6f4ea" stroke="#62a576" stroke-width="2"/>
+<text x="88" y="634" fill="#166534" font-size="13" font-weight="700"><tspan x="88" dy="0">«OCF route»</tspan></text>
+<text x="88" y="656" fill="#14532d" font-size="16" font-weight="700"><tspan x="88" dy="0">StakeholderRelationshipChangeEvent</tspan></text>
+<line x1="70" y1="676" x2="720" y2="676" stroke="#b7d8bf"/>
+<text x="88" y="699" class="field" fill="#14532d" font-size="16" font-weight="700"><tspan x="88" dy="0">+ relationship_ended</tspan></text>
+<line x1="70" y1="710" x2="720" y2="710" stroke="#b7d8bf"/>
+<text x="88" y="733" class="field" fill="#14532d" font-size="16" font-weight="700"><tspan x="88" dy="0">+ relationship_started</tspan></text>
+<line x1="70" y1="744" x2="720" y2="744" stroke="#b7d8bf"/>
+<text x="88" y="767" class="field" fill="#14532d" font-size="16" font-weight="700"><tspan x="88" dy="0">+ stakeholder_id</tspan></text>
+<rect class="source-node" data-source-route="objects/transactions/change_event/StakeholderStatusChangeEvent.mapping.md|—" data-source-label="StakeholderStatusChangeEvent" x="70" y="826" width="650" height="112" rx="10" fill="#e6f4ea" stroke="#62a576" stroke-width="2"/>
+<text x="88" y="848" fill="#166534" font-size="13" font-weight="700"><tspan x="88" dy="0">«OCF route»</tspan></text>
+<text x="88" y="870" fill="#14532d" font-size="16" font-weight="700"><tspan x="88" dy="0">StakeholderStatusChangeEvent</tspan></text>
+<line x1="70" y1="890" x2="720" y2="890" stroke="#b7d8bf"/>
+<text x="88" y="913" class="field" fill="#14532d" font-size="16" font-weight="700"><tspan x="88" dy="0">+ stakeholder_id</tspan></text>
+<rect class="target-node" data-target-key="parent" x="1740" y="194" width="880" height="334" rx="10" fill="#e8f0fe" stroke="#6b8fd6" stroke-width="2.5"/>
+<text x="1758" y="216" fill="#1e3a8a" font-size="13" font-weight="700"><tspan x="1758" dy="0">«Carta parent»</tspan></text>
+<text x="1758" y="238" fill="#1e3a8a" font-size="18" font-weight="700"><tspan x="1758" dy="0">Stakeholder</tspan></text>
+<line x1="1740" y1="258" x2="2620" y2="258" stroke="#9bb6ea"/>
+<text x="1758" y="280" fill="#1e3a8a" font-size="14" font-weight="700"><tspan x="1758" dy="0">parent properties (7)</tspan></text>
+<line x1="1740" y1="288" x2="2620" y2="288" stroke="#c4d3f3"/>
+<text x="1758" y="311" class="field" fill="#1e3a8a" font-size="16" font-weight="700"><tspan x="1758" dy="0">+ address</tspan></text>
+<line x1="1740" y1="322" x2="2620" y2="322" stroke="#c4d3f3"/>
+<text x="1758" y="345" class="field" fill="#1e3a8a" font-size="16" font-weight="700"><tspan x="1758" dy="0">+ email</tspan></text>
+<line x1="1740" y1="356" x2="2620" y2="356" stroke="#c4d3f3"/>
+<text x="1758" y="379" class="field" fill="#1e3a8a" font-size="16" font-weight="700"><tspan x="1758" dy="0">+ employeeId</tspan></text>
+<line x1="1740" y1="390" x2="2620" y2="390" stroke="#c4d3f3"/>
+<text x="1758" y="413" class="field" fill="#1e3a8a" font-size="16" font-weight="700"><tspan x="1758" dy="0">+ entityType</tspan></text>
+<line x1="1740" y1="424" x2="2620" y2="424" stroke="#c4d3f3"/>
+<text x="1758" y="447" class="field" fill="#1e3a8a" font-size="16" font-weight="700"><tspan x="1758" dy="0">+ fullName</tspan></text>
+<line x1="1740" y1="458" x2="2620" y2="458" stroke="#c4d3f3"/>
+<text x="1758" y="481" class="field" fill="#1e3a8a" font-size="16" font-weight="700"><tspan x="1758" dy="0">+ id</tspan></text>
+<line x1="1740" y1="492" x2="2620" y2="492" stroke="#c4d3f3"/>
+<text x="1758" y="515" class="field" fill="#1e3a8a" font-size="16" font-weight="700"><tspan x="1758" dy="0">+ relationship</tspan></text>
+</svg>

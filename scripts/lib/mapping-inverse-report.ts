@@ -57,7 +57,7 @@ export interface MappingFlowSvgOptions {
   mappingDocuments: ReadonlyMap<string, MappingQuestionDocument>;
 }
 
-interface MappingQuestionDocument {
+export interface MappingQuestionDocument {
   questions?: readonly MappingQuestion[];
   mapping?: Record<string, unknown>;
   sourceSchema?: RawSchema;
@@ -1486,22 +1486,25 @@ function renderMappingStructuralSvg(
     const cardinality = variant.child.cardinality === "array" ? "[]" : "";
     return `${variant.property}${cardinality}: ${variant.child.name}`;
   });
+  const hasNestedVariants = variants.length > 0;
   const parentTitleLayout = svgGraphNodeTitleLines("«Carta parent»", object, 52);
   const parentHeaderHeight = parentTitleLayout.headerHeight;
   const parentSectionHeaderHeight = 30;
   const parentSharedStart = titleHeight + 44 + parentHeaderHeight + 14;
   const parentSharedHeight = Math.max(1, sharedFields.length) * rowHeight;
-  const parentRelationsStart =
-    parentSharedStart + parentSectionHeaderHeight + parentSharedHeight + 12;
-  const parentHeight =
-    parentHeaderHeight +
-    14 +
-    parentSectionHeaderHeight +
-    parentSharedHeight +
-    12 +
-    parentSectionHeaderHeight +
-    Math.max(1, parentRelations.length) * rowHeight +
-    16;
+  const parentRelationsStart = hasNestedVariants
+    ? parentSharedStart + parentSectionHeaderHeight + parentSharedHeight + 12
+    : parentSharedStart;
+  const parentHeight = hasNestedVariants
+    ? parentHeaderHeight +
+      14 +
+      parentSectionHeaderHeight +
+      parentSharedHeight +
+      12 +
+      parentSectionHeaderHeight +
+      Math.max(1, parentRelations.length) * rowHeight +
+      16
+    : parentHeaderHeight + parentSectionHeaderHeight + parentSharedHeight + 16;
   const targetLayouts: SvgGraphTargetNode[] = [];
   const parentAnchors = new Map<string, number>();
   sharedFields.forEach((field, index) => {
@@ -1660,12 +1663,16 @@ function renderMappingStructuralSvg(
       fontWeight: 700,
       maxChars: 30,
     }),
-    svgText("contained types", targetX + targetIndent, containedTypesLabelY, {
-      fill: "#5574a8",
-      fontSize: 13,
-      fontWeight: 700,
-      maxChars: 30,
-    }),
+    ...(hasNestedVariants
+      ? [
+          svgText("contained types", targetX + targetIndent, containedTypesLabelY, {
+            fill: "#5574a8",
+            fontSize: 13,
+            fontWeight: 700,
+            maxChars: 30,
+          }),
+        ]
+      : []),
   ];
 
   const sourceByRoute = new Map(sourceLayouts.map((node) => [sourceRouteKey(node.route), node]));
@@ -1949,7 +1956,7 @@ function renderMappingStructuralSvg(
         maxChars: 52,
       })
     );
-    if (node.key === "parent") {
+    if (node.key === "parent" && hasNestedVariants) {
       const sharedHeaderY = node.y + parentHeaderHeight + 14;
       const relationHeaderY = parentRelationsStart - parentSectionHeaderHeight;
       parts.push(
@@ -1998,6 +2005,32 @@ function renderMappingStructuralSvg(
           })
         );
       });
+    } else if (node.key === "parent") {
+      const sharedHeaderY = node.y + parentHeaderHeight + 14;
+      parts.push(
+        `<line x1="${node.x}" y1="${sharedHeaderY}" x2="${
+          node.x + node.width
+        }" y2="${sharedHeaderY}" stroke="#9bb6ea"/>`,
+        svgText(`parent properties (${sharedFields.length})`, node.x + 18, sharedHeaderY + 22, {
+          fill: "#1e3a8a",
+          fontSize: 14,
+          fontWeight: 700,
+          maxChars: 60,
+        })
+      );
+      sharedFields.forEach((field, index) => {
+        const y = parentSharedStart + parentSectionHeaderHeight + index * rowHeight;
+        parts.push(
+          `<line x1="${node.x}" y1="${y}" x2="${node.x + node.width}" y2="${y}" stroke="#c4d3f3"/>`,
+          svgText(`+ ${field}`, node.x + 18, y + 23, {
+            className: "field",
+            fill: "#1e3a8a",
+            fontSize: 16,
+            fontWeight: 700,
+            maxChars: 70,
+          })
+        );
+      });
     } else {
       const fieldStart = node.y + titleLayout.headerHeight + 14;
       node.fields.forEach((field, index) => {
@@ -2028,8 +2061,14 @@ export function renderMappingFlowSvgs(options: MappingFlowSvgOptions): Map<strin
   const artifacts = new Map<string, string>();
   for (const row of rows) {
     const group = groups.get(row.name) ?? { object: row.name, flows: new Map() };
-    const variants = targetVariantsForGroup(row.name, group, options.inverse);
-    if (variants.length < 2) continue;
+    const hasObjectFlow = [...group.flows.values()]
+      .flat()
+      .some((flow) => flow.sourceKind === "object");
+    // Keep the visual gallery aligned with every mapped standalone Carta object
+    // that has executable object evidence. The earlier >=2 nested-variant gate
+    // made the text ledger complete while silently omitting simple targets such
+    // as Stakeholder and Issuer from the visual artifact set.
+    if (!hasObjectFlow) continue;
     artifacts.set(
       `${svgSlug(row.name)}.svg`,
       renderMappingStructuralSvg(row.name, group, options.inverse, options.mappingDocuments, groups)
@@ -2338,6 +2377,44 @@ export function renderMappingFlowHtml(options: MappingFlowSvgOptions): string {
   </script>
 </body>
 </html>`;
+}
+
+export function renderMappingFlowGalleryReadme(artifactNames: readonly string[]): string {
+  const rows = [...artifactNames]
+    .filter((name) => name.endsWith(".svg"))
+    .sort()
+    .map((name) => {
+      const label = name.replace(/\.svg$/, "");
+      return `| [${label}](./${name}) | ![${label}](./${name}) |`;
+    });
+  return [
+    "# Related-object flow gallery",
+    "",
+    "These native SVGs show the inverse mapping ledger as UML-like class/data-flow graphs.",
+    "",
+    "Each image is one mapped Carta target object. Green class nodes are OCF routes; blue class nodes are",
+    "the Carta target and any contained types. The solid blue boundary makes a target and its nested",
+    "variants read as one Carta aggregate. Smaller families use solid arrows for explicit source property",
+    "→ target property mappings. Dense families use target-specific mapping lanes; each lane keeps the",
+    "exact property mappings in a compact ledger while grouped arrows preserve the data flow. Dashed purple",
+    "edges show containment. The Carta parent node explicitly reports its parent-property count and lists",
+    "those properties, including parent-only routes where they contribute to the family.",
+    "",
+    "CI also publishes a self-contained interactive HTML viewer as the `mapping-inverse-interactive`",
+    "artifact. It lets reviewers toggle target lanes and source routes, zoom the diagram, then click or",
+    "shift-click exact mapping arrows to focus selected flows. A reproducible copy is checked in at",
+    "[`../mapping-flows-interactive/index.html`](../mapping-flows-interactive/index.html). GitHub's code",
+    "browser displays that file as source; opening the downloaded CI artifact (or serving the checked-in",
+    "file) provides the interactive view.",
+    "",
+    "From a checkout, run `python3 -m http.server 8000 --directory docs/generated/mapping-flows-interactive`",
+    "and open `http://127.0.0.1:8000/` to use the viewer locally.",
+    "",
+    "| Carta target | Preview |",
+    "| --- | --- |",
+    ...rows,
+    "",
+  ].join("\n");
 }
 
 function renderFlowNode(

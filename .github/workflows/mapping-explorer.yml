@@ -1,0 +1,60 @@
+name: Mapping Explorer
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+concurrency:
+  group: mapping-explorer
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - name: Generate mapping explorer
+        run: npm run mapping:artifacts
+      - name: Upload GitHub Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: docs/generated/mapping-explorer
+      - name: Upload pull request explorer preview
+        if: github.event_name == 'pull_request'
+        id: pr-preview
+        uses: actions/upload-artifact@v4
+        with:
+          name: mapping-explorer-pr-${{ github.event.pull_request.number }}
+          path: docs/generated/mapping-explorer
+          if-no-files-found: error
+      - name: Link pull request explorer preview
+        if: github.event_name == 'pull_request'
+        env:
+          ARTIFACT_URL: ${{ steps.pr-preview.outputs.artifact-url }}
+        run: |
+          echo '## Mapping Explorer preview' >> "$GITHUB_STEP_SUMMARY"
+          echo "[Download and open the generated explorer]($ARTIFACT_URL)" >> "$GITHUB_STEP_SUMMARY"
+
+  deploy:
+    if: github.event_name == 'push'
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy mapping explorer
+        id: deployment
+        uses: actions/deploy-pages@v4

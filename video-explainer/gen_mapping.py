@@ -8,7 +8,7 @@ candidates for OCF *community extensions*.
 
 Data is synthesized from the committed, generated inventories (not recomputed here):
   - OCF -> Core losses:  core/core-gaps.md (a)                 [required flags]
-  - what lands / Carta side: docs/core-bidirectional-flow.md   [mapped + cartalost]
+  - what lands / Carta side: docs/generated/mapping-inverse-report.md + mapping-flow gallery
 Left-behind is collapsed across polymorphic variants (a field that lands in ANY variant is
 NOT left behind), matching the published per-object table.
 
