@@ -112,6 +112,7 @@ async function main(argv: Args): Promise<number> {
           targetObject: argv.targetObject,
           mappingDocuments,
           includeRelatedObjectPropertyFlows: false,
+          compactAggregateTrees: true,
         }) + "\n"
       );
       if (argv.inverseSvgDir) {

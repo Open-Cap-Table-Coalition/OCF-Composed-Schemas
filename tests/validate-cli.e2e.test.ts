@@ -117,7 +117,7 @@ describe("validate-mappings CLI (temp tree)", () => {
     const { stdout } = await runCli(root, ["--inverse", "--target-object", "Thing"]);
     expect(stdout).toContain("source_documents: 1");
     expect(stdout).toContain('id: "#/$defs/Thing"');
-    expect(stdout).toContain("objects/Thing.mapping.md :: name (rename)");
+    expect(stdout).toContain("← Thing.name (rename)");
     expect(stdout).toMatch(/OK: checked 1 mapping file\(s\), 0 errors/);
   });
 

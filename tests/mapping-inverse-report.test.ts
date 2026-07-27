@@ -412,6 +412,19 @@ describe("renderMappingInverseReport", () => {
     expect(withoutFlowTables).not.toContain("<!-- mapping-flow:start -->");
     expect(withoutFlowTables).not.toContain("Related object property flows");
     expect(withoutFlowTables).toContain("Carta inverse coverage report");
+    const compact = renderMappingInverseReport({
+      inverse,
+      targetObject: "TransactionItem",
+      mappingDocuments,
+      includeRelatedObjectPropertyFlows: false,
+      compactAggregateTrees: true,
+    });
+    expect(compact).toContain("aggregate mapping ledger");
+    expect(compact).toContain("parent properties (1)");
+    expect(compact).toContain("contains (2 nested variants)");
+    expect(compact).toContain("cancellations[] : CancellationTransaction");
+    expect(compact).toContain("← SharedSource [Cancel].date (rename)");
+    expect(compact).not.toContain("source path(s)");
     const artifacts = renderMappingFlowSvgs({
       inverse,
       targetObject: "TransactionItem",

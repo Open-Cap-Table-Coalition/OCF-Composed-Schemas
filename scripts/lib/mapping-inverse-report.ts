@@ -47,6 +47,8 @@ export interface MappingInverseReportOptions {
   mappingDocuments?: ReadonlyMap<string, MappingQuestionDocument>;
   /** Include the verbose related-object flow tables in the text report. */
   includeRelatedObjectPropertyFlows?: boolean;
+  /** Render standalone target panels as compact target-first aggregate ledgers. */
+  compactAggregateTrees?: boolean;
 }
 
 export interface MappingFlowSvgOptions {
@@ -378,6 +380,19 @@ function openQuestionsForTargetField(
 function questionLabel(reportQuestion: ReportQuestion): string {
   const { file, question } = reportQuestion;
   return `? open question: ${question.question} [asked by ${question.askedBy}; answer: ${question.answer}; ${file}]`;
+}
+
+function compactQuestionLabel(reportQuestion: ReportQuestion): string {
+  const { file, question } = reportQuestion;
+  const prefix = "? open question: ";
+  const suffix = ` [asked by ${question.askedBy}; ${mappingSourceName(file)}:${question.line}]`;
+  const maxLength = 220;
+  const available = Math.max(40, maxLength - prefix.length - suffix.length);
+  const questionText =
+    question.question.length > available
+      ? `${question.question.slice(0, available - 1).trimEnd()}…`
+      : question.question;
+  return `${prefix}${questionText}${suffix}`;
 }
 
 function sameFlow(left: InverseFlow, right: InverseFlow): boolean {
@@ -2430,6 +2445,212 @@ function renderMappingTree(
   return lines;
 }
 
+function compactFlowLabel(flow: InverseFlow): string {
+  const sourceKind = flow.sourceKind === "type" ? "type " : "";
+  const context = flow.context ? ` [${flow.context}]` : "";
+  const sourceField = flow.sourceField.startsWith("(")
+    ? ` ${flow.sourceField}`
+    : `.${flow.sourceField}`;
+  const inverse =
+    flow.inverseRole && flow.inverseRole !== "record-construction"
+      ? `; inverse: ${flow.inverseRole}`
+      : "";
+  return `${sourceKind}${mappingSourceName(flow.file)}${context}${sourceField} (${
+    flow.kind
+  }${inverse})`;
+}
+
+function renderCompactFlowNode(
+  node: FlowNode,
+  prefix: string,
+  last: boolean,
+  mappingDocuments: ReadonlyMap<string, MappingQuestionDocument> | undefined,
+  lines: string[]
+): void {
+  lines.push(`${prefix}${last ? "└─ " : "├─ "}← ${compactFlowLabel(node.flow)}`);
+  const details = flowDetails(node.flow, mappingDocuments);
+  const unionDetail = details.find((detail) => detail.kind === "union-dispatch");
+  const items: Array<{ detail: FlowDetail } | { node: FlowNode }> = [
+    ...details.filter((detail) => detail !== unionDetail).map((detail) => ({ detail })),
+    ...(unionDetail ? [{ detail: { ...unionDetail, childNodes: node.children } }] : []),
+    ...(unionDetail ? [] : node.children.map((child) => ({ node: child }))),
+  ];
+  const childPrefix = `${prefix}${last ? "   " : "│  "}`;
+  items.forEach((item, index) => {
+    const itemLast = index === items.length - 1;
+    if ("detail" in item) {
+      lines.push(`${childPrefix}${itemLast ? "└─ " : "├─ "}↳ ${item.detail.label}`);
+      if (item.detail.children && item.detail.children.length > 0) {
+        const detailPrefix = `${childPrefix}${itemLast ? "   " : "│  "}`;
+        item.detail.children.forEach((child, childIndex) => {
+          const childLast = childIndex === item.detail.children!.length - 1;
+          lines.push(`${detailPrefix}${childLast ? "└─ " : "├─ "}${child}`);
+        });
+      }
+      if (item.detail.childNodes && item.detail.childNodes.length > 0) {
+        const detailPrefix = `${childPrefix}${itemLast ? "   " : "│  "}`;
+        item.detail.childNodes.forEach((child, childIndex) => {
+          const childLast = childIndex === item.detail.childNodes!.length - 1;
+          renderCompactFlowNode(child, detailPrefix, childLast, mappingDocuments, lines);
+        });
+      }
+    } else {
+      renderCompactFlowNode(item.node, childPrefix, itemLast, mappingDocuments, lines);
+    }
+  });
+}
+
+function renderCompactField(
+  object: string,
+  field: string,
+  flows: InverseFlow[],
+  prefix: string,
+  last: boolean,
+  mappingDocuments: ReadonlyMap<string, MappingQuestionDocument> | undefined,
+  lines: string[]
+): void {
+  lines.push(`${prefix}${last ? "└─ " : "├─ "}+ ${field}`);
+  const childPrefix = `${prefix}${last ? "   " : "│  "}`;
+  const roots = buildFlowForest(flows, mappingDocuments);
+  const propertyQuestions = openQuestionsForFlows(
+    flows,
+    mappingDocuments,
+    (question, flow) =>
+      question.property !== null && questionMatchesSourceField(question, flow.sourceField)
+  );
+  const targetQuestions = openQuestionsForTargetField(object, field, mappingDocuments);
+  const childCount = Math.max(roots.length, 1) + propertyQuestions.length + targetQuestions.length;
+  let childIndex = 0;
+  if (roots.length === 0) {
+    lines.push(
+      `${childPrefix}${childIndex++ === childCount - 1 ? "└─ " : "├─ "}✗ no mapped OCF source`
+    );
+  } else {
+    roots.forEach((root) => {
+      const rootLast = childIndex++ === childCount - 1;
+      renderCompactFlowNode(root, childPrefix, rootLast, mappingDocuments, lines);
+    });
+  }
+  [...propertyQuestions, ...targetQuestions].forEach((question) => {
+    const questionLast = childIndex++ === childCount - 1;
+    lines.push(`${childPrefix}${questionLast ? "└─ " : "├─ "}${compactQuestionLabel(question)}`);
+  });
+}
+
+function relevantVariantFlows(
+  variant: TargetVariant,
+  field: string,
+  childGroup: TargetGroup | undefined,
+  mappingDocuments: ReadonlyMap<string, MappingQuestionDocument> | undefined
+): InverseFlow[] {
+  const flows = childGroup?.flows.get(field) ?? [];
+  const routes = mappingDocuments ? sourceRoutesForFlows(variant.flows, mappingDocuments) : [];
+  const seen = new Set<string>();
+  return flows.filter((flow) => {
+    if (
+      flow.sourceKind === "object" &&
+      routes.length > 0 &&
+      !routes.some((route) => flowAppliesToRoute(flow, route))
+    ) {
+      return false;
+    }
+    const key = [flow.file, flow.sourceKind, flow.sourceField, flow.context, flow.kind].join(
+      "\u0000"
+    );
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+}
+
+function renderCompactAggregateMappingLedger(
+  object: string,
+  group: TargetGroup,
+  inverse: InverseCoverageLedger,
+  mappingDocuments: ReadonlyMap<string, MappingQuestionDocument> | undefined,
+  groups: Map<string, TargetGroup>,
+  includeUnmappedProperties = true,
+  includeMappingQuestions = true
+): string[] {
+  const variants = targetVariantsForGroup(object, group, inverse);
+  const nestedProperties = new Set(variants.map((variant) => variant.property));
+  const parentFields = sortedTargetFields(object, group, inverse, includeUnmappedProperties).filter(
+    (field) => field !== "(object route)" && !nestedProperties.has(field)
+  );
+  const lines = [`parent properties (${parentFields.length})`];
+  parentFields.forEach((field, index) => {
+    renderCompactField(
+      object,
+      field,
+      group.flows.get(field) ?? [],
+      "  ",
+      index === parentFields.length - 1,
+      mappingDocuments,
+      lines
+    );
+  });
+
+  if (variants.length > 0) {
+    lines.push("", `contains (${variants.length} nested variants)`);
+    variants.forEach((variant, index) => {
+      const lastVariant = index === variants.length - 1;
+      const cardinality = variant.child.cardinality === "array" ? "[]" : "";
+      lines.push(
+        `  ${lastVariant ? "└─ " : "├─ "}${variant.property}${cardinality} : ${variant.child.name}`
+      );
+      const variantPrefix = `  ${lastVariant ? "   " : "│  "}`;
+      const childGroup = groups.get(variant.child.name);
+      const childFields = childGroup
+        ? sortedTargetFields(variant.child.name, childGroup, inverse).filter(
+            (field) => field !== "(object route)"
+          )
+        : [];
+      const structuralRoots = buildFlowForest(variant.flows, mappingDocuments);
+      const itemCount = structuralRoots.length + childFields.length;
+      if (itemCount === 0) {
+        lines.push(`${variantPrefix}└─ ✗ no mapped OCF source`);
+        return;
+      }
+      let itemIndex = 0;
+      structuralRoots.forEach((root) => {
+        const rootLast = itemIndex++ === itemCount - 1;
+        renderCompactFlowNode(root, variantPrefix, rootLast, mappingDocuments, lines);
+      });
+      childFields.forEach((field) => {
+        const fieldLast = itemIndex++ === itemCount - 1;
+        renderCompactField(
+          variant.child.name,
+          field,
+          relevantVariantFlows(variant, field, childGroup, mappingDocuments),
+          variantPrefix,
+          fieldLast,
+          mappingDocuments,
+          lines
+        );
+      });
+    });
+  }
+
+  if (includeMappingQuestions) {
+    const mappingQuestions = openQuestionsForFlows(
+      [...group.flows.values()].flat(),
+      mappingDocuments,
+      (question) => question.property === null && question.target === null
+    );
+    if (mappingQuestions.length > 0) {
+      lines.push("", "mapping questions");
+      mappingQuestions.forEach((question, index) => {
+        lines.push(
+          `  ${index === mappingQuestions.length - 1 ? "└─ " : "├─ "}${compactQuestionLabel(
+            question
+          )}`
+        );
+      });
+    }
+  }
+  return lines;
+}
+
 function boxLine(content: string, innerWidth: number): string {
   return `│ ${content.padEnd(innerWidth - 2)} │`;
 }
@@ -2467,7 +2688,8 @@ function renderObjectPanel(
   group: TargetGroup,
   inverse: InverseCoverageLedger,
   mappingDocuments: ReadonlyMap<string, MappingQuestionDocument> | undefined,
-  groups: Map<string, TargetGroup>
+  groups: Map<string, TargetGroup>,
+  compactAggregateTree = false
 ): string[] {
   const hasMappings = group.flows.size > 0;
   const fields = sortedTargetFields(row.name, group, inverse);
@@ -2488,11 +2710,15 @@ function renderObjectPanel(
     mappingDocuments && hasMappings
       ? renderObjectSummary(row.name, group, inverse, mappingDocuments, groups)
       : [];
-  const mappingDetail = renderMappingTree(row.name, group, inverse, mappingDocuments);
+  const mappingDetail = compactAggregateTree
+    ? renderCompactAggregateMappingLedger(row.name, group, inverse, mappingDocuments, groups)
+    : renderMappingTree(row.name, group, inverse, mappingDocuments);
   const body = hasMappings
     ? [
         ...summary,
-        ...(summary.length > 0 ? ["", "aggregate mapping detail"] : []),
+        ...(summary.length > 0
+          ? ["", compactAggregateTree ? "aggregate mapping ledger" : "aggregate mapping detail"]
+          : []),
         ...mappingDetail,
       ]
     : ["(empty mapping)"];
@@ -2504,7 +2730,8 @@ function renderSection(
   rows: CartaDefCoverage[],
   groups: Map<string, TargetGroup>,
   inverse: InverseCoverageLedger,
-  mappingDocuments?: ReadonlyMap<string, MappingQuestionDocument>
+  mappingDocuments?: ReadonlyMap<string, MappingQuestionDocument>,
+  compactAggregateTree = false
 ): string[] {
   const lines = [`${title} (${rows.length})`];
   rows.forEach((row, index) => {
@@ -2514,7 +2741,8 @@ function renderSection(
         groups.get(row.name) ?? { object: row.name, flows: new Map() },
         inverse,
         mappingDocuments,
-        groups
+        groups,
+        compactAggregateTree
       )
     );
     if (index < rows.length - 1) lines.push("");
@@ -2681,7 +2909,8 @@ export function renderMappingInverseReport(options: MappingInverseReportOptions)
         groups.get(row.name) ?? { object: row.name, flows: new Map() },
         inverse,
         options.mappingDocuments,
-        groups
+        groups,
+        options.compactAggregateTrees === true
       )
     );
     return lines.join("\n");
@@ -2703,7 +2932,8 @@ export function renderMappingInverseReport(options: MappingInverseReportOptions)
         mapped,
         groups,
         inverse,
-        options.mappingDocuments
+        options.mappingDocuments,
+        options.compactAggregateTrees === true
       )
     );
   }
@@ -2715,7 +2945,8 @@ export function renderMappingInverseReport(options: MappingInverseReportOptions)
         followUp,
         groups,
         inverse,
-        options.mappingDocuments
+        options.mappingDocuments,
+        options.compactAggregateTrees === true
       )
     );
   }
