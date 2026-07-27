@@ -61,7 +61,10 @@ describe("mapping explorer", () => {
       "issues/new?title=%5BMapping+question%5D"
     );
     const index = renderMappingExplorerIndex(explorer);
-    expect(index).toContain("Carta OCF Core Mapping Explorer");
+    expect(index).toContain("Analysis of Carta Core vs OCF v1.0");
+    expect(index).toContain("Open Cap Table Coalition");
+    expect(index).toContain("OCT-coalition-seal_horizontal%202.png");
+    expect(index).toContain("Every page below includes a link to open a prefilled GitHub issue.");
     expect(index).toContain("OCF source objects");
     expect(index).toContain(`All (${explorer.metrics.sourceObjects})`);
     expect(index).toContain(
@@ -84,6 +87,7 @@ describe("mapping explorer", () => {
     expect(renderMappingExplorerAppJs()).toContain("setSide(sideFromHash())");
     const targetDirectory = index.split('data-directory="Carta targets">')[1] ?? "";
     expect(targetDirectory).not.toContain('data-status="support"');
+    expect(targetDirectory).toContain("Open mapping issue");
     expect(targetDirectory).not.toContain(">PointOfContact</a>");
   });
 
