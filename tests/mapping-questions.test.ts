@@ -1,5 +1,6 @@
 import {
   MappingQuestionParseError,
+  parseMappingNotes,
   parseMappingQuestions,
 } from "../scripts/lib/mapping-questions.js";
 
@@ -8,6 +9,26 @@ function notes(body: string): string {
 }
 
 describe("mapping questions", () => {
+  it("extracts authored notes while excluding checklist question metadata", () => {
+    expect(
+      parseMappingNotes(
+        notes(
+          [
+            "- **Context.** Carta has no native transfer link.",
+            "  The replacement relationship is therefore not lossless.",
+            "",
+            "- [ ] `security_id`: Can Carta add a predecessor link?",
+            "  - Asked by: @alice",
+            "  - Answer: Pending confirmation.",
+            "  - Answered by: —",
+          ].join("\n")
+        )
+      )
+    ).toEqual([
+      "**Context.** Carta has no native transfer link. The replacement relationship is therefore not lossless.",
+    ]);
+  });
+
   it("parses open and answered GitHub checklist items with optional property paths", () => {
     const questions = parseMappingQuestions(
       notes(

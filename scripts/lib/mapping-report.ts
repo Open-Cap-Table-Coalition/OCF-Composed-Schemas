@@ -24,6 +24,7 @@ export interface MappingReportInput {
 export interface MappingReportDocument {
   frontmatter: Record<string, unknown>;
   mapping: Record<string, unknown>;
+  notes?: string[];
   questions?: MappingQuestion[];
   sourceSchema?: RawSchema;
 }

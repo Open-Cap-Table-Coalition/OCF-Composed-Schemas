@@ -2,6 +2,7 @@ import { parse } from "yaml";
 import {
   MappingQuestion,
   MappingQuestionParseError,
+  parseMappingNotes,
   parseMappingQuestions,
 } from "./mapping-questions.js";
 
@@ -10,6 +11,7 @@ export class MappingParseError extends Error {}
 export interface ParsedMapping {
   frontmatter: Record<string, unknown>;
   mapping: Record<string, unknown>;
+  notes: string[];
   questions: MappingQuestion[];
 }
 
@@ -36,6 +38,7 @@ export function parseMappingDocument(markdown: string, filePath: string): Parsed
       `${filePath}: frontmatter`
     ),
     mapping: parseYamlObject(extractMappingYaml(markdown, filePath), `${filePath}: mapping block`),
+    notes: parseMappingNotes(markdown),
     questions,
   };
 }

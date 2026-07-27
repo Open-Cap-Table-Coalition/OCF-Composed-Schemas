@@ -129,23 +129,75 @@ function requireMetadata(
   return metadata as Record<RequiredMetadataLabel, string>;
 }
 
-/** Parse all checklist questions in the notes section. */
-export function parseMappingQuestions(markdown: string): MappingQuestion[] {
+function notesSection(markdown: string): { lines: string[]; start: number; end: number } | null {
   const lines = markdown.split(/\r?\n/u);
-  const notesHeading = lines.findIndex((line) => line.trim() === "## Notes / open questions");
-  if (notesHeading === -1) return [];
+  const heading = lines.findIndex((line) => line.trim() === "## Notes / open questions");
+  if (heading === -1) return null;
 
-  let sectionEnd = lines.length;
-  for (let i = notesHeading + 1; i < lines.length; i++) {
+  let end = lines.length;
+  for (let i = heading + 1; i < lines.length; i++) {
     if ((lines[i] ?? "").startsWith("## ")) {
-      sectionEnd = i;
+      end = i;
       break;
     }
   }
+  return { lines, start: heading + 1, end };
+}
+
+/** Parse the authored prose in the notes section, excluding checklist questions. */
+export function parseMappingNotes(markdown: string): string[] {
+  const section = notesSection(markdown);
+  if (!section) return [];
+
+  const notes: string[] = [];
+  let inFence = false;
+  for (let i = section.start; i < section.end; i++) {
+    const line = section.lines[i] ?? "";
+    if (line.trim().startsWith("```") || line.trim().startsWith("~~~")) {
+      inFence = !inFence;
+      continue;
+    }
+    if (inFence) continue;
+    if (/^-\s+\[([ xX])\]/u.test(line)) {
+      // Checklist questions are rendered separately with their metadata and issue actions.
+      i++;
+      while (i < section.end) {
+        const next = section.lines[i] ?? "";
+        if (/^-\s+\[([ xX])\]/u.test(next)) {
+          i--;
+          break;
+        }
+        if (next.trim() !== "" && !/^\s{2,}-\s+/u.test(next)) {
+          i--;
+          break;
+        }
+        i++;
+      }
+      continue;
+    }
+    if (line.trim() === "" || line.trim() === "-" || line.trim().startsWith("<!--")) continue;
+    if (/^\s{2,}-\s+(?:Target|Asked by|Answer|Answered by):/u.test(line)) continue;
+
+    const value = line.trim().startsWith("- ") ? line.trim().slice(2).trim() : line.trim();
+    if (!value) continue;
+    if (/^\s/.test(line) && notes.length > 0) {
+      notes[notes.length - 1] = `${notes[notes.length - 1]} ${value}`;
+    } else {
+      notes.push(value);
+    }
+  }
+  return notes;
+}
+
+/** Parse all checklist questions in the notes section. */
+export function parseMappingQuestions(markdown: string): MappingQuestion[] {
+  const section = notesSection(markdown);
+  if (!section) return [];
+  const { lines, start, end: sectionEnd } = section;
 
   const questions: MappingQuestion[] = [];
   let inFence = false;
-  for (let i = notesHeading + 1; i < sectionEnd; i++) {
+  for (let i = start; i < sectionEnd; i++) {
     const line = lines[i] ?? "";
     if (line.trim().startsWith("```") || line.trim().startsWith("~~~")) {
       inFence = !inFence;
