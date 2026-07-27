@@ -50,8 +50,9 @@ derived coverage stays reviewable, and enum remaps are checked value-by-value.
   The same flow ledger can render one native SVG artifact per related Carta parent via
   `npm run mapping:inverse -- --inverse-svg-dir docs/generated/mapping-flows`. Each SVG is a direct
   native UML-like source/target class graph with explicit property and containment edges; it does not
-  depend on Mermaid or GitHub's graph renderer. Shared parent properties are shown in the Carta parent
-  node, including their count. The checked-in gallery is [available here](generated/mapping-flows/README.md),
+  depend on Mermaid or GitHub's graph renderer. Dense families switch to target-specific mapping lanes
+  that retain exact field mappings without crossing the whole graph. Parent-level mapped properties are
+  shown in the Carta parent node, including their count. The checked-in gallery is [available here](generated/mapping-flows/README.md),
   and CI uploads the SVGs alongside the text report and embeds them in the job summary when the branch
   assets are available.
   Target properties with no mapped OCF source remain explicit in each panel.

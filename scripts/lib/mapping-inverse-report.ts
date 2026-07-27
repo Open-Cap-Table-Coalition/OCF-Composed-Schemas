@@ -1142,6 +1142,25 @@ interface SvgGraphContainmentEdge {
   label: string;
 }
 
+interface SvgGraphMappingLaneGroup {
+  route: SourceRoute;
+  flows: SvgGraphPropertyFlow[];
+  anchorY: number;
+}
+
+interface SvgGraphMappingLane {
+  targetKey: string;
+  title: string;
+  mappingCount: number;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  headerHeight: number;
+  groups: SvgGraphMappingLaneGroup[];
+  targetAnchor: number;
+}
+
 function svgVariantKey(variant: TargetVariant): string {
   return `${variant.property}\u0000${variant.child.name}`;
 }
@@ -1263,6 +1282,67 @@ function svgGraphNodeRect(
   return `<rect x="${node.x}" y="${node.y}" width="${node.width}" height="${node.height}" rx="10" fill="${fill}" stroke="${stroke}" stroke-width="2"/>`;
 }
 
+function svgGraphMappingLanes(
+  object: string,
+  targetLayouts: readonly SvgGraphTargetNode[],
+  propertyFlows: readonly SvgGraphPropertyFlow[],
+  x: number,
+  width: number,
+  startY: number,
+  nodeGap: number
+): SvgGraphMappingLane[] {
+  const lanes: SvgGraphMappingLane[] = [];
+  let y = startY;
+  for (const target of targetLayouts) {
+    const targetFlows = propertyFlows.filter((flow) => flow.targetKey === target.key);
+    if (targetFlows.length === 0) continue;
+    const grouped = new Map<string, { route: SourceRoute; flows: SvgGraphPropertyFlow[] }>();
+    for (const flow of targetFlows) {
+      const routeKey = sourceRouteKey(flow.route);
+      const group = grouped.get(routeKey) ?? { route: flow.route, flows: [] };
+      group.flows.push(flow);
+      grouped.set(routeKey, group);
+    }
+    const groups = [...grouped.values()]
+      .map((group) => ({
+        ...group,
+        flows: group.flows.sort(
+          (left, right) =>
+            left.targetField.localeCompare(right.targetField) ||
+            left.sourceField.localeCompare(right.sourceField)
+        ),
+      }))
+      .sort((left, right) =>
+        sourceRouteDisplayName(left.route).localeCompare(sourceRouteDisplayName(right.route))
+      );
+    const title = target.key === "parent" ? `${object} parent` : target.title;
+    const titleLayout = svgGraphNodeTitleLines("«mapping lane»", title, 44);
+    const headerHeight = titleLayout.headerHeight + 24;
+    let cursor = y + headerHeight + 12;
+    const laneGroups: SvgGraphMappingLaneGroup[] = [];
+    for (const group of groups) {
+      const anchorY = cursor + 10;
+      laneGroups.push({ route: group.route, flows: group.flows, anchorY });
+      cursor += 24 + group.flows.length * 24 + 8;
+    }
+    const height = cursor - y + 10;
+    lanes.push({
+      targetKey: target.key,
+      title,
+      mappingCount: targetFlows.length,
+      x,
+      y,
+      width,
+      height,
+      headerHeight,
+      groups: laneGroups,
+      targetAnchor: target.y + 44,
+    });
+    y += height + nodeGap;
+  }
+  return lanes;
+}
+
 function renderMappingStructuralSvg(
   object: string,
   group: TargetGroup,
@@ -1283,6 +1363,7 @@ function renderMappingStructuralSvg(
   const propertyFlows = routes.flatMap((route) =>
     svgGraphPropertyFlowsForRoute(object, route, variants, group, groups)
   );
+  const denseGraph = sharedFields.length >= 20 || propertyFlows.length >= 28;
   const containmentEdges = svgGraphContainmentEdges(variants, mappingDocuments);
   const sourceRows = routes.map((route) => {
     const flows = propertyFlows.filter(
@@ -1425,7 +1506,30 @@ function renderMappingStructuralSvg(
     targetY += height + nodeGap;
   }
 
-  const height = Math.max(sourceY, targetY) + 44;
+  const mappingLaneX = 820;
+  const mappingLaneWidth = 840;
+  const mappingLanes = denseGraph
+    ? svgGraphMappingLanes(
+        object,
+        targetLayouts,
+        propertyFlows,
+        mappingLaneX,
+        mappingLaneWidth,
+        titleHeight + 44,
+        nodeGap
+      )
+    : [];
+  const mappingLaneY =
+    mappingLanes.length > 0
+      ? Math.max(...mappingLanes.map((lane) => lane.y + lane.height))
+      : titleHeight + 44;
+  const height = Math.max(sourceY, targetY, mappingLaneY) + 44;
+  const graphSubtitle = `${
+    denseGraph ? "Dense mapping layout" : "Native structural mapping graph"
+  } · ${sharedFields.length} parent properties · ${variants.length} nested variants`;
+  const graphDescription = denseGraph
+    ? "OCF route classes feed target-specific mapping lanes; each lane preserves exact source-property to target-property mappings before the Carta class structure."
+    : "OCF route classes map directly to Carta parent and nested variant properties; dashed purple edges show containment.";
   const parts = [
     `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" role="img" aria-labelledby="title desc">`,
     `<title id="title">${svgEscape(object)} structural mapping graph</title>`,
@@ -1438,18 +1542,8 @@ function renderMappingStructuralSvg(
     </defs>`,
     `<rect width="${width}" height="${height}" fill="#f8fafc"/>`,
     svgText(object, 70, 48, { fill: "#0f172a", fontSize: 34, fontWeight: 700, maxChars: 60 }),
-    svgText(
-      `Native structural mapping graph · ${sharedFields.length} shared parent properties · ${variants.length} nested variants`,
-      70,
-      84,
-      { fill: "#475569", fontSize: 20, maxChars: 120 }
-    ),
-    svgText(
-      "OCF route classes → property mappings → Carta class structure; dashed purple edges are containment.",
-      70,
-      116,
-      { fill: "#64748b", fontSize: 16, maxChars: 130 }
-    ),
+    svgText(graphSubtitle, 70, 84, { fill: "#475569", fontSize: 20, maxChars: 120 }),
+    svgText(graphDescription, 70, 116, { fill: "#64748b", fontSize: 16, maxChars: 150 }),
     `<rect x="${
       width - 620
     }" y="38" width="20" height="20" rx="4" fill="#e6f4ea" stroke="#62a576"/>`,
@@ -1475,6 +1569,21 @@ function renderMappingStructuralSvg(
       fontWeight: 700,
       maxChars: 40,
     }),
+    ...(denseGraph
+      ? [
+          `<rect x="${mappingLaneX - 20}" y="${titleHeight + 14}" width="${
+            mappingLaneWidth + 40
+          }" height="${
+            mappingLaneY - titleHeight - 14
+          }" rx="14" fill="#f8fafc" stroke="#cbd5e1" stroke-dasharray="8 6"/>`,
+          svgText("Target-specific mapping lanes", mappingLaneX, titleHeight + 4, {
+            fill: "#475569",
+            fontSize: 18,
+            fontWeight: 700,
+            maxChars: 50,
+          }),
+        ]
+      : []),
     `<rect x="${targetX - 20}" y="${titleHeight + 14}" width="${targetWidth + 40}" height="${
       targetY - titleHeight - 14
     }" rx="14" fill="#eff6ff" stroke="#bfdbfe" stroke-dasharray="8 6"/>`,
@@ -1488,26 +1597,68 @@ function renderMappingStructuralSvg(
 
   const sourceByRoute = new Map(sourceLayouts.map((node) => [sourceRouteKey(node.route), node]));
   const targetByKey = new Map(targetLayouts.map((node) => [node.key, node]));
-  for (const flow of propertyFlows) {
-    const source = sourceByRoute.get(sourceRouteKey(flow.route));
-    const target = targetByKey.get(flow.targetKey);
-    const sourceYAnchor = source?.rowAnchors.get(flow.sourceField);
-    const targetYAnchor = target?.rowAnchors.get(
-      svgTargetAnchorKey(flow.targetKey, flow.targetField)
-    );
-    if (!source || !target || sourceYAnchor === undefined || targetYAnchor === undefined) continue;
-    parts.push(
-      svgGraphPath(source.x + source.width, sourceYAnchor, target.x, targetYAnchor, {
-        color: "#64748b",
-        markerEnd: "property-arrow",
-        width: 2,
-      }).replace(
-        "/>",
-        `><title>${svgEscape(
-          `${sourceRouteDisplayName(flow.route)}.${flow.sourceField} → ${flow.targetLabel}`
-        )}</title></path>`
-      )
-    );
+  if (denseGraph) {
+    for (const lane of mappingLanes) {
+      for (const group of lane.groups) {
+        const source = sourceByRoute.get(sourceRouteKey(group.route));
+        if (!source) continue;
+        parts.push(
+          svgGraphPath(
+            source.x + source.width,
+            source.y + source.headerHeight / 2,
+            lane.x,
+            group.anchorY,
+            { color: "#64748b", markerEnd: "property-arrow", width: 2 }
+          ).replace(
+            "/>",
+            `><title>${svgEscape(
+              `${sourceRouteDisplayName(group.route)} → ${lane.title} (${
+                group.flows.length
+              } property mappings)`
+            )}</title></path>`
+          )
+        );
+      }
+      const target = targetByKey.get(lane.targetKey);
+      if (!target) continue;
+      parts.push(
+        svgGraphPath(
+          lane.x + lane.width,
+          lane.y + lane.headerHeight / 2,
+          target.x,
+          lane.targetAnchor,
+          { color: "#64748b", markerEnd: "property-arrow", width: 2 }
+        ).replace(
+          "/>",
+          `><title>${svgEscape(
+            `${lane.title} → ${target.title} (${lane.mappingCount} property mappings)`
+          )}</title></path>`
+        )
+      );
+    }
+  } else {
+    for (const flow of propertyFlows) {
+      const source = sourceByRoute.get(sourceRouteKey(flow.route));
+      const target = targetByKey.get(flow.targetKey);
+      const sourceYAnchor = source?.rowAnchors.get(flow.sourceField);
+      const targetYAnchor = target?.rowAnchors.get(
+        svgTargetAnchorKey(flow.targetKey, flow.targetField)
+      );
+      if (!source || !target || sourceYAnchor === undefined || targetYAnchor === undefined)
+        continue;
+      parts.push(
+        svgGraphPath(source.x + source.width, sourceYAnchor, target.x, targetYAnchor, {
+          color: "#64748b",
+          markerEnd: "property-arrow",
+          width: 2,
+        }).replace(
+          "/>",
+          `><title>${svgEscape(
+            `${sourceRouteDisplayName(flow.route)}.${flow.sourceField} → ${flow.targetLabel}`
+          )}</title></path>`
+        )
+      );
+    }
   }
   for (const edge of containmentEdges) {
     const source = sourceByRoute.get(sourceRouteKey(edge.route));
@@ -1545,6 +1696,60 @@ function renderMappingStructuralSvg(
         `${object} contains ${target.title}`
       )}</title></path>`
     );
+  }
+
+  for (const lane of mappingLanes) {
+    parts.push(
+      `<rect x="${lane.x}" y="${lane.y}" width="${lane.width}" height="${lane.height}" rx="10" fill="#ffffff" stroke="#94a3b8" stroke-width="2"/>`,
+      svgText("«mapping lane»", lane.x + 18, lane.y + 22, {
+        fill: "#475569",
+        fontSize: 13,
+        fontWeight: 700,
+        maxChars: 30,
+      }),
+      svgText(lane.title, lane.x + 18, lane.y + 44, {
+        fill: "#334155",
+        fontSize: 17,
+        fontWeight: 700,
+        maxChars: 44,
+      }),
+      svgText(
+        `${lane.mappingCount} exact property ${lane.mappingCount === 1 ? "mapping" : "mappings"}`,
+        lane.x + 18,
+        lane.y + 64,
+        { fill: "#64748b", fontSize: 13, maxChars: 50 }
+      )
+    );
+    let cursor = lane.y + lane.headerHeight + 12;
+    for (const group of lane.groups) {
+      parts.push(
+        `<line x1="${lane.x}" y1="${cursor}" x2="${
+          lane.x + lane.width
+        }" y2="${cursor}" stroke="#cbd5e1"/>`,
+        svgText(
+          `${sourceRouteDisplayName(group.route)} (${group.flows.length})`,
+          lane.x + 18,
+          cursor + 17,
+          { fill: "#475569", fontSize: 12, fontWeight: 700, maxChars: 72 }
+        )
+      );
+      cursor += 24;
+      for (const flow of group.flows) {
+        parts.push(
+          `<line x1="${lane.x}" y1="${cursor}" x2="${
+            lane.x + lane.width
+          }" y2="${cursor}" stroke="#e2e8f0"/>`,
+          svgText(`+ ${flow.sourceField} → ${flow.targetField}`, lane.x + 18, cursor + 17, {
+            className: "field",
+            fill: "#334155",
+            fontSize: 13,
+            maxChars: 100,
+          })
+        );
+        cursor += 24;
+      }
+      cursor += 8;
+    }
   }
 
   for (const node of sourceLayouts) {
@@ -1619,12 +1824,12 @@ function renderMappingStructuralSvg(
         `<line x1="${node.x}" y1="${sharedHeaderY}" x2="${
           node.x + node.width
         }" y2="${sharedHeaderY}" stroke="#9bb6ea"/>`,
-        svgText(
-          `shared parent properties (${sharedFields.length})`,
-          node.x + 18,
-          sharedHeaderY + 22,
-          { fill: "#1e3a8a", fontSize: 14, fontWeight: 700, maxChars: 60 }
-        ),
+        svgText(`parent properties (${sharedFields.length})`, node.x + 18, sharedHeaderY + 22, {
+          fill: "#1e3a8a",
+          fontSize: 14,
+          fontWeight: 700,
+          maxChars: 60,
+        }),
         `<line x1="${node.x}" y1="${relationHeaderY}" x2="${
           node.x + node.width
         }" y2="${relationHeaderY}" stroke="#9bb6ea"/>`,

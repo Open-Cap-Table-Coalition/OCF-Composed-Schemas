@@ -424,7 +424,7 @@ describe("renderMappingInverseReport", () => {
     expect(svg).toBeDefined();
     expect(svg).toContain("cancellations[] → CancellationTransaction");
     expect(svg).toContain("issuance → IssuanceTransaction");
-    expect(svg).toContain("shared parent properties (1)");
+    expect(svg).toContain("parent properties (1)");
     expect(svg).toContain("contains (2 nested variants)");
     expect(svg).toContain("SharedSource [Issue]");
     expect(svg).toContain("TransactionItem.cancellations[].date");
@@ -432,6 +432,63 @@ describe("renderMappingInverseReport", () => {
     expect(svg).toContain('marker-end="url(#property-arrow)"');
     expect(svg).not.toContain("flowchart");
     expect(svg).not.toContain("subgraph");
+  });
+
+  it("uses target-specific mapping lanes for dense polymorphic families", () => {
+    const parentProperties = Object.fromEntries(
+      Array.from({ length: 20 }, (_, index) => [`parentField${index}`, {}])
+    );
+    const inverse = ledger(
+      {
+        DenseFamily: {
+          type: "object",
+          properties: {
+            ...parentProperties,
+            childA: { $ref: "#/$defs/ChildA" },
+            childB: { $ref: "#/$defs/ChildB" },
+          },
+        },
+        ChildA: { type: "object", properties: { value: {} } },
+        ChildB: { type: "object", properties: { value: {} } },
+      },
+      [
+        structuralEdge(
+          "objects/SourceA.mapping.md",
+          "SourceA",
+          "#/$defs/DenseFamily/properties/childA",
+          "A",
+          "contains → ChildA"
+        ),
+        structuralEdge(
+          "objects/SourceB.mapping.md",
+          "SourceB",
+          "#/$defs/DenseFamily/properties/childB",
+          "B",
+          "contains → ChildB"
+        ),
+        ...Array.from({ length: 20 }, (_, index) =>
+          objectFieldEdge(
+            "objects/SourceA.mapping.md",
+            "SourceA",
+            `sourceField${index}`,
+            `#/$defs/DenseFamily/properties/parentField${index}`,
+            "A"
+          )
+        ),
+      ]
+    );
+
+    const svg = renderMappingFlowSvgs({
+      inverse,
+      targetObject: "DenseFamily",
+      mappingDocuments: new Map(),
+    }).get("DenseFamily.svg");
+    expect(svg).toBeDefined();
+    expect(svg).toContain("Dense mapping layout");
+    expect(svg).toContain("Target-specific mapping lanes");
+    expect(svg).toContain("DenseFamily parent");
+    expect(svg).toContain("20 exact property mappings");
+    expect(svg).toContain("sourceField0 → parentField0");
   });
 
   it("keeps independent route axes separate instead of forming Cartesian subtype combinations", () => {

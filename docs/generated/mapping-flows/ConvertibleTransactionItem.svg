@@ -9,8 +9,8 @@
     </defs>
 <rect width="2700" height="1240" fill="#f8fafc"/>
 <text x="70" y="48" fill="#0f172a" font-size="34" font-weight="700"><tspan x="70" dy="0">ConvertibleTransactionItem</tspan></text>
-<text x="70" y="84" fill="#475569" font-size="20"><tspan x="70" dy="0">Native structural mapping graph · 3 shared parent properties · 2 nested variants</tspan></text>
-<text x="70" y="116" fill="#64748b" font-size="16"><tspan x="70" dy="0">OCF route classes → property mappings → Carta class structure; dashed purple edges are containment.</tspan></text>
+<text x="70" y="84" fill="#475569" font-size="20"><tspan x="70" dy="0">Native structural mapping graph · 3 parent properties · 2 nested variants</tspan></text>
+<text x="70" y="116" fill="#64748b" font-size="16"><tspan x="70" dy="0">OCF route classes map directly to Carta parent and nested variant properties; dashed purple edges show containment.</tspan></text>
 <rect x="2080" y="38" width="20" height="20" rx="4" fill="#e6f4ea" stroke="#62a576"/>
 <text x="2114" y="54" fill="#166534" font-size="16"><tspan x="2114" dy="0">OCF route node</tspan></text>
 <rect x="2310" y="38" width="20" height="20" rx="4" fill="#e8f0fe" stroke="#6b8fd6"/>
@@ -83,7 +83,7 @@
 <text x="1758" y="216" fill="#1e3a8a" font-size="13" font-weight="700"><tspan x="1758" dy="0">«Carta parent»</tspan></text>
 <text x="1758" y="238" fill="#1e3a8a" font-size="18" font-weight="700"><tspan x="1758" dy="0">ConvertibleTransactionItem</tspan></text>
 <line x1="1740" y1="258" x2="2620" y2="258" stroke="#9bb6ea"/>
-<text x="1758" y="280" fill="#1e3a8a" font-size="14" font-weight="700"><tspan x="1758" dy="0">shared parent properties (3)</tspan></text>
+<text x="1758" y="280" fill="#1e3a8a" font-size="14" font-weight="700"><tspan x="1758" dy="0">parent properties (3)</tspan></text>
 <line x1="1740" y1="372" x2="2620" y2="372" stroke="#9bb6ea"/>
 <text x="1758" y="394" fill="#1e3a8a" font-size="14" font-weight="700"><tspan x="1758" dy="0">contains (2 nested variants)</tspan></text>
 <line x1="1740" y1="288" x2="2620" y2="288" stroke="#c4d3f3"/>
