@@ -192,7 +192,12 @@ async function main(args: Args): Promise<number> {
   const svgArtifacts = renderMappingFlowSvgs({ inverse, mappingDocuments });
   const html = renderMappingFlowHtml({ inverse, mappingDocuments });
   const readme = renderMappingFlowGalleryReadme([...svgArtifacts.keys()]);
-  const explorer = buildMappingExplorerData(corpus, inverse, [...svgArtifacts.keys()]);
+  const explorer = buildMappingExplorerData(
+    corpus,
+    inverse,
+    [...svgArtifacts.keys()],
+    mappingDocuments
+  );
   const explorerFiles = buildExplorerSiteFiles(explorer, report, html, svgArtifacts);
 
   const outputRoot = path.resolve(repoRoot, args.base);

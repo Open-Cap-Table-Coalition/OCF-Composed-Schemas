@@ -6,6 +6,9 @@ import type {
 } from "./inverse-coverage.js";
 import type { Corpus, GreenObject, MappingEdge } from "./core-corpus.js";
 import { targetPointerParts } from "./mapping-report.js";
+import type { MappingReportDocument } from "./mapping-report.js";
+import type { MappingQuestion } from "./mapping-questions.js";
+import { questionTargetParts } from "./mapping-questions.js";
 
 export interface ExplorerTargetRef {
   object: string;
@@ -21,6 +24,12 @@ export interface ExplorerSourceField {
   issueUrl: string;
 }
 
+export interface ExplorerQuestion extends MappingQuestion {
+  mappingRel: string;
+  mappingUrl: string;
+  issueUrl: string;
+}
+
 export interface ExplorerSource {
   entity: string;
   slug: string;
@@ -32,6 +41,7 @@ export interface ExplorerSource {
   edgeCount: number;
   targetNames: string[];
   fields: ExplorerSourceField[];
+  questions: ExplorerQuestion[];
 }
 
 export interface ExplorerEvidence {
@@ -59,6 +69,7 @@ export interface ExplorerTarget {
   slots: ExplorerTargetSlot[];
   structuralParents: string[];
   sourceMappings: ExplorerEvidence[];
+  questions: ExplorerQuestion[];
   noSource: boolean;
   support: boolean;
   svgFile?: string;
@@ -164,6 +175,48 @@ function uniqueEvidence(edges: readonly MappingEdge[]): ExplorerEvidence[] {
   );
 }
 
+function questionSort(left: ExplorerQuestion, right: ExplorerQuestion): number {
+  return (
+    Number(left.answered) - Number(right.answered) ||
+    (left.property ?? "").localeCompare(right.property ?? "") ||
+    (left.target ?? "").localeCompare(right.target ?? "") ||
+    left.mappingRel.localeCompare(right.mappingRel) ||
+    left.line - right.line
+  );
+}
+
+function explorerQuestion(mappingRel: string, question: MappingQuestion): ExplorerQuestion {
+  return {
+    ...question,
+    mappingRel,
+    mappingUrl: mappingFileUrl(mappingRel),
+    issueUrl: mappingIssueUrl(mappingRel, question.property),
+  };
+}
+
+function questionsForMapping(
+  mappingRel: string,
+  mappingDocuments: ReadonlyMap<string, MappingReportDocument>
+): ExplorerQuestion[] {
+  return (mappingDocuments.get(mappingRel)?.questions ?? [])
+    .map((question) => explorerQuestion(mappingRel, question))
+    .sort(questionSort);
+}
+
+function questionsForTarget(
+  targetName: string,
+  mappingDocuments: ReadonlyMap<string, MappingReportDocument>
+): ExplorerQuestion[] {
+  const questions: ExplorerQuestion[] = [];
+  for (const [mappingRel, document] of mappingDocuments) {
+    for (const question of document.questions ?? []) {
+      const target = question.target === null ? null : questionTargetParts(question.target);
+      if (target?.object === targetName) questions.push(explorerQuestion(mappingRel, question));
+    }
+  }
+  return questions.sort(questionSort);
+}
+
 function targetSlots(inverse: InverseCoverageLedger, row: CartaDefCoverage): ExplorerTargetSlot[] {
   return inverse.slots
     .filter((slot) => slot.def === row.name)
@@ -194,7 +247,8 @@ function isSupportTarget(row: Pick<ExplorerTarget, "status">): boolean {
 export function buildMappingExplorerData(
   corpus: Corpus,
   inverse: InverseCoverageLedger,
-  artifactNames: readonly string[]
+  artifactNames: readonly string[],
+  mappingDocuments: ReadonlyMap<string, MappingReportDocument>
 ): MappingExplorerData {
   const artifacts = [...artifactNames].filter((name) => name.endsWith(".svg")).sort();
   const artifactBySlug = new Map(
@@ -217,6 +271,7 @@ export function buildMappingExplorerData(
         edgeCount: edges.length,
         targetNames,
         fields: sourceFields(object, edges),
+        questions: questionsForMapping(object.rel, mappingDocuments),
       };
     })
     .sort((a, b) => a.entity.localeCompare(b.entity));
@@ -236,6 +291,7 @@ export function buildMappingExplorerData(
         slots,
         structuralParents: row.structuralParents,
         sourceMappings,
+        questions: questionsForTarget(row.name, mappingDocuments),
         noSource: candidateNames.has(row.name),
         support,
         svgFile: artifactBySlug.get(explorerSlug(row.name)),
@@ -291,6 +347,74 @@ function targetStatus(target: ExplorerTarget): string {
   if (target.status === "type-only") return "Type-only evidence";
   if (target.status === "deferred") return "Deferred evidence";
   return target.status;
+}
+
+function questionCounts(questions: readonly ExplorerQuestion[]): {
+  open: number;
+  closed: number;
+} {
+  return {
+    open: questions.filter((question) => !question.answered).length,
+    closed: questions.filter((question) => question.answered).length,
+  };
+}
+
+function questionChip(questions: readonly ExplorerQuestion[]): string {
+  if (questions.length === 0) return "";
+  const counts = questionCounts(questions);
+  return `<span class="mini-chip question-chip">${html(counts.open)} open · ${html(
+    counts.closed
+  )} closed</span>`;
+}
+
+function questionRow(question: ExplorerQuestion): string {
+  const property = question.property ?? question.target ?? "mapping-level";
+  const target = question.target
+    ? `<span class="question-target">→ ${html(question.target)}</span>`
+    : "";
+  const answeredBy = question.answeredBy ? ` · answered by ${html(question.answeredBy)}` : "";
+  const state = question.answered ? "closed" : "open";
+  return `<article class="question-row question-${state}">
+    <div class="question-status"><span class="question-state question-state-${state}">${
+    question.answered ? "CLOSED" : "OPEN"
+  }</span><code>${html(property)}</code></div>
+    <div class="question-body"><p>${html(
+      question.question
+    )}</p><div class="question-meta">Asked by ${html(
+    question.askedBy
+  )}${target}${answeredBy} · ${html(question.mappingRel)}:${html(
+    question.line
+  )}</div><div class="question-answer"><span>Current answer</span> ${html(
+    question.answer
+  )}</div></div>
+    <div class="question-actions">${externalLink(
+      question.issueUrl,
+      "Open issue ↗",
+      "question-action"
+    )}${link(question.mappingUrl, "Mapping ↗", "question-mapping")}</div>
+  </article>`;
+}
+
+function renderQuestionPanel(
+  questions: readonly ExplorerQuestion[],
+  title: string,
+  description: string
+): string {
+  if (questions.length === 0) return "";
+  const counts = questionCounts(questions);
+  return `<section class="question-panel" aria-label="${html(
+    title
+  )}"><div class="question-panel-heading"><div><span class="eyebrow">Review threads</span><h2>${html(
+    title
+  )}</h2><p>${html(
+    description
+  )}</p></div><div class="question-tally"><span class="question-state question-state-open">${html(
+    counts.open
+  )} open</span><span class="question-state question-state-closed">${html(
+    counts.closed
+  )} closed</span></div></div><div class="question-list">${questions
+    .map(questionRow)
+    .join("")}</div></section>`;
 }
 
 function shell(title: string, relative: string, body: string): string {
@@ -356,7 +480,7 @@ function sourceCard(source: ExplorerSource): string {
     <p class="card-copy">${source.edgeCount} executable mapping edge${
     source.edgeCount === 1 ? "" : "s"
   } · ${source.fields.length} source fields.</p>
-    <div class="chip-row">${targets}</div>
+    <div class="chip-row">${targets}${questionChip(source.questions)}</div>
     <div class="card-footer">${externalLink(
       source.issueUrl,
       "Open mapping issue",
@@ -390,6 +514,7 @@ function targetCard(target: ExplorerTarget): string {
     <div class="chip-row"><span class="mini-chip">${html(
       target.sourceMappings.length
     )} source mapping${target.sourceMappings.length === 1 ? "" : "s"}</span>${visual}</div>
+    <div class="chip-row">${questionChip(target.questions)}</div>
     <div class="card-footer">${
       target.noSource
         ? externalLink(target.issueUrl, "Open coverage issue", "text-link issue-link")
@@ -524,10 +649,14 @@ export function renderMappingExplorerSourcePage(source: ExplorerSource): string 
       source.noTarget ? "status-gap" : "status-ok"
     }">${html(status)}</span><span>${html(source.edgeCount)} executable edges</span><span>${html(
       source.fields.length
-    )} source fields</span>${
-      source.aliasOf ? `<span>alias of ${html(source.aliasOf)}</span>` : ""
-    }</div>
-    ${alert}
+    )} source fields</span><span>${html(source.questions.length)} review question${
+      source.questions.length === 1 ? "" : "s"
+    }</span>${source.aliasOf ? `<span>alias of ${html(source.aliasOf)}</span>` : ""}</div>
+${alert}${renderQuestionPanel(
+      source.questions,
+      "Questions about this mapping",
+      "Property-level review threads stay close to the evidence. Open a prefilled issue for a new decision or follow the mapping link back to the authored file."
+    )}
     <section class="detail-grid"><div class="detail-main"><div class="section-heading compact"><div><span class="eyebrow">Field evidence</span><h2>Where the source fields go</h2></div></div><div class="table-wrap"><table><thead><tr><th>Variant</th><th>OCF field</th><th>Carta target</th><th>DSL kind</th><th></th></tr></thead><tbody>${rows}</tbody></table></div></div><aside class="detail-aside"><div class="side-card"><span class="eyebrow">Carta destinations</span><h3>${html(
       source.targetNames.length
     )}</h3><div class="token-stack">${targetChips}</div></div><div class="side-card"><span class="eyebrow">Keep exploring</span><p>Open the target-first inverse ledger or inspect the full interactive flow viewer.</p>${link(
@@ -620,6 +749,11 @@ export function renderMappingExplorerTargetPage(target: ExplorerTarget): string 
   const slots = target.slots.length
     ? target.slots.map((slot) => targetSlotRow(slot, target)).join("")
     : '<tr><td colspan="4" class="empty-cell">No properties in this target definition.</td></tr>';
+  const questionPanel = renderQuestionPanel(
+    target.questions,
+    "Questions about this target",
+    "Target-bound review threads are shown here with their source property and direct issue action."
+  );
 
   return shell(
     target.name,
@@ -641,10 +775,13 @@ export function renderMappingExplorerTargetPage(target: ExplorerTarget): string 
       targetStatus(target)
     )}</span><span>${html(target.properties.length)} properties</span><span>${html(
       target.sourceMappings.length
-    )} source mapping${target.sourceMappings.length === 1 ? "" : "s"}</span>${
+    )} source mapping${target.sourceMappings.length === 1 ? "" : "s"}</span><span>${html(
+      target.questions.length
+    )} target question${target.questions.length === 1 ? "" : "s"}</span>${
       target.reason ? `<span>${html(target.reason)}</span>` : ""
     }</div>
-    <section class="artifact-section">${visual}</section>
+   <section class="artifact-section">${visual}</section>
+${questionPanel}
     <section class="detail-grid"><div class="detail-main"><div class="section-heading compact"><div><span class="eyebrow">Target evidence</span><h2>Who can fill this target?</h2></div></div>${targetEvidenceList(
       target
     )}<div class="section-heading compact space-top"><div><span class="eyebrow">Property ledger</span><h2>Slot by slot</h2></div></div><div class="table-wrap"><table><thead><tr><th>Carta property</th><th>Status</th><th>OCF evidence</th><th></th></tr></thead><tbody>${slots}</tbody></table></div></div><aside class="detail-aside"><div class="side-card"><span class="eyebrow">Structural parents</span><div class="token-stack">${parents}</div><p class="muted">Nested definitions remain visible without being mistaken for standalone mapping targets.</p></div><div class="side-card"><span class="eyebrow">Raw artifacts</span><p>Use the generated report for role policy and the interactive viewer for cross-object flow inspection.</p>${link(
@@ -734,5 +871,13 @@ export function renderMappingExplorerCss(): string {
     ".evidence-list { display: grid; gap: 8px; } .evidence-row { display: flex; align-items: center; justify-content: space-between; gap: 20px; border: 1px solid var(--line); background: rgba(17,26,44,.72); border-radius: 14px; padding: 13px 15px; } .evidence-row strong { display: block; } .evidence-row .muted { display: block; margin-top: 3px; } .muted { color: var(--muted); } .artifact-section { margin: 10px 0 34px; } .artifact-frame { padding: 15px; background: #f4f8ff; } .artifact-frame img { display: block; width: 100%; max-height: 620px; object-fit: contain; } .artifact-frame .artifact-toolbar { color: #65728a; } .empty-state { display: flex; flex-direction: column; gap: 6px; align-items: center; justify-content: center; min-height: 180px; padding: 25px; color: var(--muted); text-align: center; } .space-top { margin-top: 45px; } [hidden] { display: none !important; }",
     "@media (max-width: 900px) { .hero { grid-template-columns: 1fr; padding-top: 60px; } .hero-orbit { height: 300px; } .metrics-grid { grid-template-columns: repeat(2, 1fr); } .feature-grid { grid-template-columns: 1fr; } .directory-grid { grid-template-columns: repeat(2, 1fr); } .detail-grid { grid-template-columns: 1fr; } .detail-aside { grid-template-columns: repeat(2, 1fr); } .detail-hero { align-items: start; flex-direction: column; } .detail-actions { justify-content: start; } }",
     "@media (max-width: 620px) { .container { width: min(100% - 26px, 1180px); } .nav-links { display: none; } .hero h1 { font-size: 48px; } .hero-lede { font-size: 16px; } .metrics-grid, .directory-grid, .detail-aside { grid-template-columns: 1fr; } .section-heading { align-items: start; flex-direction: column; } .filter-controls { align-items: stretch; width: 100%; } .filter-controls input { width: 100%; } .closing-band, .footer-row { align-items: start; flex-direction: column; } .closing-band { padding: 27px; } .featured-visual img { height: 220px; } }",
+    ".question-panel { margin: 16px 0 34px; padding: 22px; border: 1px solid rgba(255,211,139,.22); border-radius: 20px; background: linear-gradient(110deg, rgba(255,211,139,.06), rgba(17,26,44,.72)); }",
+    ".question-panel-heading { display: flex; justify-content: space-between; align-items: start; gap: 24px; margin-bottom: 16px; } .question-panel-heading h2 { margin: 6px 0 5px; font-size: 26px; letter-spacing: -.05em; } .question-panel-heading p { margin: 0; color: var(--muted); font-size: 12px; max-width: 680px; }",
+    ".question-tally { display: flex; flex-wrap: wrap; justify-content: end; gap: 6px; } .question-state { display: inline-flex; align-items: center; width: max-content; border-radius: 999px; padding: 5px 8px; font-size: 10px; font-weight: 850; letter-spacing: .06em; } .question-state-open { color: var(--coral); background: rgba(255,146,127,.12); } .question-state-closed { color: var(--blue); background: rgba(145,185,255,.12); }",
+    ".question-list { display: grid; gap: 8px; } .question-row { display: grid; grid-template-columns: minmax(140px, .2fr) minmax(0, 1fr) auto; gap: 16px; align-items: start; padding: 14px 16px; border: 1px solid var(--line); border-radius: 14px; background: rgba(9,15,29,.3); } .question-open { border-color: rgba(255,146,127,.28); } .question-closed { border-color: rgba(145,185,255,.2); opacity: .88; }",
+    ".question-status { display: flex; flex-direction: column; align-items: start; gap: 8px; } .question-status code { color: var(--ink); font: 11px ui-monospace, SFMono-Regular, Menlo, monospace; overflow-wrap: anywhere; } .question-body p { margin: 0; color: var(--ink); font-size: 13px; font-weight: 650; } .question-meta { margin-top: 6px; color: var(--subtle); font-size: 11px; } .question-target { margin-left: 8px; color: var(--blue); } .question-answer { margin-top: 8px; color: var(--muted); font-size: 11px; } .question-answer span { color: var(--subtle); text-transform: uppercase; letter-spacing: .08em; font-weight: 800; margin-right: 5px; }",
+    ".question-actions { display: flex; flex-direction: column; align-items: end; gap: 6px; } .question-action, .question-mapping { white-space: nowrap; font-size: 11px; text-decoration: none; } .question-action { color: var(--coral); font-weight: 800; } .question-mapping { color: var(--muted); } .question-action:hover, .question-mapping:hover { color: var(--mint); } .question-chip { color: var(--gold); border-color: rgba(255,211,139,.24); }",
+    "@media (max-width: 900px) { .question-row { grid-template-columns: 1fr auto; } .question-status { grid-column: 1 / -1; flex-direction: row; align-items: center; } }",
+    "@media (max-width: 620px) { .question-panel-heading { align-items: start; flex-direction: column; } .question-tally { justify-content: start; } .question-row { grid-template-columns: 1fr; } .question-actions { flex-direction: row; align-items: start; } }",
   ].join("\n");
 }
