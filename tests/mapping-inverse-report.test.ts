@@ -1,6 +1,10 @@
 import { Corpus, MappingEdge } from "../scripts/lib/core-corpus.js";
 import { buildInverseCoverage, InverseCoverageLedger } from "../scripts/lib/inverse-coverage.js";
-import { renderMappingInverseReport } from "../scripts/lib/mapping-inverse-report.js";
+import {
+  renderMappingFlowHtml,
+  renderMappingFlowSvgs,
+  renderMappingInverseReport,
+} from "../scripts/lib/mapping-inverse-report.js";
 import type { RawSchema } from "../scripts/lib/registry.js";
 
 function ledger(
@@ -53,6 +57,25 @@ function objectFieldEdge(
     scope: "object",
     target,
     kind,
+  };
+}
+
+function structuralEdge(
+  file: string,
+  source: string,
+  target: string,
+  variant = "—",
+  detail = "contains → Child"
+): MappingEdge {
+  return {
+    rel: file,
+    sourceKind: "object",
+    source,
+    variant,
+    scope: "structural",
+    target,
+    kind: "structural",
+    detail,
   };
 }
 
@@ -244,6 +267,256 @@ describe("renderMappingInverseReport", () => {
     expect(
       out.match(/\[object\] objects\/StockClass\.mapping\.md :: name \[shared\]/g)
     ).toHaveLength(1);
+  });
+
+  it("renders Carta child variants as explicit OCF-to-target flows", () => {
+    const inverse = ledger(
+      {
+        TransactionItem: {
+          type: "object",
+          properties: {
+            securityId: { type: "string" },
+            issuance: { $ref: "#/$defs/IssuanceTransaction" },
+            cancellations: {
+              type: "array",
+              items: { $ref: "#/$defs/CancellationTransaction" },
+            },
+          },
+        },
+        IssuanceTransaction: {
+          type: "object",
+          properties: { date: { type: "string" } },
+        },
+        CancellationTransaction: {
+          type: "object",
+          properties: { date: { type: "string" } },
+        },
+      },
+      [
+        structuralEdge(
+          "objects/SharedSource.mapping.md",
+          "SharedSource",
+          "#/$defs/TransactionItem/properties/issuance",
+          "Issue",
+          "contains → IssuanceTransaction"
+        ),
+        structuralEdge(
+          "objects/SharedSource.mapping.md",
+          "SharedSource",
+          "#/$defs/TransactionItem/properties/cancellations",
+          "Cancel",
+          "contains items → CancellationTransaction"
+        ),
+        structuralEdge(
+          "objects/OtherCancellation.mapping.md",
+          "OtherCancellation",
+          "#/$defs/TransactionItem/properties/cancellations",
+          "—",
+          "contains items → CancellationTransaction"
+        ),
+        objectFieldEdge(
+          "objects/SharedSource.mapping.md",
+          "SharedSource",
+          "date",
+          "#/$defs/IssuanceTransaction/properties/date",
+          "Issue"
+        ),
+        objectFieldEdge(
+          "objects/SharedSource.mapping.md",
+          "SharedSource",
+          "date",
+          "#/$defs/CancellationTransaction/properties/date",
+          "Cancel"
+        ),
+        objectFieldEdge(
+          "objects/OtherCancellation.mapping.md",
+          "OtherCancellation",
+          "date",
+          "#/$defs/CancellationTransaction/properties/date"
+        ),
+        objectFieldEdge(
+          "objects/SharedSource.mapping.md",
+          "SharedSource",
+          "security_id",
+          "#/$defs/TransactionItem/properties/securityId",
+          "Issue"
+        ),
+        objectFieldEdge(
+          "objects/SharedSource.mapping.md",
+          "SharedSource",
+          "security_id",
+          "#/$defs/TransactionItem/properties/securityId",
+          "Cancel"
+        ),
+        objectFieldEdge(
+          "objects/OtherCancellation.mapping.md",
+          "OtherCancellation",
+          "security_id",
+          "#/$defs/TransactionItem/properties/securityId"
+        ),
+        objectFieldEdge(
+          "objects/ParentOnly.mapping.md",
+          "ParentOnly",
+          "security_id",
+          "#/$defs/TransactionItem/properties/securityId"
+        ),
+      ]
+    );
+
+    const mappingDocuments = new Map([
+      [
+        "objects/SharedSource.mapping.md",
+        {
+          mapping: {
+            route_by_property: { on_property: "kind" },
+            variants: {
+              Issue: { when: ["ISSUE"] },
+              Cancel: { when: ["CANCEL"] },
+            },
+          },
+        },
+      ],
+      ["objects/OtherCancellation.mapping.md", { mapping: {} }],
+    ]);
+    const out = renderMappingInverseReport({
+      inverse,
+      targetObject: "TransactionItem",
+      mappingDocuments,
+    });
+
+    expect(out).toContain("<!-- mapping-flow:start -->");
+    expect(out).toContain("## Related object property flows (1 groups)");
+    expect(out).toContain("### TransactionItem");
+    expect(out).toContain("#### cancellations[] → CancellationTransaction");
+    expect(out).toContain("#### issuance → IssuanceTransaction");
+    expect(out).toContain("| OCF route | OCF property | → | Carta property |");
+    expect(out).toContain("SharedSource [Issue]");
+    expect(out).toContain("SharedSource [Cancel]");
+    expect(out).toContain("OtherCancellation");
+    expect(out).toContain("TransactionItem.cancellations[].date");
+    expect(out).toContain("TransactionItem.issuance.date");
+    expect(out).toContain("TransactionItem.securityId");
+    expect(out).toContain("<!-- mapping-flow:end -->");
+    const flowStart = out.indexOf("<!-- mapping-flow:start -->");
+    const flowEnd = out.indexOf("<!-- mapping-flow:end -->");
+    const flowBlock = out.slice(flowStart, flowEnd);
+    expect(flowBlock.match(/SharedSource \[(Issue|Cancel)\]/g)).toHaveLength(4);
+    expect(flowBlock).not.toContain("ParentOnly");
+    expect(out).not.toContain("```mermaid");
+    const withoutFlowTables = renderMappingInverseReport({
+      inverse,
+      targetObject: "TransactionItem",
+      mappingDocuments,
+      includeRelatedObjectPropertyFlows: false,
+    });
+    expect(withoutFlowTables).not.toContain("<!-- mapping-flow:start -->");
+    expect(withoutFlowTables).not.toContain("Related object property flows");
+    expect(withoutFlowTables).toContain("Carta inverse coverage report");
+    const compact = renderMappingInverseReport({
+      inverse,
+      targetObject: "TransactionItem",
+      mappingDocuments,
+      includeRelatedObjectPropertyFlows: false,
+      compactAggregateTrees: true,
+    });
+    expect(compact).toContain("aggregate mapping ledger");
+    expect(compact).toContain("parent properties (1)");
+    expect(compact).toContain("contains (2 nested variants)");
+    expect(compact).toContain("cancellations[] : CancellationTransaction");
+    expect(compact).toContain("← SharedSource [Cancel].date (rename)");
+    expect(compact).not.toContain("source path(s)");
+    const artifacts = renderMappingFlowSvgs({
+      inverse,
+      targetObject: "TransactionItem",
+      mappingDocuments,
+    });
+    const svg = artifacts.get("TransactionItem.svg");
+    expect(svg).toBeDefined();
+    expect(svg).toContain("cancellations[] → CancellationTransaction");
+    expect(svg).toContain("issuance → IssuanceTransaction");
+    expect(svg).toContain("parent properties (1)");
+    expect(svg).toContain("contains (2 nested variants)");
+    expect(svg).toContain("SharedSource [Issue]");
+    expect(svg).toContain("TransactionItem.cancellations[].date");
+    expect(svg).toContain("TransactionItem.issuance.date");
+    expect(svg).toContain('marker-end="url(#property-arrow)"');
+    expect(svg).toContain('class="mapping-edge"');
+    expect(svg).toContain('data-target-key="parent"');
+    expect(svg).not.toContain("flowchart");
+    expect(svg).not.toContain("subgraph");
+
+    const html = renderMappingFlowHtml({
+      inverse,
+      targetObject: "TransactionItem",
+      mappingDocuments: new Map(),
+    });
+    expect(html).toContain("Interactive polymorphic mapping flows");
+    expect(html).toContain("mapping-data");
+    expect(html).toContain('id="zoom-in"');
+    expect(html).toContain('id="zoom-out"');
+    expect(html).toContain('id="fit-width"');
+    expect(html).toContain('id="stage"');
+    expect(html).toContain("Carta target aggregate");
+    expect(html).toContain("«contained type»");
+    expect(html).toContain("shift-click to select several");
+    expect(html).toContain("TransactionItem.svg");
+  });
+
+  it("uses target-specific mapping lanes for dense polymorphic families", () => {
+    const parentProperties = Object.fromEntries(
+      Array.from({ length: 20 }, (_, index) => [`parentField${index}`, {}])
+    );
+    const inverse = ledger(
+      {
+        DenseFamily: {
+          type: "object",
+          properties: {
+            ...parentProperties,
+            childA: { $ref: "#/$defs/ChildA" },
+            childB: { $ref: "#/$defs/ChildB" },
+          },
+        },
+        ChildA: { type: "object", properties: { value: {} } },
+        ChildB: { type: "object", properties: { value: {} } },
+      },
+      [
+        structuralEdge(
+          "objects/SourceA.mapping.md",
+          "SourceA",
+          "#/$defs/DenseFamily/properties/childA",
+          "A",
+          "contains → ChildA"
+        ),
+        structuralEdge(
+          "objects/SourceB.mapping.md",
+          "SourceB",
+          "#/$defs/DenseFamily/properties/childB",
+          "B",
+          "contains → ChildB"
+        ),
+        ...Array.from({ length: 20 }, (_, index) =>
+          objectFieldEdge(
+            "objects/SourceA.mapping.md",
+            "SourceA",
+            `sourceField${index}`,
+            `#/$defs/DenseFamily/properties/parentField${index}`,
+            "A"
+          )
+        ),
+      ]
+    );
+
+    const svg = renderMappingFlowSvgs({
+      inverse,
+      targetObject: "DenseFamily",
+      mappingDocuments: new Map(),
+    }).get("DenseFamily.svg");
+    expect(svg).toBeDefined();
+    expect(svg).toContain("Dense mapping layout");
+    expect(svg).toContain("Target-specific mapping lanes");
+    expect(svg).toContain("DenseFamily parent");
+    expect(svg).toContain("20 exact property mappings");
+    expect(svg).toContain("sourceField0 → parentField0");
   });
 
   it("keeps independent route axes separate instead of forming Cartesian subtype combinations", () => {

@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 import path from "node:path";
-import { readdir, readFile, stat } from "node:fs/promises";
+import { mkdir, readdir, readFile, stat, writeFile } from "node:fs/promises";
 import yargs from "yargs";
 import { hideBin } from "yargs/helpers";
 import { minimatch } from "minimatch";
@@ -9,7 +9,11 @@ import { loadRegistry, RawSchema } from "./lib/registry.js";
 import { parseMappingDocument, MappingParseError } from "./lib/mapping-parser.js";
 import { validateMapping, ValidationError, TARGET_BUNDLES } from "./lib/mapping-validator.js";
 import { MappingReportDocument, renderMappingReport } from "./lib/mapping-report.js";
-import { renderMappingInverseReport } from "./lib/mapping-inverse-report.js";
+import {
+  renderMappingFlowHtml,
+  renderMappingFlowSvgs,
+  renderMappingInverseReport,
+} from "./lib/mapping-inverse-report.js";
 import { loadGreenCorpus } from "./lib/core-corpus.js";
 import { buildInverseCoverage } from "./lib/inverse-coverage.js";
 
@@ -20,6 +24,8 @@ interface Args {
   verbose: boolean;
   inverse: boolean;
   targetObject?: string;
+  inverseSvgDir?: string;
+  inverseHtmlDir?: string;
 }
 
 async function collectMappingFiles(repoRoot: string): Promise<string[]> {
@@ -105,8 +111,41 @@ async function main(argv: Args): Promise<number> {
           greenDocuments: corpus.greenDocuments.size,
           targetObject: argv.targetObject,
           mappingDocuments,
+          includeRelatedObjectPropertyFlows: false,
+          compactAggregateTrees: true,
         }) + "\n"
       );
+      if (argv.inverseSvgDir) {
+        const outputDir = path.resolve(repoRoot, argv.inverseSvgDir);
+        await mkdir(outputDir, { recursive: true });
+        const artifacts = renderMappingFlowSvgs({
+          inverse,
+          targetObject: argv.targetObject,
+          mappingDocuments,
+        });
+        await Promise.all(
+          [...artifacts.entries()].map(([name, contents]) =>
+            writeFile(path.join(outputDir, name), contents, "utf8")
+          )
+        );
+        console.error(
+          `Wrote ${artifacts.size} mapping flow SVG artifact(s) to ${argv.inverseSvgDir}`
+        );
+      }
+      if (argv.inverseHtmlDir) {
+        const outputDir = path.resolve(repoRoot, argv.inverseHtmlDir);
+        await mkdir(outputDir, { recursive: true });
+        await writeFile(
+          path.join(outputDir, "index.html"),
+          renderMappingFlowHtml({
+            inverse,
+            targetObject: argv.targetObject,
+            mappingDocuments,
+          }),
+          "utf8"
+        );
+        console.error(`Wrote interactive mapping flow viewer to ${argv.inverseHtmlDir}/index.html`);
+      }
     } catch (err) {
       console.error(`Failed to build inverse coverage ledger: ${(err as Error).message}`);
       return 1;
@@ -266,6 +305,14 @@ const parsed = yargs(hideBin(process.argv))
     type: "string",
     describe: "Restrict --inverse to one Carta $defs object, e.g. ConvertibleNote",
   })
+  .option("inverse-svg-dir", {
+    type: "string",
+    describe: "Write related-object flow SVG artifacts to this directory",
+  })
+  .option("inverse-html-dir", {
+    type: "string",
+    describe: "Write a self-contained interactive related-object flow viewer to this directory",
+  })
   .strict()
   .help()
   .parseSync();
@@ -275,6 +322,8 @@ const argv: Args = {
   verbose: Boolean(parsed.verbose),
   inverse: Boolean(parsed.inverse),
   targetObject: typeof parsed.targetObject === "string" ? parsed.targetObject : undefined,
+  inverseSvgDir: typeof parsed.inverseSvgDir === "string" ? parsed.inverseSvgDir : undefined,
+  inverseHtmlDir: typeof parsed.inverseHtmlDir === "string" ? parsed.inverseHtmlDir : undefined,
 };
 
 main(argv).then(

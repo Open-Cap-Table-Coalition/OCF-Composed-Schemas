@@ -23,21 +23,99 @@ jobs:
       - name: Generate shared inverse coverage report
         shell: bash
         run: |
-          mkdir -p ci-artifacts
+          mkdir -p ci-artifacts/mapping-flows ci-artifacts/mapping-flows-interactive
           set +e
-          npm run --silent mapping:inverse > ci-artifacts/mapping-inverse-report.txt 2>&1
+          npm run --silent mapping:inverse -- --inverse-svg-dir ci-artifacts/mapping-flows --inverse-html-dir ci-artifacts/mapping-flows-interactive > ci-artifacts/mapping-inverse-report.txt 2>&1
           status=$?
-          echo '```text' >> "$GITHUB_STEP_SUMMARY"
-          cat ci-artifacts/mapping-inverse-report.txt >> "$GITHUB_STEP_SUMMARY"
-          echo '```' >> "$GITHUB_STEP_SUMMARY"
+          echo '## Inverse coverage report' >> "$GITHUB_STEP_SUMMARY"
+          awk '
+            function close_text() {
+              if (in_text) {
+                print "```"
+                in_text = 0
+              }
+            }
+            function open_text() {
+              if (!in_text) {
+                print "```text"
+                in_text = 1
+              }
+            }
+            /^<!-- mapping-flow:start -->$/ {
+              close_text()
+              print
+              in_mapping_flow = 1
+              next
+            }
+            /^<!-- mapping-flow:end -->$/ {
+              print
+              in_mapping_flow = 0
+              next
+            }
+            in_mapping_flow {
+              print
+              next
+            }
+            /^```mermaid$/ {
+              close_text()
+              print
+              in_mermaid = 1
+              next
+            }
+            /^```$/ && in_mermaid {
+              print
+              in_mermaid = 0
+              next
+            }
+            in_mermaid {
+              print
+              next
+            }
+            {
+              open_text()
+              print
+            }
+            END {
+              close_text()
+            }
+          ' ci-artifacts/mapping-inverse-report.txt >> "$GITHUB_STEP_SUMMARY"
+          echo '' >> "$GITHUB_STEP_SUMMARY"
+          echo '### Inline related-object flow previews' >> "$GITHUB_STEP_SUMMARY"
+          # Keep the image host on github.com so the authenticated Actions UI can
+          # read private-repository assets; raw.githubusercontent.com returns 404
+          # for private repositories without a signed download URL.
+          preview_ref="${GITHUB_HEAD_REF:-${GITHUB_REF_NAME}}"
+          for svg in ci-artifacts/mapping-flows/*.svg; do
+            [ -e "$svg" ] || continue
+            name=$(basename "$svg" .svg)
+            echo "![${name}](${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/blob/${preview_ref}/docs/generated/mapping-flows/${name}.svg?raw=true)" >> "$GITHUB_STEP_SUMMARY"
+          done
           exit "$status"
       - name: Upload inverse coverage report
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: mapping-inverse-report
-          path: ci-artifacts/mapping-inverse-report.txt
+          path: ci-artifacts
           if-no-files-found: error
+      - name: Upload interactive mapping viewer
+        if: always()
+        id: upload-interactive-mapping-viewer
+        uses: actions/upload-artifact@v4
+        with:
+          name: mapping-inverse-interactive
+          path: ci-artifacts/mapping-flows-interactive
+          if-no-files-found: warn
+      - name: Link interactive mapping viewer
+        if: always()
+        env:
+          ARTIFACT_URL: ${{ steps.upload-interactive-mapping-viewer.outputs.artifact-url }}
+        run: |
+          if [ -n "$ARTIFACT_URL" ]; then
+            echo '' >> "$GITHUB_STEP_SUMMARY"
+            echo '### Interactive mapping viewer' >> "$GITHUB_STEP_SUMMARY"
+            echo "[Download and open the interactive mapping viewer]($ARTIFACT_URL)" >> "$GITHUB_STEP_SUMMARY"
+          fi
       - run: npm run mapping:coverage:check
       - run: npm run core:check
       - run: npm run core:validate-sample
