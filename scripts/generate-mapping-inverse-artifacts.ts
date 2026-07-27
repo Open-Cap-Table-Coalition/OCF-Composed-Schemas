@@ -165,7 +165,7 @@ function validateExplorerLinks(files: ReadonlyMap<string, string>): void {
       ) {
         continue;
       }
-      const local = reference.split("#", 1)[0] ?? "";
+      const local = reference.split(/[?#]/u, 1)[0] ?? "";
       if (!local) continue;
       const target = path.posix.normalize(path.posix.join(path.posix.dirname(relative), local));
       if (!known.has(target))
