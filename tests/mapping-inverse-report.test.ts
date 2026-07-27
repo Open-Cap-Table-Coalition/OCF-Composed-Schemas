@@ -424,10 +424,12 @@ describe("renderMappingInverseReport", () => {
     expect(svg).toBeDefined();
     expect(svg).toContain("cancellations[] → CancellationTransaction");
     expect(svg).toContain("issuance → IssuanceTransaction");
+    expect(svg).toContain("shared parent properties (1)");
+    expect(svg).toContain("contains (2 nested variants)");
     expect(svg).toContain("SharedSource [Issue]");
     expect(svg).toContain("TransactionItem.cancellations[].date");
     expect(svg).toContain("TransactionItem.issuance.date");
-    expect(svg).toContain('marker-end="url(#arrow)"');
+    expect(svg).toContain('marker-end="url(#property-arrow)"');
     expect(svg).not.toContain("flowchart");
     expect(svg).not.toContain("subgraph");
   });

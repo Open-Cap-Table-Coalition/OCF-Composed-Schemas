@@ -1,10 +1,12 @@
 # Related-object flow gallery
 
-These native SVGs show the inverse mapping ledger as direct property-to-property rows.
+These native SVGs show the inverse mapping ledger as UML-like class/data-flow graphs.
 
-Each image is one Carta parent object. Within an image, each purple header is one nested
-Carta variant; each green-to-blue arrow is one explicit OCF source property → Carta target
-property mapping. Shared parent properties are kept in their own final section.
+Each image is one Carta parent object. Green class nodes are OCF routes; blue class nodes are
+the Carta parent and nested variants. Solid arrows connect explicit source properties to target
+properties. Dashed purple edges show containment. The Carta parent node explicitly reports its
+shared parent property count and lists those properties, including parent-only routes where they
+contribute to the family.
 
 | Carta parent | Preview |
 | --- | --- |

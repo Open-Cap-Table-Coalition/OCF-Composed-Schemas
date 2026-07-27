@@ -1,125 +1,212 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1800" height="2538" viewBox="0 0 1800 2538" role="img" aria-labelledby="title desc">
-<title id="title">OptionGrant related object property flows</title>
-<desc id="desc">Direct OCF source-property to Carta target-property mappings grouped by nested variant.</desc>
-<style>text{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}</style>
-<defs><marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto" markerUnits="strokeWidth"><path d="M0,0 L10,5 L0,10 z" fill="#64748b"/></marker></defs>
-<rect width="1800" height="2538" fill="#f8fafc"/>
-<text x="64" y="48" fill="#0f172a" font-size="32" font-weight="700"><tspan x="64" dy="0">OptionGrant</tspan></text>
-<text x="64" y="82" fill="#475569" font-size="20"><tspan x="64" dy="0">Related object property flows</tspan></text>
-<text x="64" y="112" fill="#64748b" font-size="16"><tspan x="64" dy="0">Each arrow is one explicit OCF property → Carta property mapping</tspan></text>
-<rect x="1360" y="36" width="20" height="20" rx="4" fill="#e6f4ea" stroke="#62a576"/>
-<text x="1394" y="52" fill="#166534" font-size="16"><tspan x="1394" dy="0">OCF source</tspan></text>
-<rect x="1570" y="36" width="20" height="20" rx="4" fill="#e8f0fe" stroke="#6b8fd6"/>
-<text x="1604" y="52" fill="#1e3a8a" font-size="16"><tspan x="1604" dy="0">Carta target</tspan></text>
-<rect x="64" y="132" width="1672" height="52" rx="10" fill="#ede9fe" stroke="#a78bfa"/>
-<text x="84" y="164" fill="#4c1d95" font-size="20" font-weight="700"><tspan x="84" dy="0">exercises[] → Exercise</tspan></text>
-<rect x="64" y="196" width="620" height="86" rx="10" fill="#e6f4ea" stroke="#62a576"/>
-<text x="86" y="223" fill="#166534" font-size="15" font-weight="500"><tspan x="86" dy="0">EquityCompensationExercise [Option]</tspan></text><text x="86" y="241" fill="#14532d" font-size="18" font-weight="700"><tspan x="86" dy="0">resulting_security_ids</tspan></text><text x="86" y="259" fill="#166534" font-size="13" font-weight="500"><tspan x="86" dy="0">when security_id → compensation_type (lookup) = OPTION or </tspan><tspan x="86" dy="18">OPTION_NSO or OPTION_ISO</tspan></text>
-<line x1="708" y1="239" x2="900" y2="239" stroke="#64748b" stroke-width="3" marker-end="url(#arrow)"/>
-<rect x="930" y="196" width="806" height="86" rx="10" fill="#e8f0fe" stroke="#6b8fd6"/>
-<text x="952" y="230" fill="#1e3a8a" font-size="18" font-weight="700"><tspan x="952" dy="0">OptionGrant.exercises[].certificateId</tspan></text>
-<rect x="64" y="298" width="620" height="86" rx="10" fill="#e6f4ea" stroke="#62a576"/>
-<text x="86" y="325" fill="#166534" font-size="15" font-weight="500"><tspan x="86" dy="0">EquityCompensationExercise [Option]</tspan></text><text x="86" y="343" fill="#14532d" font-size="18" font-weight="700"><tspan x="86" dy="0">date</tspan></text><text x="86" y="361" fill="#166534" font-size="13" font-weight="500"><tspan x="86" dy="0">when security_id → compensation_type (lookup) = OPTION or </tspan><tspan x="86" dy="18">OPTION_NSO or OPTION_ISO</tspan></text>
-<line x1="708" y1="341" x2="900" y2="341" stroke="#64748b" stroke-width="3" marker-end="url(#arrow)"/>
-<rect x="930" y="298" width="806" height="86" rx="10" fill="#e8f0fe" stroke="#6b8fd6"/>
-<text x="952" y="332" fill="#1e3a8a" font-size="18" font-weight="700"><tspan x="952" dy="0">OptionGrant.exercises[].exerciseDate</tspan></text>
-<rect x="64" y="400" width="620" height="86" rx="10" fill="#e6f4ea" stroke="#62a576"/>
-<text x="86" y="427" fill="#166534" font-size="15" font-weight="500"><tspan x="86" dy="0">EquityCompensationExercise [Option]</tspan></text><text x="86" y="445" fill="#14532d" font-size="18" font-weight="700"><tspan x="86" dy="0">quantity</tspan></text><text x="86" y="463" fill="#166534" font-size="13" font-weight="500"><tspan x="86" dy="0">when security_id → compensation_type (lookup) = OPTION or </tspan><tspan x="86" dy="18">OPTION_NSO or OPTION_ISO</tspan></text>
-<line x1="708" y1="443" x2="900" y2="443" stroke="#64748b" stroke-width="3" marker-end="url(#arrow)"/>
-<rect x="930" y="400" width="806" height="86" rx="10" fill="#e8f0fe" stroke="#6b8fd6"/>
-<text x="952" y="434" fill="#1e3a8a" font-size="18" font-weight="700"><tspan x="952" dy="0">OptionGrant.exercises[].quantity</tspan></text>
-<rect x="64" y="528" width="1672" height="52" rx="10" fill="#ede9fe" stroke="#a78bfa"/>
-<text x="84" y="560" fill="#4c1d95" font-size="20" font-weight="700"><tspan x="84" dy="0">vestingSchedule → VestingSchedule</tspan></text>
-<rect x="64" y="592" width="620" height="86" rx="10" fill="#e6f4ea" stroke="#62a576"/>
-<text x="86" y="619" fill="#166534" font-size="15" font-weight="500"><tspan x="86" dy="0">EquityCompensationIssuance [Option]</tspan></text><text x="86" y="637" fill="#14532d" font-size="18" font-weight="700"><tspan x="86" dy="0">vesting_start_date</tspan></text><text x="86" y="655" fill="#166534" font-size="13" font-weight="500"><tspan x="86" dy="0">when compensation_type = OPTION or OPTION_NSO or OPTION_IS</tspan><tspan x="86" dy="18">O</tspan></text>
-<line x1="708" y1="635" x2="900" y2="635" stroke="#64748b" stroke-width="3" marker-end="url(#arrow)"/>
-<rect x="930" y="592" width="806" height="86" rx="10" fill="#e8f0fe" stroke="#6b8fd6"/>
-<text x="952" y="626" fill="#1e3a8a" font-size="18" font-weight="700"><tspan x="952" dy="0">OptionGrant.vestingSchedule.startDate</tspan></text>
-<rect x="64" y="720" width="1672" height="52" rx="10" fill="#ede9fe" stroke="#a78bfa"/>
-<text x="84" y="752" fill="#4c1d95" font-size="20" font-weight="700"><tspan x="84" dy="0">Shared parent properties</tspan></text>
-<rect x="64" y="784" width="620" height="86" rx="10" fill="#e6f4ea" stroke="#62a576"/>
-<text x="86" y="811" fill="#166534" font-size="15" font-weight="500"><tspan x="86" dy="0">EquityCompensationExercise [Option]</tspan></text><text x="86" y="829" fill="#14532d" font-size="18" font-weight="700"><tspan x="86" dy="0">quantity</tspan></text><text x="86" y="847" fill="#166534" font-size="13" font-weight="500"><tspan x="86" dy="0">when security_id → compensation_type (lookup) = OPTION or </tspan><tspan x="86" dy="18">OPTION_NSO or OPTION_ISO</tspan></text>
-<line x1="708" y1="827" x2="900" y2="827" stroke="#64748b" stroke-width="3" marker-end="url(#arrow)"/>
-<rect x="930" y="784" width="806" height="86" rx="10" fill="#e8f0fe" stroke="#6b8fd6"/>
-<text x="952" y="818" fill="#1e3a8a" font-size="18" font-weight="700"><tspan x="952" dy="0">OptionGrant.exercisedQuantity</tspan></text>
-<rect x="64" y="886" width="620" height="86" rx="10" fill="#e6f4ea" stroke="#62a576"/>
-<text x="86" y="913" fill="#166534" font-size="15" font-weight="500"><tspan x="86" dy="0">EquityCompensationExercise [Option]</tspan></text><text x="86" y="931" fill="#14532d" font-size="18" font-weight="700"><tspan x="86" dy="0">security_id</tspan></text><text x="86" y="949" fill="#166534" font-size="13" font-weight="500"><tspan x="86" dy="0">when security_id → compensation_type (lookup) = OPTION or </tspan><tspan x="86" dy="18">OPTION_NSO or OPTION_ISO</tspan></text>
-<line x1="708" y1="929" x2="900" y2="929" stroke="#64748b" stroke-width="3" marker-end="url(#arrow)"/>
-<rect x="930" y="886" width="806" height="86" rx="10" fill="#e8f0fe" stroke="#6b8fd6"/>
-<text x="952" y="920" fill="#1e3a8a" font-size="18" font-weight="700"><tspan x="952" dy="0">OptionGrant.securityId</tspan></text>
-<rect x="64" y="988" width="620" height="86" rx="10" fill="#e6f4ea" stroke="#62a576"/>
-<text x="86" y="1015" fill="#166534" font-size="15" font-weight="500"><tspan x="86" dy="0">EquityCompensationIssuance [Option]</tspan></text><text x="86" y="1033" fill="#14532d" font-size="18" font-weight="700"><tspan x="86" dy="0">board_approval_date</tspan></text><text x="86" y="1051" fill="#166534" font-size="13" font-weight="500"><tspan x="86" dy="0">when compensation_type = OPTION or OPTION_NSO or OPTION_IS</tspan><tspan x="86" dy="18">O</tspan></text>
-<line x1="708" y1="1031" x2="900" y2="1031" stroke="#64748b" stroke-width="3" marker-end="url(#arrow)"/>
-<rect x="930" y="988" width="806" height="86" rx="10" fill="#e8f0fe" stroke="#6b8fd6"/>
-<text x="952" y="1022" fill="#1e3a8a" font-size="18" font-weight="700"><tspan x="952" dy="0">OptionGrant.boardApprovalDate</tspan></text>
-<rect x="64" y="1090" width="620" height="86" rx="10" fill="#e6f4ea" stroke="#62a576"/>
-<text x="86" y="1117" fill="#166534" font-size="15" font-weight="500"><tspan x="86" dy="0">EquityCompensationIssuance [Option]</tspan></text><text x="86" y="1135" fill="#14532d" font-size="18" font-weight="700"><tspan x="86" dy="0">early_exercisable</tspan></text><text x="86" y="1153" fill="#166534" font-size="13" font-weight="500"><tspan x="86" dy="0">when compensation_type = OPTION or OPTION_NSO or OPTION_IS</tspan><tspan x="86" dy="18">O</tspan></text>
-<line x1="708" y1="1133" x2="900" y2="1133" stroke="#64748b" stroke-width="3" marker-end="url(#arrow)"/>
-<rect x="930" y="1090" width="806" height="86" rx="10" fill="#e8f0fe" stroke="#6b8fd6"/>
-<text x="952" y="1124" fill="#1e3a8a" font-size="18" font-weight="700"><tspan x="952" dy="0">OptionGrant.earlyExercisable</tspan></text>
-<rect x="64" y="1192" width="620" height="86" rx="10" fill="#e6f4ea" stroke="#62a576"/>
-<text x="86" y="1219" fill="#166534" font-size="15" font-weight="500"><tspan x="86" dy="0">EquityCompensationIssuance [Option]</tspan></text><text x="86" y="1237" fill="#14532d" font-size="18" font-weight="700"><tspan x="86" dy="0">termination_exercise_windows</tspan></text><text x="86" y="1255" fill="#166534" font-size="13" font-weight="500"><tspan x="86" dy="0">when compensation_type = OPTION or OPTION_NSO or OPTION_IS</tspan><tspan x="86" dy="18">O</tspan></text>
-<line x1="708" y1="1235" x2="900" y2="1235" stroke="#64748b" stroke-width="3" marker-end="url(#arrow)"/>
-<rect x="930" y="1192" width="806" height="86" rx="10" fill="#e8f0fe" stroke="#6b8fd6"/>
-<text x="952" y="1226" fill="#1e3a8a" font-size="18" font-weight="700"><tspan x="952" dy="0">OptionGrant.exercisePeriods</tspan></text>
-<rect x="64" y="1294" width="620" height="86" rx="10" fill="#e6f4ea" stroke="#62a576"/>
-<text x="86" y="1321" fill="#166534" font-size="15" font-weight="500"><tspan x="86" dy="0">EquityCompensationIssuance [Option]</tspan></text><text x="86" y="1339" fill="#14532d" font-size="18" font-weight="700"><tspan x="86" dy="0">expiration_date</tspan></text><text x="86" y="1357" fill="#166534" font-size="13" font-weight="500"><tspan x="86" dy="0">when compensation_type = OPTION or OPTION_NSO or OPTION_IS</tspan><tspan x="86" dy="18">O</tspan></text>
-<line x1="708" y1="1337" x2="900" y2="1337" stroke="#64748b" stroke-width="3" marker-end="url(#arrow)"/>
-<rect x="930" y="1294" width="806" height="86" rx="10" fill="#e8f0fe" stroke="#6b8fd6"/>
-<text x="952" y="1328" fill="#1e3a8a" font-size="18" font-weight="700"><tspan x="952" dy="0">OptionGrant.grantExpirationDate</tspan></text>
-<rect x="64" y="1396" width="620" height="86" rx="10" fill="#e6f4ea" stroke="#62a576"/>
-<text x="86" y="1423" fill="#166534" font-size="15" font-weight="500"><tspan x="86" dy="0">EquityCompensationIssuance [Option]</tspan></text><text x="86" y="1441" fill="#14532d" font-size="18" font-weight="700"><tspan x="86" dy="0">date</tspan></text><text x="86" y="1459" fill="#166534" font-size="13" font-weight="500"><tspan x="86" dy="0">when compensation_type = OPTION or OPTION_NSO or OPTION_IS</tspan><tspan x="86" dy="18">O</tspan></text>
-<line x1="708" y1="1439" x2="900" y2="1439" stroke="#64748b" stroke-width="3" marker-end="url(#arrow)"/>
-<rect x="930" y="1396" width="806" height="86" rx="10" fill="#e8f0fe" stroke="#6b8fd6"/>
-<text x="952" y="1430" fill="#1e3a8a" font-size="18" font-weight="700"><tspan x="952" dy="0">OptionGrant.issueDate</tspan></text>
-<rect x="64" y="1498" width="620" height="86" rx="10" fill="#e6f4ea" stroke="#62a576"/>
-<text x="86" y="1525" fill="#166534" font-size="15" font-weight="500"><tspan x="86" dy="0">EquityCompensationIssuance [Option]</tspan></text><text x="86" y="1543" fill="#14532d" font-size="18" font-weight="700"><tspan x="86" dy="0">quantity</tspan></text><text x="86" y="1561" fill="#166534" font-size="13" font-weight="500"><tspan x="86" dy="0">when compensation_type = OPTION or OPTION_NSO or OPTION_IS</tspan><tspan x="86" dy="18">O</tspan></text>
-<line x1="708" y1="1541" x2="900" y2="1541" stroke="#64748b" stroke-width="3" marker-end="url(#arrow)"/>
-<rect x="930" y="1498" width="806" height="86" rx="10" fill="#e8f0fe" stroke="#6b8fd6"/>
-<text x="952" y="1532" fill="#1e3a8a" font-size="18" font-weight="700"><tspan x="952" dy="0">OptionGrant.quantity</tspan></text>
-<rect x="64" y="1600" width="620" height="86" rx="10" fill="#e6f4ea" stroke="#62a576"/>
-<text x="86" y="1627" fill="#166534" font-size="15" font-weight="500"><tspan x="86" dy="0">EquityCompensationIssuance [Option]</tspan></text><text x="86" y="1645" fill="#14532d" font-size="18" font-weight="700"><tspan x="86" dy="0">security_id</tspan></text><text x="86" y="1663" fill="#166534" font-size="13" font-weight="500"><tspan x="86" dy="0">when compensation_type = OPTION or OPTION_NSO or OPTION_IS</tspan><tspan x="86" dy="18">O</tspan></text>
-<line x1="708" y1="1643" x2="900" y2="1643" stroke="#64748b" stroke-width="3" marker-end="url(#arrow)"/>
-<rect x="930" y="1600" width="806" height="86" rx="10" fill="#e8f0fe" stroke="#6b8fd6"/>
-<text x="952" y="1634" fill="#1e3a8a" font-size="18" font-weight="700"><tspan x="952" dy="0">OptionGrant.securityId</tspan></text>
-<rect x="64" y="1702" width="620" height="86" rx="10" fill="#e6f4ea" stroke="#62a576"/>
-<text x="86" y="1729" fill="#166534" font-size="15" font-weight="500"><tspan x="86" dy="0">EquityCompensationIssuance [Option]</tspan></text><text x="86" y="1747" fill="#14532d" font-size="18" font-weight="700"><tspan x="86" dy="0">custom_id</tspan></text><text x="86" y="1765" fill="#166534" font-size="13" font-weight="500"><tspan x="86" dy="0">when compensation_type = OPTION or OPTION_NSO or OPTION_IS</tspan><tspan x="86" dy="18">O</tspan></text>
-<line x1="708" y1="1745" x2="900" y2="1745" stroke="#64748b" stroke-width="3" marker-end="url(#arrow)"/>
-<rect x="930" y="1702" width="806" height="86" rx="10" fill="#e8f0fe" stroke="#6b8fd6"/>
-<text x="952" y="1736" fill="#1e3a8a" font-size="18" font-weight="700"><tspan x="952" dy="0">OptionGrant.securityLabel</tspan></text>
-<rect x="64" y="1804" width="620" height="86" rx="10" fill="#e6f4ea" stroke="#62a576"/>
-<text x="86" y="1831" fill="#166534" font-size="15" font-weight="500"><tspan x="86" dy="0">EquityCompensationIssuance [Option]</tspan></text><text x="86" y="1849" fill="#14532d" font-size="18" font-weight="700"><tspan x="86" dy="0">stock_class_id</tspan></text><text x="86" y="1867" fill="#166534" font-size="13" font-weight="500"><tspan x="86" dy="0">when compensation_type = OPTION or OPTION_NSO or OPTION_IS</tspan><tspan x="86" dy="18">O</tspan></text>
-<line x1="708" y1="1847" x2="900" y2="1847" stroke="#64748b" stroke-width="3" marker-end="url(#arrow)"/>
-<rect x="930" y="1804" width="806" height="86" rx="10" fill="#e8f0fe" stroke="#6b8fd6"/>
-<text x="952" y="1838" fill="#1e3a8a" font-size="18" font-weight="700"><tspan x="952" dy="0">OptionGrant.shareClassId</tspan></text>
-<rect x="64" y="1906" width="620" height="86" rx="10" fill="#e6f4ea" stroke="#62a576"/>
-<text x="86" y="1933" fill="#166534" font-size="15" font-weight="500"><tspan x="86" dy="0">EquityCompensationIssuance [Option]</tspan></text><text x="86" y="1951" fill="#14532d" font-size="18" font-weight="700"><tspan x="86" dy="0">stakeholder_id</tspan></text><text x="86" y="1969" fill="#166534" font-size="13" font-weight="500"><tspan x="86" dy="0">when compensation_type = OPTION or OPTION_NSO or OPTION_IS</tspan><tspan x="86" dy="18">O</tspan></text>
-<line x1="708" y1="1949" x2="900" y2="1949" stroke="#64748b" stroke-width="3" marker-end="url(#arrow)"/>
-<rect x="930" y="1906" width="806" height="86" rx="10" fill="#e8f0fe" stroke="#6b8fd6"/>
-<text x="952" y="1940" fill="#1e3a8a" font-size="18" font-weight="700"><tspan x="952" dy="0">OptionGrant.stakeholderId</tspan></text>
-<rect x="64" y="2008" width="620" height="86" rx="10" fill="#e6f4ea" stroke="#62a576"/>
-<text x="86" y="2035" fill="#166534" font-size="15" font-weight="500"><tspan x="86" dy="0">EquityCompensationIssuance [Option]</tspan></text><text x="86" y="2053" fill="#14532d" font-size="18" font-weight="700"><tspan x="86" dy="0">compensation_type</tspan></text><text x="86" y="2071" fill="#166534" font-size="13" font-weight="500"><tspan x="86" dy="0">when compensation_type = OPTION or OPTION_NSO or OPTION_IS</tspan><tspan x="86" dy="18">O</tspan></text>
-<line x1="708" y1="2051" x2="900" y2="2051" stroke="#64748b" stroke-width="3" marker-end="url(#arrow)"/>
-<rect x="930" y="2008" width="806" height="86" rx="10" fill="#e8f0fe" stroke="#6b8fd6"/>
-<text x="952" y="2042" fill="#1e3a8a" font-size="18" font-weight="700"><tspan x="952" dy="0">OptionGrant.stockOptionType</tspan></text>
-<rect x="64" y="2110" width="620" height="86" rx="10" fill="#e6f4ea" stroke="#62a576"/>
-<text x="86" y="2137" fill="#166534" font-size="15" font-weight="500"><tspan x="86" dy="0">EquityCompensationIssuance [Option]</tspan></text><text x="86" y="2155" fill="#14532d" font-size="18" font-weight="700"><tspan x="86" dy="0">option_grant_type</tspan></text><text x="86" y="2173" fill="#166534" font-size="13" font-weight="500"><tspan x="86" dy="0">when compensation_type = OPTION or OPTION_NSO or OPTION_IS</tspan><tspan x="86" dy="18">O</tspan></text>
-<line x1="708" y1="2153" x2="900" y2="2153" stroke="#64748b" stroke-width="3" marker-end="url(#arrow)"/>
-<rect x="930" y="2110" width="806" height="86" rx="10" fill="#e8f0fe" stroke="#6b8fd6"/>
-<text x="952" y="2144" fill="#1e3a8a" font-size="18" font-weight="700"><tspan x="952" dy="0">OptionGrant.stockOptionType</tspan></text>
-<rect x="64" y="2212" width="620" height="86" rx="10" fill="#e6f4ea" stroke="#62a576"/>
-<text x="86" y="2239" fill="#166534" font-size="15" font-weight="500"><tspan x="86" dy="0">EquityCompensationIssuance [Option]</tspan></text><text x="86" y="2257" fill="#14532d" font-size="18" font-weight="700"><tspan x="86" dy="0">vestings</tspan></text><text x="86" y="2275" fill="#166534" font-size="13" font-weight="500"><tspan x="86" dy="0">when compensation_type = OPTION or OPTION_NSO or OPTION_IS</tspan><tspan x="86" dy="18">O</tspan></text>
-<line x1="708" y1="2255" x2="900" y2="2255" stroke="#64748b" stroke-width="3" marker-end="url(#arrow)"/>
-<rect x="930" y="2212" width="806" height="86" rx="10" fill="#e8f0fe" stroke="#6b8fd6"/>
-<text x="952" y="2246" fill="#1e3a8a" font-size="18" font-weight="700"><tspan x="952" dy="0">OptionGrant.vestingEvents</tspan></text>
-<rect x="64" y="2314" width="620" height="86" rx="10" fill="#e6f4ea" stroke="#62a576"/>
-<text x="86" y="2341" fill="#166534" font-size="15" font-weight="500"><tspan x="86" dy="0">EquityCompensationIssuance [Option]</tspan></text><text x="86" y="2359" fill="#14532d" font-size="18" font-weight="700"><tspan x="86" dy="0">vesting_template_id</tspan></text><text x="86" y="2377" fill="#166534" font-size="13" font-weight="500"><tspan x="86" dy="0">when compensation_type = OPTION or OPTION_NSO or OPTION_IS</tspan><tspan x="86" dy="18">O</tspan></text>
-<line x1="708" y1="2357" x2="900" y2="2357" stroke="#64748b" stroke-width="3" marker-end="url(#arrow)"/>
-<rect x="930" y="2314" width="806" height="86" rx="10" fill="#e8f0fe" stroke="#6b8fd6"/>
-<text x="952" y="2348" fill="#1e3a8a" font-size="18" font-weight="700"><tspan x="952" dy="0">OptionGrant.vestingScheduleTemplateId</tspan></text>
-<rect x="64" y="2416" width="620" height="86" rx="10" fill="#e6f4ea" stroke="#62a576"/>
-<text x="86" y="2443" fill="#166534" font-size="15" font-weight="500"><tspan x="86" dy="0">EquityCompensationIssuance [Option]</tspan></text><text x="86" y="2461" fill="#14532d" font-size="18" font-weight="700"><tspan x="86" dy="0">vesting_start_date</tspan></text><text x="86" y="2479" fill="#166534" font-size="13" font-weight="500"><tspan x="86" dy="0">when compensation_type = OPTION or OPTION_NSO or OPTION_IS</tspan><tspan x="86" dy="18">O</tspan></text>
-<line x1="708" y1="2459" x2="900" y2="2459" stroke="#64748b" stroke-width="3" marker-end="url(#arrow)"/>
-<rect x="930" y="2416" width="806" height="86" rx="10" fill="#e8f0fe" stroke="#6b8fd6"/>
-<text x="952" y="2450" fill="#1e3a8a" font-size="18" font-weight="700"><tspan x="952" dy="0">OptionGrant.vestingStartDate</tspan></text>
+<svg xmlns="http://www.w3.org/2000/svg" width="2700" height="2188" viewBox="0 0 2700 2188" role="img" aria-labelledby="title desc">
+<title id="title">OptionGrant structural mapping graph</title>
+<desc id="desc">Native UML-like graph of OCF route nodes, Carta parent and nested variant nodes, containment edges, and property mappings.</desc>
+<style>text{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}.field{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}.muted{font-size:13px}</style>
+<defs>
+      <marker id="property-arrow" markerWidth="10" markerHeight="10" refX="9" refY="5" orient="auto" markerUnits="strokeWidth"><path d="M0,0 L10,5 L0,10 z" fill="#64748b"/></marker>
+      <marker id="contains-arrow" markerWidth="10" markerHeight="10" refX="9" refY="5" orient="auto" markerUnits="strokeWidth"><path d="M0,0 L10,5 L0,10 z" fill="#7c3aed"/></marker>
+      <marker id="composition-diamond" markerWidth="12" markerHeight="12" refX="2" refY="6" orient="auto" markerUnits="strokeWidth"><path d="M0,6 L6,0 L12,6 L6,12 z" fill="#7c3aed"/></marker>
+    </defs>
+<rect width="2700" height="2188" fill="#f8fafc"/>
+<text x="70" y="48" fill="#0f172a" font-size="34" font-weight="700"><tspan x="70" dy="0">OptionGrant</tspan></text>
+<text x="70" y="84" fill="#475569" font-size="20"><tspan x="70" dy="0">Native structural mapping graph · 21 shared parent properties · 2 nested variants</tspan></text>
+<text x="70" y="116" fill="#64748b" font-size="16"><tspan x="70" dy="0">OCF route classes → property mappings → Carta class structure; dashed purple edges are containment.</tspan></text>
+<rect x="2080" y="38" width="20" height="20" rx="4" fill="#e6f4ea" stroke="#62a576"/>
+<text x="2114" y="54" fill="#166534" font-size="16"><tspan x="2114" dy="0">OCF route node</tspan></text>
+<rect x="2310" y="38" width="20" height="20" rx="4" fill="#e8f0fe" stroke="#6b8fd6"/>
+<text x="2344" y="54" fill="#1e3a8a" font-size="16"><tspan x="2344" dy="0">Carta class node</tspan></text>
+<line x1="2080" y1="84" x2="2130" y2="84" stroke="#64748b" stroke-width="2" marker-end="url(#property-arrow)"/>
+<text x="2150" y="90" fill="#475569" font-size="14"><tspan x="2150" dy="0">property mapping</tspan></text>
+<line x1="2080" y1="112" x2="2130" y2="112" stroke="#7c3aed" stroke-width="2" stroke-dasharray="7 5" marker-end="url(#contains-arrow)"/>
+<text x="2150" y="118" fill="#6d28d9" font-size="14"><tspan x="2150" dy="0">contains</tspan></text>
+<rect x="50" y="164" width="690" height="1980" rx="14" fill="#f0fdf4" stroke="#bbf7d0" stroke-dasharray="8 6"/>
+<text x="70" y="154" fill="#166534" font-size="18" font-weight="700"><tspan x="70" dy="0">OCF source routes</tspan></text>
+<rect x="1720" y="164" width="920" height="1372" rx="14" fill="#eff6ff" stroke="#bfdbfe" stroke-dasharray="8 6"/>
+<text x="1740" y="154" fill="#1e3a8a" font-size="18" font-weight="700"><tspan x="1740" dy="0">Carta target class structure</tspan></text>
+<path d="M 720 319 C 1250.4 319, 1250.4 815, 1740 815" fill="none" stroke="#64748b" stroke-width="2" marker-end="url(#property-arrow)"><title>EquityCompensationAcceptance [Option].date → OptionGrant.stakeholderAcceptanceDate</title></path>
+<path d="M 720 509 C 1250.4 509, 1250.4 339, 1740 339" fill="none" stroke="#64748b" stroke-width="2" marker-end="url(#property-arrow)"><title>EquityCompensationCancellation [Option].date → OptionGrant.canceledDate</title></path>
+<path d="M 720 543 C 1250.4 543, 1250.4 373, 1740 373" fill="none" stroke="#64748b" stroke-width="2" marker-end="url(#property-arrow)"><title>EquityCompensationCancellation [Option].quantity → OptionGrant.canceledQuantity</title></path>
+<path d="M 720 577 C 1250.4 577, 1250.4 713, 1740 713" fill="none" stroke="#64748b" stroke-width="2" marker-end="url(#property-arrow)"><title>EquityCompensationCancellation [Option].security_id → OptionGrant.securityId</title></path>
+<path d="M 720 767 C 1250.4 767, 1250.4 1287, 1740 1287" fill="none" stroke="#64748b" stroke-width="2" marker-end="url(#property-arrow)"><title>EquityCompensationExercise [Option].date → OptionGrant.exercises[].exerciseDate</title></path>
+<path d="M 720 801 C 1250.4 801, 1250.4 543, 1740 543" fill="none" stroke="#64748b" stroke-width="2" marker-end="url(#property-arrow)"><title>EquityCompensationExercise [Option].quantity → OptionGrant.exercisedQuantity</title></path>
+<path d="M 720 801 C 1250.4 801, 1250.4 1321, 1740 1321" fill="none" stroke="#64748b" stroke-width="2" marker-end="url(#property-arrow)"><title>EquityCompensationExercise [Option].quantity → OptionGrant.exercises[].quantity</title></path>
+<path d="M 720 835 C 1250.4 835, 1250.4 1253, 1740 1253" fill="none" stroke="#64748b" stroke-width="2" marker-end="url(#property-arrow)"><title>EquityCompensationExercise [Option].resulting_security_ids → OptionGrant.exercises[].certificateId</title></path>
+<path d="M 720 869 C 1250.4 869, 1250.4 713, 1740 713" fill="none" stroke="#64748b" stroke-width="2" marker-end="url(#property-arrow)"><title>EquityCompensationExercise [Option].security_id → OptionGrant.securityId</title></path>
+<path d="M 720 1043 C 1250.4 1043, 1250.4 305, 1740 305" fill="none" stroke="#64748b" stroke-width="2" marker-end="url(#property-arrow)"><title>EquityCompensationIssuance [Option].board_approval_date → OptionGrant.boardApprovalDate</title></path>
+<path d="M 720 1077 C 1250.4 1077, 1250.4 883, 1740 883" fill="none" stroke="#64748b" stroke-width="2" marker-end="url(#property-arrow)"><title>EquityCompensationIssuance [Option].compensation_type → OptionGrant.stockOptionType</title></path>
+<path d="M 720 1111 C 1250.4 1111, 1250.4 747, 1740 747" fill="none" stroke="#64748b" stroke-width="2" marker-end="url(#property-arrow)"><title>EquityCompensationIssuance [Option].custom_id → OptionGrant.securityLabel</title></path>
+<path d="M 720 1145 C 1250.4 1145, 1250.4 611, 1740 611" fill="none" stroke="#64748b" stroke-width="2" marker-end="url(#property-arrow)"><title>EquityCompensationIssuance [Option].date → OptionGrant.issueDate</title></path>
+<path d="M 720 1179 C 1250.4 1179, 1250.4 407, 1740 407" fill="none" stroke="#64748b" stroke-width="2" marker-end="url(#property-arrow)"><title>EquityCompensationIssuance [Option].early_exercisable → OptionGrant.earlyExercisable</title></path>
+<path d="M 720 1213 C 1250.4 1213, 1250.4 577, 1740 577" fill="none" stroke="#64748b" stroke-width="2" marker-end="url(#property-arrow)"><title>EquityCompensationIssuance [Option].expiration_date → OptionGrant.grantExpirationDate</title></path>
+<path d="M 720 1247 C 1250.4 1247, 1250.4 883, 1740 883" fill="none" stroke="#64748b" stroke-width="2" marker-end="url(#property-arrow)"><title>EquityCompensationIssuance [Option].option_grant_type → OptionGrant.stockOptionType</title></path>
+<path d="M 720 1281 C 1250.4 1281, 1250.4 645, 1740 645" fill="none" stroke="#64748b" stroke-width="2" marker-end="url(#property-arrow)"><title>EquityCompensationIssuance [Option].quantity → OptionGrant.quantity</title></path>
+<path d="M 720 1315 C 1250.4 1315, 1250.4 713, 1740 713" fill="none" stroke="#64748b" stroke-width="2" marker-end="url(#property-arrow)"><title>EquityCompensationIssuance [Option].security_id → OptionGrant.securityId</title></path>
+<path d="M 720 1349 C 1250.4 1349, 1250.4 849, 1740 849" fill="none" stroke="#64748b" stroke-width="2" marker-end="url(#property-arrow)"><title>EquityCompensationIssuance [Option].stakeholder_id → OptionGrant.stakeholderId</title></path>
+<path d="M 720 1383 C 1250.4 1383, 1250.4 781, 1740 781" fill="none" stroke="#64748b" stroke-width="2" marker-end="url(#property-arrow)"><title>EquityCompensationIssuance [Option].stock_class_id → OptionGrant.shareClassId</title></path>
+<path d="M 720 1417 C 1250.4 1417, 1250.4 475, 1740 475" fill="none" stroke="#64748b" stroke-width="2" marker-end="url(#property-arrow)"><title>EquityCompensationIssuance [Option].termination_exercise_windows → OptionGrant.exercisePeriods</title></path>
+<path d="M 720 1451 C 1250.4 1451, 1250.4 1469, 1740 1469" fill="none" stroke="#64748b" stroke-width="2" marker-end="url(#property-arrow)"><title>EquityCompensationIssuance [Option].vesting_start_date → OptionGrant.vestingSchedule.startDate</title></path>
+<path d="M 720 1451 C 1250.4 1451, 1250.4 985, 1740 985" fill="none" stroke="#64748b" stroke-width="2" marker-end="url(#property-arrow)"><title>EquityCompensationIssuance [Option].vesting_start_date → OptionGrant.vestingStartDate</title></path>
+<path d="M 720 1485 C 1250.4 1485, 1250.4 951, 1740 951" fill="none" stroke="#64748b" stroke-width="2" marker-end="url(#property-arrow)"><title>EquityCompensationIssuance [Option].vesting_template_id → OptionGrant.vestingScheduleTemplateId</title></path>
+<path d="M 720 1519 C 1250.4 1519, 1250.4 917, 1740 917" fill="none" stroke="#64748b" stroke-width="2" marker-end="url(#property-arrow)"><title>EquityCompensationIssuance [Option].vestings → OptionGrant.vestingEvents</title></path>
+<path d="M 720 1709 C 1250.4 1709, 1250.4 509, 1740 509" fill="none" stroke="#64748b" stroke-width="2" marker-end="url(#property-arrow)"><title>EquityCompensationRepricing [Option].new_exercise_price → OptionGrant.exercisePrice</title></path>
+<path d="M 720 1855 C 1250.4 1855, 1250.4 441, 1740 441" fill="none" stroke="#64748b" stroke-width="2" marker-end="url(#property-arrow)"><title>StockPlan.plan_name → OptionGrant.equityIncentivePlanName</title></path>
+<path d="M 720 2045 C 1250.4 2045, 1250.4 679, 1740 679" fill="none" stroke="#64748b" stroke-width="2" marker-end="url(#property-arrow)"><title>StockPlanReturnToPool [Option].quantity → OptionGrant.returnedToPoolQuantity</title></path>
+<path d="M 720 2079 C 1250.4 2079, 1250.4 713, 1740 713" fill="none" stroke="#64748b" stroke-width="2" marker-end="url(#property-arrow)"><title>StockPlanReturnToPool [Option].security_id → OptionGrant.securityId</title></path>
+<path d="M 720 689 C 1250.4 689, 1250.4 1186, 1740 1186" fill="none" stroke="#7c3aed" stroke-width="2" stroke-dasharray="7 5" marker-end="url(#contains-arrow)"><title>EquityCompensationExercise [Option] contains exercises[] → Exercise</title></path>
+<path d="M 720 973 C 1250.4 973, 1250.4 1402, 1740 1402" fill="none" stroke="#7c3aed" stroke-width="2" stroke-dasharray="7 5" marker-end="url(#contains-arrow)"><title>EquityCompensationIssuance [Option] contains vestingSchedule → VestingSchedule</title></path>
+<path d="M 2620 1031 L 2650 1031 L 2650 1158 L 2620 1158" fill="none" stroke="#7c3aed" stroke-width="2" stroke-dasharray="7 5" marker-start="url(#composition-diamond)" marker-end="url(#contains-arrow)"><title>OptionGrant contains exercises[] → Exercise</title></path>
+<path d="M 2620 1065 L 2650 1065 L 2650 1374 L 2620 1374" fill="none" stroke="#7c3aed" stroke-width="2" stroke-dasharray="7 5" marker-start="url(#composition-diamond)" marker-end="url(#contains-arrow)"><title>OptionGrant contains vestingSchedule → VestingSchedule</title></path>
+<rect x="70" y="194" width="650" height="156" rx="10" fill="#e6f4ea" stroke="#62a576" stroke-width="2"/>
+<text x="88" y="216" fill="#166534" font-size="13" font-weight="700"><tspan x="88" dy="0">«OCF route»</tspan></text>
+<text x="88" y="238" fill="#14532d" font-size="16" font-weight="700"><tspan x="88" dy="0">EquityCompensationAcceptance [Option]</tspan></text>
+<text x="88" y="256" fill="#166534" font-size="12"><tspan x="88" dy="0">when security_id → compensation_type (lookup) = OPTION or OPTION_NSO or </tspan></text>
+<text x="88" y="272" fill="#166534" font-size="12"><tspan x="88" dy="0">OPTION_ISO</tspan></text>
+<line x1="70" y1="302" x2="720" y2="302" stroke="#b7d8bf"/>
+<text x="88" y="325" class="field" fill="#14532d" font-size="16" font-weight="700"><tspan x="88" dy="0">+ date</tspan></text>
+<rect x="70" y="384" width="650" height="224" rx="10" fill="#e6f4ea" stroke="#62a576" stroke-width="2"/>
+<text x="88" y="406" fill="#166534" font-size="13" font-weight="700"><tspan x="88" dy="0">«OCF route»</tspan></text>
+<text x="88" y="428" fill="#14532d" font-size="16" font-weight="700"><tspan x="88" dy="0">EquityCompensationCancellation [Option]</tspan></text>
+<text x="88" y="446" fill="#166534" font-size="12"><tspan x="88" dy="0">when security_id → compensation_type (lookup) = OPTION or OPTION_NSO or </tspan></text>
+<text x="88" y="462" fill="#166534" font-size="12"><tspan x="88" dy="0">OPTION_ISO</tspan></text>
+<line x1="70" y1="492" x2="720" y2="492" stroke="#b7d8bf"/>
+<text x="88" y="515" class="field" fill="#14532d" font-size="16" font-weight="700"><tspan x="88" dy="0">+ date</tspan></text>
+<line x1="70" y1="526" x2="720" y2="526" stroke="#b7d8bf"/>
+<text x="88" y="549" class="field" fill="#14532d" font-size="16" font-weight="700"><tspan x="88" dy="0">+ quantity</tspan></text>
+<line x1="70" y1="560" x2="720" y2="560" stroke="#b7d8bf"/>
+<text x="88" y="583" class="field" fill="#14532d" font-size="16" font-weight="700"><tspan x="88" dy="0">+ security_id</tspan></text>
+<rect x="70" y="642" width="650" height="258" rx="10" fill="#e6f4ea" stroke="#62a576" stroke-width="2"/>
+<text x="88" y="664" fill="#166534" font-size="13" font-weight="700"><tspan x="88" dy="0">«OCF route»</tspan></text>
+<text x="88" y="686" fill="#14532d" font-size="16" font-weight="700"><tspan x="88" dy="0">EquityCompensationExercise [Option]</tspan></text>
+<text x="88" y="704" fill="#166534" font-size="12"><tspan x="88" dy="0">when security_id → compensation_type (lookup) = OPTION or OPTION_NSO or </tspan></text>
+<text x="88" y="720" fill="#166534" font-size="12"><tspan x="88" dy="0">OPTION_ISO</tspan></text>
+<line x1="70" y1="750" x2="720" y2="750" stroke="#b7d8bf"/>
+<text x="88" y="773" class="field" fill="#14532d" font-size="16" font-weight="700"><tspan x="88" dy="0">+ date</tspan></text>
+<line x1="70" y1="784" x2="720" y2="784" stroke="#b7d8bf"/>
+<text x="88" y="807" class="field" fill="#14532d" font-size="16" font-weight="700"><tspan x="88" dy="0">+ quantity</tspan></text>
+<line x1="70" y1="818" x2="720" y2="818" stroke="#b7d8bf"/>
+<text x="88" y="841" class="field" fill="#14532d" font-size="16" font-weight="700"><tspan x="88" dy="0">+ resulting_security_ids</tspan></text>
+<line x1="70" y1="852" x2="720" y2="852" stroke="#b7d8bf"/>
+<text x="88" y="875" class="field" fill="#14532d" font-size="16" font-weight="700"><tspan x="88" dy="0">+ security_id</tspan></text>
+<rect x="70" y="934" width="650" height="616" rx="10" fill="#e6f4ea" stroke="#62a576" stroke-width="2"/>
+<text x="88" y="956" fill="#166534" font-size="13" font-weight="700"><tspan x="88" dy="0">«OCF route»</tspan></text>
+<text x="88" y="978" fill="#14532d" font-size="16" font-weight="700"><tspan x="88" dy="0">EquityCompensationIssuance [Option]</tspan></text>
+<text x="88" y="996" fill="#166534" font-size="12"><tspan x="88" dy="0">when compensation_type = OPTION or OPTION_NSO or OPTION_ISO</tspan></text>
+<line x1="70" y1="1026" x2="720" y2="1026" stroke="#b7d8bf"/>
+<text x="88" y="1049" class="field" fill="#14532d" font-size="16" font-weight="700"><tspan x="88" dy="0">+ board_approval_date</tspan></text>
+<line x1="70" y1="1060" x2="720" y2="1060" stroke="#b7d8bf"/>
+<text x="88" y="1083" class="field" fill="#14532d" font-size="16" font-weight="700"><tspan x="88" dy="0">+ compensation_type</tspan></text>
+<line x1="70" y1="1094" x2="720" y2="1094" stroke="#b7d8bf"/>
+<text x="88" y="1117" class="field" fill="#14532d" font-size="16" font-weight="700"><tspan x="88" dy="0">+ custom_id</tspan></text>
+<line x1="70" y1="1128" x2="720" y2="1128" stroke="#b7d8bf"/>
+<text x="88" y="1151" class="field" fill="#14532d" font-size="16" font-weight="700"><tspan x="88" dy="0">+ date</tspan></text>
+<line x1="70" y1="1162" x2="720" y2="1162" stroke="#b7d8bf"/>
+<text x="88" y="1185" class="field" fill="#14532d" font-size="16" font-weight="700"><tspan x="88" dy="0">+ early_exercisable</tspan></text>
+<line x1="70" y1="1196" x2="720" y2="1196" stroke="#b7d8bf"/>
+<text x="88" y="1219" class="field" fill="#14532d" font-size="16" font-weight="700"><tspan x="88" dy="0">+ expiration_date</tspan></text>
+<line x1="70" y1="1230" x2="720" y2="1230" stroke="#b7d8bf"/>
+<text x="88" y="1253" class="field" fill="#14532d" font-size="16" font-weight="700"><tspan x="88" dy="0">+ option_grant_type</tspan></text>
+<line x1="70" y1="1264" x2="720" y2="1264" stroke="#b7d8bf"/>
+<text x="88" y="1287" class="field" fill="#14532d" font-size="16" font-weight="700"><tspan x="88" dy="0">+ quantity</tspan></text>
+<line x1="70" y1="1298" x2="720" y2="1298" stroke="#b7d8bf"/>
+<text x="88" y="1321" class="field" fill="#14532d" font-size="16" font-weight="700"><tspan x="88" dy="0">+ security_id</tspan></text>
+<line x1="70" y1="1332" x2="720" y2="1332" stroke="#b7d8bf"/>
+<text x="88" y="1355" class="field" fill="#14532d" font-size="16" font-weight="700"><tspan x="88" dy="0">+ stakeholder_id</tspan></text>
+<line x1="70" y1="1366" x2="720" y2="1366" stroke="#b7d8bf"/>
+<text x="88" y="1389" class="field" fill="#14532d" font-size="16" font-weight="700"><tspan x="88" dy="0">+ stock_class_id</tspan></text>
+<line x1="70" y1="1400" x2="720" y2="1400" stroke="#b7d8bf"/>
+<text x="88" y="1423" class="field" fill="#14532d" font-size="16" font-weight="700"><tspan x="88" dy="0">+ termination_exercise_windows</tspan></text>
+<line x1="70" y1="1434" x2="720" y2="1434" stroke="#b7d8bf"/>
+<text x="88" y="1457" class="field" fill="#14532d" font-size="16" font-weight="700"><tspan x="88" dy="0">+ vesting_start_date</tspan></text>
+<line x1="70" y1="1468" x2="720" y2="1468" stroke="#b7d8bf"/>
+<text x="88" y="1491" class="field" fill="#14532d" font-size="16" font-weight="700"><tspan x="88" dy="0">+ vesting_template_id</tspan></text>
+<line x1="70" y1="1502" x2="720" y2="1502" stroke="#b7d8bf"/>
+<text x="88" y="1525" class="field" fill="#14532d" font-size="16" font-weight="700"><tspan x="88" dy="0">+ vestings</tspan></text>
+<rect x="70" y="1584" width="650" height="156" rx="10" fill="#e6f4ea" stroke="#62a576" stroke-width="2"/>
+<text x="88" y="1606" fill="#166534" font-size="13" font-weight="700"><tspan x="88" dy="0">«OCF route»</tspan></text>
+<text x="88" y="1628" fill="#14532d" font-size="16" font-weight="700"><tspan x="88" dy="0">EquityCompensationRepricing [Option]</tspan></text>
+<text x="88" y="1646" fill="#166534" font-size="12"><tspan x="88" dy="0">when security_id → compensation_type (lookup) = OPTION or OPTION_NSO or </tspan></text>
+<text x="88" y="1662" fill="#166534" font-size="12"><tspan x="88" dy="0">OPTION_ISO</tspan></text>
+<line x1="70" y1="1692" x2="720" y2="1692" stroke="#b7d8bf"/>
+<text x="88" y="1715" class="field" fill="#14532d" font-size="16" font-weight="700"><tspan x="88" dy="0">+ new_exercise_price</tspan></text>
+<rect x="70" y="1774" width="650" height="112" rx="10" fill="#e6f4ea" stroke="#62a576" stroke-width="2"/>
+<text x="88" y="1796" fill="#166534" font-size="13" font-weight="700"><tspan x="88" dy="0">«OCF route»</tspan></text>
+<text x="88" y="1818" fill="#14532d" font-size="16" font-weight="700"><tspan x="88" dy="0">StockPlan</tspan></text>
+<line x1="70" y1="1838" x2="720" y2="1838" stroke="#b7d8bf"/>
+<text x="88" y="1861" class="field" fill="#14532d" font-size="16" font-weight="700"><tspan x="88" dy="0">+ plan_name</tspan></text>
+<rect x="70" y="1920" width="650" height="190" rx="10" fill="#e6f4ea" stroke="#62a576" stroke-width="2"/>
+<text x="88" y="1942" fill="#166534" font-size="13" font-weight="700"><tspan x="88" dy="0">«OCF route»</tspan></text>
+<text x="88" y="1964" fill="#14532d" font-size="16" font-weight="700"><tspan x="88" dy="0">StockPlanReturnToPool [Option]</tspan></text>
+<text x="88" y="1982" fill="#166534" font-size="12"><tspan x="88" dy="0">when security_id → compensation_type (lookup) = OPTION or OPTION_NSO or </tspan></text>
+<text x="88" y="1998" fill="#166534" font-size="12"><tspan x="88" dy="0">OPTION_ISO</tspan></text>
+<line x1="70" y1="2028" x2="720" y2="2028" stroke="#b7d8bf"/>
+<text x="88" y="2051" class="field" fill="#14532d" font-size="16" font-weight="700"><tspan x="88" dy="0">+ quantity</tspan></text>
+<line x1="70" y1="2062" x2="720" y2="2062" stroke="#b7d8bf"/>
+<text x="88" y="2085" class="field" fill="#14532d" font-size="16" font-weight="700"><tspan x="88" dy="0">+ security_id</tspan></text>
+<rect x="1740" y="194" width="880" height="934" rx="10" fill="#e8f0fe" stroke="#6b8fd6" stroke-width="2"/>
+<text x="1758" y="216" fill="#1e3a8a" font-size="13" font-weight="700"><tspan x="1758" dy="0">«Carta parent»</tspan></text>
+<text x="1758" y="238" fill="#1e3a8a" font-size="18" font-weight="700"><tspan x="1758" dy="0">OptionGrant</tspan></text>
+<line x1="1740" y1="258" x2="2620" y2="258" stroke="#9bb6ea"/>
+<text x="1758" y="280" fill="#1e3a8a" font-size="14" font-weight="700"><tspan x="1758" dy="0">shared parent properties (21)</tspan></text>
+<line x1="1740" y1="984" x2="2620" y2="984" stroke="#9bb6ea"/>
+<text x="1758" y="1006" fill="#1e3a8a" font-size="14" font-weight="700"><tspan x="1758" dy="0">contains (2 nested variants)</tspan></text>
+<line x1="1740" y1="288" x2="2620" y2="288" stroke="#c4d3f3"/>
+<text x="1758" y="311" class="field" fill="#1e3a8a" font-size="16" font-weight="700"><tspan x="1758" dy="0">+ boardApprovalDate</tspan></text>
+<line x1="1740" y1="322" x2="2620" y2="322" stroke="#c4d3f3"/>
+<text x="1758" y="345" class="field" fill="#1e3a8a" font-size="16" font-weight="700"><tspan x="1758" dy="0">+ canceledDate</tspan></text>
+<line x1="1740" y1="356" x2="2620" y2="356" stroke="#c4d3f3"/>
+<text x="1758" y="379" class="field" fill="#1e3a8a" font-size="16" font-weight="700"><tspan x="1758" dy="0">+ canceledQuantity</tspan></text>
+<line x1="1740" y1="390" x2="2620" y2="390" stroke="#c4d3f3"/>
+<text x="1758" y="413" class="field" fill="#1e3a8a" font-size="16" font-weight="700"><tspan x="1758" dy="0">+ earlyExercisable</tspan></text>
+<line x1="1740" y1="424" x2="2620" y2="424" stroke="#c4d3f3"/>
+<text x="1758" y="447" class="field" fill="#1e3a8a" font-size="16" font-weight="700"><tspan x="1758" dy="0">+ equityIncentivePlanName</tspan></text>
+<line x1="1740" y1="458" x2="2620" y2="458" stroke="#c4d3f3"/>
+<text x="1758" y="481" class="field" fill="#1e3a8a" font-size="16" font-weight="700"><tspan x="1758" dy="0">+ exercisePeriods</tspan></text>
+<line x1="1740" y1="492" x2="2620" y2="492" stroke="#c4d3f3"/>
+<text x="1758" y="515" class="field" fill="#1e3a8a" font-size="16" font-weight="700"><tspan x="1758" dy="0">+ exercisePrice</tspan></text>
+<line x1="1740" y1="526" x2="2620" y2="526" stroke="#c4d3f3"/>
+<text x="1758" y="549" class="field" fill="#1e3a8a" font-size="16" font-weight="700"><tspan x="1758" dy="0">+ exercisedQuantity</tspan></text>
+<line x1="1740" y1="560" x2="2620" y2="560" stroke="#c4d3f3"/>
+<text x="1758" y="583" class="field" fill="#1e3a8a" font-size="16" font-weight="700"><tspan x="1758" dy="0">+ grantExpirationDate</tspan></text>
+<line x1="1740" y1="594" x2="2620" y2="594" stroke="#c4d3f3"/>
+<text x="1758" y="617" class="field" fill="#1e3a8a" font-size="16" font-weight="700"><tspan x="1758" dy="0">+ issueDate</tspan></text>
+<line x1="1740" y1="628" x2="2620" y2="628" stroke="#c4d3f3"/>
+<text x="1758" y="651" class="field" fill="#1e3a8a" font-size="16" font-weight="700"><tspan x="1758" dy="0">+ quantity</tspan></text>
+<line x1="1740" y1="662" x2="2620" y2="662" stroke="#c4d3f3"/>
+<text x="1758" y="685" class="field" fill="#1e3a8a" font-size="16" font-weight="700"><tspan x="1758" dy="0">+ returnedToPoolQuantity</tspan></text>
+<line x1="1740" y1="696" x2="2620" y2="696" stroke="#c4d3f3"/>
+<text x="1758" y="719" class="field" fill="#1e3a8a" font-size="16" font-weight="700"><tspan x="1758" dy="0">+ securityId</tspan></text>
+<line x1="1740" y1="730" x2="2620" y2="730" stroke="#c4d3f3"/>
+<text x="1758" y="753" class="field" fill="#1e3a8a" font-size="16" font-weight="700"><tspan x="1758" dy="0">+ securityLabel</tspan></text>
+<line x1="1740" y1="764" x2="2620" y2="764" stroke="#c4d3f3"/>
+<text x="1758" y="787" class="field" fill="#1e3a8a" font-size="16" font-weight="700"><tspan x="1758" dy="0">+ shareClassId</tspan></text>
+<line x1="1740" y1="798" x2="2620" y2="798" stroke="#c4d3f3"/>
+<text x="1758" y="821" class="field" fill="#1e3a8a" font-size="16" font-weight="700"><tspan x="1758" dy="0">+ stakeholderAcceptanceDate</tspan></text>
+<line x1="1740" y1="832" x2="2620" y2="832" stroke="#c4d3f3"/>
+<text x="1758" y="855" class="field" fill="#1e3a8a" font-size="16" font-weight="700"><tspan x="1758" dy="0">+ stakeholderId</tspan></text>
+<line x1="1740" y1="866" x2="2620" y2="866" stroke="#c4d3f3"/>
+<text x="1758" y="889" class="field" fill="#1e3a8a" font-size="16" font-weight="700"><tspan x="1758" dy="0">+ stockOptionType</tspan></text>
+<line x1="1740" y1="900" x2="2620" y2="900" stroke="#c4d3f3"/>
+<text x="1758" y="923" class="field" fill="#1e3a8a" font-size="16" font-weight="700"><tspan x="1758" dy="0">+ vestingEvents</tspan></text>
+<line x1="1740" y1="934" x2="2620" y2="934" stroke="#c4d3f3"/>
+<text x="1758" y="957" class="field" fill="#1e3a8a" font-size="16" font-weight="700"><tspan x="1758" dy="0">+ vestingScheduleTemplateId</tspan></text>
+<line x1="1740" y1="968" x2="2620" y2="968" stroke="#c4d3f3"/>
+<text x="1758" y="991" class="field" fill="#1e3a8a" font-size="16" font-weight="700"><tspan x="1758" dy="0">+ vestingStartDate</tspan></text>
+<line x1="1740" y1="1014" x2="2620" y2="1014" stroke="#c4d3f3"/>
+<text x="1758" y="1037" class="field" fill="#1e3a8a" font-size="16" font-weight="700"><tspan x="1758" dy="0">+ exercises[]: Exercise</tspan></text>
+<line x1="1740" y1="1048" x2="2620" y2="1048" stroke="#c4d3f3"/>
+<text x="1758" y="1071" class="field" fill="#1e3a8a" font-size="16" font-weight="700"><tspan x="1758" dy="0">+ vestingSchedule: VestingSchedule</tspan></text>
+<rect x="1740" y="1172" width="880" height="182" rx="10" fill="#e8f0fe" stroke="#6b8fd6" stroke-width="2"/>
+<text x="1758" y="1194" fill="#1e3a8a" font-size="13" font-weight="700"><tspan x="1758" dy="0">«nested variant»</tspan></text>
+<text x="1758" y="1216" fill="#1e3a8a" font-size="18" font-weight="700"><tspan x="1758" dy="0">exercises[] → Exercise</tspan></text>
+<line x1="1740" y1="1236" x2="2620" y2="1236" stroke="#c4d3f3"/>
+<text x="1758" y="1259" class="field" fill="#1e3a8a" font-size="16" font-weight="700"><tspan x="1758" dy="0">+ certificateId</tspan></text>
+<line x1="1740" y1="1270" x2="2620" y2="1270" stroke="#c4d3f3"/>
+<text x="1758" y="1293" class="field" fill="#1e3a8a" font-size="16" font-weight="700"><tspan x="1758" dy="0">+ exerciseDate</tspan></text>
+<line x1="1740" y1="1304" x2="2620" y2="1304" stroke="#c4d3f3"/>
+<text x="1758" y="1327" class="field" fill="#1e3a8a" font-size="16" font-weight="700"><tspan x="1758" dy="0">+ quantity</tspan></text>
+<rect x="1740" y="1388" width="880" height="114" rx="10" fill="#e8f0fe" stroke="#6b8fd6" stroke-width="2"/>
+<text x="1758" y="1410" fill="#1e3a8a" font-size="13" font-weight="700"><tspan x="1758" dy="0">«nested variant»</tspan></text>
+<text x="1758" y="1432" fill="#1e3a8a" font-size="18" font-weight="700"><tspan x="1758" dy="0">vestingSchedule → VestingSchedule</tspan></text>
+<line x1="1740" y1="1452" x2="2620" y2="1452" stroke="#c4d3f3"/>
+<text x="1758" y="1475" class="field" fill="#1e3a8a" font-size="16" font-weight="700"><tspan x="1758" dy="0">+ startDate</tspan></text>
 </svg>

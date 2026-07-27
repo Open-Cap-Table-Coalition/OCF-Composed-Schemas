@@ -1,85 +1,118 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1800" height="1722" viewBox="0 0 1800 1722" role="img" aria-labelledby="title desc">
-<title id="title">RsaTransactionItem related object property flows</title>
-<desc id="desc">Direct OCF source-property to Carta target-property mappings grouped by nested variant.</desc>
-<style>text{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}</style>
-<defs><marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto" markerUnits="strokeWidth"><path d="M0,0 L10,5 L0,10 z" fill="#64748b"/></marker></defs>
-<rect width="1800" height="1722" fill="#f8fafc"/>
-<text x="64" y="48" fill="#0f172a" font-size="32" font-weight="700"><tspan x="64" dy="0">RsaTransactionItem</tspan></text>
-<text x="64" y="82" fill="#475569" font-size="20"><tspan x="64" dy="0">Related object property flows</tspan></text>
-<text x="64" y="112" fill="#64748b" font-size="16"><tspan x="64" dy="0">Each arrow is one explicit OCF property → Carta property mapping</tspan></text>
-<rect x="1360" y="36" width="20" height="20" rx="4" fill="#e6f4ea" stroke="#62a576"/>
-<text x="1394" y="52" fill="#166534" font-size="16"><tspan x="1394" dy="0">OCF source</tspan></text>
-<rect x="1570" y="36" width="20" height="20" rx="4" fill="#e8f0fe" stroke="#6b8fd6"/>
-<text x="1604" y="52" fill="#1e3a8a" font-size="16"><tspan x="1604" dy="0">Carta target</tspan></text>
-<rect x="64" y="132" width="1672" height="52" rx="10" fill="#ede9fe" stroke="#a78bfa"/>
-<text x="84" y="164" fill="#4c1d95" font-size="20" font-weight="700"><tspan x="84" dy="0">cancellations[] → RsaCancellationTransaction</tspan></text>
-<rect x="64" y="196" width="620" height="86" rx="10" fill="#e6f4ea" stroke="#62a576"/>
-<text x="86" y="223" fill="#166534" font-size="15" font-weight="500"><tspan x="86" dy="0">StockCancellation [Rsa]</tspan></text><text x="86" y="241" fill="#14532d" font-size="18" font-weight="700"><tspan x="86" dy="0">date</tspan></text><text x="86" y="259" fill="#166534" font-size="13" font-weight="500"><tspan x="86" dy="0">when security_id → issuance_type (lookup) = RSA</tspan></text>
-<line x1="708" y1="239" x2="900" y2="239" stroke="#64748b" stroke-width="3" marker-end="url(#arrow)"/>
-<rect x="930" y="196" width="806" height="86" rx="10" fill="#e8f0fe" stroke="#6b8fd6"/>
-<text x="952" y="230" fill="#1e3a8a" font-size="18" font-weight="700"><tspan x="952" dy="0">RsaTransactionItem.cancellations[].effectiveDatetime</tspan></text>
-<rect x="64" y="298" width="620" height="86" rx="10" fill="#e6f4ea" stroke="#62a576"/>
-<text x="86" y="325" fill="#166534" font-size="15" font-weight="500"><tspan x="86" dy="0">StockCancellation [Rsa]</tspan></text><text x="86" y="343" fill="#14532d" font-size="18" font-weight="700"><tspan x="86" dy="0">quantity</tspan></text><text x="86" y="361" fill="#166534" font-size="13" font-weight="500"><tspan x="86" dy="0">when security_id → issuance_type (lookup) = RSA</tspan></text>
-<line x1="708" y1="341" x2="900" y2="341" stroke="#64748b" stroke-width="3" marker-end="url(#arrow)"/>
-<rect x="930" y="298" width="806" height="86" rx="10" fill="#e8f0fe" stroke="#6b8fd6"/>
-<text x="952" y="332" fill="#1e3a8a" font-size="18" font-weight="700"><tspan x="952" dy="0">RsaTransactionItem.cancellations[].quantity</tspan></text>
-<rect x="64" y="400" width="620" height="86" rx="10" fill="#e6f4ea" stroke="#62a576"/>
-<text x="86" y="427" fill="#166534" font-size="15" font-weight="500"><tspan x="86" dy="0">StockCancellation [Rsa]</tspan></text><text x="86" y="445" fill="#14532d" font-size="18" font-weight="700"><tspan x="86" dy="0">reason_text</tspan></text><text x="86" y="463" fill="#166534" font-size="13" font-weight="500"><tspan x="86" dy="0">when security_id → issuance_type (lookup) = RSA</tspan></text>
-<line x1="708" y1="443" x2="900" y2="443" stroke="#64748b" stroke-width="3" marker-end="url(#arrow)"/>
-<rect x="930" y="400" width="806" height="86" rx="10" fill="#e8f0fe" stroke="#6b8fd6"/>
-<text x="952" y="434" fill="#1e3a8a" font-size="18" font-weight="700"><tspan x="952" dy="0">RsaTransactionItem.cancellations[].reason</tspan></text>
-<rect x="64" y="528" width="1672" height="52" rx="10" fill="#ede9fe" stroke="#a78bfa"/>
-<text x="84" y="560" fill="#4c1d95" font-size="20" font-weight="700"><tspan x="84" dy="0">issuance → RsaIssuanceTransaction</tspan></text>
-<rect x="64" y="592" width="620" height="86" rx="10" fill="#e6f4ea" stroke="#62a576"/>
-<text x="86" y="619" fill="#166534" font-size="15" font-weight="500"><tspan x="86" dy="0">StockIssuance [Rsa]</tspan></text><text x="86" y="637" fill="#14532d" font-size="18" font-weight="700"><tspan x="86" dy="0">cost_basis</tspan></text><text x="86" y="655" fill="#166534" font-size="13" font-weight="500"><tspan x="86" dy="0">when issuance_type = RSA</tspan></text>
-<line x1="708" y1="635" x2="900" y2="635" stroke="#64748b" stroke-width="3" marker-end="url(#arrow)"/>
-<rect x="930" y="592" width="806" height="86" rx="10" fill="#e8f0fe" stroke="#6b8fd6"/>
-<text x="952" y="626" fill="#1e3a8a" font-size="18" font-weight="700"><tspan x="952" dy="0">RsaTransactionItem.issuance.acquisitionCost</tspan></text>
-<rect x="64" y="694" width="620" height="86" rx="10" fill="#e6f4ea" stroke="#62a576"/>
-<text x="86" y="721" fill="#166534" font-size="15" font-weight="500"><tspan x="86" dy="0">StockIssuance [Rsa]</tspan></text><text x="86" y="739" fill="#14532d" font-size="18" font-weight="700"><tspan x="86" dy="0">stock_plan_id</tspan></text><text x="86" y="757" fill="#166534" font-size="13" font-weight="500"><tspan x="86" dy="0">when issuance_type = RSA</tspan></text>
-<line x1="708" y1="737" x2="900" y2="737" stroke="#64748b" stroke-width="3" marker-end="url(#arrow)"/>
-<rect x="930" y="694" width="806" height="86" rx="10" fill="#e8f0fe" stroke="#6b8fd6"/>
-<text x="952" y="728" fill="#1e3a8a" font-size="18" font-weight="700"><tspan x="952" dy="0">RsaTransactionItem.issuance.equityPlanId</tspan></text>
-<rect x="64" y="796" width="620" height="86" rx="10" fill="#e6f4ea" stroke="#62a576"/>
-<text x="86" y="823" fill="#166534" font-size="15" font-weight="500"><tspan x="86" dy="0">StockIssuance [Rsa]</tspan></text><text x="86" y="841" fill="#14532d" font-size="18" font-weight="700"><tspan x="86" dy="0">date</tspan></text><text x="86" y="859" fill="#166534" font-size="13" font-weight="500"><tspan x="86" dy="0">when issuance_type = RSA</tspan></text>
-<line x1="708" y1="839" x2="900" y2="839" stroke="#64748b" stroke-width="3" marker-end="url(#arrow)"/>
-<rect x="930" y="796" width="806" height="86" rx="10" fill="#e8f0fe" stroke="#6b8fd6"/>
-<text x="952" y="830" fill="#1e3a8a" font-size="18" font-weight="700"><tspan x="952" dy="0">RsaTransactionItem.issuance.issueDatetime</tspan></text>
-<rect x="64" y="898" width="620" height="86" rx="10" fill="#e6f4ea" stroke="#62a576"/>
-<text x="86" y="925" fill="#166534" font-size="15" font-weight="500"><tspan x="86" dy="0">StockIssuance [Rsa]</tspan></text><text x="86" y="943" fill="#14532d" font-size="18" font-weight="700"><tspan x="86" dy="0">quantity</tspan></text><text x="86" y="961" fill="#166534" font-size="13" font-weight="500"><tspan x="86" dy="0">when issuance_type = RSA</tspan></text>
-<line x1="708" y1="941" x2="900" y2="941" stroke="#64748b" stroke-width="3" marker-end="url(#arrow)"/>
-<rect x="930" y="898" width="806" height="86" rx="10" fill="#e8f0fe" stroke="#6b8fd6"/>
-<text x="952" y="932" fill="#1e3a8a" font-size="18" font-weight="700"><tspan x="952" dy="0">RsaTransactionItem.issuance.quantity</tspan></text>
-<rect x="64" y="1000" width="620" height="86" rx="10" fill="#e6f4ea" stroke="#62a576"/>
-<text x="86" y="1027" fill="#166534" font-size="15" font-weight="500"><tspan x="86" dy="0">StockIssuance [Rsa]</tspan></text><text x="86" y="1045" fill="#14532d" font-size="18" font-weight="700"><tspan x="86" dy="0">stock_class_id</tspan></text><text x="86" y="1063" fill="#166534" font-size="13" font-weight="500"><tspan x="86" dy="0">when issuance_type = RSA</tspan></text>
-<line x1="708" y1="1043" x2="900" y2="1043" stroke="#64748b" stroke-width="3" marker-end="url(#arrow)"/>
-<rect x="930" y="1000" width="806" height="86" rx="10" fill="#e8f0fe" stroke="#6b8fd6"/>
-<text x="952" y="1034" fill="#1e3a8a" font-size="18" font-weight="700"><tspan x="952" dy="0">RsaTransactionItem.issuance.shareClassId</tspan></text>
-<rect x="64" y="1102" width="620" height="86" rx="10" fill="#e6f4ea" stroke="#62a576"/>
-<text x="86" y="1129" fill="#166534" font-size="15" font-weight="500"><tspan x="86" dy="0">StockIssuance [Rsa]</tspan></text><text x="86" y="1147" fill="#14532d" font-size="18" font-weight="700"><tspan x="86" dy="0">vesting_terms_id</tspan></text><text x="86" y="1165" fill="#166534" font-size="13" font-weight="500"><tspan x="86" dy="0">when issuance_type = RSA</tspan></text>
-<line x1="708" y1="1145" x2="900" y2="1145" stroke="#64748b" stroke-width="3" marker-end="url(#arrow)"/>
-<rect x="930" y="1102" width="806" height="86" rx="10" fill="#e8f0fe" stroke="#6b8fd6"/>
-<text x="952" y="1136" fill="#1e3a8a" font-size="18" font-weight="700"><tspan x="952" dy="0">RsaTransactionItem.issuance.vestingScheduleTemplateId</tspan></text>
-<rect x="64" y="1230" width="1672" height="52" rx="10" fill="#ede9fe" stroke="#a78bfa"/>
-<text x="84" y="1262" fill="#4c1d95" font-size="20" font-weight="700"><tspan x="84" dy="0">Shared parent properties</tspan></text>
-<rect x="64" y="1294" width="620" height="86" rx="10" fill="#e6f4ea" stroke="#62a576"/>
-<text x="86" y="1321" fill="#166534" font-size="15" font-weight="500"><tspan x="86" dy="0">StockCancellation [Rsa]</tspan></text><text x="86" y="1339" fill="#14532d" font-size="18" font-weight="700"><tspan x="86" dy="0">security_id</tspan></text><text x="86" y="1357" fill="#166534" font-size="13" font-weight="500"><tspan x="86" dy="0">when security_id → issuance_type (lookup) = RSA</tspan></text>
-<line x1="708" y1="1337" x2="900" y2="1337" stroke="#64748b" stroke-width="3" marker-end="url(#arrow)"/>
-<rect x="930" y="1294" width="806" height="86" rx="10" fill="#e8f0fe" stroke="#6b8fd6"/>
-<text x="952" y="1328" fill="#1e3a8a" font-size="18" font-weight="700"><tspan x="952" dy="0">RsaTransactionItem.securityId</tspan></text>
-<rect x="64" y="1396" width="620" height="86" rx="10" fill="#e6f4ea" stroke="#62a576"/>
-<text x="86" y="1423" fill="#166534" font-size="15" font-weight="500"><tspan x="86" dy="0">StockIssuance [Rsa]</tspan></text><text x="86" y="1441" fill="#14532d" font-size="18" font-weight="700"><tspan x="86" dy="0">security_id</tspan></text><text x="86" y="1459" fill="#166534" font-size="13" font-weight="500"><tspan x="86" dy="0">when issuance_type = RSA</tspan></text>
-<line x1="708" y1="1439" x2="900" y2="1439" stroke="#64748b" stroke-width="3" marker-end="url(#arrow)"/>
-<rect x="930" y="1396" width="806" height="86" rx="10" fill="#e8f0fe" stroke="#6b8fd6"/>
-<text x="952" y="1430" fill="#1e3a8a" font-size="18" font-weight="700"><tspan x="952" dy="0">RsaTransactionItem.securityId</tspan></text>
-<rect x="64" y="1498" width="620" height="86" rx="10" fill="#e6f4ea" stroke="#62a576"/>
-<text x="86" y="1525" fill="#166534" font-size="15" font-weight="500"><tspan x="86" dy="0">StockIssuance [Rsa]</tspan></text><text x="86" y="1543" fill="#14532d" font-size="18" font-weight="700"><tspan x="86" dy="0">custom_id</tspan></text><text x="86" y="1561" fill="#166534" font-size="13" font-weight="500"><tspan x="86" dy="0">when issuance_type = RSA</tspan></text>
-<line x1="708" y1="1541" x2="900" y2="1541" stroke="#64748b" stroke-width="3" marker-end="url(#arrow)"/>
-<rect x="930" y="1498" width="806" height="86" rx="10" fill="#e8f0fe" stroke="#6b8fd6"/>
-<text x="952" y="1532" fill="#1e3a8a" font-size="18" font-weight="700"><tspan x="952" dy="0">RsaTransactionItem.securityLabel</tspan></text>
-<rect x="64" y="1600" width="620" height="86" rx="10" fill="#e6f4ea" stroke="#62a576"/>
-<text x="86" y="1627" fill="#166534" font-size="15" font-weight="500"><tspan x="86" dy="0">StockIssuance [Rsa]</tspan></text><text x="86" y="1645" fill="#14532d" font-size="18" font-weight="700"><tspan x="86" dy="0">stakeholder_id</tspan></text><text x="86" y="1663" fill="#166534" font-size="13" font-weight="500"><tspan x="86" dy="0">when issuance_type = RSA</tspan></text>
-<line x1="708" y1="1643" x2="900" y2="1643" stroke="#64748b" stroke-width="3" marker-end="url(#arrow)"/>
-<rect x="930" y="1600" width="806" height="86" rx="10" fill="#e8f0fe" stroke="#6b8fd6"/>
-<text x="952" y="1634" fill="#1e3a8a" font-size="18" font-weight="700"><tspan x="952" dy="0">RsaTransactionItem.stakeholderId</tspan></text>
+<svg xmlns="http://www.w3.org/2000/svg" width="2700" height="1138" viewBox="0 0 2700 1138" role="img" aria-labelledby="title desc">
+<title id="title">RsaTransactionItem structural mapping graph</title>
+<desc id="desc">Native UML-like graph of OCF route nodes, Carta parent and nested variant nodes, containment edges, and property mappings.</desc>
+<style>text{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}.field{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}.muted{font-size:13px}</style>
+<defs>
+      <marker id="property-arrow" markerWidth="10" markerHeight="10" refX="9" refY="5" orient="auto" markerUnits="strokeWidth"><path d="M0,0 L10,5 L0,10 z" fill="#64748b"/></marker>
+      <marker id="contains-arrow" markerWidth="10" markerHeight="10" refX="9" refY="5" orient="auto" markerUnits="strokeWidth"><path d="M0,0 L10,5 L0,10 z" fill="#7c3aed"/></marker>
+      <marker id="composition-diamond" markerWidth="12" markerHeight="12" refX="2" refY="6" orient="auto" markerUnits="strokeWidth"><path d="M0,6 L6,0 L12,6 L6,12 z" fill="#7c3aed"/></marker>
+    </defs>
+<rect width="2700" height="1138" fill="#f8fafc"/>
+<text x="70" y="48" fill="#0f172a" font-size="34" font-weight="700"><tspan x="70" dy="0">RsaTransactionItem</tspan></text>
+<text x="70" y="84" fill="#475569" font-size="20"><tspan x="70" dy="0">Native structural mapping graph · 3 shared parent properties · 2 nested variants</tspan></text>
+<text x="70" y="116" fill="#64748b" font-size="16"><tspan x="70" dy="0">OCF route classes → property mappings → Carta class structure; dashed purple edges are containment.</tspan></text>
+<rect x="2080" y="38" width="20" height="20" rx="4" fill="#e6f4ea" stroke="#62a576"/>
+<text x="2114" y="54" fill="#166534" font-size="16"><tspan x="2114" dy="0">OCF route node</tspan></text>
+<rect x="2310" y="38" width="20" height="20" rx="4" fill="#e8f0fe" stroke="#6b8fd6"/>
+<text x="2344" y="54" fill="#1e3a8a" font-size="16"><tspan x="2344" dy="0">Carta class node</tspan></text>
+<line x1="2080" y1="84" x2="2130" y2="84" stroke="#64748b" stroke-width="2" marker-end="url(#property-arrow)"/>
+<text x="2150" y="90" fill="#475569" font-size="14"><tspan x="2150" dy="0">property mapping</tspan></text>
+<line x1="2080" y1="112" x2="2130" y2="112" stroke="#7c3aed" stroke-width="2" stroke-dasharray="7 5" marker-end="url(#contains-arrow)"/>
+<text x="2150" y="118" fill="#6d28d9" font-size="14"><tspan x="2150" dy="0">contains</tspan></text>
+<rect x="50" y="164" width="690" height="752" rx="14" fill="#f0fdf4" stroke="#bbf7d0" stroke-dasharray="8 6"/>
+<text x="70" y="154" fill="#166534" font-size="18" font-weight="700"><tspan x="70" dy="0">OCF source routes</tspan></text>
+<rect x="1720" y="164" width="920" height="930" rx="14" fill="#eff6ff" stroke="#bfdbfe" stroke-dasharray="8 6"/>
+<text x="1740" y="154" fill="#1e3a8a" font-size="18" font-weight="700"><tspan x="1740" dy="0">Carta target class structure</tspan></text>
+<path d="M 720 303 C 1250.4 303, 1250.4 641, 1740 641" fill="none" stroke="#64748b" stroke-width="2" marker-end="url(#property-arrow)"><title>StockCancellation [Rsa].date → RsaTransactionItem.cancellations[].effectiveDatetime</title></path>
+<path d="M 720 337 C 1250.4 337, 1250.4 675, 1740 675" fill="none" stroke="#64748b" stroke-width="2" marker-end="url(#property-arrow)"><title>StockCancellation [Rsa].quantity → RsaTransactionItem.cancellations[].quantity</title></path>
+<path d="M 720 371 C 1250.4 371, 1250.4 709, 1740 709" fill="none" stroke="#64748b" stroke-width="2" marker-end="url(#property-arrow)"><title>StockCancellation [Rsa].reason_text → RsaTransactionItem.cancellations[].reason</title></path>
+<path d="M 720 405 C 1250.4 405, 1250.4 305, 1740 305" fill="none" stroke="#64748b" stroke-width="2" marker-end="url(#property-arrow)"><title>StockCancellation [Rsa].security_id → RsaTransactionItem.securityId</title></path>
+<path d="M 720 579 C 1250.4 579, 1250.4 857, 1740 857" fill="none" stroke="#64748b" stroke-width="2" marker-end="url(#property-arrow)"><title>StockIssuance [Rsa].cost_basis → RsaTransactionItem.issuance.acquisitionCost</title></path>
+<path d="M 720 613 C 1250.4 613, 1250.4 339, 1740 339" fill="none" stroke="#64748b" stroke-width="2" marker-end="url(#property-arrow)"><title>StockIssuance [Rsa].custom_id → RsaTransactionItem.securityLabel</title></path>
+<path d="M 720 647 C 1250.4 647, 1250.4 925, 1740 925" fill="none" stroke="#64748b" stroke-width="2" marker-end="url(#property-arrow)"><title>StockIssuance [Rsa].date → RsaTransactionItem.issuance.issueDatetime</title></path>
+<path d="M 720 681 C 1250.4 681, 1250.4 959, 1740 959" fill="none" stroke="#64748b" stroke-width="2" marker-end="url(#property-arrow)"><title>StockIssuance [Rsa].quantity → RsaTransactionItem.issuance.quantity</title></path>
+<path d="M 720 715 C 1250.4 715, 1250.4 305, 1740 305" fill="none" stroke="#64748b" stroke-width="2" marker-end="url(#property-arrow)"><title>StockIssuance [Rsa].security_id → RsaTransactionItem.securityId</title></path>
+<path d="M 720 749 C 1250.4 749, 1250.4 373, 1740 373" fill="none" stroke="#64748b" stroke-width="2" marker-end="url(#property-arrow)"><title>StockIssuance [Rsa].stakeholder_id → RsaTransactionItem.stakeholderId</title></path>
+<path d="M 720 783 C 1250.4 783, 1250.4 993, 1740 993" fill="none" stroke="#64748b" stroke-width="2" marker-end="url(#property-arrow)"><title>StockIssuance [Rsa].stock_class_id → RsaTransactionItem.issuance.shareClassId</title></path>
+<path d="M 720 817 C 1250.4 817, 1250.4 891, 1740 891" fill="none" stroke="#64748b" stroke-width="2" marker-end="url(#property-arrow)"><title>StockIssuance [Rsa].stock_plan_id → RsaTransactionItem.issuance.equityPlanId</title></path>
+<path d="M 720 851 C 1250.4 851, 1250.4 1027, 1740 1027" fill="none" stroke="#64748b" stroke-width="2" marker-end="url(#property-arrow)"><title>StockIssuance [Rsa].vesting_terms_id → RsaTransactionItem.issuance.vestingScheduleTemplateId</title></path>
+<path d="M 720 233 C 1250.4 233, 1250.4 574, 1740 574" fill="none" stroke="#7c3aed" stroke-width="2" stroke-dasharray="7 5" marker-end="url(#contains-arrow)"><title>StockCancellation [Rsa] contains cancellations[] → RsaCancellationTransaction</title></path>
+<path d="M 720 509 C 1250.4 509, 1250.4 790, 1740 790" fill="none" stroke="#7c3aed" stroke-width="2" stroke-dasharray="7 5" marker-end="url(#contains-arrow)"><title>StockIssuance [Rsa] contains issuance → RsaIssuanceTransaction</title></path>
+<path d="M 2620 419 L 2650 419 L 2650 546 L 2620 546" fill="none" stroke="#7c3aed" stroke-width="2" stroke-dasharray="7 5" marker-start="url(#composition-diamond)" marker-end="url(#contains-arrow)"><title>RsaTransactionItem contains cancellations[] → RsaCancellationTransaction</title></path>
+<path d="M 2620 453 L 2650 453 L 2650 762 L 2620 762" fill="none" stroke="#7c3aed" stroke-width="2" stroke-dasharray="7 5" marker-start="url(#composition-diamond)" marker-end="url(#contains-arrow)"><title>RsaTransactionItem contains issuance → RsaIssuanceTransaction</title></path>
+<rect x="70" y="194" width="650" height="242" rx="10" fill="#e6f4ea" stroke="#62a576" stroke-width="2"/>
+<text x="88" y="216" fill="#166534" font-size="13" font-weight="700"><tspan x="88" dy="0">«OCF route»</tspan></text>
+<text x="88" y="238" fill="#14532d" font-size="16" font-weight="700"><tspan x="88" dy="0">StockCancellation [Rsa]</tspan></text>
+<text x="88" y="256" fill="#166534" font-size="12"><tspan x="88" dy="0">when security_id → issuance_type (lookup) = RSA</tspan></text>
+<line x1="70" y1="286" x2="720" y2="286" stroke="#b7d8bf"/>
+<text x="88" y="309" class="field" fill="#14532d" font-size="16" font-weight="700"><tspan x="88" dy="0">+ date</tspan></text>
+<line x1="70" y1="320" x2="720" y2="320" stroke="#b7d8bf"/>
+<text x="88" y="343" class="field" fill="#14532d" font-size="16" font-weight="700"><tspan x="88" dy="0">+ quantity</tspan></text>
+<line x1="70" y1="354" x2="720" y2="354" stroke="#b7d8bf"/>
+<text x="88" y="377" class="field" fill="#14532d" font-size="16" font-weight="700"><tspan x="88" dy="0">+ reason_text</tspan></text>
+<line x1="70" y1="388" x2="720" y2="388" stroke="#b7d8bf"/>
+<text x="88" y="411" class="field" fill="#14532d" font-size="16" font-weight="700"><tspan x="88" dy="0">+ security_id</tspan></text>
+<rect x="70" y="470" width="650" height="412" rx="10" fill="#e6f4ea" stroke="#62a576" stroke-width="2"/>
+<text x="88" y="492" fill="#166534" font-size="13" font-weight="700"><tspan x="88" dy="0">«OCF route»</tspan></text>
+<text x="88" y="514" fill="#14532d" font-size="16" font-weight="700"><tspan x="88" dy="0">StockIssuance [Rsa]</tspan></text>
+<text x="88" y="532" fill="#166534" font-size="12"><tspan x="88" dy="0">when issuance_type = RSA</tspan></text>
+<line x1="70" y1="562" x2="720" y2="562" stroke="#b7d8bf"/>
+<text x="88" y="585" class="field" fill="#14532d" font-size="16" font-weight="700"><tspan x="88" dy="0">+ cost_basis</tspan></text>
+<line x1="70" y1="596" x2="720" y2="596" stroke="#b7d8bf"/>
+<text x="88" y="619" class="field" fill="#14532d" font-size="16" font-weight="700"><tspan x="88" dy="0">+ custom_id</tspan></text>
+<line x1="70" y1="630" x2="720" y2="630" stroke="#b7d8bf"/>
+<text x="88" y="653" class="field" fill="#14532d" font-size="16" font-weight="700"><tspan x="88" dy="0">+ date</tspan></text>
+<line x1="70" y1="664" x2="720" y2="664" stroke="#b7d8bf"/>
+<text x="88" y="687" class="field" fill="#14532d" font-size="16" font-weight="700"><tspan x="88" dy="0">+ quantity</tspan></text>
+<line x1="70" y1="698" x2="720" y2="698" stroke="#b7d8bf"/>
+<text x="88" y="721" class="field" fill="#14532d" font-size="16" font-weight="700"><tspan x="88" dy="0">+ security_id</tspan></text>
+<line x1="70" y1="732" x2="720" y2="732" stroke="#b7d8bf"/>
+<text x="88" y="755" class="field" fill="#14532d" font-size="16" font-weight="700"><tspan x="88" dy="0">+ stakeholder_id</tspan></text>
+<line x1="70" y1="766" x2="720" y2="766" stroke="#b7d8bf"/>
+<text x="88" y="789" class="field" fill="#14532d" font-size="16" font-weight="700"><tspan x="88" dy="0">+ stock_class_id</tspan></text>
+<line x1="70" y1="800" x2="720" y2="800" stroke="#b7d8bf"/>
+<text x="88" y="823" class="field" fill="#14532d" font-size="16" font-weight="700"><tspan x="88" dy="0">+ stock_plan_id</tspan></text>
+<line x1="70" y1="834" x2="720" y2="834" stroke="#b7d8bf"/>
+<text x="88" y="857" class="field" fill="#14532d" font-size="16" font-weight="700"><tspan x="88" dy="0">+ vesting_terms_id</tspan></text>
+<rect x="1740" y="194" width="880" height="322" rx="10" fill="#e8f0fe" stroke="#6b8fd6" stroke-width="2"/>
+<text x="1758" y="216" fill="#1e3a8a" font-size="13" font-weight="700"><tspan x="1758" dy="0">«Carta parent»</tspan></text>
+<text x="1758" y="238" fill="#1e3a8a" font-size="18" font-weight="700"><tspan x="1758" dy="0">RsaTransactionItem</tspan></text>
+<line x1="1740" y1="258" x2="2620" y2="258" stroke="#9bb6ea"/>
+<text x="1758" y="280" fill="#1e3a8a" font-size="14" font-weight="700"><tspan x="1758" dy="0">shared parent properties (3)</tspan></text>
+<line x1="1740" y1="372" x2="2620" y2="372" stroke="#9bb6ea"/>
+<text x="1758" y="394" fill="#1e3a8a" font-size="14" font-weight="700"><tspan x="1758" dy="0">contains (2 nested variants)</tspan></text>
+<line x1="1740" y1="288" x2="2620" y2="288" stroke="#c4d3f3"/>
+<text x="1758" y="311" class="field" fill="#1e3a8a" font-size="16" font-weight="700"><tspan x="1758" dy="0">+ securityId</tspan></text>
+<line x1="1740" y1="322" x2="2620" y2="322" stroke="#c4d3f3"/>
+<text x="1758" y="345" class="field" fill="#1e3a8a" font-size="16" font-weight="700"><tspan x="1758" dy="0">+ securityLabel</tspan></text>
+<line x1="1740" y1="356" x2="2620" y2="356" stroke="#c4d3f3"/>
+<text x="1758" y="379" class="field" fill="#1e3a8a" font-size="16" font-weight="700"><tspan x="1758" dy="0">+ stakeholderId</tspan></text>
+<line x1="1740" y1="402" x2="2620" y2="402" stroke="#c4d3f3"/>
+<text x="1758" y="425" class="field" fill="#1e3a8a" font-size="16" font-weight="700"><tspan x="1758" dy="0">+ cancellations[]: RsaCancellationTransaction</tspan></text>
+<line x1="1740" y1="436" x2="2620" y2="436" stroke="#c4d3f3"/>
+<text x="1758" y="459" class="field" fill="#1e3a8a" font-size="16" font-weight="700"><tspan x="1758" dy="0">+ issuance: RsaIssuanceTransaction</tspan></text>
+<rect x="1740" y="560" width="880" height="182" rx="10" fill="#e8f0fe" stroke="#6b8fd6" stroke-width="2"/>
+<text x="1758" y="582" fill="#1e3a8a" font-size="13" font-weight="700"><tspan x="1758" dy="0">«nested variant»</tspan></text>
+<text x="1758" y="604" fill="#1e3a8a" font-size="18" font-weight="700"><tspan x="1758" dy="0">cancellations[] → RsaCancellationTransaction</tspan></text>
+<line x1="1740" y1="624" x2="2620" y2="624" stroke="#c4d3f3"/>
+<text x="1758" y="647" class="field" fill="#1e3a8a" font-size="16" font-weight="700"><tspan x="1758" dy="0">+ effectiveDatetime</tspan></text>
+<line x1="1740" y1="658" x2="2620" y2="658" stroke="#c4d3f3"/>
+<text x="1758" y="681" class="field" fill="#1e3a8a" font-size="16" font-weight="700"><tspan x="1758" dy="0">+ quantity</tspan></text>
+<line x1="1740" y1="692" x2="2620" y2="692" stroke="#c4d3f3"/>
+<text x="1758" y="715" class="field" fill="#1e3a8a" font-size="16" font-weight="700"><tspan x="1758" dy="0">+ reason</tspan></text>
+<rect x="1740" y="776" width="880" height="284" rx="10" fill="#e8f0fe" stroke="#6b8fd6" stroke-width="2"/>
+<text x="1758" y="798" fill="#1e3a8a" font-size="13" font-weight="700"><tspan x="1758" dy="0">«nested variant»</tspan></text>
+<text x="1758" y="820" fill="#1e3a8a" font-size="18" font-weight="700"><tspan x="1758" dy="0">issuance → RsaIssuanceTransaction</tspan></text>
+<line x1="1740" y1="840" x2="2620" y2="840" stroke="#c4d3f3"/>
+<text x="1758" y="863" class="field" fill="#1e3a8a" font-size="16" font-weight="700"><tspan x="1758" dy="0">+ acquisitionCost</tspan></text>
+<line x1="1740" y1="874" x2="2620" y2="874" stroke="#c4d3f3"/>
+<text x="1758" y="897" class="field" fill="#1e3a8a" font-size="16" font-weight="700"><tspan x="1758" dy="0">+ equityPlanId</tspan></text>
+<line x1="1740" y1="908" x2="2620" y2="908" stroke="#c4d3f3"/>
+<text x="1758" y="931" class="field" fill="#1e3a8a" font-size="16" font-weight="700"><tspan x="1758" dy="0">+ issueDatetime</tspan></text>
+<line x1="1740" y1="942" x2="2620" y2="942" stroke="#c4d3f3"/>
+<text x="1758" y="965" class="field" fill="#1e3a8a" font-size="16" font-weight="700"><tspan x="1758" dy="0">+ quantity</tspan></text>
+<line x1="1740" y1="976" x2="2620" y2="976" stroke="#c4d3f3"/>
+<text x="1758" y="999" class="field" fill="#1e3a8a" font-size="16" font-weight="700"><tspan x="1758" dy="0">+ shareClassId</tspan></text>
+<line x1="1740" y1="1010" x2="2620" y2="1010" stroke="#c4d3f3"/>
+<text x="1758" y="1033" class="field" fill="#1e3a8a" font-size="16" font-weight="700"><tspan x="1758" dy="0">+ vestingScheduleTemplateId</tspan></text>
 </svg>
