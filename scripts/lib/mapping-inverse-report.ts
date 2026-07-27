@@ -2047,12 +2047,14 @@ export function renderMappingFlowHtml(options: MappingFlowSvgOptions): string {
     button.is-active { color: #1d4ed8; font-weight: 700; }
     .control-group { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
     .status { color: #475569; font-size: 12px; margin-left: auto; }
+    .zoom-value { min-width: 48px; text-align: center; color: #475569; font-size: 12px; font-variant-numeric: tabular-nums; }
     #diagram {
       overflow: auto;
       padding: 16px;
       min-height: calc(100vh - 150px);
     }
-    #diagram svg { display: block; width: auto; min-width: 1200px; height: auto; }
+    #stage { position: relative; width: fit-content; }
+    #diagram svg { display: block; width: auto; min-width: 0; height: auto; transform-origin: top left; }
     #diagram path.mapping-edge,
     #diagram path.mapping-group-edge,
     #diagram path.containment-edge,
@@ -2079,10 +2081,17 @@ export function renderMappingFlowHtml(options: MappingFlowSvgOptions): string {
       <div class="control-group"><span class="group-label">Source routes</span><span id="routes"></span></div>
       <button id="show-all" type="button">Show all</button>
       <button id="clear-focus" type="button">Clear focus</button>
+      <div class="control-group" aria-label="Diagram zoom">
+        <span class="group-label">Zoom</span>
+        <button id="zoom-out" type="button" aria-label="Zoom out">−</button>
+        <span class="zoom-value" id="zoom-value" aria-live="polite">Fit width</span>
+        <button id="zoom-in" type="button" aria-label="Zoom in">+</button>
+        <button id="fit-width" type="button">Fit width</button>
+      </div>
       <span class="status" id="status"></span>
     </div>
   </header>
-  <main id="diagram" aria-live="polite"></main>
+  <main id="diagram" aria-live="polite"><div id="stage"></div></main>
   <script id="mapping-data" type="application/json">${payload}</script>
   <script>
     (function () {
@@ -2091,12 +2100,53 @@ export function renderMappingFlowHtml(options: MappingFlowSvgOptions): string {
       const layerControls = document.getElementById("layers");
       const routeControls = document.getElementById("routes");
       const diagram = document.getElementById("diagram");
+      const stage = document.getElementById("stage");
       const status = document.getElementById("status");
+      const zoomValue = document.getElementById("zoom-value");
       const selectedLayers = new Set();
       const selectedRoutes = new Set();
       const selectedFlows = new Set();
       let activeSvg = null;
       let activeEdges = [];
+      let zoom = 1;
+      let fitWidthMode = true;
+
+      function svgSize(svg) {
+        const viewBox = (svg.getAttribute("viewBox") || "").trim().split(/\s+/).map(Number);
+        if (viewBox.length === 4 && viewBox[2] > 0 && viewBox[3] > 0) {
+          return { width: viewBox[2], height: viewBox[3] };
+        }
+        return { width: svg.getBoundingClientRect().width, height: svg.getBoundingClientRect().height };
+      }
+
+      function applyZoom() {
+        if (!activeSvg) {
+          zoomValue.textContent = "Fit width";
+          return;
+        }
+        const size = svgSize(activeSvg);
+        activeSvg.style.width = size.width + "px";
+        activeSvg.style.height = size.height + "px";
+        activeSvg.style.transform = "scale(" + zoom + ")";
+        stage.style.width = size.width * zoom + "px";
+        stage.style.height = size.height * zoom + "px";
+        zoomValue.textContent = Math.round(zoom * 100) + "%";
+      }
+
+      function fitToWidth() {
+        if (!activeSvg) return;
+        const size = svgSize(activeSvg);
+        const available = Math.max(320, diagram.clientWidth - 32);
+        zoom = Math.max(0.25, Math.min(1, available / size.width));
+        fitWidthMode = true;
+        applyZoom();
+      }
+
+      function setZoom(nextZoom) {
+        zoom = Math.max(0.25, Math.min(3, nextZoom));
+        fitWidthMode = false;
+        applyZoom();
+      }
 
       function labelForLayer(key) {
         if (key === "parent") return "parent";
@@ -2192,16 +2242,17 @@ export function renderMappingFlowHtml(options: MappingFlowSvgOptions): string {
         selectedFlows.clear();
         const family = families.find(function (entry) { return entry.name === name; });
         if (!family) {
-          diagram.innerHTML = '<div class="empty">No mapping flow artifact found.</div>';
+          stage.innerHTML = '<div class="empty">No mapping flow artifact found.</div>';
           activeSvg = null;
           activeEdges = [];
           renderControls();
           updateVisibility();
           return;
         }
-        diagram.innerHTML = family.svg;
-        activeSvg = diagram.querySelector("svg");
+        stage.innerHTML = family.svg;
+        activeSvg = stage.querySelector("svg");
         bindEdges();
+        fitToWidth();
       }
 
       families.forEach(function (family) {
@@ -2222,11 +2273,21 @@ export function renderMappingFlowHtml(options: MappingFlowSvgOptions): string {
         selectedFlows.clear();
         updateVisibility();
       });
+      document.getElementById("zoom-out").addEventListener("click", function () {
+        setZoom(zoom / 1.25);
+      });
+      document.getElementById("zoom-in").addEventListener("click", function () {
+        setZoom(zoom * 1.25);
+      });
+      document.getElementById("fit-width").addEventListener("click", fitToWidth);
+      window.addEventListener("resize", function () {
+        if (fitWidthMode) fitToWidth();
+      });
       if (families.length) {
         familySelect.value = families[0].name;
         renderFamily(families[0].name);
       } else {
-        diagram.innerHTML = '<div class="empty">No mapping flow artifacts found.</div>';
+        stage.innerHTML = '<div class="empty">No mapping flow artifacts found.</div>';
       }
     }());
   </script>

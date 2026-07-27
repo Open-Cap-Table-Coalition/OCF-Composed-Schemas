@@ -443,6 +443,10 @@ describe("renderMappingInverseReport", () => {
     });
     expect(html).toContain("Interactive polymorphic mapping flows");
     expect(html).toContain("mapping-data");
+    expect(html).toContain('id="zoom-in"');
+    expect(html).toContain('id="zoom-out"');
+    expect(html).toContain('id="fit-width"');
+    expect(html).toContain('id="stage"');
     expect(html).toContain("shift-click to select several");
     expect(html).toContain("TransactionItem.svg");
   });

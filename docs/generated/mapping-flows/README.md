@@ -10,8 +10,15 @@ Dashed purple edges show containment. The Carta parent node explicitly reports i
 count and lists those properties, including parent-only routes where they contribute to the family.
 
 CI also publishes a self-contained interactive HTML viewer as the `mapping-inverse-interactive`
-artifact. It lets reviewers toggle target lanes and source routes, then click or shift-click exact
-mapping arrows to focus selected flows; the checked-in SVGs remain the static inline previews.
+artifact. It lets reviewers toggle target lanes and source routes, zoom the diagram, then click or
+shift-click exact mapping arrows to focus selected flows. A reproducible copy is checked in at
+[`../mapping-flows-interactive/index.html`](../mapping-flows-interactive/index.html). GitHub's code
+browser displays that file as source; opening the downloaded CI artifact (or serving the checked-in
+file locally) provides the interactive view. GitHub Pages can serve the same `docs/` path if the
+repository later enables Pages.
+
+From a checkout, run `python3 -m http.server 8000 --directory docs/generated/mapping-flows-interactive`
+and open `http://127.0.0.1:8000/` to use the viewer locally.
 
 | Carta parent | Preview |
 | --- | --- |
