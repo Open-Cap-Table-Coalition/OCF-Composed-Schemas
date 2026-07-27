@@ -1300,13 +1300,22 @@ function svgGraphNodeRect(
   node: SvgGraphTargetNode | SvgGraphSourceNode,
   fill: string,
   stroke: string,
-  options: { className?: string; data?: Readonly<Record<string, string>> } = {}
+  options: {
+    className?: string;
+    data?: Readonly<Record<string, string>>;
+    rx?: number;
+    strokeWidth?: number;
+  } = {}
 ): string {
   const className = options.className ? ` class="${svgEscape(options.className)}"` : "";
   const data = Object.entries(options.data ?? {})
     .map(([key, value]) => ` data-${svgEscape(key)}="${svgEscape(value)}"`)
     .join("");
-  return `<rect${className}${data} x="${node.x}" y="${node.y}" width="${node.width}" height="${node.height}" rx="10" fill="${fill}" stroke="${stroke}" stroke-width="2"/>`;
+  return `<rect${className}${data} x="${node.x}" y="${node.y}" width="${node.width}" height="${
+    node.height
+  }" rx="${options.rx ?? 10}" fill="${fill}" stroke="${stroke}" stroke-width="${
+    options.strokeWidth ?? 2
+  }"/>`;
 }
 
 function svgGraphMappingLanes(
@@ -1420,8 +1429,11 @@ function renderMappingStructuralSvg(
   const sourceWidth = 650;
   const targetX = 1740;
   const targetWidth = 880;
+  const targetIndent = 42;
+  const targetVariantWidth = targetWidth - targetIndent;
   const titleHeight = 150;
   const nodeGap = 34;
+  const targetNodeGap = 24;
   const rowHeight = 34;
   const sourceLayouts: SvgGraphSourceNode[] = [];
   let sourceY = titleHeight + 44;
@@ -1503,7 +1515,8 @@ function renderMappingStructuralSvg(
   };
   targetLayouts.push(parentNode);
 
-  let targetY = parentNode.y + parentNode.height + 44;
+  let targetY = parentNode.y + parentNode.height + 54;
+  const containedTypesLabelY = targetY - 22;
   for (const variant of variants) {
     const targetKey = svgVariantKey(variant);
     const variantFields = [
@@ -1511,10 +1524,10 @@ function renderMappingStructuralSvg(
         propertyFlows.filter((flow) => flow.targetKey === targetKey).map((flow) => flow.targetField)
       ),
     ].sort();
-    const title = `${variant.property}${variant.child.cardinality === "array" ? "[]" : ""} → ${
+    const title = `${variant.property}${variant.child.cardinality === "array" ? "[]" : ""} : ${
       variant.child.name
     }`;
-    const titleLayout = svgGraphNodeTitleLines("«nested variant»", title, 52);
+    const titleLayout = svgGraphNodeTitleLines("«contained type»", title, 52);
     const height =
       titleLayout.headerHeight + 14 + Math.max(1, variantFields.length) * rowHeight + 16;
     const anchors = new Map<string, number>();
@@ -1525,16 +1538,16 @@ function renderMappingStructuralSvg(
     targetLayouts.push({
       key: targetKey,
       title,
-      stereotype: "«nested variant»",
+      stereotype: "«contained type»",
       fields: variantFields.length > 0 ? variantFields : ["(no direct property flows)"],
-      x: targetX,
+      x: targetX + targetIndent,
       y: targetY,
-      width: targetWidth,
+      width: targetVariantWidth,
       height,
       rowAnchors: anchors,
       relationAnchors: new Map(),
     });
-    targetY += height + nodeGap;
+    targetY += height + targetNodeGap;
   }
 
   const mappingLaneX = 820;
@@ -1615,14 +1628,26 @@ function renderMappingStructuralSvg(
           }),
         ]
       : []),
-    `<rect x="${targetX - 20}" y="${titleHeight + 14}" width="${targetWidth + 40}" height="${
+    `<rect x="${targetX - 40}" y="${titleHeight + 14}" width="${targetWidth + 80}" height="${
       targetY - titleHeight - 14
-    }" rx="14" fill="#eff6ff" stroke="#bfdbfe" stroke-dasharray="8 6"/>`,
-    svgText("Carta target class structure", targetX, titleHeight + 4, {
+    }" rx="18" fill="#f8fbff" stroke="#7c9bd3" stroke-width="3"/>`,
+    svgText("Carta target aggregate", targetX, titleHeight + 4, {
       fill: "#1e3a8a",
       fontSize: 18,
       fontWeight: 700,
       maxChars: 50,
+    }),
+    svgText("«Carta aggregate»", targetX - 18, titleHeight + 38, {
+      fill: "#315a9d",
+      fontSize: 13,
+      fontWeight: 700,
+      maxChars: 30,
+    }),
+    svgText("contained types", targetX + targetIndent, containedTypesLabelY, {
+      fill: "#5574a8",
+      fontSize: 13,
+      fontWeight: 700,
+      maxChars: 30,
     }),
   ];
 
@@ -1883,23 +1908,26 @@ function renderMappingStructuralSvg(
   }
 
   for (const node of targetLayouts) {
+    const nested = node.key !== "parent";
     parts.push(
       svgGraphNodeRect(node, "#e8f0fe", "#6b8fd6", {
         className: "target-node",
         data: { "target-key": svgGraphInteractiveKey(node.key) },
+        rx: nested ? 8 : 10,
+        strokeWidth: nested ? 1.5 : 2.5,
       })
     );
     const titleLayout = svgGraphNodeTitleLines(node.stereotype, node.title, 52);
     parts.push(
       svgText(titleLayout.lines[0] ?? "", node.x + 18, node.y + 22, {
-        fill: "#1e3a8a",
+        fill: nested ? "#5574a8" : "#1e3a8a",
         fontSize: 13,
         fontWeight: 700,
         maxChars: 30,
       }),
       svgText(node.title, node.x + 18, node.y + 44, {
-        fill: "#1e3a8a",
-        fontSize: 18,
+        fill: nested ? "#315a9d" : "#1e3a8a",
+        fontSize: nested ? 16 : 18,
         fontWeight: 700,
         maxChars: 52,
       })
@@ -1961,7 +1989,7 @@ function renderMappingStructuralSvg(
           `<line x1="${node.x}" y1="${y}" x2="${node.x + node.width}" y2="${y}" stroke="#c4d3f3"/>`,
           svgText(`+ ${field}`, node.x + 18, y + 23, {
             className: "field",
-            fill: field.startsWith("(") ? "#64748b" : "#1e3a8a",
+            fill: field.startsWith("(") ? "#64748b" : nested ? "#315a9d" : "#1e3a8a",
             fontSize: 16,
             fontWeight: field.startsWith("(") ? 400 : 700,
             maxChars: 76,

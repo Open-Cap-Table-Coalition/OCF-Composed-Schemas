@@ -3,9 +3,10 @@
 These native SVGs show the inverse mapping ledger as UML-like class/data-flow graphs.
 
 Each image is one Carta parent object. Green class nodes are OCF routes; blue class nodes are
-the Carta parent and nested variants. Smaller families use solid arrows for explicit source
-property → target property mappings. Dense families use target-specific mapping lanes; each lane
-keeps the exact property mappings in a compact ledger while grouped arrows preserve the data flow.
+the Carta parent and contained types. The solid blue boundary makes the parent and its nested
+variants read as one Carta aggregate. Smaller families use solid arrows for explicit source property
+→ target property mappings. Dense families use target-specific mapping lanes; each lane keeps the
+exact property mappings in a compact ledger while grouped arrows preserve the data flow.
 Dashed purple edges show containment. The Carta parent node explicitly reports its parent-property
 count and lists those properties, including parent-only routes where they contribute to the family.
 

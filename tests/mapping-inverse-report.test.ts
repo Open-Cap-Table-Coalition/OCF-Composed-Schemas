@@ -447,6 +447,8 @@ describe("renderMappingInverseReport", () => {
     expect(html).toContain('id="zoom-out"');
     expect(html).toContain('id="fit-width"');
     expect(html).toContain('id="stage"');
+    expect(html).toContain("Carta target aggregate");
+    expect(html).toContain("«contained type»");
     expect(html).toContain("shift-click to select several");
     expect(html).toContain("TransactionItem.svg");
   });
