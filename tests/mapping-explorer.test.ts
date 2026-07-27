@@ -141,7 +141,9 @@ describe("mapping explorer", () => {
 
     const page = renderMappingExplorerTargetPage(target!);
     expect(page).toContain("Carta property / type");
-    expect(page).toContain("Carta type</span> Decimal");
-    expect(page).toContain("OCF type</span> Numeric");
+    expect(page).toContain(">Decimal ↗</a>");
+    expect(page).toContain(">Numeric ↗</a>");
+    expect(page).toContain("target-schema/Carta.schema.json");
+    expect(page).toContain("types/Numeric.schema.json");
   });
 });
