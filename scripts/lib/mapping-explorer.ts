@@ -605,8 +605,8 @@ export function renderMappingExplorerIndex(data: MappingExplorerData): string {
     <section id="ocf-objects" class="directory-section"><div class="section-heading"><div><span class="eyebrow">01 / source side</span><h2>OCF objects</h2><p>Each page keeps the authored mapping visible, including objects with no Carta target evidence.</p></div>${filterBar(
       "OCF objects",
       {
-        all: data.sources.length,
-        mapped: data.sources.filter((source) => !source.noTarget).length,
+        all: data.metrics.sourceObjects,
+        mapped: data.metrics.sourceObjects - data.metrics.noTargetSources,
         gap: data.metrics.noTargetSources,
       }
     )}</div><div class="directory-grid" data-directory="OCF objects">${data.sources
@@ -615,7 +615,7 @@ export function renderMappingExplorerIndex(data: MappingExplorerData): string {
     <section id="carta-targets" class="directory-section"><div class="section-heading"><div><span class="eyebrow">02 / target side</span><h2>Carta targets</h2><p>Every Carta object-like definition is browseable: standalone targets, source gaps, and support definitions retained for context.</p></div>${filterBar(
       "Carta targets",
       {
-        all: data.targets.length,
+        all: data.metrics.targetObjects,
         mapped: data.metrics.mappedTargets,
         gap: data.metrics.noSourceTargets,
       }

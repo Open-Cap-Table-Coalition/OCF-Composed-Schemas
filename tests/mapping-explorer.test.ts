@@ -57,9 +57,11 @@ describe("mapping explorer", () => {
     const index = renderMappingExplorerIndex(explorer);
     expect(index).toContain("Carta OCF Core Mapping Explorer");
     expect(index).toContain("OCF source objects");
-    expect(index).toContain(`All (${explorer.sources.length})`);
-    expect(index).toContain(`Mapped (${explorer.sources.filter((item) => !item.noTarget).length})`);
-    expect(index).toContain(`All (${explorer.targets.length})`);
+    expect(index).toContain(`All (${explorer.metrics.sourceObjects})`);
+    expect(index).toContain(
+      `Mapped (${explorer.metrics.sourceObjects - explorer.metrics.noTargetSources})`
+    );
+    expect(index).toContain(`All (${explorer.metrics.targetObjects})`);
     expect(index).toContain(`Mapped (${explorer.metrics.mappedTargets})`);
     expect(index).toContain(`Gaps (${explorer.metrics.noSourceTargets})`);
     expect(index).toContain(`Support (${explorer.metrics.supportTargets})`);
