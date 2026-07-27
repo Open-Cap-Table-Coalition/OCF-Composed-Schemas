@@ -53,10 +53,12 @@ describe("mapping explorer", () => {
     expect(renderMappingExplorerTargetPage(target!)).toContain(
       "issues/new?title=%5BMapping+question%5D"
     );
-    expect(renderMappingExplorerIndex(explorer)).toContain("OCF source objects");
+    const index = renderMappingExplorerIndex(explorer);
+    expect(index).toContain("Carta OCF Core Mapping Explorer");
+    expect(index).toContain("OCF source objects");
   });
 
-  it("surfaces open and closed property questions with direct issue actions", async () => {
+  it("renders authored mapping notes and open/closed questions", async () => {
     const { corpus, inverse, mappingDocuments } = await loadExplorer();
     const stakeholder = mappingDocuments.get("objects/Stakeholder.mapping.md");
     expect(stakeholder?.questions?.length).toBeGreaterThan(0);
@@ -80,6 +82,7 @@ describe("mapping explorer", () => {
     const explorer = buildMappingExplorerData(corpus, inverse, [], documents);
     const source = explorer.sources.find((item) => item.entity === "Stakeholder");
     const target = explorer.targets.find((item) => item.name === "Compliance");
+    const transfer = explorer.sources.find((item) => item.entity === "EquityCompensationTransfer");
 
     expect(source?.questions).toHaveLength(3);
     expect(renderMappingExplorerSourcePage(source!)).toContain("OPEN");
@@ -91,5 +94,9 @@ describe("mapping explorer", () => {
     expect(target?.questions).toHaveLength(3);
     expect(renderMappingExplorerTargetPage(target!)).toContain("Questions about this target");
     expect(renderMappingExplorerTargetPage(target!)).toContain("Compliance.countryOfResidency");
+    expect(transfer?.notes.some((note) => note.includes("Cancellation + issuance"))).toBe(true);
+    expect(renderMappingExplorerSourcePage(transfer!)).toContain(
+      "Cancellation + issuance is not an effective Carta replacement"
+    );
   });
 });

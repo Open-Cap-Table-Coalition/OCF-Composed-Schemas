@@ -3,21 +3,21 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#0a1020">
-  <meta name="description" content="Generated OCF to Carta mapping explorer">
-  <title>WarrantExerciseTransaction · Mapping Explorer</title>
+  <meta name="theme-color" content="#2a30c8">
+  <meta name="description" content="Carta OCF Core Mapping Explorer">
+  <title>WarrantExerciseTransaction · Carta OCF Core Mapping Explorer</title>
   <link rel="stylesheet" href="../styles.css">
 </head>
 <body>
   <div class="page-glow page-glow-one"></div><div class="page-glow page-glow-two"></div>
   <header class="site-header"><div class="container nav-row">
-    <a class="brand" href="../index.html">Mapping Explorer</a>
+    <a class="brand" href="../index.html">Carta OCF Core Mapping Explorer</a>
     <nav class="nav-links" aria-label="Primary"><a href="../index.html#ocf-objects">OCF objects</a><a href="../index.html#carta-targets">Carta targets</a><a href="../assets/mapping-flows-interactive/index.html">Interactive viewer</a></nav>
   </div></header>
   <main class="container"><div class="breadcrumbs"><a class="text-link" href="../index.html">Explorer</a> <span>/</span> <a class="text-link" href="../index.html#carta-targets">Carta targets</a> <span>/</span> <strong>WarrantExerciseTransaction</strong></div>
     <section class="detail-hero"><div><span class="eyebrow">Carta target definition</span><h1>WarrantExerciseTransaction</h1><p class="path-label">#/$defs/WarrantExerciseTransaction</p></div><div class="detail-actions"><a class="button button-quiet" href="../assets/mapping-flows-interactive/index.html" target="_blank" rel="noreferrer">Interactive viewer ↗</a><a class="button button-primary" href="https://github.com/Open-Cap-Table-Coalition/OCF-Composed-Schemas/issues/new?template=mapping-question.yml&amp;mapping_file=objects%2Ftransactions%2Fexercise%2FWarrantExercise.mapping.md&amp;source_url=https%3A%2F%2Fgithub.com%2FOpen-Cap-Table-Coalition%2FOCF-Composed-Schemas%2Fblob%2Fmain%2Fobjects%2Ftransactions%2Fexercise%2FWarrantExercise.mapping.md&amp;title=%5BMapping+question%5D+WarrantExercise%3A+date&amp;property_path=date" target="_blank" rel="noreferrer">Ask about mapping ↗</a></div></section>
     <div class="detail-meta"><span class="status-pill status-support">Support definition</span><span>7 properties</span><span>1 source mapping</span><span>1 target question</span></div>
-   <section class="artifact-section"><div class="empty-state"><strong>No standalone SVG for this target.</strong><span>This definition is represented in the generated inverse ledger and interactive viewer.</span></div></section>
+    <section class="artifact-section"><div class="empty-state"><strong>No standalone SVG for this target.</strong><span>This definition is represented in the generated inverse ledger and interactive viewer.</span></div></section>
 <section class="question-panel" aria-label="Questions about this target"><div class="question-panel-heading"><div><span class="eyebrow">Review threads</span><h2>Questions about this target</h2><p>Target-bound review threads are shown here with their source property and direct issue action.</p></div><div class="question-tally"><span class="question-state question-state-open">1 open</span><span class="question-state question-state-closed">0 closed</span></div></div><div class="question-list"><article class="question-row question-open">
     <div class="question-status"><span class="question-state question-state-open">OPEN</span><code>resulting_security_ids</code></div>
     <div class="question-body"><p>Given that OCF allows one warrant exercise to produce multiple resulting securities while Carta `WarrantExerciseTransaction.resultingSecurityId` is scalar, should one OCF `WarrantExercise` be expanded into one `WarrantExerciseTransaction` per resulting security ID under the same `WarrantTransactionItem.exercises[]`, rather than retaining the current `first_resulting_security_id` reduction?</p><div class="question-meta">Asked by @johnscrudato<span class="question-target">→ WarrantExerciseTransaction.resultingSecurityId</span> · objects/transactions/exercise/WarrantExercise.mapping.md:179</div><div class="question-answer"><span>Current answer</span> Open: confirm whether the intended cardinality-preserving export is a one-to-many split into nested exercise records, copying the shared exercise fields to each record and assigning one resulting security ID to each.</div></div>

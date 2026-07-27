@@ -212,6 +212,16 @@ Use a link below to open a prefilled GitHub issue. The issue can be copied into 
   exists to host any of these fields. (Sibling `WarrantTransfer.mapping.md` *does*
   have a home; equity-comp transfer does not — same "host transaction absent"
   situation as `EquityCompensationRetraction.mapping.md`.)
+- **Cancellation + issuance is not an effective Carta replacement.** Carta does
+  have cancellation and issuance event shapes for these families, but the pair is
+  not linked: `OptionTransactionItem`, `RsuTransactionItem`, and
+  `SarTransactionItem` group lifecycle events for one existing `securityId`, while
+  their cancellation/issuance payloads have no transfer ID, predecessor field, or
+  `resultingSecurityId`. The corresponding `OptionGrant`, `RestrictedStockUnit`,
+  and `SAR` security objects likewise expose no `precededBy` edge. Emitting a
+  cancellation plus an independent issuance would therefore lose the fact that
+  the latter replaced the former; this mapping must remain no-payload until Carta
+  provides a native link or an explicitly supported external correlation contract.
 - **The lineage has no Carta home either (sharper gap than `StockTransfer`).**
   Transferring an equity-comp award produces a new `OptionGrant` / `RestrictedStockUnit` /
   `SAR`, and Carta's equity-comp security objects carry **no** `precededBy` edge — only
@@ -224,11 +234,9 @@ Use a link below to open a prefilled GitHub issue. The issue can be copied into 
 - **`date` / `quantity` / `resulting_security_ids` / `balance_security_id` /
   `consideration_text`** are the business fields a transfer would carry —
   effective date, units transferred, the resulting securities created, the
-  partial-transfer remainder, and free-text consideration. Carta's only transfer
-  object (`WarrantTransferTransaction`) carries datetime/quantity/single
-  resulting-security analogues, but on the warrant track exclusively; with no
-  equity-comp transfer object in any family, none of these has a destination.
-  All `no-equivalent`.
+  partial-transfer remainder, and free-text consideration. With no Carta transfer
+  host or effective cancellation/issuance link, none has a destination. All remain
+  `unmappable`.
 - **`security_id`** is the join key (`route_by_property.lookup_by.key`); it routes the
   family rather than being a stored Carta field, so it is `ocf-internal`.
 - **`object_type` (`TX_PLAN_SECURITY_TRANSFER` | `TX_EQUITY_COMPENSATION_TRANSFER`),
@@ -236,6 +244,12 @@ Use a link below to open a prefilled GitHub issue. The issue can be copied into 
   alias + its v2.0.0 replacement, both denoting the equity-comp transfer type),
   OCF's own identifier (Carta assigns ids server-side), and unstructured comments
   with no Carta slot. All `ocf-internal` / `no-equivalent` accordingly.
+- **Open mapping question — Carta-side correlation.** If Carta adds a native
+  transfer transaction or a supported way to link a cancelled option/RSU/SAR award
+  to its replacement issuance, this mapping can be revisited. Until then, the
+  cancellation + issuance pair is not an effective replacement and should not be
+  treated as a lossless or Core-admissible fold. Use the mapping-level question
+  link above to record any Carta clarification.
 - **Net:** 0 of 9 fields map in any variant. Because Carta represents
   option/plan-security ownership as point-in-time grant state
   (`OptionGrant.stakeholderId`) rather than an append-only ledger of transfer

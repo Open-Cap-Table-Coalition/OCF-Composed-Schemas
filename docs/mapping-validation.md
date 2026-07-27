@@ -10,7 +10,8 @@ derived coverage stays reviewable, and enum remaps are checked value-by-value.
 
 - `scripts/lib/mapping-parser.ts` extracts the frontmatter and the single ` ```yaml ` block under
   `## Mapping` and parses both with the `yaml` package (duplicate keys are a parse error). It
-  also parses the optional auditable checklist questions in `## Notes / open questions`.
+  also extracts authored notes and parses the optional auditable checklist questions in
+  `## Notes / open questions`.
 - `scripts/lib/mapping-validator.ts` is pure rules: `validateMapping(parsed, sourceSchema,
   registry, targetBundle) → ValidationError[]`.
 - `scripts/validate-mappings.ts` is the CLI walker (`--filter <glob>`, `--verbose`); errors are
@@ -68,10 +69,11 @@ derived coverage stays reviewable, and enum remaps are checked value-by-value.
   a static multi-page browse surface for all green OCF objects and all Carta object-like definitions.
   It deliberately includes the already-derived no-target OCF objects and no-source Carta candidates;
   it adds presentation and links only, without a second coverage calculation. Every source page links
- to its mapping-level and field-level issue forms; every target gap page opens a prefilled coverage issue.
-  Pages with parsed mapping questions also show compact OPEN/CLOSED property callouts, with one
-  prefilled issue action per question and a direct link back to the authored mapping document.
- The `Mapping Explorer` workflow builds a pull-request preview artifact and deploys the `main` result
+  to its mapping-level and field-level issue forms. Source pages also render the authored
+  `## Notes / open questions` prose, and parsed checklist questions appear as compact OPEN/CLOSED
+  callouts with direct issue and mapping-file links; target pages surface target-bound questions.
+  Every target gap page opens a prefilled coverage issue.
+  The `Mapping Explorer` workflow builds a pull-request preview artifact and deploys the `main` result
   through GitHub Pages.
 
 Each mapping page also contains a generated **Ask a mapping question** table with a prefilled
