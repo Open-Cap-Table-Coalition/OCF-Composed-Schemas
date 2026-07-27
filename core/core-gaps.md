@@ -655,165 +655,27 @@ flowchart LR
 
 ## (b) Carta inverse coverage by object definition
 
-The inverse ledger separates executable slot coverage, reusable type mappings,
-schema-backed structural child-container coverage, deferred extraction, expected derived objects,
-curated value-type roles, alternate/unreachable shapes, and actionable gap candidates.
-A missing root target is therefore not automatically a missing concept.
+The canonical target-first inverse report owns the Carta-side object panels, source paths,
+role policy, open-question projection, and visual flow artifacts. This Core gap report keeps
+only a compact shared-ledger summary so it cannot drift into a second inverse renderer.
+See `docs/generated/mapping-inverse-report.md` and `docs/generated/mapping-flows/` for the
+complete target-first evidence and visuals.
 
-### CARTA inverse coverage: the simple story
-
-1. Carta defines **139** total definitions.
-2. **53** are non-object definitions: **47** scalar enum definitions (field vocabularies) + **6** curated scalar support types; neither is a standalone mapping target.
-3. **86** are object-shaped definitions.
-4. Of those **86**, **54** are support definitions, not standalone objects (**53** nested objects + **1** object-shaped value type), leaving **32** standalone mapping candidates.
-5. **60** support definitions are excluded from standalone mapping: **54** object-shaped support definitions + **6** scalar support types.
-6. We have mapping evidence for **19**: **8** fully mapped and **11** partially mapped (**18** direct executable, **1** type-only, **0** deferred).
-7. **13** standalone candidates have no mapping evidence yet; their inventory role tells us whether that is expected or actionable (**8** report/read-model roll-ups, **2** alternate shapes, **1** CARTA-specific families without OCF sources, **1** workflow/data gaps, **1** actionable gaps, **0** requiring review).
-
-**Checks:** 139 = 53 non-object + 86 object-shaped; 53 = 47 scalar enum + 6 scalar support; 32 = 19 + 13; 86 = 32 + 54.
-
-### Technical slot diagnostics
-
-| Carta-side dimension | count |
+| Shared inverse-ledger dimension | count |
 | --- | ---: |
+| Carta definitions | 139 |
+| Carta object definitions | 86 |
 | object slots | 588 |
-| defs with direct executable coverage | 18 |
 | direct executable slots | 225 |
-| defs with type-only slots | 6 |
-| defs with only type-only coverage | 1 |
 | reusable type-only slots | 28 |
 | implicit constant slots | 1 |
 | deferred slots | 0 |
 | structural child-container slots | 28 |
 | empty slots | 306 |
 
-### Supporting CARTA definitions excluded from standalone mapping targets (60)
-
-53 nested object definitions and 7 value-type support definitions are intentionally not standalone targets.
-6 scalar wrappers are outside the object-like definition denominator; 1 value-type definition is object-like.
-These definitions are packaging/support types, not standalone mapping targets; their mapping/type evidence remains valid.
-
-#### Value-type support definitions (7)
-
-| Carta `$def` | covered through | note |
-| --- | --- | --- |
-| `#/$defs/Date` | type correspondence: Iso8601CompleteCalendarDate, Iso8601CompleteCalendarDateTime | Partial-date value helper; OCF Date maps to the Iso8601 date wrappers. |
-| `#/$defs/Decimal` | owning Carta object properties; not a standalone entity | Reusable scalar value wrapper, not a standalone Carta entity. |
-| `#/$defs/Iso3166Set1Alpha3Code` | owning Carta object properties; not a standalone entity | Reusable scalar value wrapper, not a standalone Carta entity. |
-| `#/$defs/Iso3166Set2Code` | owning Carta object properties; not a standalone entity | Reusable scalar value wrapper, not a standalone Carta entity. |
-| `#/$defs/Iso4217CurrencyAlphaCode` | owning Carta object properties; not a standalone entity | Reusable scalar value wrapper, not a standalone Carta entity. |
-| `#/$defs/Iso8601CompleteCalendarDate` | owning Carta object properties; not a standalone entity | Reusable calendar-date wrapper, populated through owning object properties. |
-| `#/$defs/Iso8601CompleteCalendarDateTime` | owning Carta object properties; not a standalone entity | Reusable datetime wrapper, populated through owning object properties. |
-
-#### Nested objects with mapped parent coverage (38)
-
-| Carta `$def` | immediate parent(s) |
-| --- | --- |
-| `#/$defs/CertificateCancellationTransaction` | CertificateTransactionItem |
-| `#/$defs/CertificateIssuanceTransaction` | CertificateTransactionItem |
-| `#/$defs/CertificatePrecededBy` | Certificate |
-| `#/$defs/ConvertibleCancellationTransaction` | ConvertibleTransactionItem |
-| `#/$defs/ConvertibleIssuanceTransaction` | ConvertibleTransactionItem |
-| `#/$defs/DividendDetails` | ShareClassDividendDetails |
-| `#/$defs/Exercise` | OptionGrant |
-| `#/$defs/ExercisePeriods` | OptionGrant |
-| `#/$defs/Money` | Certificate, CertificateIssuanceTransaction, ConvertibleCancellationTransaction, ConvertibleIssuanceTransaction, ConvertibleNote, OptionGrant, OptionIssuanceTransaction, RestrictedStockAward, RestrictedStockUnit, RestrictedStockUnitSettlement, RsaIssuanceTransaction, SarExerciseTransaction, SarIssuanceTransaction, ShareClass, ShareClassRightsAndPreferences, ShareClassValuation, WarrantIssuanceTransaction |
-| `#/$defs/NoteBlock` | ConvertibleNote |
-| `#/$defs/OptionCancellationTransaction` | OptionTransactionItem |
-| `#/$defs/OptionExerciseTransaction` | OptionTransactionItem |
-| `#/$defs/OptionGrantVestingEvent` | OptionGrant |
-| `#/$defs/OptionIssuanceTransaction` | OptionTransactionItem |
-| `#/$defs/PerformanceCondition` | VestingPeriod |
-| `#/$defs/PrecededBySecurity` | CertificatePrecededBy, RestrictedStockAwardPrecededBy |
-| `#/$defs/PreferredShareClassDetails` | ShareClass |
-| `#/$defs/RestrictedStockAwardPrecededBy` | RestrictedStockAward |
-| `#/$defs/RestrictedStockAwardVestingEvent` | RestrictedStockAward |
-| `#/$defs/RestrictedStockUnitSettlement` | RestrictedStockUnit |
-| `#/$defs/RestrictedStockUnitVestingEvent` | RestrictedStockUnit |
-| `#/$defs/RsaCancellationTransaction` | RsaTransactionItem |
-| `#/$defs/RsaIssuanceTransaction` | RsaTransactionItem |
-| `#/$defs/RsuCancellationTransaction` | RsuTransactionItem |
-| `#/$defs/RsuIssuanceTransaction` | RsuTransactionItem |
-| `#/$defs/RsuSettlementTransaction` | RsuTransactionItem |
-| `#/$defs/SarCancellationTransaction` | SarTransactionItem |
-| `#/$defs/SarExerciseTransaction` | SarTransactionItem |
-| `#/$defs/SarIssuanceTransaction` | SarTransactionItem |
-| `#/$defs/ShareClassDividendDetails` | PreferredShareClassDetails |
-| `#/$defs/ShareClassRightsAndPreferences` | PreferredShareClassDetails |
-| `#/$defs/StakeholderAddress` | Stakeholder |
-| `#/$defs/VestingPeriod` | VestingScheduleTemplate |
-| `#/$defs/VestingSchedule` | OptionGrant, RestrictedStockAward, RestrictedStockUnit |
-| `#/$defs/WarrantCancellationTransaction` | WarrantTransactionItem |
-| `#/$defs/WarrantExerciseTransaction` | WarrantTransactionItem |
-| `#/$defs/WarrantIssuanceTransaction` | WarrantTransactionItem |
-| `#/$defs/WarrantTransferTransaction` | WarrantTransactionItem |
-
-#### Nested objects without mapped parent coverage (15)
-
-| Carta `$def` | immediate parent(s) |
-| --- | --- |
-| `#/$defs/Acceleration` | Vesting |
-| `#/$defs/Document` | OptionGrantDocuments |
-| `#/$defs/Jurisdiction` | OptionExerciseTaxWithholdingLineItem |
-| `#/$defs/OptionExerciseMoneyMovement` | OptionExercise |
-| `#/$defs/OptionExerciseTaxWithholdingLineItem` | OptionExercise |
-| `#/$defs/PhantomCancellationTransaction` | PhantomTransactionItem |
-| `#/$defs/PhantomIssuanceTransaction` | PhantomTransactionItem |
-| `#/$defs/PiuCancellationTransaction` | PiuTransactionItem |
-| `#/$defs/PiuIssuanceTransaction` | PiuTransactionItem |
-| `#/$defs/StakeholderCapitalizationTableSummary` | StakeholderGroup |
-| `#/$defs/StakeholderNoteBlockSummary` | StakeholderGroup |
-| `#/$defs/StakeholderOptionPoolSummary` | StakeholderGroup |
-| `#/$defs/StakeholderShareClassSummary` | StakeholderGroup |
-| `#/$defs/StakeholderWarrantBlockSummary` | StakeholderGroup |
-| `#/$defs/ThresholdDetails` | Interest |
-
-### Standalone candidates requiring inventory detail (13)
-
-The summary above counts these definitions once. The status and reason columns below
-explain whether each is a read-model roll-up, alternate shape, CARTA-specific family
-without an OCF source, workflow/data gap, or actionable mapping candidate.
-
-| Carta `$def` | status | structural parent(s) | reason |
-| --- | --- | --- | --- |
-| `#/$defs/CapitalizationTableSummary` | report-rollup | — | Carta read-model aggregate; OCF records the underlying leaf facts instead. |
-| `#/$defs/Corporation` | alternate | — | Unused alternate issuer shape; OCF Issuer maps to Carta Issuer. |
-| `#/$defs/Interest` | vendor-family | — | Carta profits-interest security family has no OCF source object. |
-| `#/$defs/NoteBlockSummary` | report-rollup | — | Carta read-model aggregate; OCF records the underlying leaf facts instead. |
-| `#/$defs/OptionExercise` | workflow-gap | — | Carta exercise-request workflow object; OCF maps the realized transaction instead. |
-| `#/$defs/OptionGrantDocuments` | gap | — | Carta grant-document relationship has no OCF source relationship. |
-| `#/$defs/OptionPoolSummary` | report-rollup | — | Carta option-pool read-model summary; the pinned API bundle has no pool ledger or standalone pool record to reconstruct. |
-| `#/$defs/PhantomTransactionItem` | report-rollup | — | Carta read-model aggregate; OCF records the underlying leaf facts instead. |
-| `#/$defs/PiuTransactionItem` | report-rollup | — | Carta read-model aggregate; OCF records the underlying leaf facts instead. |
-| `#/$defs/ShareClassSummary` | report-rollup | — | Carta read-model aggregate; OCF records the underlying leaf facts instead. |
-| `#/$defs/StakeholderGroup` | report-rollup | — | Carta read-model aggregate; OCF records the underlying leaf facts instead. |
-| `#/$defs/Vesting` | alternate | — | Unreachable option-grant vesting shape; mapped OCF vesting uses schedule/event defs. |
-| `#/$defs/WarrantBlockSummary` | report-rollup | — | Carta read-model aggregate; OCF records the underlying leaf facts instead. |
-
-### Reusable and schema-aware type correspondences (8 selected examples)
-
-These rows explain why a source-side complex/scalar type may have no same-named Carta
-`$def`: the actual destination can be a wrapped scalar or a context-specific property.
-
-| OCF type | Carta type/shape | evidence edges |
-| --- | --- | ---: |
-| `Address` | `StakeholderAddress` | 2 |
-| `ContactInfo` | `PointOfContact` | 2 |
-| `ContactInfoWithoutName` | `PointOfContact` | 1 |
-| `Date` | `Iso8601CompleteCalendarDate` | 21 |
-| `Date` | `Iso8601CompleteCalendarDateTime` | 30 |
-| `Monetary` | `Decimal` | 1 |
-| `Monetary` | `Iso4217CurrencyAlphaCode` | 1 |
-| `Monetary` | `Money` | 20 |
-
-### Actionable inverse candidates
-
-These are Carta capabilities with no current executable OCF source edge after the
-role policy excludes expected roll-ups and alternate schema shapes.
-
-| Carta `$def` | disposition | reason |
-| --- | --- | --- |
-| `#/$defs/Interest` | vendor-family | Carta profits-interest security family has no OCF source object. |
-| `#/$defs/OptionExercise` | workflow-gap | Carta exercise-request workflow object; OCF maps the realized transaction instead. |
-| `#/$defs/OptionGrantDocuments` | gap | Carta grant-document relationship has no OCF source relationship. |
+| direct target definitions | 18 |
+| type-only target definitions | 6 |
+| deferred target definitions | 0 |
+| nested/support definitions | 54 |
+| follow-up candidates | 13 |
 

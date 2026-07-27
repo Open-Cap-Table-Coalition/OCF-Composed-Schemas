@@ -26,8 +26,9 @@ enrichment context supplies omitted required data. The contract is defined in
   that do have a Carta target but narrow on the way out (a structured `Address` where Carta holds
   only a country) — in OCF's own shape. Rich thereby **relocates** the loss onto the Core→Carta fold
   and knowingly gives up strict's Carta-expressibility guarantee, in exchange for a populated hub
-  both formats can meet on. Rich is the "interop hub" the coverage reports (`core:bidi`, `core:lossy`,
-  `core:unmapped`) analyze; it is a discussion artifact, not a second contract.
+  both formats can meet on. Rich is the "interop hub" analyzed by the OCF-side loss inventories
+  (`core:lossy`, `core:unmapped`) and the canonical target-first inverse report; it is a discussion
+  artifact, not a second contract.
 
 ## The defining invariant
 
@@ -76,11 +77,11 @@ The standard, applied uniformly and dialed in against the real fold:
 
 - **Not vendor-neutral interop** across many systems — Carta is the target; other targets are future
   work.
-- **Not a `Carta → Core` round-trip** — convertibility is one-way *down*. The bidirectional "interop
-  hub" report (`core:bidi`) is a **non-gated coverage measurement**, not a counter-example: it counts
-  whether a forward mapping edge *could* fill a Core slot from a Carta document; it never inverts or
-  executes a mapping, so it imposes no Carta→Core requirement. (Rich Core can be *populated* from
-  Carta best-effort, but that is never a lossless obligation.)
+- **Not a `Carta → Core` round-trip** — convertibility is one-way *down*. The canonical inverse report
+  is a **target-first coverage measurement**, not a counter-example: it counts whether a forward
+  mapping edge *could* fill a Carta slot from a source record; it never inverts or executes a mapping,
+  so it imposes no Carta→Core requirement. (Rich Core can be *populated* from Carta best-effort, but
+  that is never a lossless obligation.)
 - **The fold and enrichment mechanisms are separate, already-owned machinery** — this repository
   establishes schema-derived admissibility and the OCF Extended contract; runtime implementations
   must provide their own conformance evidence.

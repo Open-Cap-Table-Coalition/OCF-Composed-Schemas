@@ -13,8 +13,8 @@ itself requires; an unmapped field on an **in-Core** object is the sharper loss.
 it is unmappable in **at least one** variant. Ones marked `†` also **land in another variant**
 of the same object (e.g. `EquityCompensationIssuance.board_approval_date` maps for Option/Rsu,
 drops only for Sar), so "no Carta home" is a per-flavor statement here, not object-level. The
-magnitude diagrams split flavors apart; `core-bidirectional-flow.md` gives the distinct-field,
-best-landing view (its lower "left behind" count).
+magnitude diagrams split flavors apart; the canonical target-first inverse report gives the
+Carta-side landing view. OCF-side distinct-field counts remain in the Core ledger and gap reports.
 
 ## Magnitude — unmapped properties per OCF object (163 distinct across 46 objects; 240 per-flavor rows, 144 OCF-required)
 

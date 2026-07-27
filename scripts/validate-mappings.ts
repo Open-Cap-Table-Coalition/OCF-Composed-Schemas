@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 import path from "node:path";
-import { mkdir, readdir, readFile, stat, writeFile } from "node:fs/promises";
+import { mkdir, readFile, writeFile } from "node:fs/promises";
 import yargs from "yargs";
 import { hideBin } from "yargs/helpers";
 import { minimatch } from "minimatch";
@@ -16,8 +16,7 @@ import {
 } from "./lib/mapping-inverse-report.js";
 import { loadGreenCorpus } from "./lib/core-corpus.js";
 import { buildInverseCoverage } from "./lib/inverse-coverage.js";
-
-const MAPPING_DIRS = ["objects", "types"] as const;
+import { collectMappingFiles, loadMappingDocuments } from "./lib/mapping-input.js";
 
 interface Args {
   filter?: string;
@@ -26,29 +25,6 @@ interface Args {
   targetObject?: string;
   inverseSvgDir?: string;
   inverseHtmlDir?: string;
-}
-
-async function collectMappingFiles(repoRoot: string): Promise<string[]> {
-  const out: string[] = [];
-  for (const dir of MAPPING_DIRS) {
-    const abs = path.join(repoRoot, dir);
-    try {
-      await stat(abs);
-    } catch {
-      continue;
-    }
-    const entries = await readdir(abs, { recursive: true, withFileTypes: true });
-    for (const e of entries) {
-      if (!e.isFile()) continue;
-      if (!e.name.endsWith(".mapping.md")) continue;
-      const direntDir =
-        (e as unknown as { parentPath?: string; path?: string }).parentPath ??
-        (e as unknown as { path?: string }).path ??
-        abs;
-      out.push(path.relative(repoRoot, path.join(direntDir, e.name)));
-    }
-  }
-  return out.sort();
 }
 
 async function main(argv: Args): Promise<number> {
@@ -86,17 +62,8 @@ async function main(argv: Args): Promise<number> {
   // mapping's effective fields. Preload the report index without changing the
   // validator's normal error handling for the selected --filter set.
   if (argv.verbose || argv.inverse) {
-    for (const rel of all) {
-      try {
-        const parsed = parseMappingDocument(await readFile(path.join(repoRoot, rel), "utf8"), rel);
-        const schemaRel = rel.replace(/\.mapping\.md$/, ".schema.json");
-        const sourceSchema = JSON.parse(
-          await readFile(path.join(repoRoot, schemaRel), "utf8")
-        ) as RawSchema;
-        mappingDocuments.set(rel, { ...parsed, sourceSchema });
-      } catch {
-        // The selected file's parse/schema error is still reported below.
-      }
+    for (const [rel, document] of await loadMappingDocuments(repoRoot, all)) {
+      mappingDocuments.set(rel, document);
     }
   }
 

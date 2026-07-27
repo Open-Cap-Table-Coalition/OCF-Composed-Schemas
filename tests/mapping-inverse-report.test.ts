@@ -519,6 +519,36 @@ describe("renderMappingInverseReport", () => {
     expect(svg).toContain("sourceField0 → parentField0");
   });
 
+  it("renders simple mapped Carta targets instead of limiting visuals to nested families", () => {
+    const inverse = ledger(
+      {
+        Stakeholder: {
+          type: "object",
+          properties: { fullName: {}, email: {} },
+        },
+      },
+      [
+        objectFieldEdge(
+          "objects/Stakeholder.mapping.md",
+          "Stakeholder",
+          "name",
+          "#/$defs/Stakeholder/properties/fullName"
+        ),
+      ]
+    );
+
+    const svg = renderMappingFlowSvgs({
+      inverse,
+      mappingDocuments: new Map(),
+    }).get("Stakeholder.svg");
+
+    expect(svg).toBeDefined();
+    expect(svg).toContain("Stakeholder structural mapping graph");
+    expect(svg).toContain("parent properties (1)");
+    expect(svg).toContain("Stakeholder.name → Stakeholder.fullName");
+    expect(svg).not.toContain("contains (0 nested variants)");
+  });
+
   it("keeps independent route axes separate instead of forming Cartesian subtype combinations", () => {
     const inverse = ledger(
       {
