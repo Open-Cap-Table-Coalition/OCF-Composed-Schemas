@@ -497,9 +497,9 @@ function targetScopeLegend(data: MappingExplorerData): string {
     data.metrics.mappedTargets
   )})</strong> are standalone Carta definitions with OCF evidence. <strong>Gaps (${html(
     data.metrics.noSourceTargets
-  )})</strong> are definitions retained for candidate and coverage review. <strong>Support (${html(
+  )})</strong> are standalone candidates without an OCF source. <strong>Support (${html(
     data.metrics.supportTargets
-  )})</strong> are nested object or value-type definitions shown for context, not standalone mapping targets.</p></div><div class="legend-links">${link(
+  )})</strong> are nested object or value-type definitions kept in the full inventory and analysis, not shown in this standalone target directory.</p></div><div class="legend-links">${link(
     "assets/mapping-inverse-report.md",
     "Full inventory + analysis →"
   )}</div></aside>`;
@@ -569,6 +569,7 @@ function targetCard(target: ExplorerTarget): string {
 
 export function renderMappingExplorerIndex(data: MappingExplorerData): string {
   const featured = data.artifactNames[0];
+  const standaloneTargets = data.targets.filter((target) => !target.support);
   const featuredVisual = featured
     ? `<div class="featured-visual"><img src="assets/mapping-flows/${html(
         featured
@@ -589,7 +590,7 @@ export function renderMappingExplorerIndex(data: MappingExplorerData): string {
       "OCF source objects"
     )}${metric(data.metrics.noTargetSources, "with no target evidence", "metric-warn")}${metric(
       data.metrics.targetObjects,
-      "Carta object definitions"
+      "Carta definitions in inventory"
     )}${metric(
       data.metrics.noSourceTargets,
       "standalone targets with no OCF source",
@@ -612,16 +613,16 @@ export function renderMappingExplorerIndex(data: MappingExplorerData): string {
     )}</div><div class="directory-grid" data-directory="OCF objects">${data.sources
       .map(sourceCard)
       .join("")}</div></section>
-    <section id="carta-targets" class="directory-section"><div class="section-heading"><div><span class="eyebrow">02 / target side</span><h2>Carta targets</h2><p>Every Carta object-like definition is browseable: standalone targets, source gaps, and support definitions retained for context.</p></div>${filterBar(
+    <section id="carta-targets" class="directory-section"><div class="section-heading"><div><span class="eyebrow">02 / target side</span><h2>Carta targets</h2><p>Standalone Carta targets are browseable here: mapped definitions and source gaps. Support definitions remain in the full inventory and analysis linked below.</p></div>${filterBar(
       "Carta targets",
       {
-        all: data.metrics.targetObjects,
+        all: data.metrics.mappedTargets + data.metrics.noSourceTargets,
         mapped: data.metrics.mappedTargets,
         gap: data.metrics.noSourceTargets,
       }
     )}</div>${targetScopeLegend(
       data
-    )}<div class="directory-grid" data-directory="Carta targets">${data.targets
+    )}<div class="directory-grid" data-directory="Carta targets">${standaloneTargets
       .map(targetCard)
       .join("")}</div></section>
     <section class="closing-band"><div><span class="eyebrow accent">Need the raw ledger?</span><h2>Keep the generated report close.</h2></div><div class="hero-actions"><a class="button button-primary" href="assets/mapping-inverse-report.md">Read inverse report</a><a class="button button-quiet" href="https://github.com/Open-Cap-Table-Coalition/OCF-Composed-Schemas">View repository ↗</a></div></section>`
