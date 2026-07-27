@@ -111,6 +111,7 @@ async function main(argv: Args): Promise<number> {
           greenDocuments: corpus.greenDocuments.size,
           targetObject: argv.targetObject,
           mappingDocuments,
+          includeRelatedObjectPropertyFlows: false,
         }) + "\n"
       );
       if (argv.inverseSvgDir) {

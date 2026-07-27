@@ -363,24 +363,25 @@ describe("renderMappingInverseReport", () => {
       ]
     );
 
+    const mappingDocuments = new Map([
+      [
+        "objects/SharedSource.mapping.md",
+        {
+          mapping: {
+            route_by_property: { on_property: "kind" },
+            variants: {
+              Issue: { when: ["ISSUE"] },
+              Cancel: { when: ["CANCEL"] },
+            },
+          },
+        },
+      ],
+      ["objects/OtherCancellation.mapping.md", { mapping: {} }],
+    ]);
     const out = renderMappingInverseReport({
       inverse,
       targetObject: "TransactionItem",
-      mappingDocuments: new Map([
-        [
-          "objects/SharedSource.mapping.md",
-          {
-            mapping: {
-              route_by_property: { on_property: "kind" },
-              variants: {
-                Issue: { when: ["ISSUE"] },
-                Cancel: { when: ["CANCEL"] },
-              },
-            },
-          },
-        ],
-        ["objects/OtherCancellation.mapping.md", { mapping: {} }],
-      ]),
+      mappingDocuments,
     });
 
     expect(out).toContain("<!-- mapping-flow:start -->");
@@ -402,24 +403,19 @@ describe("renderMappingInverseReport", () => {
     expect(flowBlock.match(/SharedSource \[(Issue|Cancel)\]/g)).toHaveLength(4);
     expect(flowBlock).not.toContain("ParentOnly");
     expect(out).not.toContain("```mermaid");
+    const withoutFlowTables = renderMappingInverseReport({
+      inverse,
+      targetObject: "TransactionItem",
+      mappingDocuments,
+      includeRelatedObjectPropertyFlows: false,
+    });
+    expect(withoutFlowTables).not.toContain("<!-- mapping-flow:start -->");
+    expect(withoutFlowTables).not.toContain("Related object property flows");
+    expect(withoutFlowTables).toContain("Carta inverse coverage report");
     const artifacts = renderMappingFlowSvgs({
       inverse,
       targetObject: "TransactionItem",
-      mappingDocuments: new Map([
-        [
-          "objects/SharedSource.mapping.md",
-          {
-            mapping: {
-              route_by_property: { on_property: "kind" },
-              variants: {
-                Issue: { when: ["ISSUE"] },
-                Cancel: { when: ["CANCEL"] },
-              },
-            },
-          },
-        ],
-        ["objects/OtherCancellation.mapping.md", { mapping: {} }],
-      ]),
+      mappingDocuments,
     });
     const svg = artifacts.get("TransactionItem.svg");
     expect(svg).toBeDefined();

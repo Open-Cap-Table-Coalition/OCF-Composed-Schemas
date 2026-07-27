@@ -45,6 +45,8 @@ export interface MappingInverseReportOptions {
   targetObject?: string;
   /** Parsed mapping documents, used to attach open questions to inverse flows. */
   mappingDocuments?: ReadonlyMap<string, MappingQuestionDocument>;
+  /** Include the verbose related-object flow tables in the text report. */
+  includeRelatedObjectPropertyFlows?: boolean;
 }
 
 export interface MappingFlowSvgOptions {
@@ -2665,7 +2667,11 @@ export function renderMappingInverseReport(options: MappingInverseReportOptions)
       );
     }
     if (options.mappingDocuments) {
-      lines.push(...renderRelatedObjectDiagrams([row], groups, inverse, options.mappingDocuments));
+      if (options.includeRelatedObjectPropertyFlows !== false) {
+        lines.push(
+          ...renderRelatedObjectDiagrams([row], groups, inverse, options.mappingDocuments)
+        );
+      }
     }
     lines.push(...renderExcludedRows(excluded));
     lines.push(
@@ -2682,7 +2688,9 @@ export function renderMappingInverseReport(options: MappingInverseReportOptions)
   }
 
   if (options.mappingDocuments) {
-    lines.push(...renderRelatedObjectDiagrams(mapped, groups, inverse, options.mappingDocuments));
+    if (options.includeRelatedObjectPropertyFlows !== false) {
+      lines.push(...renderRelatedObjectDiagrams(mapped, groups, inverse, options.mappingDocuments));
+    }
   }
 
   lines.push(...renderExcludedRows(excluded));

@@ -37,16 +37,12 @@ derived coverage stays reviewable, and enum remaps are checked value-by-value.
   compact **resulting Carta object flavors** summary. Each flavor names the source route, the
   discriminator condition, and the target properties mapped by that route. Conditional property
   flows that enrich an object without creating a new object flavor are shown separately. The
-  report also renders a GitHub-safe **related object property flows** section when standalone OCF
-  object mappings populate multiple child slots on the same Carta object (for example, `issuance`
-  versus `cancellations[]` on a transaction item). It emits one group per Carta parent and one
-  subsection per nested variant. Each table row is an explicit `OCF.property → Carta.property`
-  mapping. Only routes that populate a displayed nested variant are included; parent-only routes
-  remain in the object audit panels. This is a per-source-record flow view: a routed OCF record
-  follows its matching branch, while distinct lifecycle records may still aggregate into one parent
-  Carta item. The flow tables appear before the object panels; the full aggregate mapping detail
-  remains below as the audit trail. The tables are a report-only recut of the existing mapping
-  evidence and do not change coverage counts or mapping semantics.
+  The native SVG and interactive HTML artifacts provide the detailed **related object property flows**
+  when standalone OCF object mappings populate multiple child slots on the same Carta object (for
+  example, `issuance` versus `cancellations[]` on a transaction item). The CI text report omits that
+  duplicated table section so it stays focused on coverage and audit panels; the SVG/HTML artifacts
+  preserve the full per-source-record flow view. A routed OCF record follows its matching branch,
+  while distinct lifecycle records may still aggregate into one parent Carta item.
   The same flow ledger can render one native SVG artifact per related Carta parent via
   `npm run mapping:inverse -- --inverse-svg-dir docs/generated/mapping-flows`. Each SVG is a direct
   native UML-like source/target class graph with explicit property and containment edges; it does not
