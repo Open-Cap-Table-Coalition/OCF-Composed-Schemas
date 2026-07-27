@@ -3,6 +3,7 @@ import { buildInverseCoverage } from "../scripts/lib/inverse-coverage.js";
 import { collectMappingFiles, loadMappingDocuments } from "../scripts/lib/mapping-input.js";
 import {
   buildMappingExplorerData,
+  renderMappingExplorerCss,
   renderMappingExplorerIndex,
   renderMappingExplorerSourcePage,
   renderMappingExplorerTargetPage,
@@ -56,6 +57,14 @@ describe("mapping explorer", () => {
     const index = renderMappingExplorerIndex(explorer);
     expect(index).toContain("Carta OCF Core Mapping Explorer");
     expect(index).toContain("OCF source objects");
+  });
+
+  it("keeps directory cards inside responsive grid tracks", () => {
+    const css = renderMappingExplorerCss();
+
+    expect(css).toContain("grid-template-columns: repeat(3, minmax(0, 1fr))");
+    expect(css).toContain(".card { min-width: 0;");
+    expect(css).toContain("overflow-wrap: anywhere");
   });
 
   it("renders authored mapping notes and open/closed questions", async () => {
