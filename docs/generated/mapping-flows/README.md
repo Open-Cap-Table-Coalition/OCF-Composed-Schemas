@@ -9,6 +9,10 @@ keeps the exact property mappings in a compact ledger while grouped arrows prese
 Dashed purple edges show containment. The Carta parent node explicitly reports its parent-property
 count and lists those properties, including parent-only routes where they contribute to the family.
 
+CI also publishes a self-contained interactive HTML viewer as the `mapping-inverse-interactive`
+artifact. It lets reviewers toggle target lanes and source routes, then click or shift-click exact
+mapping arrows to focus selected flows; the checked-in SVGs remain the static inline previews.
+
 | Carta parent | Preview |
 | --- | --- |
 | [CertificateTransactionItem](./CertificateTransactionItem.svg) | ![CertificateTransactionItem](./CertificateTransactionItem.svg) |

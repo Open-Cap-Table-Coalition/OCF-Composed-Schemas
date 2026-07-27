@@ -1,6 +1,7 @@
 import { Corpus, MappingEdge } from "../scripts/lib/core-corpus.js";
 import { buildInverseCoverage, InverseCoverageLedger } from "../scripts/lib/inverse-coverage.js";
 import {
+  renderMappingFlowHtml,
   renderMappingFlowSvgs,
   renderMappingInverseReport,
 } from "../scripts/lib/mapping-inverse-report.js";
@@ -430,8 +431,20 @@ describe("renderMappingInverseReport", () => {
     expect(svg).toContain("TransactionItem.cancellations[].date");
     expect(svg).toContain("TransactionItem.issuance.date");
     expect(svg).toContain('marker-end="url(#property-arrow)"');
+    expect(svg).toContain('class="mapping-edge"');
+    expect(svg).toContain('data-target-key="parent"');
     expect(svg).not.toContain("flowchart");
     expect(svg).not.toContain("subgraph");
+
+    const html = renderMappingFlowHtml({
+      inverse,
+      targetObject: "TransactionItem",
+      mappingDocuments: new Map(),
+    });
+    expect(html).toContain("Interactive polymorphic mapping flows");
+    expect(html).toContain("mapping-data");
+    expect(html).toContain("shift-click to select several");
+    expect(html).toContain("TransactionItem.svg");
   });
 
   it("uses target-specific mapping lanes for dense polymorphic families", () => {

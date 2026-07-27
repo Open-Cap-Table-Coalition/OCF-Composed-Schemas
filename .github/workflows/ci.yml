@@ -23,9 +23,9 @@ jobs:
       - name: Generate shared inverse coverage report
         shell: bash
         run: |
-          mkdir -p ci-artifacts/mapping-flows
+          mkdir -p ci-artifacts/mapping-flows ci-artifacts/mapping-flows-interactive
           set +e
-          npm run --silent mapping:inverse -- --inverse-svg-dir ci-artifacts/mapping-flows > ci-artifacts/mapping-inverse-report.txt 2>&1
+          npm run --silent mapping:inverse -- --inverse-svg-dir ci-artifacts/mapping-flows --inverse-html-dir ci-artifacts/mapping-flows-interactive > ci-artifacts/mapping-inverse-report.txt 2>&1
           status=$?
           echo '## Inverse coverage report' >> "$GITHUB_STEP_SUMMARY"
           awk '
@@ -98,6 +98,24 @@ jobs:
           name: mapping-inverse-report
           path: ci-artifacts
           if-no-files-found: error
+      - name: Upload interactive mapping viewer
+        if: always()
+        id: upload-interactive-mapping-viewer
+        uses: actions/upload-artifact@v4
+        with:
+          name: mapping-inverse-interactive
+          path: ci-artifacts/mapping-flows-interactive
+          if-no-files-found: warn
+      - name: Link interactive mapping viewer
+        if: always()
+        env:
+          ARTIFACT_URL: ${{ steps.upload-interactive-mapping-viewer.outputs.artifact-url }}
+        run: |
+          if [ -n "$ARTIFACT_URL" ]; then
+            echo '' >> "$GITHUB_STEP_SUMMARY"
+            echo '### Interactive mapping viewer' >> "$GITHUB_STEP_SUMMARY"
+            echo "[Download and open the interactive mapping viewer]($ARTIFACT_URL)" >> "$GITHUB_STEP_SUMMARY"
+          fi
       - run: npm run mapping:coverage:check
       - run: npm run core:check
       - run: npm run core:validate-sample

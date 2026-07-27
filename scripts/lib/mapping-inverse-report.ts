@@ -1146,6 +1146,7 @@ interface SvgGraphMappingLaneGroup {
   route: SourceRoute;
   flows: SvgGraphPropertyFlow[];
   anchorY: number;
+  rowAnchors: Map<string, number>;
 }
 
 interface SvgGraphMappingLane {
@@ -1158,7 +1159,6 @@ interface SvgGraphMappingLane {
   height: number;
   headerHeight: number;
   groups: SvgGraphMappingLaneGroup[];
-  targetAnchor: number;
 }
 
 function svgVariantKey(variant: TargetVariant): string {
@@ -1167,6 +1167,16 @@ function svgVariantKey(variant: TargetVariant): string {
 
 function svgTargetAnchorKey(targetKey: string, field: string): string {
   return `${targetKey}\u0000${field}`;
+}
+
+function svgGraphPropertyFlowKey(flow: SvgGraphPropertyFlow): string {
+  return `${sourceRouteKey(flow.route)}\u0000${flow.targetKey}\u0000${flow.sourceField}\u0000${
+    flow.targetField
+  }`;
+}
+
+function svgGraphInteractiveKey(value: string): string {
+  return value.replaceAll("\u0000", "|");
 }
 
 function svgRouteCondition(route: SourceRoute): string | undefined {
@@ -1262,12 +1272,24 @@ function svgGraphPath(
   y1: number,
   x2: number,
   y2: number,
-  options: { color: string; markerEnd: string; dash?: string; markerStart?: string; width?: number }
+  options: {
+    color: string;
+    markerEnd: string;
+    dash?: string;
+    markerStart?: string;
+    width?: number;
+    className?: string;
+    data?: Readonly<Record<string, string>>;
+  }
 ): string {
   const controlX = x1 + (x2 - x1) * 0.52;
   const dash = options.dash ? ` stroke-dasharray="${options.dash}"` : "";
   const markerStart = options.markerStart ? ` marker-start="url(#${options.markerStart})"` : "";
-  return `<path d="M ${x1} ${y1} C ${controlX} ${y1}, ${controlX} ${y2}, ${x2} ${y2}" fill="none" stroke="${
+  const className = options.className ? ` class="${svgEscape(options.className)}"` : "";
+  const data = Object.entries(options.data ?? {})
+    .map(([key, value]) => ` data-${svgEscape(key)}="${svgEscape(value)}"`)
+    .join("");
+  return `<path${className}${data} d="M ${x1} ${y1} C ${controlX} ${y1}, ${controlX} ${y2}, ${x2} ${y2}" fill="none" stroke="${
     options.color
   }" stroke-width="${options.width ?? 2}"${dash}${markerStart} marker-end="url(#${
     options.markerEnd
@@ -1277,9 +1299,14 @@ function svgGraphPath(
 function svgGraphNodeRect(
   node: SvgGraphTargetNode | SvgGraphSourceNode,
   fill: string,
-  stroke: string
+  stroke: string,
+  options: { className?: string; data?: Readonly<Record<string, string>> } = {}
 ): string {
-  return `<rect x="${node.x}" y="${node.y}" width="${node.width}" height="${node.height}" rx="10" fill="${fill}" stroke="${stroke}" stroke-width="2"/>`;
+  const className = options.className ? ` class="${svgEscape(options.className)}"` : "";
+  const data = Object.entries(options.data ?? {})
+    .map(([key, value]) => ` data-${svgEscape(key)}="${svgEscape(value)}"`)
+    .join("");
+  return `<rect${className}${data} x="${node.x}" y="${node.y}" width="${node.width}" height="${node.height}" rx="10" fill="${fill}" stroke="${stroke}" stroke-width="2"/>`;
 }
 
 function svgGraphMappingLanes(
@@ -1322,8 +1349,13 @@ function svgGraphMappingLanes(
     const laneGroups: SvgGraphMappingLaneGroup[] = [];
     for (const group of groups) {
       const anchorY = cursor + 10;
-      laneGroups.push({ route: group.route, flows: group.flows, anchorY });
-      cursor += 24 + group.flows.length * 24 + 8;
+      const rowAnchors = new Map<string, number>();
+      const rowStart = cursor + 24;
+      group.flows.forEach((flow, index) => {
+        rowAnchors.set(svgGraphPropertyFlowKey(flow), rowStart + index * 24 + 12);
+      });
+      cursor = rowStart + group.flows.length * 24 + 8;
+      laneGroups.push({ route: group.route, flows: group.flows, anchorY, rowAnchors });
     }
     const height = cursor - y + 10;
     lanes.push({
@@ -1336,7 +1368,6 @@ function svgGraphMappingLanes(
       height,
       headerHeight,
       groups: laneGroups,
-      targetAnchor: target.y + 44,
     });
     y += height + nodeGap;
   }
@@ -1599,6 +1630,7 @@ function renderMappingStructuralSvg(
   const targetByKey = new Map(targetLayouts.map((node) => [node.key, node]));
   if (denseGraph) {
     for (const lane of mappingLanes) {
+      const target = targetByKey.get(lane.targetKey);
       for (const group of lane.groups) {
         const source = sourceByRoute.get(sourceRouteKey(group.route));
         if (!source) continue;
@@ -1608,7 +1640,17 @@ function renderMappingStructuralSvg(
             source.y + source.headerHeight / 2,
             lane.x,
             group.anchorY,
-            { color: "#64748b", markerEnd: "property-arrow", width: 2 }
+            {
+              color: "#64748b",
+              markerEnd: "property-arrow",
+              width: 2,
+              className: "mapping-group-edge",
+              data: {
+                "target-key": svgGraphInteractiveKey(lane.targetKey),
+                "source-route": svgGraphInteractiveKey(sourceRouteKey(group.route)),
+                "source-label": sourceRouteDisplayName(group.route),
+              },
+            }
           ).replace(
             "/>",
             `><title>${svgEscape(
@@ -1619,22 +1661,35 @@ function renderMappingStructuralSvg(
           )
         );
       }
-      const target = targetByKey.get(lane.targetKey);
       if (!target) continue;
-      parts.push(
-        svgGraphPath(
-          lane.x + lane.width,
-          lane.y + lane.headerHeight / 2,
-          target.x,
-          lane.targetAnchor,
-          { color: "#64748b", markerEnd: "property-arrow", width: 2 }
-        ).replace(
-          "/>",
-          `><title>${svgEscape(
-            `${lane.title} → ${target.title} (${lane.mappingCount} property mappings)`
-          )}</title></path>`
-        )
-      );
+      for (const group of lane.groups) {
+        for (const flow of group.flows) {
+          const laneRowY = group.rowAnchors.get(svgGraphPropertyFlowKey(flow));
+          const targetRowY = target.rowAnchors.get(
+            svgTargetAnchorKey(flow.targetKey, flow.targetField)
+          );
+          if (laneRowY === undefined || targetRowY === undefined) continue;
+          parts.push(
+            svgGraphPath(lane.x + lane.width, laneRowY, target.x, targetRowY, {
+              color: "#64748b",
+              markerEnd: "property-arrow",
+              width: 2,
+              className: "mapping-edge",
+              data: {
+                "target-key": svgGraphInteractiveKey(flow.targetKey),
+                "source-route": svgGraphInteractiveKey(sourceRouteKey(flow.route)),
+                "source-label": sourceRouteDisplayName(flow.route),
+                "flow-key": svgGraphInteractiveKey(svgGraphPropertyFlowKey(flow)),
+              },
+            }).replace(
+              "/>",
+              `><title>${svgEscape(
+                `${sourceRouteDisplayName(flow.route)}.${flow.sourceField} → ${flow.targetLabel}`
+              )}</title></path>`
+            )
+          );
+        }
+      }
     }
   } else {
     for (const flow of propertyFlows) {
@@ -1651,6 +1706,13 @@ function renderMappingStructuralSvg(
           color: "#64748b",
           markerEnd: "property-arrow",
           width: 2,
+          className: "mapping-edge",
+          data: {
+            "target-key": svgGraphInteractiveKey(flow.targetKey),
+            "source-route": svgGraphInteractiveKey(sourceRouteKey(flow.route)),
+            "source-label": sourceRouteDisplayName(flow.route),
+            "flow-key": svgGraphInteractiveKey(svgGraphPropertyFlowKey(flow)),
+          },
         }).replace(
           "/>",
           `><title>${svgEscape(
@@ -1672,6 +1734,12 @@ function renderMappingStructuralSvg(
         markerEnd: "contains-arrow",
         dash: "7 5",
         width: 2,
+        className: "containment-edge",
+        data: {
+          "target-key": svgGraphInteractiveKey(edge.targetKey),
+          "source-route": svgGraphInteractiveKey(sourceRouteKey(edge.route)),
+          "source-label": sourceRouteDisplayName(edge.route),
+        },
       }).replace(
         "/>",
         `><title>${svgEscape(
@@ -1688,7 +1756,9 @@ function renderMappingStructuralSvg(
     const endX = target.x + target.width;
     const routeX = startX + 30;
     parts.push(
-      `<path d="M ${startX} ${parentAnchor} L ${routeX} ${parentAnchor} L ${routeX} ${
+      `<path class="composition-edge" data-target-key="${svgEscape(
+        svgGraphInteractiveKey(svgVariantKey(variant))
+      )}" d="M ${startX} ${parentAnchor} L ${routeX} ${parentAnchor} L ${routeX} ${
         target.y - 14
       } L ${endX} ${
         target.y - 14
@@ -1700,7 +1770,11 @@ function renderMappingStructuralSvg(
 
   for (const lane of mappingLanes) {
     parts.push(
-      `<rect x="${lane.x}" y="${lane.y}" width="${lane.width}" height="${lane.height}" rx="10" fill="#ffffff" stroke="#94a3b8" stroke-width="2"/>`,
+      `<rect class="mapping-lane" data-target-key="${svgEscape(
+        svgGraphInteractiveKey(lane.targetKey)
+      )}" x="${lane.x}" y="${lane.y}" width="${lane.width}" height="${
+        lane.height
+      }" rx="10" fill="#ffffff" stroke="#94a3b8" stroke-width="2"/>`,
       svgText("«mapping lane»", lane.x + 18, lane.y + 22, {
         fill: "#475569",
         fontSize: 13,
@@ -1753,7 +1827,15 @@ function renderMappingStructuralSvg(
   }
 
   for (const node of sourceLayouts) {
-    parts.push(svgGraphNodeRect(node, "#e6f4ea", "#62a576"));
+    parts.push(
+      svgGraphNodeRect(node, "#e6f4ea", "#62a576", {
+        className: "source-node",
+        data: {
+          "source-route": svgGraphInteractiveKey(sourceRouteKey(node.route)),
+          "source-label": sourceRouteDisplayName(node.route),
+        },
+      })
+    );
     const titleLayout = svgGraphNodeTitleLines(
       "«OCF route»",
       sourceRouteDisplayName(node.route),
@@ -1801,7 +1883,12 @@ function renderMappingStructuralSvg(
   }
 
   for (const node of targetLayouts) {
-    parts.push(svgGraphNodeRect(node, "#e8f0fe", "#6b8fd6"));
+    parts.push(
+      svgGraphNodeRect(node, "#e8f0fe", "#6b8fd6", {
+        className: "target-node",
+        data: { "target-key": svgGraphInteractiveKey(node.key) },
+      })
+    );
     const titleLayout = svgGraphNodeTitleLines(node.stereotype, node.title, 52);
     parts.push(
       svgText(titleLayout.lines[0] ?? "", node.x + 18, node.y + 22, {
@@ -1904,6 +1991,247 @@ export function renderMappingFlowSvgs(options: MappingFlowSvgOptions): Map<strin
     );
   }
   return artifacts;
+}
+
+export function renderMappingFlowHtml(options: MappingFlowSvgOptions): string {
+  const artifacts = renderMappingFlowSvgs(options);
+  const payload = JSON.stringify(
+    [...artifacts.entries()].map(([name, svg]) => ({ name, svg }))
+  ).replaceAll("<", "\\u003c");
+  return String.raw`<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Interactive polymorphic mapping flows</title>
+  <style>
+    :root {
+      color-scheme: light;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #f8fafc;
+      color: #0f172a;
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: #f8fafc; }
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 2;
+      padding: 16px 20px 12px;
+      border-bottom: 1px solid #cbd5e1;
+      background: rgba(248, 250, 252, .96);
+      backdrop-filter: blur(8px);
+    }
+    h1 { margin: 0 0 4px; font-size: 22px; }
+    .hint { color: #475569; font-size: 13px; }
+    .toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px 16px;
+      align-items: center;
+      margin-top: 12px;
+    }
+    label, .group-label { color: #334155; font-size: 12px; font-weight: 700; }
+    select, button {
+      border: 1px solid #94a3b8;
+      border-radius: 6px;
+      background: #fff;
+      color: #0f172a;
+      font: inherit;
+      font-size: 13px;
+      padding: 6px 9px;
+    }
+    select { margin-left: 6px; }
+    button { cursor: pointer; }
+    button:hover, button.is-active { border-color: #2563eb; background: #eff6ff; }
+    button.is-active { color: #1d4ed8; font-weight: 700; }
+    .control-group { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+    .status { color: #475569; font-size: 12px; margin-left: auto; }
+    #diagram {
+      overflow: auto;
+      padding: 16px;
+      min-height: calc(100vh - 150px);
+    }
+    #diagram svg { display: block; width: auto; min-width: 1200px; height: auto; }
+    #diagram path.mapping-edge,
+    #diagram path.mapping-group-edge,
+    #diagram path.containment-edge,
+    #diagram path.composition-edge { transition: opacity .15s, stroke-width .15s; }
+    #diagram path.mapping-edge { cursor: pointer; }
+    #diagram path.is-dimmed { opacity: .08 !important; }
+    #diagram path.is-focused {
+      opacity: 1 !important;
+      stroke: #0f172a !important;
+      stroke-width: 4 !important;
+    }
+    #diagram rect.mapping-lane.is-dimmed,
+    #diagram rect.target-node.is-dimmed { opacity: .2; }
+    .empty { padding: 40px; color: #475569; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Interactive polymorphic mapping flows</h1>
+    <div class="hint">Toggle target lanes or source routes. Click a property arrow to focus one mapping; shift-click to select several.</div>
+    <div class="toolbar">
+      <label>Family<select id="family"></select></label>
+      <div class="control-group"><span class="group-label">Target lanes</span><span id="layers"></span></div>
+      <div class="control-group"><span class="group-label">Source routes</span><span id="routes"></span></div>
+      <button id="show-all" type="button">Show all</button>
+      <button id="clear-focus" type="button">Clear focus</button>
+      <span class="status" id="status"></span>
+    </div>
+  </header>
+  <main id="diagram" aria-live="polite"></main>
+  <script id="mapping-data" type="application/json">${payload}</script>
+  <script>
+    (function () {
+      const families = JSON.parse(document.getElementById("mapping-data").textContent || "[]");
+      const familySelect = document.getElementById("family");
+      const layerControls = document.getElementById("layers");
+      const routeControls = document.getElementById("routes");
+      const diagram = document.getElementById("diagram");
+      const status = document.getElementById("status");
+      const selectedLayers = new Set();
+      const selectedRoutes = new Set();
+      const selectedFlows = new Set();
+      let activeSvg = null;
+      let activeEdges = [];
+
+      function labelForLayer(key) {
+        if (key === "parent") return "parent";
+        return key.split("|").join(" → ");
+      }
+
+      function uniqueValues(elements, attribute, labelAttribute) {
+        const values = new Map();
+        elements.forEach(function (element) {
+          const key = element.dataset[attribute];
+          if (key && !values.has(key)) values.set(key, labelAttribute ? (element.dataset[labelAttribute] || key) : key);
+        });
+        return Array.from(values.entries()).sort(function (left, right) {
+          return left[1].localeCompare(right[1]);
+        });
+      }
+
+      function addToggle(container, kind, key, label, selected) {
+        const button = document.createElement("button");
+        button.type = "button";
+        button.textContent = label;
+        button.dataset.kind = kind;
+        button.dataset.value = key;
+        button.className = selected ? "is-active" : "";
+        button.addEventListener("click", function () {
+          const set = kind === "layer" ? selectedLayers : selectedRoutes;
+          if (set.has(key)) set.delete(key); else set.add(key);
+          renderControls();
+          updateVisibility();
+        });
+        container.appendChild(button);
+      }
+
+      function renderControls() {
+        layerControls.replaceChildren();
+        routeControls.replaceChildren();
+        const layerValues = uniqueValues(activeEdges, "targetKey");
+        const routeValues = uniqueValues(activeEdges, "sourceRoute", "sourceLabel");
+        layerValues.forEach(function (entry) {
+          addToggle(layerControls, "layer", entry[0], labelForLayer(entry[0]), selectedLayers.has(entry[0]));
+        });
+        routeValues.forEach(function (entry) {
+          addToggle(routeControls, "route", entry[0], entry[1], selectedRoutes.has(entry[0]));
+        });
+      }
+
+      function updateVisibility() {
+        activeEdges.forEach(function (edge) {
+          const layerVisible = !selectedLayers.size || selectedLayers.has(edge.dataset.targetKey);
+          const routeVisible = !selectedRoutes.size || selectedRoutes.has(edge.dataset.sourceRoute);
+          const flowVisible = !selectedFlows.size ||
+            !edge.classList.contains("mapping-edge") ||
+            selectedFlows.has(edge.dataset.flowKey);
+          edge.classList.toggle("is-dimmed", !(layerVisible && routeVisible && flowVisible));
+          edge.classList.toggle("is-focused", selectedFlows.has(edge.dataset.flowKey));
+        });
+        if (activeSvg) {
+          activeSvg.querySelectorAll("rect.mapping-lane, rect.target-node").forEach(function (node) {
+            const key = node.dataset.targetKey;
+            const keep = !selectedLayers.size || selectedLayers.has(key) || key === "parent";
+            node.classList.toggle("is-dimmed", !keep);
+          });
+        }
+        const parts = [];
+        if (selectedLayers.size) parts.push(selectedLayers.size + " lane" + (selectedLayers.size === 1 ? "" : "s"));
+        if (selectedRoutes.size) parts.push(selectedRoutes.size + " route" + (selectedRoutes.size === 1 ? "" : "s"));
+        if (selectedFlows.size) parts.push(selectedFlows.size + " focused mapping" + (selectedFlows.size === 1 ? "" : "s"));
+        status.textContent = parts.length ? parts.join(" · ") : "Showing all mappings";
+      }
+
+      function bindEdges() {
+        activeEdges = Array.from(activeSvg.querySelectorAll(
+          "path.mapping-edge, path.mapping-group-edge, path.containment-edge, path.composition-edge"
+        ));
+        activeSvg.querySelectorAll("path.mapping-edge").forEach(function (edge) {
+          edge.addEventListener("click", function (event) {
+            if (!event.shiftKey) selectedFlows.clear();
+            const key = edge.dataset.flowKey;
+            if (key) {
+              if (event.shiftKey && selectedFlows.has(key)) selectedFlows.delete(key);
+              else selectedFlows.add(key);
+            }
+            updateVisibility();
+          });
+        });
+        renderControls();
+        updateVisibility();
+      }
+
+      function renderFamily(name) {
+        selectedLayers.clear();
+        selectedRoutes.clear();
+        selectedFlows.clear();
+        const family = families.find(function (entry) { return entry.name === name; });
+        if (!family) {
+          diagram.innerHTML = '<div class="empty">No mapping flow artifact found.</div>';
+          activeSvg = null;
+          activeEdges = [];
+          renderControls();
+          updateVisibility();
+          return;
+        }
+        diagram.innerHTML = family.svg;
+        activeSvg = diagram.querySelector("svg");
+        bindEdges();
+      }
+
+      families.forEach(function (family) {
+        const option = document.createElement("option");
+        option.value = family.name;
+        option.textContent = family.name.replace(/\.svg$/, "");
+        familySelect.appendChild(option);
+      });
+      familySelect.addEventListener("change", function () { renderFamily(familySelect.value); });
+      document.getElementById("show-all").addEventListener("click", function () {
+        selectedLayers.clear();
+        selectedRoutes.clear();
+        selectedFlows.clear();
+        renderControls();
+        updateVisibility();
+      });
+      document.getElementById("clear-focus").addEventListener("click", function () {
+        selectedFlows.clear();
+        updateVisibility();
+      });
+      if (families.length) {
+        familySelect.value = families[0].name;
+        renderFamily(families[0].name);
+      } else {
+        diagram.innerHTML = '<div class="empty">No mapping flow artifacts found.</div>';
+      }
+    }());
+  </script>
+</body>
+</html>`;
 }
 
 function renderFlowNode(

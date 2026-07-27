@@ -53,8 +53,9 @@ derived coverage stays reviewable, and enum remaps are checked value-by-value.
   depend on Mermaid or GitHub's graph renderer. Dense families switch to target-specific mapping lanes
   that retain exact field mappings without crossing the whole graph. Parent-level mapped properties are
   shown in the Carta parent node, including their count. The checked-in gallery is [available here](generated/mapping-flows/README.md),
-  and CI uploads the SVGs alongside the text report and embeds them in the job summary when the branch
-  assets are available.
+  and CI uploads the SVGs alongside the text report. CI also uploads a self-contained interactive HTML
+  viewer; the job summary links to it when the artifact is available. GitHub renders the checked-in SVGs
+  inline, while the HTML viewer supports lane/route dimming and click-to-focus mapping arrows.
   Target properties with no mapped OCF source remain explicit in each panel.
 - CI runs the equivalent `npm run mapping:inverse` command on every pull request and push to `main`.
   That command renders the same shared inverse-coverage ledger and role policy used by the
