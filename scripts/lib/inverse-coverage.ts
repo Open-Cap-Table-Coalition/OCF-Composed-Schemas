@@ -13,17 +13,13 @@ import type { InverseRole } from "./inverse-semantics.js";
 
 export type CartaDefDisposition = CartaCoverageRole | "review";
 
-export type CartaDefStatus =
-  | "direct"
-  | "type-only"
-  | "nested-obj"
-  | "deferred"
-  | CartaDefDisposition;
+export type NestedNamespace = "ocf" | "carta";
+
+export type CartaDefStatus = "direct" | "nested-obj" | "deferred" | CartaDefDisposition;
 
 /** Mutually exclusive primary roles used to account for every object-like definition. */
 export const CARTA_DEF_STATUS_ORDER: CartaDefStatus[] = [
   "direct",
-  "type-only",
   "deferred",
   "nested-obj",
   "value-type",
@@ -37,7 +33,6 @@ export const CARTA_DEF_STATUS_ORDER: CartaDefStatus[] = [
 
 export const CARTA_DEF_STATUS_LABELS: Record<CartaDefStatus, string> = {
   direct: "direct executable",
-  "type-only": "type-only",
   deferred: "deferred",
   "nested-obj": "nested object / non-target",
   "value-type": "value-type / non-target",
@@ -94,6 +89,8 @@ export interface CartaDefCoverage {
   emptySlots: string[];
   structuralParents: string[];
   status: CartaDefStatus;
+  /** Namespace in which a nested-object role is established. */
+  nestedNamespace?: NestedNamespace;
   disposition?: CartaDefDisposition;
   reason?: string;
 }
@@ -147,7 +144,7 @@ export interface InverseCoverageStory {
   objectDefs: number;
   /** Object-shaped definitions that are standalone mapping candidates. */
   standaloneCandidateDefs: number;
-  /** Object-like definitions with executable, type-only, or deferred evidence. */
+  /** Object-like definitions with standalone executable evidence. */
   mappedDefs: number;
   /** Mapped standalone targets with no empty object slots. */
   fullyMappedDefs: number;
@@ -182,6 +179,7 @@ export interface InverseExcludedRoleRow {
   name: string;
   coveredThrough: string;
   reason: string;
+  nestedNamespace?: NestedNamespace;
 }
 
 export interface InverseExcludedRoleGroups {
@@ -210,11 +208,7 @@ export function isInverseNonEntityDefinition(row: Pick<CartaDefCoverage, "status
   return INVERSE_NON_ENTITY_STATUSES.includes(row.status);
 }
 
-export const INVERSE_MAPPED_STATUSES: readonly CartaDefStatus[] = [
-  "direct",
-  "type-only",
-  "deferred",
-];
+export const INVERSE_MAPPED_STATUSES: readonly CartaDefStatus[] = ["direct", "deferred"];
 
 export function isInverseMappedDefinition(row: Pick<CartaDefCoverage, "status">): boolean {
   return INVERSE_MAPPED_STATUSES.includes(row.status);
@@ -228,7 +222,7 @@ export function isInverseMappedDefinition(row: Pick<CartaDefCoverage, "status">)
  */
 export function inverseCoverageStory(inverse: InverseCoverageLedger): InverseCoverageStory {
   const counts = inverse.metrics.definitionRoleCounts;
-  const mappedDefs = counts.direct + counts["type-only"] + counts.deferred;
+  const mappedDefs = counts.direct + counts.deferred;
   const nonEntityObjectDefs = counts["nested-obj"] + counts["value-type"];
   const unmappedCandidateDefs =
     counts["report-rollup"] +
@@ -680,11 +674,13 @@ export function buildInverseCoverage(corpus: Corpus): InverseCoverageLedger {
     const structuralParents = [...(parents.get(info.name) ?? new Set<string>())].sort();
     const policy = corpus.coveragePolicy.cartaDefs.get(info.name) ?? reportRollupPolicy(info.name);
     let status: CartaDefStatus;
+    let nestedNamespace: NestedNamespace | undefined;
     let disposition: CartaDefDisposition | undefined;
     let reason: string | undefined;
 
     if (policy?.override === true) {
       status = policy.role;
+      if (policy.role === "nested-obj") nestedNamespace = "carta";
       disposition = policy.role;
       reason = policy.reason;
     } else if (policy?.role === "value-type") {
@@ -693,13 +689,17 @@ export function buildInverseCoverage(corpus: Corpus): InverseCoverageLedger {
       reason = policy.reason;
     } else if (info.inboundRefs.length > 0 || policy?.role === "nested-obj") {
       status = "nested-obj";
+      nestedNamespace = "carta";
     } else if (directRoot || directSlots.length > 0) status = "direct";
     else if (
       typeOnlySlots.length > 0 ||
       typeEdges.some((edge) => rootOf(edge.target) === info.name)
-    )
-      status = "type-only";
-    else if (
+    ) {
+      status = "nested-obj";
+      nestedNamespace = "ocf";
+      disposition = "nested-obj";
+      reason = "Only OCF reusable type mapping evidence; not a standalone target.";
+    } else if (
       deferredSlots.length > 0 ||
       deferredEdges.some((edge) => rootOf(edge.target) === info.name)
     )
@@ -726,6 +726,7 @@ export function buildInverseCoverage(corpus: Corpus): InverseCoverageLedger {
       emptySlots,
       structuralParents,
       status,
+      nestedNamespace,
       disposition,
       reason,
     });
@@ -749,7 +750,14 @@ export function buildInverseCoverage(corpus: Corpus): InverseCoverageLedger {
     directDefs: countStatus("direct"),
     directSlots: slots.filter((slot) => slot.status === "direct").length,
     typeOnlyDefs: defRows.filter((row) => row.typeOnlySlots.length > 0).length,
-    typeOnlyOnlyDefs: countStatus("type-only"),
+    typeOnlyOnlyDefs: defRows.filter(
+      (row) =>
+        row.typeOnlySlots.length > 0 &&
+        row.directSlots.length === 0 &&
+        row.implicitSlots.length === 0 &&
+        row.deferredSlots.length === 0 &&
+        row.structuralSlots.length === 0
+    ).length,
     typeOnlySlots: slots.filter((slot) => slot.status === "type-only").length,
     implicitSlots: slots.filter((slot) => slot.status === "implicit").length,
     deferredSlots: slots.filter((slot) => slot.status === "deferred").length,
@@ -839,9 +847,13 @@ export function excludedInverseRoleRows(
       role: "nested-obj",
       name: row.name,
       coveredThrough,
-      reason: row.structuralParents.length
-        ? "Nested object; covered through mapped parent(s)."
-        : "Nested object; no mapped parent coverage established, but not a standalone target.",
+      nestedNamespace: row.nestedNamespace,
+      reason:
+        row.nestedNamespace === "ocf"
+          ? "Nested OCF type; type mapping evidence is not a standalone Carta target."
+          : row.structuralParents.length
+          ? "Nested Carta object; covered through mapped parent(s)."
+          : "Nested Carta object; no mapped parent coverage established, but not a standalone target.",
     });
   }
   for (const [name, entry] of [...policy.cartaDefs.entries()]
@@ -855,6 +867,7 @@ export function excludedInverseRoleRows(
       role: "nested-obj",
       name,
       coveredThrough: inboundParents.join(", ") || "curated nested role",
+      nestedNamespace: "carta",
       reason: entry.reason,
     });
   }

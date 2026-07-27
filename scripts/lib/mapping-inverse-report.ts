@@ -2845,7 +2845,8 @@ function renderCoverageStory(inverse: InverseCoverageLedger): string[] {
     `       ${story.standaloneCandidateDefs} are standalone mapping candidates.`,
     `  5. ${story.nonEntityDefs} support definitions are excluded from standalone mapping: ${story.nonEntityObjectDefs} object-shaped support definitions + ${story.scalarValueTypeDefs} scalar support types.`,
     `  6. ${story.mappedDefs} standalone candidates have OCF mapping evidence:`,
-    `       ${counts.direct} direct executable, ${counts["type-only"]} type-only, ${counts.deferred} deferred.`,
+    `       ${counts.direct} direct executable, ${counts.deferred} deferred.`,
+    `       ${inverse.metrics.typeOnlyDefs} definitions also carry reusable type-only evidence across ${inverse.metrics.typeOnlySlots} slots; that evidence does not create a standalone target.`,
     `       Completeness: ${story.fullyMappedDefs} fully mapped, ${story.partiallyMappedDefs} partially mapped.`,
     `  7. ${story.unmappedCandidateDefs} standalone candidates have no mapping evidence yet; their inventory role says whether that is expected or actionable:`,
     `       ${counts["report-rollup"]} report/read-model roll-ups, ${counts.alternate} alternate shapes,`,
@@ -2887,7 +2888,9 @@ function renderExcludedRoleGroup(
     if (detail === "nested") {
       lines.push(
         ...wrapReportText(
-          `#/$defs/${row.name} — parent(s): ${row.coveredThrough}`,
+          `#/$defs/${row.name} — namespace: ${row.nestedNamespace ?? "carta"}; parent(s): ${
+            row.coveredThrough
+          }`,
           "    - ",
           "      "
         )
@@ -2908,7 +2911,11 @@ function renderExcludedRows(rows: InverseExcludedRoleRow[]): string[] {
     `Supporting CARTA definitions excluded from standalone mapping targets (${rows.length})`,
     `  ${
       groups.nestedWithMappedParent.length + groups.nestedWithoutMappedParent.length
-    } nested object definitions + ${groups.valueTypes.length} value-type support definitions.`,
+    } nested object definitions (${
+      rows.filter((row) => row.nestedNamespace === "carta").length
+    } Carta + ${rows.filter((row) => row.nestedNamespace === "ocf").length} OCF) + ${
+      groups.valueTypes.length
+    } value-type support definitions.`,
     `  These ${rows.length} definitions are packaging/support types, not standalone mapping targets; their mapping/type evidence remains valid.`,
   ];
   lines.push(
@@ -2968,7 +2975,11 @@ export function renderMappingInverseReport(options: MappingInverseReportOptions)
     if (row.status === "value-type" || row.status === "nested-obj") {
       lines.push(
         "",
-        `Carta definition ${options.targetObject} is a supporting definition, not a standalone mapping target (${row.status}).`
+        `Carta definition ${
+          options.targetObject
+        } is a supporting definition, not a standalone mapping target (${row.status}${
+          row.nestedNamespace ? `; ${row.nestedNamespace} namespace` : ""
+        }).`
       );
     }
     if (options.mappingDocuments) {
