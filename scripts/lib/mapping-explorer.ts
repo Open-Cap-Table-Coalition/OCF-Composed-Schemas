@@ -94,6 +94,13 @@ export interface MappingExplorerData {
   };
 }
 
+interface DirectoryFilterCounts {
+  all: number;
+  mapped: number;
+  gap: number;
+  support?: number;
+}
+
 export function explorerSlug(value: string): string {
   return value
     .replace(/([a-z0-9])([A-Z])/g, "$1-$2")
@@ -470,18 +477,39 @@ function metric(value: number, label: string, tone = ""): string {
   )}</span></div>`;
 }
 
-function filterBar(group: string): string {
+function filterBar(group: string, counts: DirectoryFilterCounts): string {
   return `<div class="filter-controls" data-filter-group="${html(
     group
   )}"><input data-filter-input type="search" placeholder="Search ${html(
     group
   )}…" aria-label="Search ${html(
     group
-  )}"><div class="filter-buttons"><button class="filter-button is-active" data-filter-button="all" type="button">All</button><button class="filter-button" data-filter-button="mapped" type="button">Mapped</button><button class="filter-button" data-filter-button="gap" type="button">Gaps</button>${
-    group === "Carta targets"
-      ? '<button class="filter-button" data-filter-button="support" type="button">Support</button>'
-      : ""
+  )}"><div class="filter-buttons"><button class="filter-button is-active" data-filter-button="all" type="button">All (${html(
+    counts.all
+  )})</button><button class="filter-button" data-filter-button="mapped" type="button">Mapped (${html(
+    counts.mapped
+  )})</button><button class="filter-button" data-filter-button="gap" type="button">Gaps (${html(
+    counts.gap
+  )})</button>${
+    counts.support === undefined
+      ? ""
+      : `<button class="filter-button" data-filter-button="support" type="button">Support (${html(
+          counts.support
+        )})</button>`
   }</div></div>`;
+}
+
+function targetScopeLegend(data: MappingExplorerData): string {
+  return `<aside class="directory-legend" aria-label="Carta target directory scope"><div><span class="eyebrow">Target page scope</span><p><strong>Mapped (${html(
+    data.metrics.mappedTargets
+  )})</strong> are standalone Carta definitions with OCF evidence. <strong>Gaps (${html(
+    data.metrics.noSourceTargets
+  )})</strong> are definitions retained for candidate and coverage review. <strong>Support (${html(
+    data.metrics.supportTargets
+  )})</strong> are nested object or value-type definitions shown for context, not standalone mapping targets.</p></div><div class="legend-links">${link(
+    "assets/mapping-inverse-report.md",
+    "Full inventory + analysis →"
+  )}</div></aside>`;
 }
 
 function sourceCard(source: ExplorerSource): string {
@@ -582,13 +610,26 @@ export function renderMappingExplorerIndex(data: MappingExplorerData): string {
       data.metrics.visualTargets
     )} SVG previews + interactive HTML</span></div></div>${featuredVisual}</section>
     <section id="ocf-objects" class="directory-section"><div class="section-heading"><div><span class="eyebrow">01 / source side</span><h2>OCF objects</h2><p>Each page keeps the authored mapping visible, including objects with no Carta target evidence.</p></div>${filterBar(
-      "OCF objects"
+      "OCF objects",
+      {
+        all: data.sources.length,
+        mapped: data.sources.filter((source) => !source.noTarget).length,
+        gap: data.metrics.noTargetSources,
+      }
     )}</div><div class="directory-grid" data-directory="OCF objects">${data.sources
       .map(sourceCard)
       .join("")}</div></section>
-    <section id="carta-targets" class="directory-section"><div class="section-heading"><div><span class="eyebrow">02 / target side</span><h2>Carta targets</h2><p>Every object-like target is browseable, including standalone candidates with no OCF source and nested support definitions.</p></div>${filterBar(
-      "Carta targets"
-    )}</div><div class="directory-grid" data-directory="Carta targets">${data.targets
+    <section id="carta-targets" class="directory-section"><div class="section-heading"><div><span class="eyebrow">02 / target side</span><h2>Carta targets</h2><p>Every Carta object-like definition is browseable: standalone targets, source gaps, and support definitions retained for context.</p></div>${filterBar(
+      "Carta targets",
+      {
+        all: data.targets.length,
+        mapped: data.metrics.mappedTargets,
+        gap: data.metrics.noSourceTargets,
+        support: data.metrics.supportTargets,
+      }
+    )}</div>${targetScopeLegend(
+      data
+    )}<div class="directory-grid" data-directory="Carta targets">${data.targets
       .map(targetCard)
       .join("")}</div></section>
     <section class="closing-band"><div><span class="eyebrow accent">Need the raw ledger?</span><h2>Keep the generated report close.</h2></div><div class="hero-actions"><a class="button button-primary" href="assets/mapping-inverse-report.md">Read inverse report</a><a class="button button-quiet" href="https://github.com/Open-Cap-Table-Coalition/OCF-Composed-Schemas">View repository ↗</a></div></section>`
@@ -917,6 +958,8 @@ export function renderMappingExplorerCss(): string {
     '.breadcrumbs { color: var(--subtle); text-transform: uppercase; letter-spacing: .08em; } .detail-hero h1 { font-family: "Gotham", "Helvetica Neue", Arial, sans-serif; font-size: clamp(36px, 5.2vw, 60px); font-weight: 400; letter-spacing: .04em; } .callout { border-radius: 0; border-color: rgba(42,48,200,.28); background: #f1f1ff; color: var(--muted); } .callout strong { color: var(--ink); } .callout-icon { border-radius: 50%; background: var(--primary); color: #fff; }',
     ".table-wrap { border-radius: 0; background: #fff; } th, td { border-color: var(--line); } th { color: var(--primary); font-weight: 400; } .evidence-row { border-radius: 0; background: #fff; } .artifact-frame { background: #f1f1ff; }",
     ".notes-panel { border-color: rgba(42,48,200,.28); border-radius: 0; background: #f1f1ff; } .notes-list p { color: var(--ink); } .question-panel { border-color: rgba(42,48,200,.28); border-radius: 0; background: #f1f1ff; } .question-panel-heading h2 { font-size: 24px; } .question-state { color: var(--primary); background: #fff; border: 1px solid rgba(42,48,200,.24); font-weight: 400; } .question-row { border-radius: 0; background: #fff; } .question-open, .question-closed { border-color: rgba(42,48,200,.24); } .question-body p { font-weight: 400; } .question-chip { color: var(--primary); border-color: rgba(42,48,200,.24); }",
-    "@media (max-width: 620px) { .hero { padding: 76px 20px 84px; } .hero h1 { font-size: 38px; letter-spacing: .1em; } }",
+    ".directory-legend { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: end; gap: 20px; max-width: 760px; margin: -8px 0 26px auto; padding: 15px 18px; border: 1px solid rgba(42,48,200,.22); background: #f1f1ff; } .directory-legend p { margin: 5px 0 0; color: var(--muted); font-size: 12px; line-height: 1.55; } .directory-legend strong { color: var(--ink); font-weight: 500; } .legend-links { white-space: nowrap; font-size: 11px; text-transform: uppercase; letter-spacing: .08em; } .legend-links a { color: var(--primary); text-decoration: none; } .legend-links a:hover { color: var(--ink); }",
+    "@media (max-width: 900px) { .directory-legend { max-width: none; margin-left: 0; } }",
+    "@media (max-width: 620px) { .hero { padding: 76px 20px 84px; } .hero h1 { font-size: 38px; letter-spacing: .1em; } .directory-legend { grid-template-columns: 1fr; gap: 10px; } .legend-links { white-space: normal; } }",
   ].join("\n");
 }
