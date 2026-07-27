@@ -510,8 +510,7 @@ function structuralEdgesForProperties(
   return structural;
 }
 
-function sourcePropertyNode(corpus: Corpus, object: GreenObject, field: string): unknown {
-  const root = object.sourceSchemaId ? corpus.registry.get(object.sourceSchemaId) : undefined;
+function sourcePropertyNodeFromRoot(corpus: Corpus, root: unknown, field: string): unknown {
   const seen = new Set<unknown>();
   const visit = (node: unknown): unknown => {
     if (!isPlainObject(node) || seen.has(node)) return undefined;
@@ -527,7 +526,16 @@ function sourcePropertyNode(corpus: Corpus, object: GreenObject, field: string):
     }
     return undefined;
   };
-  return visit(root) ?? object.properties[field];
+  return visit(root);
+}
+
+export function sourcePropertyNode(corpus: Corpus, object: GreenObject, field: string): unknown {
+  const root = object.sourceSchemaId ? corpus.registry.get(object.sourceSchemaId) : undefined;
+  return sourcePropertyNodeFromRoot(corpus, root, field) ?? object.properties[field];
+}
+
+export function sourceSchemaPropertyNode(corpus: Corpus, schemaId: string, field: string): unknown {
+  return sourcePropertyNodeFromRoot(corpus, corpus.registry.get(schemaId), field);
 }
 
 function refNames(node: unknown): string[] {

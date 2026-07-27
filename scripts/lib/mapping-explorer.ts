@@ -1,10 +1,13 @@
 import { cartaCoverageIssueUrl, mappingFileUrl, mappingIssueUrl } from "./question-links.js";
+import { sourcePropertyNode, sourceSchemaPropertyNode } from "./inverse-coverage.js";
 import type {
   CartaDefCoverage,
   CartaSlotCoverage,
   InverseCoverageLedger,
 } from "./inverse-coverage.js";
 import type { Corpus, GreenObject, MappingEdge } from "./core-corpus.js";
+import { resolveSource, resolveTarget } from "./core-classifier.js";
+import { isPlainObject } from "./mapping-validator.js";
 import { targetPointerParts } from "./mapping-report.js";
 import type { MappingReportDocument } from "./mapping-report.js";
 import type { MappingQuestion } from "./mapping-questions.js";
@@ -52,6 +55,7 @@ export interface ExplorerEvidence {
   source: string;
   variant: string;
   field?: string;
+  sourceType: string;
   kind?: string;
   scope: MappingEdge["scope"];
   issueUrl: string;
@@ -59,6 +63,7 @@ export interface ExplorerEvidence {
 
 export interface ExplorerTargetSlot {
   property: string;
+  type: string;
   status: CartaSlotCoverage["status"];
   evidence: ExplorerEvidence[];
 }
@@ -151,12 +156,84 @@ function sourceFields(object: GreenObject, edges: readonly MappingEdge[]): Explo
   return fields;
 }
 
-function evidenceFor(edge: MappingEdge): ExplorerEvidence {
+function schemaRefName(value: string): string {
+  return (
+    value
+      .split(/[/?#]/)
+      .pop()
+      ?.replace(/\.schema\.json$/, "") ?? value
+  );
+}
+
+function schemaTypeLabel(node: unknown, resolve: (value: unknown) => unknown, depth = 0): string {
+  if (depth > 10 || !isPlainObject(node)) return "unknown";
+  if (typeof node.$ref === "string") return schemaRefName(node.$ref);
+
+  const resolved = resolve(node);
+  if (resolved !== node && isPlainObject(resolved)) {
+    return schemaTypeLabel(resolved, resolve, depth + 1);
+  }
+
+  const union = node.oneOf ?? node.anyOf;
+  if (Array.isArray(union)) {
+    const labels = union
+      .map((branch) => schemaTypeLabel(branch, resolve, depth + 1))
+      .filter((label) => label !== "unknown");
+    if (labels.length) return [...new Set(labels)].join(" | ");
+  }
+
+  if (node.items !== undefined) {
+    return `array<${schemaTypeLabel(node.items, resolve, depth + 1)}>`;
+  }
+
+  if (node.type !== undefined) {
+    if (Array.isArray(node.type)) return node.type.join(" | ");
+    if (typeof node.type === "string") {
+      return typeof node.format === "string" ? `${node.type} (${node.format})` : node.type;
+    }
+  }
+
+  if (node.const !== undefined) return `literal (${typeof node.const})`;
+  if (isPlainObject(node.properties)) return "object";
+  return "unknown";
+}
+
+function sourceTypeForEdge(
+  corpus: Corpus,
+  objects: ReadonlyMap<string, GreenObject>,
+  edge: MappingEdge
+): string {
+  const object = objects.get(edge.source);
+  if (edge.field && object) {
+    const node = sourcePropertyNode(corpus, object, edge.field);
+    if (node !== undefined) {
+      return schemaTypeLabel(node, (value) => resolveSource(value, corpus.registry));
+    }
+  }
+  if (edge.field) {
+    const schemaId = [...corpus.registry.keys()].find((id) => schemaRefName(id) === edge.source);
+    if (schemaId) {
+      const node = sourceSchemaPropertyNode(corpus, schemaId, edge.field);
+      if (node !== undefined) {
+        return schemaTypeLabel(node, (value) => resolveSource(value, corpus.registry));
+      }
+    }
+  }
+  if (object?.sourceSchemaId) return schemaRefName(object.sourceSchemaId);
+  return edge.sourceKind === "type" ? edge.source : "object";
+}
+
+function evidenceFor(
+  corpus: Corpus,
+  objects: ReadonlyMap<string, GreenObject>,
+  edge: MappingEdge
+): ExplorerEvidence {
   return {
     rel: edge.rel,
     source: edge.source,
     variant: edge.variant,
     field: edge.field,
+    sourceType: sourceTypeForEdge(corpus, objects, edge),
     kind: edge.kind,
     scope: edge.scope,
     issueUrl: mappingIssueUrl(edge.rel, edge.field ?? null),
@@ -173,9 +250,18 @@ function evidenceKey(evidence: ExplorerEvidence): string {
   ].join("\u0000");
 }
 
-function uniqueEvidence(edges: readonly MappingEdge[]): ExplorerEvidence[] {
+function uniqueEvidence(
+  corpus: Corpus,
+  objects: ReadonlyMap<string, GreenObject>,
+  edges: readonly MappingEdge[]
+): ExplorerEvidence[] {
   return [
-    ...new Map(edges.map((edge) => [evidenceKey(evidenceFor(edge)), evidenceFor(edge)])).values(),
+    ...new Map(
+      edges.map((edge) => {
+        const evidence = evidenceFor(corpus, objects, edge);
+        return [evidenceKey(evidence), evidence] as const;
+      })
+    ).values(),
   ].sort(
     (a, b) =>
       a.source.localeCompare(b.source) ||
@@ -226,14 +312,22 @@ function questionsForTarget(
   return questions.sort(questionSort);
 }
 
-function targetSlots(inverse: InverseCoverageLedger, row: CartaDefCoverage): ExplorerTargetSlot[] {
+function targetSlots(
+  corpus: Corpus,
+  inverse: InverseCoverageLedger,
+  row: CartaDefCoverage,
+  objects: ReadonlyMap<string, GreenObject>
+): ExplorerTargetSlot[] {
   return inverse.slots
     .filter((slot) => slot.def === row.name)
     .sort((a, b) => a.property.localeCompare(b.property))
     .map((slot) => ({
       property: slot.property,
+      type: schemaTypeLabel(inverse.schema.resolve(slot.pointer), (node) =>
+        resolveTarget(node, corpus.bundle)
+      ),
       status: slot.status,
-      evidence: uniqueEvidence([...slot.edges, ...slot.structuralEdges]),
+      evidence: uniqueEvidence(corpus, objects, [...slot.edges, ...slot.structuralEdges]),
     }));
 }
 
@@ -287,9 +381,10 @@ export function buildMappingExplorerData(
     .sort((a, b) => a.entity.localeCompare(b.entity));
 
   const candidateNames = new Set(inverse.candidates.map((row) => row.name));
+  const objectsByEntity = new Map(corpus.objects.map((object) => [object.entity, object]));
   const targets = inverse.defs
     .map((row) => {
-      const slots = targetSlots(inverse, row);
+      const slots = targetSlots(corpus, inverse, row, objectsByEntity);
       const sourceMappings = targetEvidence(slots);
       const support = isSupportTarget(row);
       return {
@@ -741,7 +836,7 @@ function targetEvidenceList(target: ExplorerTarget): string {
           evidence.source
         )}</strong><span class="muted">${html(evidence.variant)}${
           evidence.field ? ` · ${html(evidence.field)}` : ""
-        }</span></div>${externalLink(
+        } · OCF type: ${html(evidence.sourceType)}</span></div>${externalLink(
           evidence.issueUrl,
           "Open mapping issue ↗",
           "table-link"
@@ -756,15 +851,19 @@ function targetSlotRow(slot: ExplorerTargetSlot, target: ExplorerTarget): string
         .slice(0, 4)
         .map(
           (item) =>
-            `<span class="source-token">${html(item.source)}${
+            `<span class="source-token"><span>${html(item.source)}${
               item.field ? `.${html(item.field)}` : ""
-            }</span>`
+            }</span><span class="schema-type"><span class="schema-type-label">OCF type</span> ${html(
+              item.sourceType
+            )}</span></span>`
         )
         .join("")
     : '<span class="muted">No OCF source evidence</span>';
   const issue = slot.evidence[0]?.issueUrl ?? target.issueUrl;
   return `<tr><td><span class="mono strong">${html(
     slot.property
+  )}</span><span class="schema-type"><span class="schema-type-label">Carta type</span> ${html(
+    slot.type
   )}</span></td><td><span class="kind-token status-${slot.status}">${html(
     slot.status
   )}</span></td><td><div class="token-stack">${evidence}</div></td><td>${externalLink(
@@ -841,7 +940,7 @@ export function renderMappingExplorerTargetPage(target: ExplorerTarget): string 
 ${questionPanel}
     <section class="detail-grid"><div class="detail-main"><div class="section-heading compact"><div><span class="eyebrow">Target evidence</span><h2>Who can fill this target?</h2></div></div>${targetEvidenceList(
       target
-    )}<div class="section-heading compact space-top"><div><span class="eyebrow">Property ledger</span><h2>Slot by slot</h2></div></div><div class="table-wrap"><table><thead><tr><th>Carta property</th><th>Status</th><th>OCF evidence</th><th></th></tr></thead><tbody>${slots}</tbody></table></div></div><aside class="detail-aside"><div class="side-card"><span class="eyebrow">Structural parents</span><div class="token-stack">${parents}</div><p class="muted">Nested definitions remain visible without being mistaken for standalone mapping targets.</p></div><div class="side-card"><span class="eyebrow">Raw artifacts</span><p>Use the generated report for role policy and the interactive viewer for cross-object flow inspection.</p>${link(
+    )}<div class="section-heading compact space-top"><div><span class="eyebrow">Property ledger</span><h2>Slot by slot</h2><p>Schema types are shown for both sides of each mapping slot.</p></div></div><div class="table-wrap"><table><thead><tr><th>Carta property / type</th><th>Status</th><th>OCF evidence / type</th><th></th></tr></thead><tbody>${slots}</tbody></table></div></div><aside class="detail-aside"><div class="side-card"><span class="eyebrow">Structural parents</span><div class="token-stack">${parents}</div><p class="muted">Nested definitions remain visible without being mistaken for standalone mapping targets.</p></div><div class="side-card"><span class="eyebrow">Raw artifacts</span><p>Use the generated report for role policy and the interactive viewer for cross-object flow inspection.</p>${link(
       "../assets/mapping-inverse-report.md",
       "Read inverse report →"
     )}<br>${link(
@@ -923,7 +1022,7 @@ export function renderMappingExplorerCss(): string {
     ".detail-meta { display: flex; flex-wrap: wrap; gap: 10px 18px; color: var(--muted); font-size: 12px; padding: 17px 0 32px; } .callout { display: flex; gap: 15px; padding: 19px; border-radius: 18px; margin: 8px 0 30px; border: 1px solid rgba(255,146,127,.26); background: rgba(74,31,42,.45); color: var(--muted); } .callout strong { color: var(--ink); } .callout p { margin: 4px 0 13px; } .callout-icon { display: grid; place-items: center; flex: 0 0 25px; height: 25px; border-radius: 50%; background: var(--coral); color: #24111a; font-weight: 900; }",
     ".detail-grid { display: grid; grid-template-columns: minmax(0, 1fr) 270px; gap: 26px; padding-bottom: 90px; } .detail-main { min-width: 0; } .detail-aside { display: grid; align-content: start; gap: 14px; } .side-card { padding: 21px; } .side-card h3 { font-size: 42px; line-height: 1; margin: 8px 0 18px; letter-spacing: -.07em; } .side-card .text-link { line-height: 2; }",
     ".table-wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 18px; background: rgba(17,26,44,.72); } table { width: 100%; border-collapse: collapse; font-size: 12px; min-width: 680px; } th, td { text-align: left; padding: 14px 16px; border-bottom: 1px solid var(--line); vertical-align: top; } th { color: var(--subtle); font-size: 10px; text-transform: uppercase; letter-spacing: .1em; font-weight: 800; } tr:last-child td { border-bottom: 0; }",
-    ".mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 11px; } .strong { color: var(--ink); } .target-token { color: var(--blue); } .target-link { text-decoration: none; } .source-token { color: var(--mint); } .table-link { color: var(--coral); font-size: 11px; text-decoration: none; white-space: nowrap; } .empty-cell { color: var(--muted); text-align: center; padding: 35px; }",
+    ".mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 11px; } .strong { color: var(--ink); } .target-token { color: var(--blue); } .target-link { text-decoration: none; } .source-token { color: var(--mint); flex-direction: column; align-items: flex-start; } .schema-type { display: block; margin-top: 4px; color: var(--subtle); font: 10px ui-monospace, SFMono-Regular, Menlo, monospace; letter-spacing: .01em; } .schema-type-label { margin-right: 5px; color: var(--blue); font-family: inherit; font-size: 9px; letter-spacing: .08em; text-transform: uppercase; } .table-link { color: var(--coral); font-size: 11px; text-decoration: none; white-space: nowrap; } .empty-cell { color: var(--muted); text-align: center; padding: 35px; }",
     ".kind-select, .kind-rename, .kind-computed, .kind-enum-remap, .kind-combine, .kind-split, .kind-construct { color: var(--blue); background: rgba(145,185,255,.1); } .status-direct, .status-type-only, .status-implicit, .status-deferred, .status-structural { color: var(--mint); background: rgba(143,240,206,.1); } .status-empty { color: var(--coral); background: rgba(255,146,127,.1); } .status-nested-obj, .status-value-type { color: var(--gold); background: rgba(255,211,139,.1); }",
     ".evidence-list { display: grid; gap: 8px; } .evidence-row { display: flex; align-items: center; justify-content: space-between; gap: 20px; border: 1px solid var(--line); background: rgba(17,26,44,.72); border-radius: 14px; padding: 13px 15px; } .evidence-row strong { display: block; } .evidence-row .muted { display: block; margin-top: 3px; } .muted { color: var(--muted); } .artifact-section { margin: 10px 0 34px; } .artifact-frame { padding: 15px; background: #f4f8ff; } .artifact-frame img { display: block; width: 100%; max-height: 620px; object-fit: contain; } .artifact-frame .artifact-toolbar { color: #65728a; } .empty-state { display: flex; flex-direction: column; gap: 6px; align-items: center; justify-content: center; min-height: 180px; padding: 25px; color: var(--muted); text-align: center; } .space-top { margin-top: 45px; } [hidden] { display: none !important; }",
     "@media (max-width: 900px) { .hero { grid-template-columns: 1fr; padding-top: 60px; } .hero-orbit { height: 300px; } .metrics-grid { grid-template-columns: repeat(2, 1fr); } .feature-grid { grid-template-columns: 1fr; } .directory-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } .detail-grid { grid-template-columns: 1fr; } .detail-aside { grid-template-columns: repeat(2, 1fr); } .detail-hero { align-items: start; flex-direction: column; } .detail-actions { justify-content: start; } }",
