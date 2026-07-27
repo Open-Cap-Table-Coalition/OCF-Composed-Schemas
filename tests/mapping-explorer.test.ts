@@ -123,4 +123,25 @@ describe("mapping explorer", () => {
       "Cancellation + issuance is not an effective Carta replacement"
     );
   });
+
+  it("shows Carta and OCF schema types in the target slot ledger", async () => {
+    const { corpus, inverse, mappingDocuments } = await loadExplorer();
+    const explorer = buildMappingExplorerData(corpus, inverse, [], mappingDocuments);
+    const target = explorer.targets.find((item) => item.name === "WarrantIssuanceTransaction");
+    const quantity = target?.slots.find((slot) => slot.property === "quantity");
+
+    expect(quantity?.type).toBe("Decimal");
+    expect(quantity?.evidence[0]?.sourceType).toBe("Numeric");
+
+    const money = explorer.targets
+      .find((item) => item.name === "Money")
+      ?.slots.find((slot) => slot.property === "amount");
+    expect(money?.type).toBe("Decimal");
+    expect(money?.evidence[0]?.sourceType).toBe("Numeric");
+
+    const page = renderMappingExplorerTargetPage(target!);
+    expect(page).toContain("Carta property / type");
+    expect(page).toContain("Carta type</span> Decimal");
+    expect(page).toContain("OCF type</span> Numeric");
+  });
 });
