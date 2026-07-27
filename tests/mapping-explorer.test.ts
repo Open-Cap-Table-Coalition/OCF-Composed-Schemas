@@ -1,5 +1,6 @@
 import { loadGreenCorpus } from "../scripts/lib/core-corpus.js";
 import { buildInverseCoverage } from "../scripts/lib/inverse-coverage.js";
+import { collectMappingFiles, loadMappingDocuments } from "../scripts/lib/mapping-input.js";
 import {
   buildMappingExplorerData,
   renderMappingExplorerIndex,
@@ -8,10 +9,24 @@ import {
 } from "../scripts/lib/mapping-explorer.js";
 
 describe("mapping explorer", () => {
+  async function loadExplorer() {
+    const repoRoot = process.cwd();
+    const [corpus, files] = await Promise.all([
+      loadGreenCorpus(repoRoot),
+      collectMappingFiles(repoRoot),
+    ]);
+    const mappingDocuments = await loadMappingDocuments(repoRoot, files);
+    return { corpus, inverse: buildInverseCoverage(corpus), mappingDocuments };
+  }
+
   it("projects every derived source and target into browseable pages", async () => {
-    const corpus = await loadGreenCorpus(process.cwd());
-    const inverse = buildInverseCoverage(corpus);
-    const explorer = buildMappingExplorerData(corpus, inverse, ["Stakeholder.svg"]);
+    const { corpus, inverse, mappingDocuments } = await loadExplorer();
+    const explorer = buildMappingExplorerData(
+      corpus,
+      inverse,
+      ["Stakeholder.svg"],
+      mappingDocuments
+    );
 
     expect(explorer.sources).toHaveLength(corpus.objects.length);
     expect(explorer.targets).toHaveLength(inverse.defs.length);
@@ -25,9 +40,8 @@ describe("mapping explorer", () => {
   });
 
   it("keeps gap pages actionable with mapping-specific issue links", async () => {
-    const corpus = await loadGreenCorpus(process.cwd());
-    const inverse = buildInverseCoverage(corpus);
-    const explorer = buildMappingExplorerData(corpus, inverse, []);
+    const { corpus, inverse, mappingDocuments } = await loadExplorer();
+    const explorer = buildMappingExplorerData(corpus, inverse, [], mappingDocuments);
     const source = explorer.sources.find((item) => item.noTarget);
     const target = explorer.targets.find((item) => item.noSource);
 
@@ -40,5 +54,42 @@ describe("mapping explorer", () => {
       "issues/new?title=%5BMapping+question%5D"
     );
     expect(renderMappingExplorerIndex(explorer)).toContain("OCF source objects");
+  });
+
+  it("surfaces open and closed property questions with direct issue actions", async () => {
+    const { corpus, inverse, mappingDocuments } = await loadExplorer();
+    const stakeholder = mappingDocuments.get("objects/Stakeholder.mapping.md");
+    expect(stakeholder?.questions?.length).toBeGreaterThan(0);
+    const firstQuestion = stakeholder!.questions![0]!;
+    const closedQuestion = {
+      ...firstQuestion,
+      answered: true,
+      answeredBy: "reviewer@example.com",
+      answer: "Confirmed for the current target policy.",
+    };
+    const targetQuestion = {
+      ...firstQuestion,
+      property: "addresses[].country",
+      target: "Compliance.countryOfResidency",
+    };
+    const documents = new Map(mappingDocuments);
+    documents.set("objects/Stakeholder.mapping.md", {
+      ...stakeholder!,
+      questions: [firstQuestion, closedQuestion, targetQuestion],
+    });
+    const explorer = buildMappingExplorerData(corpus, inverse, [], documents);
+    const source = explorer.sources.find((item) => item.entity === "Stakeholder");
+    const target = explorer.targets.find((item) => item.name === "Compliance");
+
+    expect(source?.questions).toHaveLength(3);
+    expect(renderMappingExplorerSourcePage(source!)).toContain("OPEN");
+    expect(renderMappingExplorerSourcePage(source!)).toContain("CLOSED");
+    expect(renderMappingExplorerSourcePage(source!)).toContain("reviewer@example.com");
+    expect(renderMappingExplorerSourcePage(source!)).toContain(
+      "issues/new?template=mapping-question.yml"
+    );
+    expect(target?.questions).toHaveLength(3);
+    expect(renderMappingExplorerTargetPage(target!)).toContain("Questions about this target");
+    expect(renderMappingExplorerTargetPage(target!)).toContain("Compliance.countryOfResidency");
   });
 });
