@@ -137,6 +137,14 @@ function edgeTarget(edge: MappingEdge): ExplorerTargetRef {
   return { object: parts.object, property: parts.relative, pointer: edge.target };
 }
 
+function targetLabel(target: ExplorerTargetRef): string {
+  // Derive the visible label from the canonical pointer at render time. This
+  // keeps the explorer from displaying a generic/stale property name when a
+  // target reference has been serialized or transformed upstream.
+  const parts = targetPointerParts(target.pointer);
+  return `${parts.object}.${parts.relative}`;
+}
+
 function uniqueTargets(edges: readonly MappingEdge[]): ExplorerTargetRef[] {
   return [...new Map(edges.map((edge) => [edge.target, edgeTarget(edge)])).values()].sort(
     (a, b) => a.object.localeCompare(b.object) || a.property.localeCompare(b.property)
@@ -804,10 +812,7 @@ export function renderMappingExplorerIndex(data: MappingExplorerData): string {
 function sourceFieldRow(field: ExplorerSourceField): string {
   const targets = field.targets.length
     ? field.targets
-        .map(
-          (target) =>
-            `<span class="target-token">${html(`${target.object}.${target.property}`)}</span>`
-        )
+        .map((target) => `<span class="target-token">${html(targetLabel(target))}</span>`)
         .join("")
     : '<span class="muted">No Carta target</span>';
   return `<tr><td><span class="mono">${html(

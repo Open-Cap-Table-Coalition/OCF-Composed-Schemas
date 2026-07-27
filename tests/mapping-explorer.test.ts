@@ -139,6 +139,28 @@ describe("mapping explorer", () => {
     );
   });
 
+  it("renders the concrete Carta property for Document mappings", async () => {
+    const { corpus, inverse, mappingDocuments } = await loadExplorer();
+    const explorer = buildMappingExplorerData(corpus, inverse, [], mappingDocuments);
+    const document = explorer.sources.find((item) => item.entity === "Document");
+
+    expect(document).toBeDefined();
+    const path = document!.fields.find((field) => field.field === "path");
+    const uri = document!.fields.find((field) => field.field === "uri");
+    expect(path?.targets).toEqual([
+      {
+        object: "Document",
+        property: "fileId",
+        pointer: "#/$defs/Document/properties/fileId",
+      },
+    ]);
+    expect(uri?.targets).toEqual(path?.targets);
+
+    const page = renderMappingExplorerSourcePage(document!);
+    expect(page).toContain("Document.fileId");
+    expect(page).not.toContain("Document.field");
+  });
+
   it("shows Carta and OCF schema types in the target slot ledger", async () => {
     const { corpus, inverse, mappingDocuments } = await loadExplorer();
     const explorer = buildMappingExplorerData(corpus, inverse, [], mappingDocuments);
