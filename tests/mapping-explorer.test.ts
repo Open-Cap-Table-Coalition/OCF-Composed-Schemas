@@ -3,6 +3,7 @@ import { buildInverseCoverage } from "../scripts/lib/inverse-coverage.js";
 import { collectMappingFiles, loadMappingDocuments } from "../scripts/lib/mapping-input.js";
 import {
   buildMappingExplorerData,
+  renderMappingExplorerAppJs,
   renderMappingExplorerCss,
   renderMappingExplorerIndex,
   renderMappingExplorerSourcePage,
@@ -70,6 +71,10 @@ describe("mapping explorer", () => {
     expect(index).not.toContain('data-filter-button="support"');
     expect(index).toContain("Target page scope");
     expect(index).toContain("Full inventory + analysis →");
+    expect(index).toContain('data-side-tab="source"');
+    expect(index).toContain('data-side-tab="target"');
+    expect(index).toContain('data-side-panel="target"');
+    expect(renderMappingExplorerAppJs()).toContain("setSide(sideFromHash())");
     const targetDirectory = index.split('data-directory="Carta targets">')[1] ?? "";
     expect(targetDirectory).not.toContain('data-status="support"');
   });
@@ -78,6 +83,7 @@ describe("mapping explorer", () => {
     const css = renderMappingExplorerCss();
 
     expect(css).toContain("grid-template-columns: repeat(3, minmax(0, 1fr))");
+    expect(css).toContain(".direction-tabs");
     expect(css).toContain(".card { min-width: 0;");
     expect(css).toContain("overflow-wrap: anywhere");
   });
