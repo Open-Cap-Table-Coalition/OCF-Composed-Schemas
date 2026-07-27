@@ -4,6 +4,7 @@ import type {
   CartaDefCoverage,
   CartaSlotCoverage,
   InverseCoverageLedger,
+  NestedNamespace,
 } from "./inverse-coverage.js";
 import type { Corpus, GreenObject, MappingEdge } from "./core-corpus.js";
 import { resolveSource, resolveTarget } from "./core-classifier.js";
@@ -89,6 +90,7 @@ export interface ExplorerTarget {
   name: string;
   slug: string;
   status: CartaDefCoverage["status"];
+  nestedNamespace?: NestedNamespace;
   reason?: string;
   properties: string[];
   slots: ExplorerTargetSlot[];
@@ -401,7 +403,7 @@ function targetEvidence(slots: readonly ExplorerTargetSlot[]): ExplorerEvidence[
 }
 
 function isMappedTarget(row: Pick<ExplorerTarget, "status">): boolean {
-  return row.status === "direct" || row.status === "type-only" || row.status === "deferred";
+  return row.status === "direct" || row.status === "deferred";
 }
 
 function isSupportTarget(row: Pick<ExplorerTarget, "status">): boolean {
@@ -452,6 +454,7 @@ export function buildMappingExplorerData(
         name: row.name,
         slug: explorerSlug(row.name),
         status: row.status,
+        nestedNamespace: row.nestedNamespace,
         reason: row.reason,
         properties: row.properties,
         slots,
@@ -514,9 +517,10 @@ function sourceStatus(source: ExplorerSource): string {
 
 function targetStatus(target: ExplorerTarget): string {
   if (target.noSource) return "No OCF source";
-  if (target.support) return "Support definition";
+  if (target.support) {
+    return target.nestedNamespace === "ocf" ? "Nested OCF type" : "Support definition";
+  }
   if (target.status === "direct") return "Mapped target";
-  if (target.status === "type-only") return "Type-only evidence";
   if (target.status === "deferred") return "Deferred evidence";
   return target.status;
 }

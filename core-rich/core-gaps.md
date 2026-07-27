@@ -981,6 +981,6 @@ complete target-first evidence and visuals.
 | direct target definitions | 18 |
 | type-only target definitions | 6 |
 | deferred target definitions | 0 |
-| nested/support definitions | 54 |
+| nested/support definitions | 55 |
 | follow-up candidates | 13 |
 

@@ -15,9 +15,8 @@ describe("Carta inverse coverage", () => {
       objectDefs: 86,
       definitionRoleCounts: {
         direct: 18,
-        "type-only": 1,
         deferred: 0,
-        "nested-obj": 53,
+        "nested-obj": 54,
         "value-type": 1,
         "report-rollup": 8,
         alternate: 2,
@@ -28,12 +27,12 @@ describe("Carta inverse coverage", () => {
       },
       directSlots: 225,
       typeOnlyDefs: 6,
-      typeOnlyOnlyDefs: 1,
+      typeOnlyOnlyDefs: 6,
       typeOnlySlots: 28,
       implicitSlots: 1,
       deferredSlots: 0,
       structuralSlots: 28,
-      nestedObjDefs: 53,
+      nestedObjDefs: 54,
       reportRollupDefs: 8,
       curatedValueTypeEntries: 7,
       valueTypeDefs: 1,
@@ -44,6 +43,11 @@ describe("Carta inverse coverage", () => {
 
     const byDef = new Map(inverse.defs.map((row) => [row.name, row]));
     expect(byDef.get("Date")?.status).toBe("value-type");
+    expect(byDef.get("PointOfContact")).toMatchObject({
+      status: "nested-obj",
+      nestedNamespace: "ocf",
+      typeOnlySlots: ["userEmail", "userFullName"],
+    });
     expect(byDef.get("Vesting")?.status).toBe("alternate");
     expect(byDef.get("DividendDetails")?.status).toBe("nested-obj");
     expect(byDef.get("CertificateIssuanceTransaction")?.status).toBe("nested-obj");
@@ -124,11 +128,11 @@ describe("Carta inverse coverage", () => {
     });
 
     const excluded = inverse.excludedRoleRows;
-    expect(excluded).toHaveLength(60);
+    expect(excluded).toHaveLength(61);
     const excludedGroups = groupInverseExcludedRoleRows(excluded);
     expect(excludedGroups.valueTypes).toHaveLength(7);
     expect(excludedGroups.nestedWithMappedParent).toHaveLength(38);
-    expect(excludedGroups.nestedWithoutMappedParent).toHaveLength(15);
+    expect(excludedGroups.nestedWithoutMappedParent).toHaveLength(16);
     expect(excluded.find((row) => row.name === "Date")).toMatchObject({ role: "value-type" });
     expect(excluded.find((row) => row.name === "VestingSchedule")).toMatchObject({
       role: "nested-obj",
@@ -137,6 +141,12 @@ describe("Carta inverse coverage", () => {
     expect(excluded.find((row) => row.name === "ThresholdDetails")).toMatchObject({
       role: "nested-obj",
       coveredThrough: "Interest",
+      nestedNamespace: "carta",
+    });
+    expect(excluded.find((row) => row.name === "PointOfContact")).toMatchObject({
+      role: "nested-obj",
+      nestedNamespace: "ocf",
+      reason: "Nested OCF type; type mapping evidence is not a standalone Carta target.",
     });
 
     expect(inverseCoverageStory(inverse)).toEqual({
@@ -145,13 +155,13 @@ describe("Carta inverse coverage", () => {
       scalarEnumDefs: 47,
       otherNonObjectDefs: 0,
       objectDefs: 86,
-      standaloneCandidateDefs: 32,
-      mappedDefs: 19,
+      standaloneCandidateDefs: 31,
+      mappedDefs: 18,
       fullyMappedDefs: 8,
-      partiallyMappedDefs: 11,
+      partiallyMappedDefs: 10,
       unmappedCandidateDefs: 13,
-      nonEntityDefs: 60,
-      nonEntityObjectDefs: 54,
+      nonEntityDefs: 61,
+      nonEntityObjectDefs: 55,
       scalarValueTypeDefs: 6,
     });
   });

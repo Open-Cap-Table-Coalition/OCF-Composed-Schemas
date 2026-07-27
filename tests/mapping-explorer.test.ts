@@ -39,6 +39,11 @@ describe("mapping explorer", () => {
     expect(explorer.targets.find((target) => target.name === "Stakeholder")?.svgFile).toBe(
       "Stakeholder.svg"
     );
+    expect(explorer.targets.find((target) => target.name === "PointOfContact")).toMatchObject({
+      status: "nested-obj",
+      nestedNamespace: "ocf",
+      support: true,
+    });
   });
 
   it("keeps gap pages actionable with mapping-specific issue links", async () => {
@@ -79,6 +84,7 @@ describe("mapping explorer", () => {
     expect(renderMappingExplorerAppJs()).toContain("setSide(sideFromHash())");
     const targetDirectory = index.split('data-directory="Carta targets">')[1] ?? "";
     expect(targetDirectory).not.toContain('data-status="support"');
+    expect(targetDirectory).not.toContain(">PointOfContact</a>");
   });
 
   it("keeps directory cards inside responsive grid tracks", () => {

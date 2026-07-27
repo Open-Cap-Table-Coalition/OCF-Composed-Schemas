@@ -13,21 +13,22 @@ Simple story
        47 scalar enum definitions (field vocabularies) + 6 curated scalar support types; neither is a standalone mapping target.
   3. 86 are object-shaped definitions.
   4. Of those 86:
-       54 are support definitions, not standalone objects (53 nested objects + 1 object-shaped value type).
-       32 are standalone mapping candidates.
-  5. 60 support definitions are excluded from standalone mapping: 54 object-shaped support definitions + 6 scalar support types.
-  6. 19 standalone candidates have OCF mapping evidence:
-       18 direct executable, 1 type-only, 0 deferred.
-       Completeness: 8 fully mapped, 11 partially mapped.
+       55 are support definitions, not standalone objects (54 nested objects + 1 object-shaped value type).
+       31 are standalone mapping candidates.
+  5. 61 support definitions are excluded from standalone mapping: 55 object-shaped support definitions + 6 scalar support types.
+  6. 18 standalone candidates have OCF mapping evidence:
+       18 direct executable, 0 deferred.
+       6 definitions also carry reusable type-only evidence across 28 slots; that evidence does not create a standalone target.
+       Completeness: 8 fully mapped, 10 partially mapped.
   7. 13 standalone candidates have no mapping evidence yet; their inventory role says whether that is expected or actionable:
        8 report/read-model roll-ups, 2 alternate shapes,
        1 CARTA-specific families without OCF sources, 1 workflow/data gaps,
        1 actionable gaps, 0 requiring review.
-  Check: 139 = 53 non-object + 86 object-shaped; 53 = 47 scalar enum + 6 scalar support; 32 = 19 + 13; 86 = 32 + 54.
+  Check: 139 = 53 non-object + 86 object-shaped; 53 = 47 scalar enum + 6 scalar support; 31 = 18 + 13; 86 = 31 + 55.
 
-Supporting CARTA definitions excluded from standalone mapping targets (60)
-  53 nested object definitions + 7 value-type support definitions.
-  These 60 definitions are packaging/support types, not standalone mapping targets; their mapping/type evidence remains valid.
+Supporting CARTA definitions excluded from standalone mapping targets (61)
+  54 nested object definitions (53 Carta + 1 OCF) + 7 value-type support definitions.
+  These 61 definitions are packaging/support types, not standalone mapping targets; their mapping/type evidence remains valid.
 
   Value-type support definitions (7)
     - #/$defs/Date
@@ -53,67 +54,70 @@ Supporting CARTA definitions excluded from standalone mapping targets (60)
       note: Reusable datetime wrapper, populated through owning object properties.
 
   Nested objects with mapped parent coverage (38)
-    - #/$defs/CertificateCancellationTransaction — parent(s): CertificateTransactionItem
-    - #/$defs/CertificateIssuanceTransaction — parent(s): CertificateTransactionItem
-    - #/$defs/CertificatePrecededBy — parent(s): Certificate
-    - #/$defs/ConvertibleCancellationTransaction — parent(s): ConvertibleTransactionItem
-    - #/$defs/ConvertibleIssuanceTransaction — parent(s): ConvertibleTransactionItem
-    - #/$defs/DividendDetails — parent(s): ShareClassDividendDetails
-    - #/$defs/Exercise — parent(s): OptionGrant
-    - #/$defs/ExercisePeriods — parent(s): OptionGrant
-    - #/$defs/Money — parent(s): Certificate, CertificateIssuanceTransaction,
+    - #/$defs/CertificateCancellationTransaction — namespace: carta; parent(s): CertificateTransactionItem
+    - #/$defs/CertificateIssuanceTransaction — namespace: carta; parent(s): CertificateTransactionItem
+    - #/$defs/CertificatePrecededBy — namespace: carta; parent(s): Certificate
+    - #/$defs/ConvertibleCancellationTransaction — namespace: carta; parent(s): ConvertibleTransactionItem
+    - #/$defs/ConvertibleIssuanceTransaction — namespace: carta; parent(s): ConvertibleTransactionItem
+    - #/$defs/DividendDetails — namespace: carta; parent(s): ShareClassDividendDetails
+    - #/$defs/Exercise — namespace: carta; parent(s): OptionGrant
+    - #/$defs/ExercisePeriods — namespace: carta; parent(s): OptionGrant
+    - #/$defs/Money — namespace: carta; parent(s): Certificate, CertificateIssuanceTransaction,
       ConvertibleCancellationTransaction, ConvertibleIssuanceTransaction, ConvertibleNote, OptionGrant,
       OptionIssuanceTransaction, RestrictedStockAward, RestrictedStockUnit, RestrictedStockUnitSettlement,
       RsaIssuanceTransaction, SarExerciseTransaction, SarIssuanceTransaction, ShareClass,
       ShareClassRightsAndPreferences, ShareClassValuation, WarrantIssuanceTransaction
-    - #/$defs/NoteBlock — parent(s): ConvertibleNote
-    - #/$defs/OptionCancellationTransaction — parent(s): OptionTransactionItem
-    - #/$defs/OptionExerciseTransaction — parent(s): OptionTransactionItem
-    - #/$defs/OptionGrantVestingEvent — parent(s): OptionGrant
-    - #/$defs/OptionIssuanceTransaction — parent(s): OptionTransactionItem
-    - #/$defs/PerformanceCondition — parent(s): VestingPeriod
-    - #/$defs/PrecededBySecurity — parent(s): CertificatePrecededBy, RestrictedStockAwardPrecededBy
-    - #/$defs/PreferredShareClassDetails — parent(s): ShareClass
-    - #/$defs/RestrictedStockAwardPrecededBy — parent(s): RestrictedStockAward
-    - #/$defs/RestrictedStockAwardVestingEvent — parent(s): RestrictedStockAward
-    - #/$defs/RestrictedStockUnitSettlement — parent(s): RestrictedStockUnit
-    - #/$defs/RestrictedStockUnitVestingEvent — parent(s): RestrictedStockUnit
-    - #/$defs/RsaCancellationTransaction — parent(s): RsaTransactionItem
-    - #/$defs/RsaIssuanceTransaction — parent(s): RsaTransactionItem
-    - #/$defs/RsuCancellationTransaction — parent(s): RsuTransactionItem
-    - #/$defs/RsuIssuanceTransaction — parent(s): RsuTransactionItem
-    - #/$defs/RsuSettlementTransaction — parent(s): RsuTransactionItem
-    - #/$defs/SarCancellationTransaction — parent(s): SarTransactionItem
-    - #/$defs/SarExerciseTransaction — parent(s): SarTransactionItem
-    - #/$defs/SarIssuanceTransaction — parent(s): SarTransactionItem
-    - #/$defs/ShareClassDividendDetails — parent(s): PreferredShareClassDetails
-    - #/$defs/ShareClassRightsAndPreferences — parent(s): PreferredShareClassDetails
-    - #/$defs/StakeholderAddress — parent(s): Stakeholder
-    - #/$defs/VestingPeriod — parent(s): VestingScheduleTemplate
-    - #/$defs/VestingSchedule — parent(s): OptionGrant, RestrictedStockAward, RestrictedStockUnit
-    - #/$defs/WarrantCancellationTransaction — parent(s): WarrantTransactionItem
-    - #/$defs/WarrantExerciseTransaction — parent(s): WarrantTransactionItem
-    - #/$defs/WarrantIssuanceTransaction — parent(s): WarrantTransactionItem
-    - #/$defs/WarrantTransferTransaction — parent(s): WarrantTransactionItem
+    - #/$defs/NoteBlock — namespace: carta; parent(s): ConvertibleNote
+    - #/$defs/OptionCancellationTransaction — namespace: carta; parent(s): OptionTransactionItem
+    - #/$defs/OptionExerciseTransaction — namespace: carta; parent(s): OptionTransactionItem
+    - #/$defs/OptionGrantVestingEvent — namespace: carta; parent(s): OptionGrant
+    - #/$defs/OptionIssuanceTransaction — namespace: carta; parent(s): OptionTransactionItem
+    - #/$defs/PerformanceCondition — namespace: carta; parent(s): VestingPeriod
+    - #/$defs/PrecededBySecurity — namespace: carta; parent(s): CertificatePrecededBy,
+      RestrictedStockAwardPrecededBy
+    - #/$defs/PreferredShareClassDetails — namespace: carta; parent(s): ShareClass
+    - #/$defs/RestrictedStockAwardPrecededBy — namespace: carta; parent(s): RestrictedStockAward
+    - #/$defs/RestrictedStockAwardVestingEvent — namespace: carta; parent(s): RestrictedStockAward
+    - #/$defs/RestrictedStockUnitSettlement — namespace: carta; parent(s): RestrictedStockUnit
+    - #/$defs/RestrictedStockUnitVestingEvent — namespace: carta; parent(s): RestrictedStockUnit
+    - #/$defs/RsaCancellationTransaction — namespace: carta; parent(s): RsaTransactionItem
+    - #/$defs/RsaIssuanceTransaction — namespace: carta; parent(s): RsaTransactionItem
+    - #/$defs/RsuCancellationTransaction — namespace: carta; parent(s): RsuTransactionItem
+    - #/$defs/RsuIssuanceTransaction — namespace: carta; parent(s): RsuTransactionItem
+    - #/$defs/RsuSettlementTransaction — namespace: carta; parent(s): RsuTransactionItem
+    - #/$defs/SarCancellationTransaction — namespace: carta; parent(s): SarTransactionItem
+    - #/$defs/SarExerciseTransaction — namespace: carta; parent(s): SarTransactionItem
+    - #/$defs/SarIssuanceTransaction — namespace: carta; parent(s): SarTransactionItem
+    - #/$defs/ShareClassDividendDetails — namespace: carta; parent(s): PreferredShareClassDetails
+    - #/$defs/ShareClassRightsAndPreferences — namespace: carta; parent(s): PreferredShareClassDetails
+    - #/$defs/StakeholderAddress — namespace: carta; parent(s): Stakeholder
+    - #/$defs/VestingPeriod — namespace: carta; parent(s): VestingScheduleTemplate
+    - #/$defs/VestingSchedule — namespace: carta; parent(s): OptionGrant, RestrictedStockAward,
+      RestrictedStockUnit
+    - #/$defs/WarrantCancellationTransaction — namespace: carta; parent(s): WarrantTransactionItem
+    - #/$defs/WarrantExerciseTransaction — namespace: carta; parent(s): WarrantTransactionItem
+    - #/$defs/WarrantIssuanceTransaction — namespace: carta; parent(s): WarrantTransactionItem
+    - #/$defs/WarrantTransferTransaction — namespace: carta; parent(s): WarrantTransactionItem
 
-  Nested objects without mapped parent coverage (15)
-    - #/$defs/Acceleration — parent(s): Vesting
-    - #/$defs/Document — parent(s): OptionGrantDocuments
-    - #/$defs/Jurisdiction — parent(s): OptionExerciseTaxWithholdingLineItem
-    - #/$defs/OptionExerciseMoneyMovement — parent(s): OptionExercise
-    - #/$defs/OptionExerciseTaxWithholdingLineItem — parent(s): OptionExercise
-    - #/$defs/PhantomCancellationTransaction — parent(s): PhantomTransactionItem
-    - #/$defs/PhantomIssuanceTransaction — parent(s): PhantomTransactionItem
-    - #/$defs/PiuCancellationTransaction — parent(s): PiuTransactionItem
-    - #/$defs/PiuIssuanceTransaction — parent(s): PiuTransactionItem
-    - #/$defs/StakeholderCapitalizationTableSummary — parent(s): StakeholderGroup
-    - #/$defs/StakeholderNoteBlockSummary — parent(s): StakeholderGroup
-    - #/$defs/StakeholderOptionPoolSummary — parent(s): StakeholderGroup
-    - #/$defs/StakeholderShareClassSummary — parent(s): StakeholderGroup
-    - #/$defs/StakeholderWarrantBlockSummary — parent(s): StakeholderGroup
-    - #/$defs/ThresholdDetails — parent(s): Interest
+  Nested objects without mapped parent coverage (16)
+    - #/$defs/Acceleration — namespace: carta; parent(s): Vesting
+    - #/$defs/Document — namespace: carta; parent(s): OptionGrantDocuments
+    - #/$defs/Jurisdiction — namespace: carta; parent(s): OptionExerciseTaxWithholdingLineItem
+    - #/$defs/OptionExerciseMoneyMovement — namespace: carta; parent(s): OptionExercise
+    - #/$defs/OptionExerciseTaxWithholdingLineItem — namespace: carta; parent(s): OptionExercise
+    - #/$defs/PhantomCancellationTransaction — namespace: carta; parent(s): PhantomTransactionItem
+    - #/$defs/PhantomIssuanceTransaction — namespace: carta; parent(s): PhantomTransactionItem
+    - #/$defs/PiuCancellationTransaction — namespace: carta; parent(s): PiuTransactionItem
+    - #/$defs/PiuIssuanceTransaction — namespace: carta; parent(s): PiuTransactionItem
+    - #/$defs/PointOfContact — namespace: ocf; parent(s): —
+    - #/$defs/StakeholderCapitalizationTableSummary — namespace: carta; parent(s): StakeholderGroup
+    - #/$defs/StakeholderNoteBlockSummary — namespace: carta; parent(s): StakeholderGroup
+    - #/$defs/StakeholderOptionPoolSummary — namespace: carta; parent(s): StakeholderGroup
+    - #/$defs/StakeholderShareClassSummary — namespace: carta; parent(s): StakeholderGroup
+    - #/$defs/StakeholderWarrantBlockSummary — namespace: carta; parent(s): StakeholderGroup
+    - #/$defs/ThresholdDetails — namespace: carta; parent(s): Interest
 
-Standalone Carta targets with mapping evidence (19)
+Standalone Carta targets with mapping evidence (18)
 ╭ Carta object: Certificate ───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
 │ name: Certificate                                                                                                                                                                                                                    │
 │ id: "#/$defs/Certificate"                                                                                                                                                                                                            │
@@ -686,26 +690,6 @@ Standalone Carta targets with mapping evidence (19)
 │      └─ + vestingScheduleTemplateId                                                                                                  │
 │         └─ ← EquityCompensationIssuance [Option].vesting_template_id (rename)                                                        │
 ╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
-
-╭ Carta object: PointOfContact ───────────────────────────────────╮
-│ name: PointOfContact                                            │
-│ id: "#/$defs/PointOfContact"                                    │
-│ inverse_role: type-only                                         │
-│ status: PARTIAL                                                 │
-│ mapping_evidence: 3 (direct object: 0, reusable type detail: 3) │
-│ unmapped_properties: 2                                          │
-├─────────────────────────────────────────────────────────────────┤
-│ parent properties (4)                                           │
-│   ├─ + issuerId                                                 │
-│   │  └─ ✗ no mapped OCF source                                  │
-│   ├─ + type                                                     │
-│   │  └─ ✗ no mapped OCF source                                  │
-│   ├─ + userEmail                                                │
-│   │  ├─ ← type ContactInfo.emails (select)                      │
-│   │  └─ ← type ContactInfoWithoutName.emails (select)           │
-│   └─ + userFullName                                             │
-│      └─ ← type ContactInfo.name (select)                        │
-╰─────────────────────────────────────────────────────────────────╯
 
 ╭ Carta object: RestrictedStockAward ──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
 │ name: RestrictedStockAward                                                                                                                                                                                                           │
