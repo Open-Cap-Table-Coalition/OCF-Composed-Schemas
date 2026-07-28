@@ -131,7 +131,7 @@ Standalone Carta targets with mapping evidence (18)
 │ id: "#/$defs/Certificate"                                                                                       │
 │ inverse_role: direct                                                                                            │
 │ status: PARTIAL                                                                                                 │
-│ mapping_evidence: 30 (direct object: 30, reusable type detail: 0)                                               │
+│ mapping_evidence: 31 (direct object: 31, reusable type detail: 0)                                               │
 │ unmapped_properties: 4                                                                                          │
 ├─────────────────────────────────────────────────────────────────────────────────────────────────────────────────┤
 │ resulting Carta object flavors (1)                                                                              │
@@ -169,6 +169,7 @@ Standalone Carta targets with mapping evidence (18)
 │   ├─ + returnedToTreasuryQuantity                                                                               │
 │   │  └─ ← StockRepurchase [Default].quantity (computed)                                                         │
 │   ├─ + securityId                                                                                               │
+│   │  ├─ ← StockAcceptance [Default].security_id (rename)                                                        │
 │   │  ├─ ← StockCancellation [Default].balance_security_id (computed)                                            │
 │   │  ├─ ← StockCancellation [Default].security_id (rename)                                                      │
 │   │  ├─ ← StockConsolidation [Default].resulting_security_id (computed)                                         │
@@ -220,11 +221,12 @@ Standalone Carta targets with mapping evidence (18)
 │ id: "#/$defs/CertificateTransactionItem"                                                                 │
 │ inverse_role: direct                                                                                     │
 │ status: MAPPED                                                                                           │
-│ mapping_evidence: 8 (direct object: 8, reusable type detail: 0)                                          │
+│ mapping_evidence: 9 (direct object: 9, reusable type detail: 0)                                          │
 │ unmapped_properties: 0                                                                                   │
 ├──────────────────────────────────────────────────────────────────────────────────────────────────────────┤
 │ parent properties (3)                                                                                    │
 │   ├─ + securityId                                                                                        │
+│   │  ├─ ← StockAcceptance [Default].security_id (rename)                                                 │
 │   │  ├─ ← StockCancellation [Default].security_id (rename)                                               │
 │   │  └─ ← StockIssuance [Default].security_id (rename)                                                   │
 │   ├─ + securityLabel                                                                                     │
@@ -415,11 +417,12 @@ Standalone Carta targets with mapping evidence (18)
 │ id: "#/$defs/ConvertibleTransactionItem"                                                                      │
 │ inverse_role: direct                                                                                          │
 │ status: MAPPED                                                                                                │
-│ mapping_evidence: 8 (direct object: 8, reusable type detail: 0)                                               │
+│ mapping_evidence: 9 (direct object: 9, reusable type detail: 0)                                               │
 │ unmapped_properties: 0                                                                                        │
 ├───────────────────────────────────────────────────────────────────────────────────────────────────────────────┤
 │ parent properties (3)                                                                                         │
 │   ├─ + securityId                                                                                             │
+│   │  ├─ ← ConvertibleAcceptance.security_id (rename)                                                          │
 │   │  ├─ ← ConvertibleCancellation.security_id (rename)                                                        │
 │   │  ├─ ← ConvertibleConversion.security_id (rename)                                                          │
 │   │  └─ ← ConvertibleIssuance.security_id (rename)                                                            │
@@ -516,7 +519,7 @@ Standalone Carta targets with mapping evidence (18)
 │ id: "#/$defs/OptionGrant"                                                                                        │
 │ inverse_role: direct                                                                                             │
 │ status: PARTIAL                                                                                                  │
-│ mapping_evidence: 31 (direct object: 31, reusable type detail: 0)                                                │
+│ mapping_evidence: 32 (direct object: 32, reusable type detail: 0)                                                │
 │ unmapped_properties: 12                                                                                          │
 ├──────────────────────────────────────────────────────────────────────────────────────────────────────────────────┤
 │ parent properties (33)                                                                                           │
@@ -570,6 +573,7 @@ Standalone Carta targets with mapping evidence (18)
 │   ├─ + returnedToTreasuryQuantity                                                                                │
 │   │  └─ ✗ no mapped OCF source                                                                                   │
 │   ├─ + securityId                                                                                                │
+│   │  ├─ ← EquityCompensationAcceptance [Option].security_id (rename)                                             │
 │   │  ├─ ← EquityCompensationCancellation [Option].security_id (rename)                                           │
 │   │  ├─ ← EquityCompensationExercise [Option].security_id (rename)                                               │
 │   │  ├─ ← EquityCompensationIssuance [Option].security_id (rename)                                               │
@@ -634,11 +638,12 @@ Standalone Carta targets with mapping evidence (18)
 │ id: "#/$defs/OptionTransactionItem"                                                                              │
 │ inverse_role: direct                                                                                             │
 │ status: MAPPED                                                                                                   │
-│ mapping_evidence: 13 (direct object: 13, reusable type detail: 0)                                                │
+│ mapping_evidence: 14 (direct object: 14, reusable type detail: 0)                                                │
 │ unmapped_properties: 0                                                                                           │
 ├──────────────────────────────────────────────────────────────────────────────────────────────────────────────────┤
 │ parent properties (3)                                                                                            │
 │   ├─ + securityId                                                                                                │
+│   │  ├─ ← EquityCompensationAcceptance [Option].security_id (rename)                                             │
 │   │  ├─ ← EquityCompensationCancellation [Option].security_id (rename)                                           │
 │   │  ├─ ← EquityCompensationExercise [Option].security_id (rename)                                               │
 │   │  ├─ ← EquityCompensationIssuance [Option].security_id (rename)                                               │
@@ -707,13 +712,13 @@ Standalone Carta targets with mapping evidence (18)
 │ id: "#/$defs/RestrictedStockAward"                                                                              │
 │ inverse_role: direct                                                                                            │
 │ status: PARTIAL                                                                                                 │
-│ mapping_evidence: 33 (direct object: 33, reusable type detail: 0)                                               │
+│ mapping_evidence: 34 (direct object: 34, reusable type detail: 0)                                               │
 │ unmapped_properties: 8                                                                                          │
 ├─────────────────────────────────────────────────────────────────────────────────────────────────────────────────┤
 │ resulting Carta object flavors (2)                                                                              │
 │ ├── StockAcceptance.Rsa → RestrictedStockAward                                                                  │
 │ │   ├── when: StockAcceptance.security_id → issuance_type (lookup) = [RSA]                                      │
-│ │   └── properties: stakeholderAcceptanceDate                                                                   │
+│ │   └── properties: securityId, stakeholderAcceptanceDate                                                       │
 │ └── StockIssuance.Rsa → RestrictedStockAward                                                                    │
 │     ├── when: StockIssuance.issuance_type = [RSA]                                                               │
 │     └── properties: boardApprovalDate, issueDate, pricePerShare, quantity, securityId, securityLabel,           │
@@ -752,6 +757,7 @@ Standalone Carta targets with mapping evidence (18)
 │   ├─ + returnedToTreasuryQuantity                                                                               │
 │   │  └─ ← StockRepurchase [Rsa].quantity (computed)                                                             │
 │   ├─ + securityId                                                                                               │
+│   │  ├─ ← StockAcceptance [Rsa].security_id (rename)                                                            │
 │   │  ├─ ← StockCancellation [Rsa].balance_security_id (computed)                                                │
 │   │  ├─ ← StockCancellation [Rsa].security_id (rename)                                                          │
 │   │  ├─ ← StockConsolidation [Rsa].resulting_security_id (computed)                                             │
@@ -812,7 +818,7 @@ Standalone Carta targets with mapping evidence (18)
 │ id: "#/$defs/RestrictedStockUnit"                                                                                │
 │ inverse_role: direct                                                                                             │
 │ status: PARTIAL                                                                                                  │
-│ mapping_evidence: 25 (direct object: 25, reusable type detail: 0)                                                │
+│ mapping_evidence: 26 (direct object: 26, reusable type detail: 0)                                                │
 │ unmapped_properties: 9                                                                                           │
 ├──────────────────────────────────────────────────────────────────────────────────────────────────────────────────┤
 │ parent properties (26)                                                                                           │
@@ -853,6 +859,7 @@ Standalone Carta targets with mapping evidence (18)
 │   ├─ + returnedToTreasuryQuantity                                                                                │
 │   │  └─ ✗ no mapped OCF source                                                                                   │
 │   ├─ + securityId                                                                                                │
+│   │  ├─ ← EquityCompensationAcceptance [Rsu].security_id (rename)                                                │
 │   │  ├─ ← EquityCompensationCancellation [Rsu].security_id (rename)                                              │
 │   │  ├─ ← EquityCompensationIssuance [Rsu].security_id (rename)                                                  │
 │   │  ├─ ← EquityCompensationRelease [Rsu].security_id (rename)                                                   │
@@ -914,11 +921,12 @@ Standalone Carta targets with mapping evidence (18)
 │ id: "#/$defs/RsaTransactionItem"                                                             │
 │ inverse_role: direct                                                                         │
 │ status: MAPPED                                                                               │
-│ mapping_evidence: 8 (direct object: 8, reusable type detail: 0)                              │
+│ mapping_evidence: 9 (direct object: 9, reusable type detail: 0)                              │
 │ unmapped_properties: 0                                                                       │
 ├──────────────────────────────────────────────────────────────────────────────────────────────┤
 │ parent properties (3)                                                                        │
 │   ├─ + securityId                                                                            │
+│   │  ├─ ← StockAcceptance [Rsa].security_id (rename)                                         │
 │   │  ├─ ← StockCancellation [Rsa].security_id (rename)                                       │
 │   │  └─ ← StockIssuance [Rsa].security_id (rename)                                           │
 │   ├─ + securityLabel                                                                         │
@@ -960,11 +968,12 @@ Standalone Carta targets with mapping evidence (18)
 │ id: "#/$defs/RsuTransactionItem"                                                                                 │
 │ inverse_role: direct                                                                                             │
 │ status: MAPPED                                                                                                   │
-│ mapping_evidence: 13 (direct object: 13, reusable type detail: 0)                                                │
+│ mapping_evidence: 14 (direct object: 14, reusable type detail: 0)                                                │
 │ unmapped_properties: 0                                                                                           │
 ├──────────────────────────────────────────────────────────────────────────────────────────────────────────────────┤
 │ parent properties (3)                                                                                            │
 │   ├─ + securityId                                                                                                │
+│   │  ├─ ← EquityCompensationAcceptance [Rsu].security_id (rename)                                                │
 │   │  ├─ ← EquityCompensationCancellation [Rsu].security_id (rename)                                              │
 │   │  ├─ ← EquityCompensationIssuance [Rsu].security_id (rename)                                                  │
 │   │  ├─ ← EquityCompensationRelease [Rsu].security_id (rename)                                                   │
@@ -1024,11 +1033,12 @@ Standalone Carta targets with mapping evidence (18)
 │ id: "#/$defs/SarTransactionItem"                                                                                 │
 │ inverse_role: direct                                                                                             │
 │ status: MAPPED                                                                                                   │
-│ mapping_evidence: 13 (direct object: 13, reusable type detail: 0)                                                │
+│ mapping_evidence: 14 (direct object: 14, reusable type detail: 0)                                                │
 │ unmapped_properties: 0                                                                                           │
 ├──────────────────────────────────────────────────────────────────────────────────────────────────────────────────┤
 │ parent properties (3)                                                                                            │
 │   ├─ + securityId                                                                                                │
+│   │  ├─ ← EquityCompensationAcceptance [Sar].security_id (rename)                                                │
 │   │  ├─ ← EquityCompensationCancellation [Sar].security_id (rename)                                              │
 │   │  ├─ ← EquityCompensationExercise [Sar].security_id (rename)                                                  │
 │   │  ├─ ← EquityCompensationIssuance [Sar].security_id (rename)                                                  │
@@ -1230,11 +1240,12 @@ Standalone Carta targets with mapping evidence (18)
 │ id: "#/$defs/WarrantTransactionItem"                                                         │
 │ inverse_role: direct                                                                         │
 │ status: MAPPED                                                                               │
-│ mapping_evidence: 10 (direct object: 10, reusable type detail: 0)                            │
+│ mapping_evidence: 11 (direct object: 11, reusable type detail: 0)                            │
 │ unmapped_properties: 0                                                                       │
 ├──────────────────────────────────────────────────────────────────────────────────────────────┤
 │ parent properties (3)                                                                        │
 │   ├─ + securityId                                                                            │
+│   │  ├─ ← WarrantAcceptance.security_id (rename)                                             │
 │   │  ├─ ← WarrantCancellation.security_id (rename)                                           │
 │   │  ├─ ← WarrantExercise.security_id (rename)                                               │
 │   │  ├─ ← WarrantIssuance.security_id (rename)                                               │

@@ -15,14 +15,14 @@
     <nav class="nav-links" aria-label="Primary"><a href="index.html#ocf-objects">OCF records</a><a href="index.html#carta-targets">Carta records</a><a href="assets/mapping-flows-interactive/index.html">Flow viewer</a></nav>
   </div></header>
   <main class="container"><section class="hero"><div class="hero-copy"><span class="eyebrow accent">OCF ↔ Carta / cap-table data</span><h1>How cap-table records move from OCF to Carta.</h1><p class="hero-lede"><strong>OCF</strong> is the Open Cap Format: the source-side records and events that describe a cap table. <strong>Carta</strong> is the destination data model in this comparison. Start with an OCF record to see where each field goes, or switch to Carta records to see what is mapped, derived, or still unmatched.</p><div class="hero-actions"><a class="button button-primary" href="#ocf-objects">Start with OCF records</a><a class="button button-quiet" href="#carta-targets">View Carta records</a></div></div><div class="hero-orbit"><div class="orbit-ring ring-one"></div><div class="orbit-ring ring-two"></div><div class="orbit-core"><span>source</span><strong>→</strong><span>destination</span></div><span class="orbit-tag tag-one">OCF</span><span class="orbit-tag tag-two">CARTA</span><span class="orbit-tag tag-three">MAP</span></div></section>
-    <section class="metrics-grid" aria-label="Coverage summary"><div class="metric "><strong>55</strong><span>OCF records</span></div><div class="metric metric-warn"><strong>22</strong><span>with no Carta destination</span></div><div class="metric "><strong>86</strong><span>Carta definitions</span></div><div class="metric metric-warn"><strong>13</strong><span>without a standalone OCF record</span></div></section>
+    <section class="metrics-grid" aria-label="Coverage summary"><div class="metric "><strong>55</strong><span>OCF records</span></div><div class="metric metric-warn"><strong>20</strong><span>with no Carta destination</span></div><div class="metric "><strong>86</strong><span>Carta definitions</span></div><div class="metric metric-warn"><strong>13</strong><span>without a standalone OCF record</span></div></section>
     <section class="map-guide" aria-labelledby="map-guide-title"><div class="map-guide-heading"><span class="eyebrow">Start here</span><h2 id="map-guide-title">Choose a side, then open a record.</h2><p>Use the tabs below to switch between the source records and the destination records. The Flow viewer shows relationships across records. It is a fixed diagram, so there are no layer controls.</p></div><ol class="map-guide-steps"><li class="map-guide-step"><span class="map-guide-number">1</span><div><strong>OCF records</strong><span>See a source record and where its fields go.</span></div></li><li class="map-guide-step"><span class="map-guide-number">2</span><div><strong>Carta records</strong><span>See destination definitions, support types, and gaps.</span></div></li><li class="map-guide-step"><span class="map-guide-number">3</span><div><strong>Inspect the details</strong><span>Read the field-level mapping, transformation, and open questions.</span></div></li></ol></section>
     <nav class="direction-tabs" aria-label="Mapping direction" data-side-tabs role="tablist"><button id="source-side-tab" class="direction-tab is-active" data-side-tab="source" aria-controls="ocf-objects" aria-selected="true" role="tab" type="button"><span class="direction-tab-kicker">01 / source side</span><strong>OCF records</strong></button><button id="target-side-tab" class="direction-tab" data-side-tab="target" aria-controls="carta-targets" aria-selected="false" role="tab" type="button"><span class="direction-tab-kicker">02 / destination side</span><strong>Carta records</strong></button></nav>
-    <section id="ocf-objects" class="directory-section" data-side-panel="source" aria-labelledby="source-side-tab" role="tabpanel"><div class="section-heading"><div><span class="eyebrow">01 / source side</span><h2>OCF records</h2><p>These are the source-side OCF records and events. Open one to see each field, its Carta destination, and any known loss or open question.</p></div><div class="filter-controls" data-filter-group="OCF records"><input data-filter-input type="search" placeholder="Search OCF records…" aria-label="Search OCF records"><div class="filter-buttons"><button class="filter-button is-active" data-filter-button="all" type="button">All (55)</button><button class="filter-button" data-filter-button="mapped" type="button">Mapped (33)</button><button class="filter-button" data-filter-button="gap" type="button">Gaps (22)</button></div></div></div><div class="directory-grid" data-directory="OCF records"><article class="card directory-card is-gap" data-card data-status="gap" data-search="ConvertibleAcceptance objects/transactions/acceptance/ConvertibleAcceptance.mapping.md ">
-    <div class="card-top"><span class="eyebrow">OCF record</span><span class="status-pill status-gap">No Carta destination</span></div>
+    <section id="ocf-objects" class="directory-section" data-side-panel="source" aria-labelledby="source-side-tab" role="tabpanel"><div class="section-heading"><div><span class="eyebrow">01 / source side</span><h2>OCF records</h2><p>These are the source-side OCF records and events. Open one to see each field, its Carta destination, and any known loss or open question.</p></div><div class="filter-controls" data-filter-group="OCF records"><input data-filter-input type="search" placeholder="Search OCF records…" aria-label="Search OCF records"><div class="filter-buttons"><button class="filter-button is-active" data-filter-button="all" type="button">All (55)</button><button class="filter-button" data-filter-button="mapped" type="button">Mapped (35)</button><button class="filter-button" data-filter-button="gap" type="button">Gaps (20)</button></div></div></div><div class="directory-grid" data-directory="OCF records"><article class="card directory-card" data-card data-status="mapped" data-search="ConvertibleAcceptance objects/transactions/acceptance/ConvertibleAcceptance.mapping.md ConvertibleTransactionItem">
+    <div class="card-top"><span class="eyebrow">OCF record</span><span class="status-pill status-ok">Mapped</span></div>
     <h3><a class="card-title" href="sources/convertible-acceptance.html">ConvertibleAcceptance</a></h3>
-    <p class="card-copy">0 executable mapping edges · 5 source fields.</p>
-    <div class="chip-row"><span class="muted">No Carta destination</span></div>
+    <p class="card-copy">1 executable mapping edge · 5 source fields.</p>
+    <div class="chip-row"><span class="mini-chip">ConvertibleTransactionItem</span></div>
     <div class="card-footer"><a class="text-link issue-link" href="https://github.com/Open-Cap-Table-Coalition/OCF-Composed-Schemas/issues/new?template=mapping-question.yml&amp;mapping_file=objects%2Ftransactions%2Facceptance%2FConvertibleAcceptance.mapping.md&amp;source_url=https%3A%2F%2Fgithub.com%2FOpen-Cap-Table-Coalition%2FOCF-Composed-Schemas%2Fblob%2Fmain%2Fobjects%2Ftransactions%2Facceptance%2FConvertibleAcceptance.mapping.md&amp;title=%5BMapping+question%5D+ConvertibleAcceptance" target="_blank" rel="noreferrer">Open mapping issue</a></div>
   </article><article class="card directory-card" data-card data-status="mapped" data-search="ConvertibleCancellation objects/transactions/cancellation/ConvertibleCancellation.mapping.md ConvertibleCancellationTransaction ConvertibleNote ConvertibleTransactionItem">
     <div class="card-top"><span class="eyebrow">OCF record</span><span class="status-pill status-ok">Mapped</span></div>
@@ -60,11 +60,11 @@
     <p class="card-copy">2 executable mapping edges · 7 source fields.</p>
     <div class="chip-row"><span class="mini-chip">Document</span></div>
     <div class="card-footer"><a class="text-link issue-link" href="https://github.com/Open-Cap-Table-Coalition/OCF-Composed-Schemas/issues/new?template=mapping-question.yml&amp;mapping_file=objects%2FDocument.mapping.md&amp;source_url=https%3A%2F%2Fgithub.com%2FOpen-Cap-Table-Coalition%2FOCF-Composed-Schemas%2Fblob%2Fmain%2Fobjects%2FDocument.mapping.md&amp;title=%5BMapping+question%5D+Document" target="_blank" rel="noreferrer">Open mapping issue</a></div>
-  </article><article class="card directory-card" data-card data-status="mapped" data-search="EquityCompensationAcceptance objects/transactions/acceptance/EquityCompensationAcceptance.mapping.md OptionGrant RestrictedStockUnit">
+  </article><article class="card directory-card" data-card data-status="mapped" data-search="EquityCompensationAcceptance objects/transactions/acceptance/EquityCompensationAcceptance.mapping.md OptionGrant OptionTransactionItem RestrictedStockUnit RsuTransactionItem SarTransactionItem">
     <div class="card-top"><span class="eyebrow">OCF record</span><span class="status-pill status-ok">Mapped</span></div>
     <h3><a class="card-title" href="sources/equity-compensation-acceptance.html">EquityCompensationAcceptance</a></h3>
-    <p class="card-copy">4 executable mapping edges · 15 source fields.</p>
-    <div class="chip-row"><span class="mini-chip">OptionGrant</span><span class="mini-chip">RestrictedStockUnit</span></div>
+    <p class="card-copy">9 executable mapping edges · 15 source fields.</p>
+    <div class="chip-row"><span class="mini-chip">OptionGrant</span><span class="mini-chip">OptionTransactionItem</span><span class="mini-chip">RestrictedStockUnit</span></div>
     <div class="card-footer"><a class="text-link issue-link" href="https://github.com/Open-Cap-Table-Coalition/OCF-Composed-Schemas/issues/new?template=mapping-question.yml&amp;mapping_file=objects%2Ftransactions%2Facceptance%2FEquityCompensationAcceptance.mapping.md&amp;source_url=https%3A%2F%2Fgithub.com%2FOpen-Cap-Table-Coalition%2FOCF-Composed-Schemas%2Fblob%2Fmain%2Fobjects%2Ftransactions%2Facceptance%2FEquityCompensationAcceptance.mapping.md&amp;title=%5BMapping+question%5D+EquityCompensationAcceptance" target="_blank" rel="noreferrer">Open mapping issue</a></div>
   </article><article class="card directory-card" data-card data-status="mapped" data-search="EquityCompensationCancellation objects/transactions/cancellation/EquityCompensationCancellation.mapping.md OptionCancellationTransaction OptionGrant OptionTransactionItem RestrictedStockUnit RsuCancellationTransaction RsuTransactionItem SarCancellationTransaction SarTransactionItem">
     <div class="card-top"><span class="eyebrow">OCF record</span><span class="status-pill status-ok">Mapped</span></div>
@@ -186,11 +186,11 @@
     <p class="card-copy">1 executable mapping edge · 6 source fields.</p>
     <div class="chip-row"><span class="mini-chip">Stakeholder</span></div>
     <div class="card-footer"><a class="text-link issue-link" href="https://github.com/Open-Cap-Table-Coalition/OCF-Composed-Schemas/issues/new?template=mapping-question.yml&amp;mapping_file=objects%2Ftransactions%2Fchange_event%2FStakeholderStatusChangeEvent.mapping.md&amp;source_url=https%3A%2F%2Fgithub.com%2FOpen-Cap-Table-Coalition%2FOCF-Composed-Schemas%2Fblob%2Fmain%2Fobjects%2Ftransactions%2Fchange_event%2FStakeholderStatusChangeEvent.mapping.md&amp;title=%5BMapping+question%5D+StakeholderStatusChangeEvent" target="_blank" rel="noreferrer">Open mapping issue</a></div>
-  </article><article class="card directory-card" data-card data-status="mapped" data-search="StockAcceptance objects/transactions/acceptance/StockAcceptance.mapping.md RestrictedStockAward">
+  </article><article class="card directory-card" data-card data-status="mapped" data-search="StockAcceptance objects/transactions/acceptance/StockAcceptance.mapping.md Certificate CertificateTransactionItem RestrictedStockAward RsaTransactionItem">
     <div class="card-top"><span class="eyebrow">OCF record</span><span class="status-pill status-ok">Mapped</span></div>
     <h3><a class="card-title" href="sources/stock-acceptance.html">StockAcceptance</a></h3>
-    <p class="card-copy">2 executable mapping edges · 10 source fields.</p>
-    <div class="chip-row"><span class="mini-chip">RestrictedStockAward</span></div>
+    <p class="card-copy">6 executable mapping edges · 10 source fields.</p>
+    <div class="chip-row"><span class="mini-chip">Certificate</span><span class="mini-chip">CertificateTransactionItem</span><span class="mini-chip">RestrictedStockAward</span></div>
     <div class="card-footer"><a class="text-link issue-link" href="https://github.com/Open-Cap-Table-Coalition/OCF-Composed-Schemas/issues/new?template=mapping-question.yml&amp;mapping_file=objects%2Ftransactions%2Facceptance%2FStockAcceptance.mapping.md&amp;source_url=https%3A%2F%2Fgithub.com%2FOpen-Cap-Table-Coalition%2FOCF-Composed-Schemas%2Fblob%2Fmain%2Fobjects%2Ftransactions%2Facceptance%2FStockAcceptance.mapping.md&amp;title=%5BMapping+question%5D+StockAcceptance" target="_blank" rel="noreferrer">Open mapping issue</a></div>
   </article><article class="card directory-card" data-card data-status="mapped" data-search="StockCancellation objects/transactions/cancellation/StockCancellation.mapping.md Certificate CertificateCancellationTransaction CertificatePrecededBy CertificateTransactionItem RestrictedStockAward RestrictedStockAwardPrecededBy RsaCancellationTransaction RsaTransactionItem">
     <div class="card-top"><span class="eyebrow">OCF record</span><span class="status-pill status-ok">Mapped</span></div>
@@ -312,11 +312,11 @@
     <p class="card-copy">2 executable mapping edges · 3 source fields.</p>
     <div class="chip-row"><span class="mini-chip">VestingScheduleTemplate</span></div>
     <div class="card-footer"><a class="text-link issue-link" href="https://github.com/Open-Cap-Table-Coalition/OCF-Composed-Schemas/issues/new?template=mapping-question.yml&amp;mapping_file=objects%2FVestingTerms.mapping.md&amp;source_url=https%3A%2F%2Fgithub.com%2FOpen-Cap-Table-Coalition%2FOCF-Composed-Schemas%2Fblob%2Fmain%2Fobjects%2FVestingTerms.mapping.md&amp;title=%5BMapping+question%5D+VestingTerms" target="_blank" rel="noreferrer">Open mapping issue</a></div>
-  </article><article class="card directory-card is-gap" data-card data-status="gap" data-search="WarrantAcceptance objects/transactions/acceptance/WarrantAcceptance.mapping.md ">
-    <div class="card-top"><span class="eyebrow">OCF record</span><span class="status-pill status-gap">No Carta destination</span></div>
+  </article><article class="card directory-card" data-card data-status="mapped" data-search="WarrantAcceptance objects/transactions/acceptance/WarrantAcceptance.mapping.md WarrantTransactionItem">
+    <div class="card-top"><span class="eyebrow">OCF record</span><span class="status-pill status-ok">Mapped</span></div>
     <h3><a class="card-title" href="sources/warrant-acceptance.html">WarrantAcceptance</a></h3>
-    <p class="card-copy">0 executable mapping edges · 5 source fields.</p>
-    <div class="chip-row"><span class="muted">No Carta destination</span></div>
+    <p class="card-copy">1 executable mapping edge · 5 source fields.</p>
+    <div class="chip-row"><span class="mini-chip">WarrantTransactionItem</span></div>
     <div class="card-footer"><a class="text-link issue-link" href="https://github.com/Open-Cap-Table-Coalition/OCF-Composed-Schemas/issues/new?template=mapping-question.yml&amp;mapping_file=objects%2Ftransactions%2Facceptance%2FWarrantAcceptance.mapping.md&amp;source_url=https%3A%2F%2Fgithub.com%2FOpen-Cap-Table-Coalition%2FOCF-Composed-Schemas%2Fblob%2Fmain%2Fobjects%2Ftransactions%2Facceptance%2FWarrantAcceptance.mapping.md&amp;title=%5BMapping+question%5D+WarrantAcceptance" target="_blank" rel="noreferrer">Open mapping issue</a></div>
   </article><article class="card directory-card" data-card data-status="mapped" data-search="WarrantCancellation objects/transactions/cancellation/WarrantCancellation.mapping.md WarrantCancellationTransaction WarrantTransactionItem">
     <div class="card-top"><span class="eyebrow">OCF record</span><span class="status-pill status-ok">Mapped</span></div>
@@ -363,11 +363,11 @@
     <div class="chip-row"><span class="mini-chip">0 source mappings</span></div>
     <div class="chip-row"></div>
     <div class="card-footer"><a class="text-link" href="targets/capitalization-table-summary.html">Inspect target →</a></div>
-  </article><article class="card directory-card" data-card data-status="mapped" data-search="Certificate direct  canceledDate canceledQuantity id issueDate issuerId lastModifiedDatetime precededBy pricePerShare quantity returnedToPoolQuantity returnedToTreasuryQuantity securityId securityLabel shareClassId shareClassName stakeholderId vestingScheduleTemplateId EquityCompensationExercise StockCancellation StockClass StockConsolidation StockConversion StockIssuance StockReissuance StockRepurchase StockTransfer">
+  </article><article class="card directory-card" data-card data-status="mapped" data-search="Certificate direct  canceledDate canceledQuantity id issueDate issuerId lastModifiedDatetime precededBy pricePerShare quantity returnedToPoolQuantity returnedToTreasuryQuantity securityId securityLabel shareClassId shareClassName stakeholderId vestingScheduleTemplateId EquityCompensationExercise StockAcceptance StockCancellation StockClass StockConsolidation StockConversion StockIssuance StockReissuance StockRepurchase StockTransfer">
     <div class="card-top"><span class="eyebrow">Carta record</span><span class="status-pill status-ok">Mapped target</span></div>
     <h3><a class="card-title" href="targets/certificate.html">Certificate</a></h3>
     <p class="card-copy">13 evidence-bearing slots · 4 empty slots.</p>
-    <div class="chip-row"><span class="mini-chip">9 source mappings</span><span class="mini-chip">SVG visual</span></div>
+    <div class="chip-row"><span class="mini-chip">10 source mappings</span><span class="mini-chip">SVG visual</span></div>
     <div class="chip-row"></div>
     <div class="card-footer"><a class="text-link" href="targets/certificate.html">Inspect target →</a></div>
   </article><article class="card directory-card" data-card data-status="support" data-search="CertificateCancellationTransaction nested-obj  effectiveDatetime forfeitureDatetime quantity reason terminationDatetime StockCancellation StockTransfer">
@@ -391,11 +391,11 @@
     <div class="chip-row"><span class="mini-chip">8 source mappings</span></div>
     <div class="chip-row"></div>
     <div class="card-footer"><a class="text-link" href="targets/certificate-preceded-by.html">Inspect target →</a></div>
-  </article><article class="card directory-card" data-card data-status="mapped" data-search="CertificateTransactionItem direct  cancellations issuance securityId securityLabel stakeholderId StockCancellation StockIssuance">
+  </article><article class="card directory-card" data-card data-status="mapped" data-search="CertificateTransactionItem direct  cancellations issuance securityId securityLabel stakeholderId StockAcceptance StockCancellation StockIssuance">
     <div class="card-top"><span class="eyebrow">Carta record</span><span class="status-pill status-ok">Mapped target</span></div>
     <h3><a class="card-title" href="targets/certificate-transaction-item.html">CertificateTransactionItem</a></h3>
     <p class="card-copy">5 evidence-bearing slots · 0 empty slots.</p>
-    <div class="chip-row"><span class="mini-chip">2 source mappings</span><span class="mini-chip">SVG visual</span></div>
+    <div class="chip-row"><span class="mini-chip">3 source mappings</span><span class="mini-chip">SVG visual</span></div>
     <div class="chip-row"></div>
     <div class="card-footer"><a class="text-link" href="targets/certificate-transaction-item.html">Inspect target →</a></div>
   </article><article class="card directory-card" data-card data-status="mapped" data-search="Compliance direct  countryOfResidency federalExemption stateOfResidency ConvertibleIssuance EquityCompensationIssuance SecurityExemption StockIssuance WarrantIssuance">
@@ -426,11 +426,11 @@
     <div class="chip-row"><span class="mini-chip">7 source mappings</span><span class="mini-chip">SVG visual</span></div>
     <div class="chip-row"></div>
     <div class="card-footer"><a class="text-link" href="targets/convertible-note.html">Inspect target →</a></div>
-  </article><article class="card directory-card" data-card data-status="mapped" data-search="ConvertibleTransactionItem direct  cancellations issuance securityId securityLabel stakeholderId ConvertibleCancellation ConvertibleConversion ConvertibleIssuance">
+  </article><article class="card directory-card" data-card data-status="mapped" data-search="ConvertibleTransactionItem direct  cancellations issuance securityId securityLabel stakeholderId ConvertibleAcceptance ConvertibleCancellation ConvertibleConversion ConvertibleIssuance">
     <div class="card-top"><span class="eyebrow">Carta record</span><span class="status-pill status-ok">Mapped target</span></div>
     <h3><a class="card-title" href="targets/convertible-transaction-item.html">ConvertibleTransactionItem</a></h3>
     <p class="card-copy">5 evidence-bearing slots · 0 empty slots.</p>
-    <div class="chip-row"><span class="mini-chip">3 source mappings</span><span class="mini-chip">SVG visual</span></div>
+    <div class="chip-row"><span class="mini-chip">4 source mappings</span><span class="mini-chip">SVG visual</span></div>
     <div class="chip-row"></div>
     <div class="card-footer"><a class="text-link" href="targets/convertible-transaction-item.html">Inspect target →</a></div>
   </article><article class="card directory-card" data-card data-status="explained" data-search="Corporation alternate Unused alternate issuer shape; OCF Issuer maps to Carta Issuer. doingBusinessAsName id legalName website ">
@@ -587,11 +587,11 @@
     <div class="chip-row"><span class="mini-chip">2 source mappings</span></div>
     <div class="chip-row"></div>
     <div class="card-footer"><a class="text-link" href="targets/option-pool-summary.html">Inspect target →</a></div>
-  </article><article class="card directory-card" data-card data-status="mapped" data-search="OptionTransactionItem direct  cancellations exercises issuance securityId securityLabel stakeholderId EquityCompensationCancellation EquityCompensationExercise EquityCompensationIssuance StockPlanReturnToPool">
+  </article><article class="card directory-card" data-card data-status="mapped" data-search="OptionTransactionItem direct  cancellations exercises issuance securityId securityLabel stakeholderId EquityCompensationAcceptance EquityCompensationCancellation EquityCompensationExercise EquityCompensationIssuance StockPlanReturnToPool">
     <div class="card-top"><span class="eyebrow">Carta record</span><span class="status-pill status-ok">Mapped target</span></div>
     <h3><a class="card-title" href="targets/option-transaction-item.html">OptionTransactionItem</a></h3>
     <p class="card-copy">6 evidence-bearing slots · 0 empty slots.</p>
-    <div class="chip-row"><span class="mini-chip">4 source mappings</span><span class="mini-chip">SVG visual</span></div>
+    <div class="chip-row"><span class="mini-chip">5 source mappings</span><span class="mini-chip">SVG visual</span></div>
     <div class="chip-row"></div>
     <div class="card-footer"><a class="text-link" href="targets/option-transaction-item.html">Inspect target →</a></div>
   </article><article class="card directory-card" data-card data-status="support" data-search="PerformanceCondition nested-obj  description evaluationDate maxPayoutPercentage minPayoutPercentage name payoutPercentage status type vestsPostTermination VestingEventCondition">
@@ -720,11 +720,11 @@
     <div class="chip-row"><span class="mini-chip">2 source mappings</span></div>
     <div class="chip-row"></div>
     <div class="card-footer"><a class="text-link" href="targets/rsa-issuance-transaction.html">Inspect target →</a></div>
-  </article><article class="card directory-card" data-card data-status="mapped" data-search="RsaTransactionItem direct  cancellations issuance securityId securityLabel stakeholderId StockCancellation StockIssuance">
+  </article><article class="card directory-card" data-card data-status="mapped" data-search="RsaTransactionItem direct  cancellations issuance securityId securityLabel stakeholderId StockAcceptance StockCancellation StockIssuance">
     <div class="card-top"><span class="eyebrow">Carta record</span><span class="status-pill status-ok">Mapped target</span></div>
     <h3><a class="card-title" href="targets/rsa-transaction-item.html">RsaTransactionItem</a></h3>
     <p class="card-copy">5 evidence-bearing slots · 0 empty slots.</p>
-    <div class="chip-row"><span class="mini-chip">2 source mappings</span><span class="mini-chip">SVG visual</span></div>
+    <div class="chip-row"><span class="mini-chip">3 source mappings</span><span class="mini-chip">SVG visual</span></div>
     <div class="chip-row"></div>
     <div class="card-footer"><a class="text-link" href="targets/rsa-transaction-item.html">Inspect target →</a></div>
   </article><article class="card directory-card" data-card data-status="support" data-search="RsuCancellationTransaction nested-obj  effectiveDatetime forfeitureDatetime quantity reason terminationDatetime EquityCompensationCancellation">
@@ -748,11 +748,11 @@
     <div class="chip-row"><span class="mini-chip">1 source mapping</span></div>
     <div class="chip-row"></div>
     <div class="card-footer"><a class="text-link" href="targets/rsu-settlement-transaction.html">Inspect target →</a></div>
-  </article><article class="card directory-card" data-card data-status="mapped" data-search="RsuTransactionItem direct  cancellations issuance securityId securityLabel settlements stakeholderId EquityCompensationCancellation EquityCompensationIssuance EquityCompensationRelease StockPlanReturnToPool">
+  </article><article class="card directory-card" data-card data-status="mapped" data-search="RsuTransactionItem direct  cancellations issuance securityId securityLabel settlements stakeholderId EquityCompensationAcceptance EquityCompensationCancellation EquityCompensationIssuance EquityCompensationRelease StockPlanReturnToPool">
     <div class="card-top"><span class="eyebrow">Carta record</span><span class="status-pill status-ok">Mapped target</span></div>
     <h3><a class="card-title" href="targets/rsu-transaction-item.html">RsuTransactionItem</a></h3>
     <p class="card-copy">6 evidence-bearing slots · 0 empty slots.</p>
-    <div class="chip-row"><span class="mini-chip">4 source mappings</span><span class="mini-chip">SVG visual</span></div>
+    <div class="chip-row"><span class="mini-chip">5 source mappings</span><span class="mini-chip">SVG visual</span></div>
     <div class="chip-row"></div>
     <div class="card-footer"><a class="text-link" href="targets/rsu-transaction-item.html">Inspect target →</a></div>
   </article><article class="card directory-card" data-card data-status="support" data-search="SarCancellationTransaction nested-obj  effectiveDatetime forfeitureDatetime quantity reason terminationDatetime EquityCompensationCancellation">
@@ -776,11 +776,11 @@
     <div class="chip-row"><span class="mini-chip">2 source mappings</span></div>
     <div class="chip-row"></div>
     <div class="card-footer"><a class="text-link" href="targets/sar-issuance-transaction.html">Inspect target →</a></div>
-  </article><article class="card directory-card" data-card data-status="mapped" data-search="SarTransactionItem direct  cancellations exercises issuance securityId securityLabel stakeholderId EquityCompensationCancellation EquityCompensationExercise EquityCompensationIssuance StockPlanReturnToPool">
+  </article><article class="card directory-card" data-card data-status="mapped" data-search="SarTransactionItem direct  cancellations exercises issuance securityId securityLabel stakeholderId EquityCompensationAcceptance EquityCompensationCancellation EquityCompensationExercise EquityCompensationIssuance StockPlanReturnToPool">
     <div class="card-top"><span class="eyebrow">Carta record</span><span class="status-pill status-ok">Mapped target</span></div>
     <h3><a class="card-title" href="targets/sar-transaction-item.html">SarTransactionItem</a></h3>
     <p class="card-copy">6 evidence-bearing slots · 0 empty slots.</p>
-    <div class="chip-row"><span class="mini-chip">4 source mappings</span><span class="mini-chip">SVG visual</span></div>
+    <div class="chip-row"><span class="mini-chip">5 source mappings</span><span class="mini-chip">SVG visual</span></div>
     <div class="chip-row"></div>
     <div class="card-footer"><a class="text-link" href="targets/sar-transaction-item.html">Inspect target →</a></div>
   </article><article class="card directory-card" data-card data-status="mapped" data-search="ShareClass direct  authorizedShareCount id issuerId name parValue pariPassu preferredShareClassDetails prefix seniority type StockClass StockClassAuthorizedSharesAdjustment StockClassConversionRatioAdjustment">
@@ -937,11 +937,11 @@
     <div class="chip-row"><span class="mini-chip">1 source mapping</span></div>
     <div class="chip-row"></div>
     <div class="card-footer"><a class="text-link" href="targets/warrant-issuance-transaction.html">Inspect target →</a></div>
-  </article><article class="card directory-card" data-card data-status="mapped" data-search="WarrantTransactionItem direct  cancellations exercises issuance securityId securityLabel stakeholderId transfers WarrantCancellation WarrantExercise WarrantIssuance WarrantTransfer">
+  </article><article class="card directory-card" data-card data-status="mapped" data-search="WarrantTransactionItem direct  cancellations exercises issuance securityId securityLabel stakeholderId transfers WarrantAcceptance WarrantCancellation WarrantExercise WarrantIssuance WarrantTransfer">
     <div class="card-top"><span class="eyebrow">Carta record</span><span class="status-pill status-ok">Mapped target</span></div>
     <h3><a class="card-title" href="targets/warrant-transaction-item.html">WarrantTransactionItem</a></h3>
     <p class="card-copy">7 evidence-bearing slots · 0 empty slots.</p>
-    <div class="chip-row"><span class="mini-chip">4 source mappings</span><span class="mini-chip">SVG visual</span></div>
+    <div class="chip-row"><span class="mini-chip">5 source mappings</span><span class="mini-chip">SVG visual</span></div>
     <div class="chip-row"></div>
     <div class="card-footer"><a class="text-link" href="targets/warrant-transaction-item.html">Inspect target →</a></div>
   </article><article class="card directory-card" data-card data-status="support" data-search="WarrantTransferTransaction nested-obj  quantity resultingSecurityId resultingSecurityLabel transferredDatetime WarrantTransfer">
