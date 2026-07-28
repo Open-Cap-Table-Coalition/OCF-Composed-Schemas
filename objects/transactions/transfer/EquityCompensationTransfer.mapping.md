@@ -194,4 +194,5 @@ Use a link below to open a prefilled GitHub issue. The issue can be copied into 
 ## Notes / open questions
 
 - Join on `security_id` to the compensation family, but Option, RSU, and SAR families have no transfer transaction. All routes have `primary_targets: null`.
-- The event date, quantity, source/result/balance IDs, consideration, and discriminator are not represented. Cancellation + issuance is not an effective Carta replacement; it changes the event semantics.
+- Carta has no equity-compensation transfer transaction for Option, RSU, or SAR. Therefore, this OCF event has no Carta destination for its `date`, `quantity`, source `security_id`, `resulting_security_ids`, optional `balance_security_id`, or `consideration_text`; the OCF `id`, `comments`, and `object_type` are scaffolding and are not carried over.
+- A cancellation followed by an issuance cannot represent this event without losing key causal information: it would replace one transfer event with two separate lifecycle events and fail to preserve the relationship between the source, resulting, and balance securities.
