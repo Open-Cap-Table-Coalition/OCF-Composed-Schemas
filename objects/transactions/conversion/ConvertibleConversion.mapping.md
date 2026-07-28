@@ -12,7 +12,7 @@ required_fields:
   - security_id
   - resulting_security_ids
 target_standard: Carta
-target_version: "v1alpha1 (2026-04-30)"
+target_version: "v1alpha1 (2026-06-22)"
 status: complete
 last_generated: 2026-05-18
 ---
@@ -147,6 +147,7 @@ fields:
     kind: rename
     target:
       - "#/$defs/ConvertibleTransactionItem/properties/securityId"
+      - "#/$defs/ConvertibleNote/properties/id"
       - "#/$defs/ConvertibleNote/properties/securityId"
   resulting_security_ids:
     kind: unmappable

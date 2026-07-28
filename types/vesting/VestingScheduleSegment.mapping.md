@@ -8,7 +8,7 @@ required_fields:
   - period
   - period_type
 target_standard: Carta
-target_version: v1alpha1 (2026-04-30)
+target_version: "v1alpha1 (2026-06-22)"
 status: complete
 last_generated: 2026-06-29
 ---
@@ -75,8 +75,9 @@ fields:
     kind: computed
     target: "#/$defs/VestingPeriod/properties/length"
     transform: |
-      length = occurrences * period
-      (See period_type for lengthUnit; see period for vestingMethod.)
+      length = occurrences * period, normalized to the unit required by the
+      June 22 Carta schema. (See period_type for the source unit; see period
+      for vestingMethod.)
   period:
     kind: computed
     target: "#/$defs/VestingPeriod/properties/vestingMethod"
@@ -92,12 +93,14 @@ fields:
         (1,  YEARS)  -> ANNUALLY
       (Also contributes to length via occurrences * period — see occurrences.)
   period_type:
-    kind: enum-remap
+    kind: computed
     target: "#/$defs/VestingPeriod/properties/lengthUnit"
-    values:
-      DAYS:   DAY
-      MONTHS: MONTH
-      YEARS:  YEAR
+    transform: |
+      The June 22 VestingPeriod conditional requires lengthUnit = MONTH for
+      DAILY, WEEKLY, MONTHLY, BI_MONTHLY, QUARTERLY, SEMI_ANNUALLY, and
+      ANNUALLY vesting methods. Normalize the source period/occurrence value
+      into months before emitting length; do not emit DAY or YEAR for these
+      cadence methods.
   cliff:
     kind: split
     target:
@@ -130,5 +133,5 @@ Use a link below to open a prefilled GitHub issue. The issue can be copied into 
 
 ## Notes / open questions
 
-- A segment projects to one Carta `VestingPeriod`: occurrences × period becomes `length`, the unit remaps to `lengthUnit`, and the supported cadence maps to `vestingMethod`.
+- A segment projects to one Carta `VestingPeriod`: occurrences × period becomes `length`, the supported cadence maps to `vestingMethod`, and the June 22 conditional requires the emitted cadence period to use `lengthUnit: MONTH`.
 - Unsupported cadence combinations have no exact Carta enum. The optional cliff splits into the period's cliff length, unit, and percentage; the segment has no grant-share percentage of its own.

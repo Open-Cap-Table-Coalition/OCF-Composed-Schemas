@@ -9,7 +9,7 @@ required_fields:
   - id
   - object_type
 target_standard: Carta
-target_version: "v1alpha1 (2026-04-30)"
+target_version: "v1alpha1 (2026-06-22)"
 status: complete
 last_generated: 2026-05-18
 ---
@@ -131,11 +131,9 @@ status: complete
 
 fields:
   id:
-    kind: rename
-    target: "#/$defs/OptionPoolSummary/properties/optionPoolId"
-    inverse:
-      role: reference-only
-      note: Pool identity/reference; the summary is not an inverse source record.
+    kind: unmappable
+    target: null
+    reason: excluded-from-snapshot
   comments:
     kind: unmappable
     target: null
@@ -149,7 +147,6 @@ fields:
   plan_name:
     kind: rename
     target:
-      - "#/$defs/OptionPoolSummary/properties/name"
       - "#/$defs/OptionGrant/properties/equityIncentivePlanName"
       - "#/$defs/RestrictedStockAward/properties/equityIncentivePlanName"
       - "#/$defs/RestrictedStockUnit/properties/equityIncentivePlanName"
@@ -165,11 +162,9 @@ fields:
     target: null
     reason: no-equivalent
   initial_shares_reserved:
-    kind: rename
-    target: "#/$defs/OptionPoolSummary/properties/authorizedShares"
-    inverse:
-      role: state-projection
-      note: Summary authorization state; it cannot recover the initial value versus later pool adjustments.
+    kind: unmappable
+    target: null
+    reason: excluded-from-snapshot
   default_cancellation_behavior:
     kind: unmappable
     target: null
@@ -180,18 +175,13 @@ fields:
       HOLD_AS_CAPITAL_STOCK: null
       DEFINED_PER_PLAN_SECURITY: null
   stock_class_id:
-    kind: rename
-    target: "#/$defs/OptionPoolSummary/properties/shareClassId"
-    inverse:
-      role: reference-only
-      note: Identifies the backing share class; it does not construct pool-authorization history.
+    kind: unmappable
+    target: null
+    reason: excluded-from-snapshot
   stock_class_ids:
-    kind: select
-    target: "#/$defs/OptionPoolSummary/properties/shareClassId"
-    policy: first_stock_class_id
-    inverse:
-      role: reference-only
-      note: Only the selected share-class reference survives; the full OCF relationship cannot be recovered.
+    kind: unmappable
+    target: null
+    reason: excluded-from-snapshot
 ```
 
 ## Ask a mapping question
@@ -220,7 +210,6 @@ Use a link below to open a prefilled GitHub issue. The issue can be copied into 
 
 ## Notes / open questions
 
-- OCF `StockPlan` maps to Carta `OptionPoolSummary`; `id` → `optionPoolId`, `plan_name` → the pool name and denormalized award plan-name fields.
-- `initial_shares_reserved` maps to `authorizedShares` as a state projection. It does not preserve the “initial” qualifier; later `StockPlanPoolAdjustment` events must be handled separately.
-- `stock_class_id` maps directly to `shareClassId`; the array form uses `first_stock_class_id`, so additional classes are lost because Carta supports one backing class.
+- OCF `StockPlan` has no retained pool-summary target in the June 22 bundle. `plan_name` still maps to the denormalized award plan-name fields on Option, RSA, and RSU records.
+- `id`, `initial_shares_reserved`, `stock_class_id`, and `stock_class_ids` are explicitly excluded because `OptionPoolSummary` was removed; pool history and backing-class state cannot be represented in the retained bundle.
 - Plan approval dates and `default_cancellation_behavior` have no Carta target. `comments` and `object_type` are OCF scaffolding.

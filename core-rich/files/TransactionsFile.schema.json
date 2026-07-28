@@ -5018,26 +5018,6 @@
                 "type": "string",
                 "description": "Identifier for the security (stock, plan security, warrant, or convertible) by which it can be referenced by other transaction objects. N…"
               },
-              "security_law_exemptions": {
-                "type": "array",
-                "items": {
-                  "type": "object",
-                  "additionalProperties": false,
-                  "properties": {
-                    "description": {
-                      "type": "string"
-                    },
-                    "jurisdiction": {
-                      "type": "string"
-                    }
-                  },
-                  "required": [
-                    "description",
-                    "jurisdiction"
-                  ]
-                },
-                "description": "List of security law exemptions (and applicable jurisdictions) for this security"
-              },
               "stakeholder_id": {
                 "type": "string",
                 "description": "Identifier for the stakeholder that holds legal title to this security"
@@ -5138,27 +5118,6 @@
             "type": "object",
             "title": "EquityCompensationIssuance",
             "properties": {
-              "base_price": {
-                "type": "object",
-                "additionalProperties": false,
-                "properties": {
-                  "amount": {
-                    "type": "string",
-                    "pattern": "^[+-]?[0-9]+(\\.[0-9]{1,10})?$"
-                  },
-                  "currency": {
-                    "type": "string",
-                    "pattern": "^[A-Z]{3}$",
-                    "minLength": 3,
-                    "maxLength": 3
-                  }
-                },
-                "required": [
-                  "amount",
-                  "currency"
-                ],
-                "description": "Required for stock appreciation right compensation types (CSAR, SSAR). The base price used to calculate appreciation."
-              },
               "board_approval_date": {
                 "type": "string",
                 "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
@@ -5244,26 +5203,6 @@
               "security_id": {
                 "type": "string",
                 "description": "Identifier for the security created by this issuance. Other transactions (vesting event, exercise, cancellation, etc.) reference this id."
-              },
-              "security_law_exemptions": {
-                "type": "array",
-                "items": {
-                  "type": "object",
-                  "additionalProperties": false,
-                  "properties": {
-                    "description": {
-                      "type": "string"
-                    },
-                    "jurisdiction": {
-                      "type": "string"
-                    }
-                  },
-                  "required": [
-                    "description",
-                    "jurisdiction"
-                  ]
-                },
-                "description": "Security law exemptions (and applicable jurisdictions) for this security."
               },
               "stakeholder_id": {
                 "type": "string",
@@ -5729,26 +5668,6 @@
                 "type": "string",
                 "description": "Identifier for the security (stock, plan security, warrant, or convertible) by which it can be referenced by other transaction objects. N…"
               },
-              "security_law_exemptions": {
-                "type": "array",
-                "items": {
-                  "type": "object",
-                  "additionalProperties": false,
-                  "properties": {
-                    "description": {
-                      "type": "string"
-                    },
-                    "jurisdiction": {
-                      "type": "string"
-                    }
-                  },
-                  "required": [
-                    "description",
-                    "jurisdiction"
-                  ]
-                },
-                "description": "List of security law exemptions (and applicable jurisdictions) for this security"
-              },
               "share_price": {
                 "type": "object",
                 "additionalProperties": false,
@@ -5835,10 +5754,6 @@
               "security_id": {
                 "type": "string",
                 "description": "Identifier for the security (stock, plan security, warrant, or convertible) by which it can be referenced by other transaction objects. N…"
-              },
-              "stock_plan_id": {
-                "type": "string",
-                "description": "Id of the Stock Plan whose pool the reserved shares should return to. This does not have to be the same pool the securities were issued f…"
               }
             },
             "required": [
@@ -6021,26 +5936,6 @@
               "security_id": {
                 "type": "string",
                 "description": "Identifier for the security (stock, plan security, warrant, or convertible) by which it can be referenced by other transaction objects. N…"
-              },
-              "security_law_exemptions": {
-                "type": "array",
-                "items": {
-                  "type": "object",
-                  "additionalProperties": false,
-                  "properties": {
-                    "description": {
-                      "type": "string"
-                    },
-                    "jurisdiction": {
-                      "type": "string"
-                    }
-                  },
-                  "required": [
-                    "description",
-                    "jurisdiction"
-                  ]
-                },
-                "description": "List of security law exemptions (and applicable jurisdictions) for this security"
               },
               "stakeholder_id": {
                 "type": "string",

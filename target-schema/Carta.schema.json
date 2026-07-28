@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "title": "Carta Cap Table Data Schema",
-  "description": "JSON Schema 2020-12 bundle describing Carta cap-table DATA (stakeholders, share classes, securities, transactions, etc.) \u2014 derived from the Carta Issuer API OpenAPI spec (info.version=v1alpha1). Validate a record by referencing #/$defs/<TypeName>. Type names use PascalCase; property names use camelCase. API plumbing (response wrappers, request bodies, error envelopes, pagination) and capitalization summaries (derived views over the facts) are intentionally NOT included \u2014 this bundle ships only the fact tables. Carta product features outside the OCT-foundation contract (Compensation Benchmarks/CTC, Draft Securities, 409A FMV) are also excluded; refs into excluded schemas are rewritten to `true`.",
+  "description": "JSON Schema 2020-12 bundle describing Carta cap-table DATA (stakeholders, share classes, securities, transactions, etc.) \u2014 derived from the Carta Issuer API OpenAPI spec (info.version=v1alpha1). Validate a record by referencing #/$defs/<TypeName>. Type names use PascalCase; property names use camelCase. API plumbing (response wrappers, request bodies, error envelopes, pagination) and derived/aggregate views (capitalization totals, option pool rollups, share class summaries, note/warrant block aggregates) are intentionally NOT included \u2014 this bundle ships only the fact tables. Carta product features outside the OCT-foundation contract (Compensation Benchmarks/CTC, Draft Securities, 409A FMV) and document attachments are also excluded; refs into excluded schemas are rewritten to `true`.",
   "$defs": {
     "StockOptionType": {
       "type": "string",
@@ -62,14 +62,6 @@
         "DISREGARDED_ENTITY",
         "UNKNOWN"
       ]
-    },
-    "ThresholdDetailsThresholdType": {
-      "type": "string",
-      "enum": [
-        "THRESHOLD_TYPE_PER_UNIT",
-        "THRESHOLD_TYPE_OVERALL"
-      ],
-      "title": "- THRESHOLD_TYPE_PER_UNIT: Applied on a per-unit basis.\n - THRESHOLD_TYPE_OVERALL: Applied on the overall company value"
     },
     "ExercisePeriod": {
       "type": "string",
@@ -160,7 +152,7 @@
         "employeeId": {
           "type": "string",
           "description": "An employee identifier for the stakeholder, if it exists.",
-          "title": "An employee identifier for the stakeholder, if it exists.\nMax length is according to what we accept when users are \"writing\" the data\nhttps://github.com/carta/carta-web/blob/c23a2bed261884a665295550970c4b97969eb5c9/eshares/corporations/stakeholders/models.py#L1479",
+          "title": "An employee identifier for the stakeholder, if it exists.\nMax length is according to what we accept when users are \"writing\" the data",
           "maxLength": 256
         },
         "relationship": {
@@ -178,7 +170,12 @@
           "$ref": "#/$defs/StakeholderAddress"
         }
       },
-      "description": "A stakeholder is any person or entity who holds an outstanding security."
+      "description": "A stakeholder is any person or entity who holds an outstanding security.",
+      "required": [
+        "fullName",
+        "id",
+        "issuerId"
+      ]
     },
     "StakeholderRelationship": {
       "type": "string",
@@ -200,58 +197,6 @@
         "EX_INTERNATIONAL_EMPLOYEE"
       ],
       "description": "The relationship of the stakeholder with the draft issuer.\n\n - ADVISOR: Stakeholder is an advisor\n - EX_ADVISOR: Stakeholder is an ex-advisor\n - BOARD_MEMBER: Stakeholder is a board member\n - CONSULTANT: Stakeholder is a consultant\n - EX_CONSULTANT: Stakeholder is an ex-consultant\n - EMPLOYEE: Stakeholder is an employee\n - EX_EMPLOYEE: Stakeholder is an ex-employee\n - EXECUTIVE: Stakeholder is an executive\n - FOUNDER: Stakeholder is a founder\n - INTERNATIONAL_EMPLOYEE: Stakeholder is an international employee\n - INVESTOR: Stakeholder is an investor\n - OFFICER: Stakeholder is an officer\n - OTHER: Stakeholder has some other type of relationship\n - EX_BOARD_MEMBER: Stakeholder is an ex-board member\n - EX_INTERNATIONAL_EMPLOYEE: Stakeholder is an ex-international employee"
-    },
-    "Acceleration": {
-      "type": "object",
-      "properties": {
-        "name": {
-          "type": "string",
-          "description": "The name of the acceleration vesting.",
-          "title": "The name of the accelerated vesting condition",
-          "maxLength": 256,
-          "minLength": 1
-        },
-        "terms": {
-          "type": "string",
-          "description": "Detailed terms of accelerated vesting of the draft option grant.",
-          "title": "Detailed terms of the accelerated vesting condition",
-          "maxLength": 1000,
-          "minLength": 1
-        }
-      },
-      "title": "Details of accelerated vesting",
-      "required": [
-        "name",
-        "terms"
-      ]
-    },
-    "BoardApproval": {
-      "type": "string",
-      "enum": [
-        "BOARD_APPROVAL_NOT_APPROVED",
-        "BOARD_APPROVAL_APPROVED"
-      ],
-      "title": "- BOARD_APPROVAL_NOT_APPROVED: Not board approved, will be sent for board approval\n - BOARD_APPROVAL_APPROVED: Board approved"
-    },
-    "CapitalizationTableSummary": {
-      "type": "object",
-      "properties": {
-        "fullyDilutedShares": {
-          "$ref": "#/$defs/Decimal"
-        },
-        "outstandingShares": {
-          "$ref": "#/$defs/Decimal"
-        },
-        "cashRaised": {
-          "$ref": "#/$defs/Money"
-        }
-      },
-      "description": "Summary information about the capitalization table.",
-      "required": [
-        "fullyDilutedShares",
-        "outstandingShares",
-        "cashRaised"
-      ]
     },
     "Certificate": {
       "type": "object",
@@ -323,9 +268,23 @@
         },
         "precededBy": {
           "$ref": "#/$defs/CertificatePrecededBy"
+        },
+        "dividendAccrualStartDate": {
+          "$ref": "#/$defs/Iso8601CompleteCalendarDate"
+        },
+        "returnedInvestedCapital": {
+          "$ref": "#/$defs/Money"
         }
       },
-      "description": "A certificate is a record of ownership of a company's shares."
+      "description": "A certificate is a record of ownership of a company's shares.",
+      "required": [
+        "id",
+        "issueDate",
+        "issuerId",
+        "quantity",
+        "securityLabel",
+        "stakeholderId"
+      ]
     },
     "CertificateCancellationReason": {
       "type": "string",
@@ -471,22 +430,6 @@
         }
       },
       "description": "A certificate with its full transaction history. Groups all lifecycle events (issuance, cancellation) for a single certificate."
-    },
-    "Compliance": {
-      "type": "object",
-      "properties": {
-        "countryOfResidency": {
-          "$ref": "#/$defs/Iso3166Set1Alpha3Code"
-        },
-        "stateOfResidency": {
-          "$ref": "#/$defs/Iso3166Set2Code"
-        },
-        "federalExemption": {
-          "$ref": "#/$defs/FederalExemption"
-        }
-      },
-      "description": "Compliance details of a stakeholder",
-      "title": "Compliance details of a stakeholder"
     },
     "ConvertibleCancellationReason": {
       "type": "string",
@@ -677,12 +620,15 @@
       },
       "description": "A convertible note.",
       "required": [
-        "issueDatetime",
         "cashPaid",
+        "dayCountBasis",
+        "id",
         "interest",
-        "noteBlock",
         "interestCompoundingPeriod",
-        "dayCountBasis"
+        "issueDatetime",
+        "issuerId",
+        "noteBlock",
+        "stakeholderId"
       ]
     },
     "ConvertibleTransactionItem": {
@@ -715,54 +661,6 @@
         }
       },
       "description": "A convertible note with its full transaction history. Groups all lifecycle events (issuance, cancellation) for a single convertible note."
-    },
-    "Corporation": {
-      "type": "object",
-      "properties": {
-        "id": {
-          "type": "string",
-          "description": "The identifier of the corporation.",
-          "maxLength": 50
-        },
-        "legalName": {
-          "type": "string",
-          "description": "The legal name of the corporation.",
-          "maxLength": 1000
-        },
-        "doingBusinessAsName": {
-          "type": "string",
-          "description": "The operating, or doing business as (DBA), name of the corporation.",
-          "maxLength": 1000
-        },
-        "website": {
-          "type": "string",
-          "description": "The URL of the corporation\u2019s website.",
-          "maxLength": 1000
-        }
-      },
-      "description": "A corporation."
-    },
-    "Date": {
-      "type": "object",
-      "properties": {
-        "year": {
-          "type": "integer",
-          "format": "int32",
-          "description": "Year of date. Use 0 if specifying a date without a year."
-        },
-        "month": {
-          "type": "integer",
-          "format": "int32",
-          "description": "Month of year. Use 0 if specifying a year without a month and day."
-        },
-        "day": {
-          "type": "integer",
-          "format": "int32",
-          "description": "Day of month. Must be from 1 to 31 and valid for the year and month, or 0\nif specifying a year by itself or a year and month where the day is not\nsignificant."
-        }
-      },
-      "description": "* A full date, with non-zero year, month and day values\n* A month and day value, with a zero year, e.g. an anniversary\n* A year on its own, with zero month and day values\n* A year and month value, with a zero day, e.g. a credit card expiration date",
-      "title": "Represents a whole or partial calendar date, e.g. a birthday. The time of day\nand time zone are either specified elsewhere or are not significant. The date\nis relative to the Proleptic Gregorian Calendar. This can represent:"
     },
     "DayCountBasis": {
       "type": "string",
@@ -845,30 +743,6 @@
       ],
       "title": "- CASH: Investors will receive dividends in cash\n - NON_CASH: Investors will receive non-cash dividends, such as shares"
     },
-    "Document": {
-      "type": "object",
-      "properties": {
-        "name": {
-          "type": "string",
-          "description": "The name of the document.\n\nThis is an output-only field and values provided by clients will be ignored when creating.",
-          "readOnly": true,
-          "maxLength": 256,
-          "minLength": 1
-        },
-        "url": {
-          "type": "string",
-          "description": "The URL of the document.\n\nThis is an output-only field and values provided by clients will be ignored when creating.",
-          "readOnly": true,
-          "maxLength": 2048
-        },
-        "fileId": {
-          "type": "string",
-          "description": "The file identifier of the document.\n\nFiles must be uploaded first through the [Upload File](https://docs.carta.com/carta/reference/v1alpha1filesuploadfile) endpoint before their file identifiers can be referenced here.",
-          "maxLength": 50
-        }
-      },
-      "description": "Contains information about a document, including name, url, and file id."
-    },
     "Exercise": {
       "type": "object",
       "properties": {
@@ -922,122 +796,6 @@
         "BLENDED"
       ],
       "description": "Enumeration of exercise types.\n\n - CASH_EXERCISE: The cost of exercise was covered in cash.\n - CASHLESS_EXERCISE: The cost of exercise was covered by selling shares.\n - NET_EXERCISE: The cost of exercise was covered by withholding shares.\n - BLENDED: The cost of exercise was covered by a combination of cash and selling of shares."
-    },
-    "FederalExemption": {
-      "type": "string",
-      "enum": [
-        "RULE_701",
-        "SECTION_4_A_2",
-        "SECTION_4_1_1_2",
-        "SECTION_4_A_7",
-        "RULE_144",
-        "REG_D_506_B",
-        "REG_D_506_C",
-        "REG_D_506",
-        "REG_D_505",
-        "REG_D_504",
-        "REG_S",
-        "REG_A_TIER_1",
-        "REG_A_TIER_2",
-        "REG_CF",
-        "SECTION_756",
-        "SCHEDULE_11A",
-        "NON_US",
-        "OTHER",
-        "SMALL_SCALE",
-        "SOPHISTICATED",
-        "SENIOR_MANAGEMENT"
-      ],
-      "description": "- RULE_701: Rule 701 - USA\n - SECTION_4_A_2: Section 4(a)(2) - USA\n - SECTION_4_1_1_2: Section 4(a)(1-1/2) - USA\n - SECTION_4_A_7: Section 4(a)(7) - USA\n - RULE_144: Rule 144 - USA\n - REG_D_506_B: Reg D - 506(b) - USA\n - REG_D_506_C: Reg D - 506(c) - USA\n - REG_D_506: Reg D - 506 - USA\n - REG_D_505: Reg D - 505 - USA\n - REG_D_504: Reg D - 504 - USA\n - REG_S: Reg S - USA\n - REG_A_TIER_1: Reg A (Tier 1) - USA\n - REG_A_TIER_2: Reg A (Tier 2) - USA\n - REG_CF: Reg CF - USA\n - SECTION_756: Section 756 - GBR\n - SCHEDULE_11A: Schedule 11A - GBR\n - NON_US: Non-U.S.\n - OTHER: Other\n - SMALL_SCALE: Small scale\n - SOPHISTICATED: Sophisticated\n - SENIOR_MANAGEMENT: Senior management",
-      "title": "Federal Exemption types supported"
-    },
-    "GrantReason": {
-      "type": "string",
-      "enum": [
-        "GRANT_REASON_NEW_HIRE",
-        "GRANT_REASON_MERIT",
-        "GRANT_REASON_PROMOTION",
-        "GRANT_REASON_REFRESH",
-        "GRANT_REASON_CORPORATE_TRANSACTION",
-        "GRANT_REASON_RELATIONSHIP_CHANGE",
-        "GRANT_REASON_RETENTION",
-        "GRANT_REASON_ADVISOR",
-        "GRANT_REASON_CONSULTANT",
-        "GRANT_REASON_BOARD"
-      ],
-      "description": "- GRANT_REASON_NEW_HIRE: New hire\n - GRANT_REASON_MERIT: Merit\n - GRANT_REASON_PROMOTION: Promotion\n - GRANT_REASON_REFRESH: Refresh\n - GRANT_REASON_CORPORATE_TRANSACTION: Corporate transaction\n - GRANT_REASON_RELATIONSHIP_CHANGE: Relationship change\n - GRANT_REASON_RETENTION: Retention\n - GRANT_REASON_ADVISOR: Advisor\n - GRANT_REASON_CONSULTANT: Consultant\n - GRANT_REASON_BOARD: Board",
-      "title": "Reason for granting the option"
-    },
-    "Interest": {
-      "type": "object",
-      "properties": {
-        "id": {
-          "type": "string",
-          "description": "The unique identifier for the interest."
-        },
-        "issuerId": {
-          "type": "string",
-          "description": "The unique identifier for the issuer of the interest."
-        },
-        "stakeholderId": {
-          "type": "string",
-          "description": "The unique identifier for the stakeholder that the interest is issued to."
-        },
-        "interestLabel": {
-          "type": "string",
-          "description": "The label of the interest."
-        },
-        "interestTypeName": {
-          "type": "string",
-          "description": "The name of the interest type."
-        },
-        "issueDate": {
-          "$ref": "#/$defs/Iso8601CompleteCalendarDate"
-        },
-        "acceptanceDate": {
-          "$ref": "#/$defs/Iso8601CompleteCalendarDateTime"
-        },
-        "thresholdDetails": {
-          "$ref": "#/$defs/ThresholdDetails"
-        },
-        "exercisePrice": {
-          "$ref": "#/$defs/Money"
-        },
-        "originalIssuePrice": {
-          "$ref": "#/$defs/Money"
-        },
-        "investedCapital": {
-          "$ref": "#/$defs/Money"
-        },
-        "accruedValue": {
-          "$ref": "#/$defs/Money"
-        },
-        "issuedQuantity": {
-          "$ref": "#/$defs/Decimal"
-        },
-        "outstandingQuantity": {
-          "$ref": "#/$defs/Decimal"
-        },
-        "outstandingVestedQuantity": {
-          "$ref": "#/$defs/Decimal"
-        },
-        "exercisedQuantity": {
-          "$ref": "#/$defs/Decimal"
-        },
-        "repurchasedQuantity": {
-          "$ref": "#/$defs/Decimal"
-        },
-        "cancelledQuantity": {
-          "$ref": "#/$defs/Decimal"
-        },
-        "forfeitedQuantity": {
-          "$ref": "#/$defs/Decimal"
-        },
-        "vestingSchedule": {
-          "$ref": "#/$defs/VestingSchedule"
-        }
-      },
-      "description": "Interest information."
     },
     "InterestAccrualPeriod": {
       "type": "string",
@@ -1151,7 +909,11 @@
           "maxLength": 1000
         }
       },
-      "description": "An issuer."
+      "description": "An issuer.",
+      "required": [
+        "id",
+        "legalName"
+      ]
     },
     "Jurisdiction": {
       "type": "object",
@@ -1223,33 +985,6 @@
         "INACTIVE"
       ],
       "description": "The status of the note block."
-    },
-    "NoteBlockSummary": {
-      "type": "object",
-      "properties": {
-        "noteBlockId": {
-          "type": "string",
-          "description": "The identifier of the note block.",
-          "maxLength": 50,
-          "minLength": 1
-        },
-        "cashRaised": {
-          "$ref": "#/$defs/Money"
-        },
-        "principal": {
-          "$ref": "#/$defs/Money"
-        },
-        "interest": {
-          "$ref": "#/$defs/Money"
-        }
-      },
-      "description": "Note block summary information.",
-      "required": [
-        "noteBlockId",
-        "cashRaised",
-        "principal",
-        "interest"
-      ]
     },
     "NoteType": {
       "type": "string",
@@ -1349,7 +1084,13 @@
           "$ref": "#/$defs/OptionExerciseMoneyMovement"
         }
       },
-      "description": "An option exercise is an event representing a stakeholder exercising their right to purchase shares of an issuer at a set price, the strike price, defined in the option grant being exercised. The result of a successfully completed exercise is the issuance of a certificate."
+      "description": "An option exercise is an event representing a stakeholder exercising their right to purchase shares of an issuer at a set price, the strike price, defined in the option grant being exercised. The result of a successfully completed exercise is the issuance of a certificate.",
+      "required": [
+        "issuerId",
+        "optionGrantId",
+        "quantity",
+        "stakeholderId"
+      ]
     },
     "OptionExerciseMethod": {
       "type": "string",
@@ -1511,10 +1252,6 @@
         "disqualificationDate": {
           "$ref": "#/$defs/Iso8601CompleteCalendarDate"
         },
-        "isoNsoSplit": {
-          "type": "boolean",
-          "description": "True if the grant has ISO/NSO split. False otherwise.\n\nLearn more about [the ISO $100K limit and ISO/NSO splits](https://support.carta.com/s/article/100k-rule)."
-        },
         "stockOptionType": {
           "$ref": "#/$defs/StockOptionType"
         },
@@ -1584,29 +1321,16 @@
           "$ref": "#/$defs/ExercisePeriods"
         }
       },
-      "description": "An option grant is a contract that gives an employee the right to purchase a company's stock at a set price."
-    },
-    "OptionGrantDocuments": {
-      "type": "object",
-      "properties": {
-        "formOfOptionAgreement": {
-          "$ref": "#/$defs/Document"
-        },
-        "formOfExerciseAgreement": {
-          "$ref": "#/$defs/Document"
-        },
-        "equityIncentivePlan": {
-          "$ref": "#/$defs/Document"
-        },
-        "additionalDocuments": {
-          "type": "array",
-          "items": {
-            "$ref": "#/$defs/Document"
-          },
-          "description": "Details about other additional documents.\n\nMax of 100 items."
-        }
-      },
-      "description": "Documents that are relevant to a draft option grant.\n\nThese documents are attached to a specific draft option grant object and will be associated with the resulting option grant once the draft is approved."
+      "description": "An option grant is a contract that gives an employee the right to purchase a company's stock at a set price.",
+      "required": [
+        "equityIncentivePlanName",
+        "id",
+        "issueDate",
+        "issuerId",
+        "quantity",
+        "securityLabel",
+        "stakeholderId"
+      ]
     },
     "OptionGrantVestingEvent": {
       "type": "object",
@@ -1620,12 +1344,6 @@
           "$ref": "#/$defs/Iso8601CompleteCalendarDate"
         },
         "quantity": {
-          "$ref": "#/$defs/Decimal"
-        },
-        "isoQuantity": {
-          "$ref": "#/$defs/Decimal"
-        },
-        "nsoQuantity": {
           "$ref": "#/$defs/Decimal"
         },
         "performanceCondition": {
@@ -1683,54 +1401,6 @@
         }
       },
       "description": "The issuance transaction for an option grant. Represents the initial grant of options."
-    },
-    "OptionPoolSummary": {
-      "type": "object",
-      "properties": {
-        "optionPoolId": {
-          "type": "string",
-          "description": "The identifier of the option pool.",
-          "maxLength": 50,
-          "minLength": 1
-        },
-        "shareClassId": {
-          "type": "string",
-          "description": "The identifier of the share class used by the option pool to issue equity.",
-          "maxLength": 50,
-          "minLength": 1
-        },
-        "fullyDilutedShares": {
-          "$ref": "#/$defs/Decimal"
-        },
-        "outstandingEquityAwardDerivatives": {
-          "$ref": "#/$defs/Decimal"
-        },
-        "outstandingCommittedRestrictedStockAwards": {
-          "$ref": "#/$defs/Decimal"
-        },
-        "name": {
-          "type": "string",
-          "description": "The name of the option pool.",
-          "maxLength": 100,
-          "minLength": 1
-        },
-        "authorizedShares": {
-          "$ref": "#/$defs/Decimal"
-        },
-        "terminatedDatetime": {
-          "$ref": "#/$defs/Iso8601CompleteCalendarDateTime"
-        }
-      },
-      "description": "Option pool summary.",
-      "required": [
-        "optionPoolId",
-        "shareClassId",
-        "fullyDilutedShares",
-        "outstandingEquityAwardDerivatives",
-        "outstandingCommittedRestrictedStockAwards",
-        "name",
-        "authorizedShares"
-      ]
     },
     "OptionTransactionItem": {
       "type": "object",
@@ -1835,217 +1505,6 @@
       ],
       "description": "Period unit for duration calculations."
     },
-    "PhantomCancellationReason": {
-      "type": "string",
-      "enum": [
-        "PHANTOM_CANCELLATION_REASON_CANCELED",
-        "PHANTOM_CANCELLATION_REASON_TERMINATED",
-        "PHANTOM_CANCELLATION_REASON_TERMINATION_FORFEITED",
-        "PHANTOM_CANCELLATION_REASON_LIFETIME_ENDED",
-        "PHANTOM_CANCELLATION_REASON_PTEP_ENDED"
-      ],
-      "description": "The reason the phantom was canceled or terminated.\n\n - PHANTOM_CANCELLATION_REASON_CANCELED: The phantom was explicitly canceled.\n - PHANTOM_CANCELLATION_REASON_TERMINATED: The phantom was terminated due to the holder's relationship ending.\n - PHANTOM_CANCELLATION_REASON_TERMINATION_FORFEITED: Unvested units were forfeited following termination.\n - PHANTOM_CANCELLATION_REASON_LIFETIME_ENDED: The phantom expired at the end of its lifetime.\n - PHANTOM_CANCELLATION_REASON_PTEP_ENDED: The phantom expired at the end of the post-termination exercise period."
-    },
-    "PhantomCancellationTransaction": {
-      "type": "object",
-      "properties": {
-        "effectiveDatetime": {
-          "$ref": "#/$defs/Iso8601CompleteCalendarDateTime"
-        },
-        "reason": {
-          "$ref": "#/$defs/PhantomCancellationReason"
-        },
-        "quantity": {
-          "$ref": "#/$defs/Decimal"
-        },
-        "terminationDatetime": {
-          "$ref": "#/$defs/Iso8601CompleteCalendarDateTime"
-        },
-        "forfeitureDatetime": {
-          "$ref": "#/$defs/Iso8601CompleteCalendarDateTime"
-        }
-      },
-      "description": "A cancellation or termination transaction for a phantom."
-    },
-    "PhantomIssuanceTransaction": {
-      "type": "object",
-      "properties": {
-        "issueDatetime": {
-          "$ref": "#/$defs/Iso8601CompleteCalendarDateTime"
-        },
-        "quantity": {
-          "$ref": "#/$defs/Decimal"
-        },
-        "baseValue": {
-          "$ref": "#/$defs/Money"
-        },
-        "upperPrice": {
-          "$ref": "#/$defs/Money"
-        },
-        "dilutive": {
-          "type": "boolean",
-          "description": "Whether the phantom is dilutive to the equity plan."
-        },
-        "equityPlanId": {
-          "type": "string",
-          "description": "The identifier of the equity plan under which the phantom was issued.",
-          "maxLength": 50
-        },
-        "shareClassId": {
-          "type": "string",
-          "description": "The identifier of the share class associated with the phantom.",
-          "maxLength": 50
-        },
-        "vestingScheduleTemplateId": {
-          "type": "string",
-          "description": "The identifier of the vesting schedule template. May be absent if the phantom has no vesting schedule.",
-          "maxLength": 50
-        },
-        "expirationDatetime": {
-          "$ref": "#/$defs/Iso8601CompleteCalendarDateTime"
-        }
-      },
-      "description": "The issuance transaction for a phantom. Represents the initial issuance of the phantom equity."
-    },
-    "PhantomTransactionItem": {
-      "type": "object",
-      "properties": {
-        "securityId": {
-          "type": "string",
-          "description": "The identifier of the phantom.",
-          "maxLength": 50
-        },
-        "stakeholderId": {
-          "type": "string",
-          "description": "The identifier of the current holder of the phantom.",
-          "maxLength": 50
-        },
-        "securityLabel": {
-          "type": "string",
-          "description": "The human-readable label for the phantom (e.g. \"CBU-1\").",
-          "maxLength": 50
-        },
-        "issuance": {
-          "$ref": "#/$defs/PhantomIssuanceTransaction"
-        },
-        "cancellations": {
-          "type": "array",
-          "items": {
-            "$ref": "#/$defs/PhantomCancellationTransaction"
-          },
-          "description": "All cancellation and termination transactions for the phantom, in chronological order."
-        }
-      },
-      "description": "A Phantom (also known as CBU \u2014 Cash Bonus Unit) with its full transaction history. Groups all lifecycle events (issuance, cancellation) for a single phantom. Phantom equity is cash-settled \u2014 settlements are represented as cancellations, not exercises."
-    },
-    "PiuCancellationReason": {
-      "type": "string",
-      "enum": [
-        "PIU_CANCELLATION_REASON_CANCELED",
-        "PIU_CANCELLATION_REASON_TERMINATED",
-        "PIU_CANCELLATION_REASON_TERMINATION_FORFEITED",
-        "PIU_CANCELLATION_REASON_REPURCHASED",
-        "PIU_CANCELLATION_REASON_TRANSFERRED",
-        "PIU_CANCELLATION_REASON_SHARE_CLASS_CONVERTED"
-      ],
-      "description": "The reason the PIU was canceled or terminated.\n\n - PIU_CANCELLATION_REASON_CANCELED: The PIU was explicitly canceled.\n - PIU_CANCELLATION_REASON_TERMINATED: The PIU was terminated due to the holder's relationship ending.\n - PIU_CANCELLATION_REASON_TERMINATION_FORFEITED: Unvested units were forfeited following termination.\n - PIU_CANCELLATION_REASON_REPURCHASED: The PIU shares were repurchased by the issuer.\n - PIU_CANCELLATION_REASON_TRANSFERRED: The PIU was transferred to another holder.\n - PIU_CANCELLATION_REASON_SHARE_CLASS_CONVERTED: The PIU's share class was converted."
-    },
-    "PiuCancellationTransaction": {
-      "type": "object",
-      "properties": {
-        "effectiveDatetime": {
-          "$ref": "#/$defs/Iso8601CompleteCalendarDateTime"
-        },
-        "reason": {
-          "$ref": "#/$defs/PiuCancellationReason"
-        },
-        "quantity": {
-          "$ref": "#/$defs/Decimal"
-        },
-        "terminationDatetime": {
-          "$ref": "#/$defs/Iso8601CompleteCalendarDateTime"
-        }
-      },
-      "description": "A cancellation or termination transaction for a PIU."
-    },
-    "PiuIssuanceReason": {
-      "type": "string",
-      "enum": [
-        "PIU_ISSUANCE_REASON_ISSUED_FROM_SHARE_RESERVE",
-        "PIU_ISSUANCE_REASON_SHARE_CLASS_CONVERTED",
-        "PIU_ISSUANCE_REASON_TRANSFERRED"
-      ],
-      "description": "The reason a PIU was created. Indicates what originated the PIU.\n\n - PIU_ISSUANCE_REASON_ISSUED_FROM_SHARE_RESERVE: PIU was issued directly from the share reserve.\n - PIU_ISSUANCE_REASON_SHARE_CLASS_CONVERTED: PIU was created as a result of a share class conversion.\n - PIU_ISSUANCE_REASON_TRANSFERRED: PIU was created as a result of a transfer."
-    },
-    "PiuIssuanceTransaction": {
-      "type": "object",
-      "properties": {
-        "issueDatetime": {
-          "$ref": "#/$defs/Iso8601CompleteCalendarDateTime"
-        },
-        "quantity": {
-          "$ref": "#/$defs/Decimal"
-        },
-        "acquisitionCost": {
-          "$ref": "#/$defs/Money"
-        },
-        "equityPlanId": {
-          "type": "string",
-          "description": "The identifier of the equity plan under which the PIU was issued. May be absent if not plan-associated.",
-          "maxLength": 50
-        },
-        "shareClassId": {
-          "type": "string",
-          "description": "The identifier of the share class associated with the PIU.",
-          "maxLength": 50
-        },
-        "vestingScheduleTemplateId": {
-          "type": "string",
-          "description": "The identifier of the vesting schedule template. May be absent if the PIU has no vesting schedule.",
-          "maxLength": 50
-        },
-        "issuanceReason": {
-          "$ref": "#/$defs/PiuIssuanceReason"
-        },
-        "precededBySecurityId": {
-          "type": "string",
-          "description": "The identifier of the security that preceded this PIU (e.g. the certificate that was transferred). May be absent if the PIU was issued directly from the share reserve.",
-          "maxLength": 50
-        }
-      },
-      "description": "The issuance transaction for a PIU. Represents the initial issuance of the profits interest unit."
-    },
-    "PiuTransactionItem": {
-      "type": "object",
-      "properties": {
-        "securityId": {
-          "type": "string",
-          "description": "The identifier of the PIU.",
-          "maxLength": 50
-        },
-        "stakeholderId": {
-          "type": "string",
-          "description": "The identifier of the current holder of the PIU.",
-          "maxLength": 50
-        },
-        "securityLabel": {
-          "type": "string",
-          "description": "The human-readable label for the PIU (e.g. \"PIU-3\").",
-          "maxLength": 50
-        },
-        "issuance": {
-          "$ref": "#/$defs/PiuIssuanceTransaction"
-        },
-        "cancellations": {
-          "type": "array",
-          "items": {
-            "$ref": "#/$defs/PiuCancellationTransaction"
-          },
-          "description": "All cancellation and termination transactions for the PIU, in chronological order."
-        }
-      },
-      "description": "A PIU (Profits Interest Unit) with its full transaction history. Groups all lifecycle events (issuance, cancellation) for a single PIU."
-    },
     "PointOfContact": {
       "type": "object",
       "properties": {
@@ -2070,7 +1529,11 @@
           "$ref": "#/$defs/PointOfContactType"
         }
       },
-      "description": "A point of contact for an issuer. Examples include a Legal Admin or an Option Signatory."
+      "description": "A point of contact for an issuer. Examples include a Legal Admin or an Option Signatory.",
+      "required": [
+        "issuerId",
+        "type"
+      ]
     },
     "PointOfContactType": {
       "type": "string",
@@ -2230,7 +1693,15 @@
           "$ref": "#/$defs/RestrictedStockAwardPrecededBy"
         }
       },
-      "description": "A restricted stock award is a grant of company shares."
+      "description": "A restricted stock award is a grant of company shares.",
+      "required": [
+        "id",
+        "issueDate",
+        "issuerId",
+        "quantity",
+        "securityLabel",
+        "stakeholderId"
+      ]
     },
     "RestrictedStockAwardPrecededBy": {
       "type": "object",
@@ -2406,7 +1877,16 @@
           "$ref": "#/$defs/Iso8601CompleteCalendarDateTime"
         }
       },
-      "description": "A restricted stock unit is a grant of company shares."
+      "description": "A restricted stock unit is a grant of company shares.",
+      "required": [
+        "equityIncentivePlanName",
+        "id",
+        "issueDate",
+        "issuerId",
+        "quantity",
+        "securityLabel",
+        "stakeholderId"
+      ]
     },
     "RestrictedStockUnitSettlement": {
       "type": "object",
@@ -2700,145 +2180,6 @@
       },
       "description": "An RSU award with its full transaction history. Groups all lifecycle events (issuance, settlements, cancellation) for a single RSU award."
     },
-    "SarCancellationReason": {
-      "type": "string",
-      "enum": [
-        "SAR_CANCELLATION_REASON_CANCELED",
-        "SAR_CANCELLATION_REASON_TERMINATED",
-        "SAR_CANCELLATION_REASON_TERMINATION_FORFEITED",
-        "SAR_CANCELLATION_REASON_LIFETIME_ENDED",
-        "SAR_CANCELLATION_REASON_PTEP_ENDED"
-      ],
-      "description": "The reason the SAR was canceled or terminated.\n\n - SAR_CANCELLATION_REASON_CANCELED: The SAR was explicitly canceled.\n - SAR_CANCELLATION_REASON_TERMINATED: The SAR was terminated due to the holder's relationship ending.\n - SAR_CANCELLATION_REASON_TERMINATION_FORFEITED: Unvested units were forfeited following termination.\n - SAR_CANCELLATION_REASON_LIFETIME_ENDED: The SAR expired at the end of its lifetime.\n - SAR_CANCELLATION_REASON_PTEP_ENDED: The SAR expired at the end of the post-termination exercise period."
-    },
-    "SarCancellationTransaction": {
-      "type": "object",
-      "properties": {
-        "effectiveDatetime": {
-          "$ref": "#/$defs/Iso8601CompleteCalendarDateTime"
-        },
-        "reason": {
-          "$ref": "#/$defs/SarCancellationReason"
-        },
-        "quantity": {
-          "$ref": "#/$defs/Decimal"
-        },
-        "terminationDatetime": {
-          "$ref": "#/$defs/Iso8601CompleteCalendarDateTime"
-        },
-        "forfeitureDatetime": {
-          "$ref": "#/$defs/Iso8601CompleteCalendarDateTime"
-        }
-      },
-      "description": "A cancellation or termination transaction for a SAR."
-    },
-    "SarExerciseTransaction": {
-      "type": "object",
-      "properties": {
-        "sharesAcquiredDatetime": {
-          "$ref": "#/$defs/Iso8601CompleteCalendarDateTime"
-        },
-        "quantity": {
-          "$ref": "#/$defs/Decimal"
-        },
-        "withheldQuantity": {
-          "$ref": "#/$defs/Decimal"
-        },
-        "settledQuantity": {
-          "$ref": "#/$defs/Decimal"
-        },
-        "resultingSecurityId": {
-          "type": "string",
-          "description": "The identifier of the security produced as a result of a stock-settled exercise. Empty for cash-settled exercises.",
-          "maxLength": 50
-        },
-        "resultingSecurityType": {
-          "type": "string",
-          "description": "The type of the security produced as a result of a stock-settled exercise (e.g. \"certificate\"). Empty for cash-settled exercises.",
-          "maxLength": 50
-        },
-        "resultingSecurityLabel": {
-          "type": "string",
-          "description": "The human-readable label of the security produced as a result of a stock-settled exercise (e.g. \"CS-55\"). Empty for cash-settled exercises.",
-          "maxLength": 50
-        },
-        "cashAcquired": {
-          "$ref": "#/$defs/Money"
-        }
-      },
-      "description": "An exercise transaction for a SAR. Supports both stock-settled (resulting in shares) and cash-settled (resulting in a cash payment) outcomes."
-    },
-    "SarIssuanceTransaction": {
-      "type": "object",
-      "properties": {
-        "issueDatetime": {
-          "$ref": "#/$defs/Iso8601CompleteCalendarDateTime"
-        },
-        "quantity": {
-          "$ref": "#/$defs/Decimal"
-        },
-        "exercisePrice": {
-          "$ref": "#/$defs/Money"
-        },
-        "equityPlanId": {
-          "type": "string",
-          "description": "The identifier of the equity plan under which the SAR was issued.",
-          "maxLength": 50
-        },
-        "shareClassId": {
-          "type": "string",
-          "description": "The identifier of the share class associated with the SAR.",
-          "maxLength": 50
-        },
-        "vestingScheduleTemplateId": {
-          "type": "string",
-          "description": "The identifier of the vesting schedule template.",
-          "maxLength": 50
-        },
-        "expirationDatetime": {
-          "$ref": "#/$defs/Iso8601CompleteCalendarDateTime"
-        }
-      },
-      "description": "The issuance transaction for a SAR. Represents the initial issuance of the stock appreciation right."
-    },
-    "SarTransactionItem": {
-      "type": "object",
-      "properties": {
-        "securityId": {
-          "type": "string",
-          "description": "The identifier of the SAR.",
-          "maxLength": 50
-        },
-        "stakeholderId": {
-          "type": "string",
-          "description": "The identifier of the current holder of the SAR.",
-          "maxLength": 50
-        },
-        "securityLabel": {
-          "type": "string",
-          "description": "The human-readable label for the SAR (e.g. \"SAR-3\").",
-          "maxLength": 50
-        },
-        "issuance": {
-          "$ref": "#/$defs/SarIssuanceTransaction"
-        },
-        "exercises": {
-          "type": "array",
-          "items": {
-            "$ref": "#/$defs/SarExerciseTransaction"
-          },
-          "description": "All exercise transactions for the SAR. Each exercise may be stock-settled (with resulting security) or cash-settled (with cash acquired)."
-        },
-        "cancellations": {
-          "type": "array",
-          "items": {
-            "$ref": "#/$defs/SarCancellationTransaction"
-          },
-          "description": "All cancellation and termination transactions for the SAR, in chronological order."
-        }
-      },
-      "description": "A SAR (Stock Appreciation Right) with its full transaction history. Groups all lifecycle events (issuance, exercises, cancellation) for a single SAR."
-    },
     "ShareClass": {
       "type": "object",
       "properties": {
@@ -2888,7 +2229,15 @@
           "$ref": "#/$defs/PreferredShareClassDetails"
         }
       },
-      "description": "A class of stock issued by an issuer."
+      "description": "A class of stock issued by an issuer.",
+      "required": [
+        "id",
+        "issuerId",
+        "name",
+        "prefix",
+        "seniority",
+        "type"
+      ]
     },
     "ShareClassDividendDetails": {
       "type": "object",
@@ -2927,41 +2276,6 @@
       },
       "description": "Share class rights and preferences for a preferred share class."
     },
-    "ShareClassSummary": {
-      "type": "object",
-      "properties": {
-        "shareClassId": {
-          "type": "string",
-          "description": "The identifier of the share class.",
-          "maxLength": 50,
-          "minLength": 1
-        },
-        "optionPoolIds": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          },
-          "description": "List of option pool ids that are associated with this share class.",
-          "maxItems": 1000
-        },
-        "fullyDilutedShares": {
-          "$ref": "#/$defs/Decimal"
-        },
-        "outstandingShares": {
-          "$ref": "#/$defs/Decimal"
-        },
-        "cashRaised": {
-          "$ref": "#/$defs/Money"
-        }
-      },
-      "description": "Share class summary includes all certificated, non-certificated and RSAs with an issue date.",
-      "required": [
-        "shareClassId",
-        "fullyDilutedShares",
-        "outstandingShares",
-        "cashRaised"
-      ]
-    },
     "ShareClassType": {
       "type": "string",
       "enum": [
@@ -2969,31 +2283,6 @@
         "PREFERRED"
       ],
       "title": "- COMMON: Used to denote a common share with voting rights\n - PREFERRED: Used to denote a preferred share with no voting rights"
-    },
-    "ShareClassValuation": {
-      "type": "object",
-      "properties": {
-        "shareClassId": {
-          "type": "string",
-          "description": "The identifier of the share class.",
-          "maxLength": 50,
-          "minLength": 1
-        },
-        "shareClassName": {
-          "type": "string",
-          "description": "The name of the share class.",
-          "maxLength": 60,
-          "minLength": 1
-        },
-        "common": {
-          "type": "boolean",
-          "description": "True if this is a common share class; otherwise, false if this is a preferred share class."
-        },
-        "price": {
-          "$ref": "#/$defs/Money"
-        }
-      },
-      "description": "The fair market valuation price for a share class."
     },
     "StakeholderAddress": {
       "type": "object",
@@ -3004,277 +2293,6 @@
           "maxLength": 1000
         }
       }
-    },
-    "StakeholderCapitalizationTableSummary": {
-      "type": "object",
-      "properties": {
-        "fullyDilutedShares": {
-          "$ref": "#/$defs/Decimal"
-        },
-        "outstandingShares": {
-          "$ref": "#/$defs/Decimal"
-        },
-        "cashRaised": {
-          "$ref": "#/$defs/Money"
-        }
-      },
-      "description": "Summary information about the capitalization table.",
-      "required": [
-        "fullyDilutedShares",
-        "outstandingShares",
-        "cashRaised"
-      ]
-    },
-    "StakeholderGroup": {
-      "type": "object",
-      "properties": {
-        "stakeholderGroupId": {
-          "type": "string",
-          "description": "The identifier of the stakeholder group.",
-          "maxLength": 50,
-          "minLength": 1
-        },
-        "stakeholderGroupName": {
-          "type": "string",
-          "description": "The name of the stakeholder group.",
-          "maxLength": 1000,
-          "minLength": 1
-        },
-        "stakeholders": {
-          "type": "array",
-          "items": true,
-          "description": "The list of stakeholders in this stakeholder group.",
-          "maxItems": 100
-        },
-        "summary": {
-          "$ref": "#/$defs/StakeholderCapitalizationTableSummary"
-        },
-        "shareClassSummaries": {
-          "type": "array",
-          "items": {
-            "$ref": "#/$defs/StakeholderShareClassSummary"
-          },
-          "description": "Per share class summary information scoped to the stakeholder group.",
-          "maxItems": 200
-        },
-        "optionPoolSummaries": {
-          "type": "array",
-          "items": {
-            "$ref": "#/$defs/StakeholderOptionPoolSummary"
-          },
-          "description": "Per option pool summary information scoped to the stakeholder group.",
-          "maxItems": 200
-        },
-        "warrantBlockSummaries": {
-          "type": "array",
-          "items": {
-            "$ref": "#/$defs/StakeholderWarrantBlockSummary"
-          },
-          "description": "Per warrant block summary information scoped to the stakeholder group.",
-          "maxItems": 200
-        },
-        "noteBlockSummaries": {
-          "type": "array",
-          "items": {
-            "$ref": "#/$defs/StakeholderNoteBlockSummary"
-          },
-          "description": "Per note block summary scoped to the stakeholder group.",
-          "maxItems": 200
-        }
-      },
-      "description": "A grouping of individual stakeholders used to compute capitalization calculations. All stakeholders within a group are considered when computing capitalization calculations.\n\nThese groupings of individual stakeholders are disjoint sets; i.e., a stakeholder can only belong to a single stakeholder group.",
-      "title": "A grouping of individual stakeholders used to compute capitalization calculations.",
-      "required": [
-        "stakeholderGroupId",
-        "stakeholderGroupName"
-      ]
-    },
-    "StakeholderNoteBlockSummary": {
-      "type": "object",
-      "properties": {
-        "noteBlockId": {
-          "type": "string",
-          "description": "The identifier of the note block.",
-          "maxLength": 50,
-          "minLength": 1
-        },
-        "cashRaised": {
-          "$ref": "#/$defs/Money"
-        },
-        "principal": {
-          "$ref": "#/$defs/Money"
-        },
-        "interest": {
-          "$ref": "#/$defs/Money"
-        },
-        "outstandingDebt": {
-          "$ref": "#/$defs/Money"
-        },
-        "name": {
-          "type": "string",
-          "description": "The name of the note block.",
-          "maxLength": 1000
-        }
-      },
-      "description": "Note block summary information scoped to a specific stakeholder.",
-      "required": [
-        "noteBlockId",
-        "cashRaised",
-        "principal",
-        "interest",
-        "name"
-      ]
-    },
-    "StakeholderOptionPoolSummary": {
-      "type": "object",
-      "properties": {
-        "optionPoolId": {
-          "type": "string",
-          "description": "The identifier of the option pool.",
-          "maxLength": 50,
-          "minLength": 1
-        },
-        "name": {
-          "type": "string",
-          "description": "The name of the option pool.",
-          "maxLength": 100,
-          "minLength": 1
-        },
-        "shareClassId": {
-          "type": "string",
-          "description": "The identifier of the share class used by the option pool to issue equity.",
-          "maxLength": 50,
-          "minLength": 1
-        },
-        "outstandingEquityAwardDerivatives": {
-          "$ref": "#/$defs/Decimal"
-        },
-        "outstandingCommittedRestrictedStockAwards": {
-          "$ref": "#/$defs/Decimal"
-        }
-      },
-      "description": "Option pool summary scoped to a specific stakeholder.",
-      "required": [
-        "optionPoolId",
-        "name",
-        "shareClassId",
-        "outstandingEquityAwardDerivatives",
-        "outstandingCommittedRestrictedStockAwards"
-      ]
-    },
-    "StakeholderShareClassSummary": {
-      "type": "object",
-      "properties": {
-        "shareClassId": {
-          "type": "string",
-          "description": "The identifier of the share class.",
-          "maxLength": 50,
-          "minLength": 1
-        },
-        "name": {
-          "type": "string",
-          "description": "The name of the share class.",
-          "maxLength": 1000,
-          "minLength": 1
-        },
-        "fullyDilutedShares": {
-          "$ref": "#/$defs/Decimal"
-        },
-        "outstandingShares": {
-          "$ref": "#/$defs/Decimal"
-        },
-        "cashRaised": {
-          "$ref": "#/$defs/Money"
-        }
-      },
-      "description": "Share class summary scoped to a specific stakeholder. This includes all certificated, non-certificated and RSAs with an issue date.",
-      "required": [
-        "shareClassId",
-        "name",
-        "fullyDilutedShares",
-        "outstandingShares",
-        "cashRaised"
-      ]
-    },
-    "StakeholderType": {
-      "type": "string",
-      "enum": [
-        "STAKEHOLDER_TYPE_INDIVIDUAL",
-        "STAKEHOLDER_TYPE_NON_INDIVIDUAL"
-      ],
-      "description": "- STAKEHOLDER_TYPE_INDIVIDUAL: Individual\n - STAKEHOLDER_TYPE_NON_INDIVIDUAL: Non-Individual (e.g. organization, trust, etc.)",
-      "title": "Type of stakeholder"
-    },
-    "StakeholderWarrantBlockSummary": {
-      "type": "object",
-      "properties": {
-        "warrantBlockId": {
-          "type": "string",
-          "description": "The identifier of the warrant block.",
-          "maxLength": 50,
-          "minLength": 1
-        },
-        "name": {
-          "type": "string",
-          "description": "The name of the warrant block.",
-          "maxLength": 1000,
-          "minLength": 1
-        },
-        "shareClassId": {
-          "type": "string",
-          "description": "The identifier of the share class for this warrant block.",
-          "maxLength": 50,
-          "minLength": 1
-        },
-        "fullyDilutedShares": {
-          "$ref": "#/$defs/Decimal"
-        },
-        "outstandingWarrants": {
-          "$ref": "#/$defs/Decimal"
-        },
-        "cashRaised": {
-          "$ref": "#/$defs/Money"
-        }
-      },
-      "description": "Warrant block summary scoped to a specific stakeholder.",
-      "required": [
-        "warrantBlockId",
-        "name",
-        "shareClassId",
-        "fullyDilutedShares",
-        "outstandingWarrants",
-        "cashRaised"
-      ]
-    },
-    "ThresholdDetails": {
-      "type": "object",
-      "properties": {
-        "amount": {
-          "$ref": "#/$defs/Decimal"
-        },
-        "type": {
-          "$ref": "#/$defs/ThresholdDetailsThresholdType"
-        }
-      },
-      "description": "Threshold Details for the interest."
-    },
-    "Vesting": {
-      "type": "object",
-      "properties": {
-        "templateId": {
-          "type": "string",
-          "description": "The template id of the vesting schedule.",
-          "maxLength": 100
-        },
-        "startDate": {
-          "$ref": "#/$defs/Date"
-        },
-        "acceleration": {
-          "$ref": "#/$defs/Acceleration"
-        }
-      },
-      "description": "Vesting details of the option grant",
-      "title": "Vesting details of the option grant"
     },
     "VestingMethod": {
       "type": "string",
@@ -3347,7 +2365,36 @@
           "$ref": "#/$defs/PerformanceCondition"
         }
       },
-      "description": "A vesting period defines a portion of shares that vest."
+      "description": "A vesting period defines a portion of shares that vest.",
+      "allOf": [
+        {
+          "if": {
+            "required": [
+              "vestingMethod"
+            ],
+            "properties": {
+              "vestingMethod": {
+                "enum": [
+                  "DAILY",
+                  "WEEKLY",
+                  "MONTHLY",
+                  "BI_MONTHLY",
+                  "QUARTERLY",
+                  "SEMI_ANNUALLY",
+                  "ANNUALLY"
+                ]
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "lengthUnit": {
+                "const": "MONTH"
+              }
+            }
+          }
+        }
+      ]
     },
     "VestingScheduleTemplate": {
       "type": "object",
@@ -3389,7 +2436,14 @@
           "description": "The vesting periods that define how shares vest."
         }
       },
-      "description": "Details of a vesting schedule template."
+      "description": "Details of a vesting schedule template.",
+      "required": [
+        "id",
+        "issuerId",
+        "name",
+        "periods",
+        "vestingScheduleType"
+      ]
     },
     "VestingScheduleType": {
       "type": "string",
@@ -3399,40 +2453,6 @@
         "HYBRID"
       ],
       "description": "Types of vesting schedule templates.\n\n - DATE: Vesting schedule with tranches based on calendar dates\n - MILESTONE: Vesting schedule with tranches based on a milestone condition being achieved\n - HYBRID: vesting schedule with a combination of date-based tranches and performance conditions"
-    },
-    "WarrantBlockSummary": {
-      "type": "object",
-      "properties": {
-        "warrantBlockId": {
-          "type": "string",
-          "description": "The identifier of the warrant block.",
-          "maxLength": 50,
-          "minLength": 1
-        },
-        "shareClassId": {
-          "type": "string",
-          "description": "The identifier of the share class for this warrant block.",
-          "maxLength": 50,
-          "minLength": 1
-        },
-        "fullyDilutedShares": {
-          "$ref": "#/$defs/Decimal"
-        },
-        "outstandingWarrants": {
-          "$ref": "#/$defs/Decimal"
-        },
-        "cashRaised": {
-          "$ref": "#/$defs/Money"
-        }
-      },
-      "description": "Warrant block summary.",
-      "required": [
-        "warrantBlockId",
-        "shareClassId",
-        "fullyDilutedShares",
-        "outstandingWarrants",
-        "cashRaised"
-      ]
     },
     "WarrantCancellationReason": {
       "type": "string",

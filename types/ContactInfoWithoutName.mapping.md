@@ -5,7 +5,7 @@ ocf_title: Type - Contact Info Without Name
 ocf_kind: type
 required_fields: []
 target_standard: Carta
-target_version: "v1alpha1 (2026-04-30)"
+target_version: "v1alpha1 (2026-06-22)"
 status: complete
 last_generated: 2026-05-18
 ---
@@ -103,4 +103,4 @@ Use a link below to open a prefilled GitHub issue. The issue can be copied into 
 ## Notes / open questions
 
 - `emails` selects the primary, then first, email address into `PointOfContact.userEmail`; there is no name source in this variant.
-- `phone_numbers` has no Carta target. Carta-only issuer and contact-role fields remain unset.
+- `phone_numbers` has no Carta target. June 22 makes `PointOfContact.issuerId` and `PointOfContact.type` required; neither is present in this OCF contact type and both remain explicit context/role requirements.

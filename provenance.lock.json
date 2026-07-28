@@ -10,7 +10,7 @@
   },
   "carta": {
     "snapshot_file": "target-schema/Carta.schema.json",
-    "version": "v1alpha1 (2026-04-30)",
-    "sha256": "9cb61cd0464edbba67f721c29afaba22dce15a2d59af2d0587670ad709af8a71"
+    "version": "v1alpha1 (2026-06-22)",
+    "sha256": "b8d54974eea8957f67ebe600097b31024a691e50d949a8a6db6227dd7a2aa06c"
   }
 }

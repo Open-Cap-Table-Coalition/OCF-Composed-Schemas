@@ -471,10 +471,6 @@
               "security_id": {
                 "type": "string",
                 "description": "Identifier for the security (stock, plan security, warrant, or convertible) by which it can be referenced by other transaction objects. N…"
-              },
-              "stock_plan_id": {
-                "type": "string",
-                "description": "Id of the Stock Plan whose pool the reserved shares should return to. This does not have to be the same pool the securities were issued f…"
               }
             },
             "required": [

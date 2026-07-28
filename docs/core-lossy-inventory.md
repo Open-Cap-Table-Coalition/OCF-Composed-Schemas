@@ -12,7 +12,7 @@ Fields that today fall **out** of Core, split by whether Carta offers a home at 
 strongest rich-Core / upstream-OCF signal. **A** breaks it down per OCF object;
 **B** inverts it (per Carta slot); **C** is no-home.
 
-## A. Lossy home — by OCF object, flowing to Carta (59 (entity,variant,field) rows across 23 objects; 42 OCF-required)
+## A. Lossy home — by OCF object, flowing to Carta (48 (entity,variant,field) rows across 19 objects; 34 OCF-required)
 
 Each field HAS a Carta home but the fold loses fidelity: `existence-loss` = the shape
 collapses (object/array → scalar); `heuristic` = a non-1:1 transform (combine/split/computed).
@@ -37,14 +37,6 @@ is a direct predecessor→`securities` landing.
 | field | OCF-req | variant(s) | flows to (Carta) | loss |
 | --- | :---: | --- | --- | --- |
 | conversion_triggers | **yes** |  | ConvertibleIssuanceTransaction.{conversionTrigger, dayCountBasis, discountPercentage, interestAccrualPeriod, interestCompoundingPeriod, interestRate, valuationCap} + ConvertibleNote.{conversionTrigger, dayCountBasis, discountPercentage, interestAccrualPeriod, interestCompoundingPeriod, interestRate, priceCap} | heuristic (sequential_transform (select first_convertible_trigger_with_economic_terms)) |
-| security_law_exemptions | **yes** |  | Compliance.federalExemption | heuristic (computed) |
-
-### Document — not yet admissible
-
-| field | OCF-req | variant(s) | flows to (Carta) | loss |
-| --- | :---: | --- | --- | --- |
-| path |  |  | Document.fileId | heuristic (computed) |
-| uri |  |  | Document.fileId | heuristic (computed) |
 
 ### EquityCompensationCancellation — in Core (admissible)
 
@@ -52,20 +44,18 @@ is a direct predecessor→`securities` landing.
 | --- | :---: | --- | --- | --- |
 | reason_text | **yes** | Option | OptionCancellationTransaction.reason | heuristic (computed) |
 | reason_text | **yes** | Rsu | RsuCancellationTransaction.reason | heuristic (computed) |
-| reason_text | **yes** | Sar | SarCancellationTransaction.reason | heuristic (computed) |
 
 ### EquityCompensationExercise — in Core (admissible)
 
 | field | OCF-req | variant(s) | flows to (Carta) | loss |
 | --- | :---: | --- | --- | --- |
-| resulting_security_ids | **yes** | Option | Certificate.securityId + CertificatePrecededBy.securities + Exercise.certificateId | heuristic (computed) |
-| resulting_security_ids | **yes** | Sar | Certificate.securityId + CertificatePrecededBy.securities | heuristic (computed) |
+| resulting_security_ids | **yes** | Option | Certificate.{id, securityId} + CertificatePrecededBy.securities + Exercise.certificateId | heuristic (computed) |
+| resulting_security_ids | **yes** | Sar | Certificate.{id, securityId} + CertificatePrecededBy.securities | heuristic (computed) |
 
 ### EquityCompensationIssuance — not yet admissible
 
 | field | OCF-req | variant(s) | flows to (Carta) | loss |
 | --- | :---: | --- | --- | --- |
-| security_law_exemptions | **yes** | Option, Rsu, Sar | Compliance.federalExemption | heuristic (computed) |
 | termination_exercise_windows | **yes** | Option | OptionGrant.exercisePeriods | existence-loss (select (first_termination_window)) |
 
 ### EquityCompensationRelease — in Core (admissible)
@@ -88,8 +78,8 @@ is a direct predecessor→`securities` landing.
 
 | field | OCF-req | variant(s) | flows to (Carta) | loss |
 | --- | :---: | --- | --- | --- |
-| balance_security_id |  | Rsa | RestrictedStockAward.securityId + RestrictedStockAwardPrecededBy.securities | heuristic (computed) |
-| balance_security_id |  | Default | Certificate.securityId + CertificatePrecededBy.securities | heuristic (computed) |
+| balance_security_id |  | Rsa | RestrictedStockAward.{id, securityId} + RestrictedStockAwardPrecededBy.securities | heuristic (computed) |
+| balance_security_id |  | Default | Certificate.{id, securityId} + CertificatePrecededBy.securities | heuristic (computed) |
 | reason_text | **yes** | Rsa | RsaCancellationTransaction.reason | heuristic (computed) |
 | reason_text | **yes** | Default | CertificateCancellationTransaction.reason | heuristic (computed) |
 
@@ -97,7 +87,7 @@ is a direct predecessor→`securities` landing.
 
 | field | OCF-req | variant(s) | flows to (Carta) | loss |
 | --- | :---: | --- | --- | --- |
-| class_type | **yes** | Common, Preferred | ShareClass.type + ShareClassValuation.common | heuristic (computed) |
+| class_type | **yes** | Common, Preferred | ShareClass.type | heuristic (computed) |
 | conversion_rights |  | Common, Preferred | ShareClassRightsAndPreferences.{conversionPrice, conversionRatio} | heuristic (sequential_transform (select first_ratio_conversion_right)) |
 | initial_shares_authorized | **yes** | Common, Preferred | ShareClass.authorizedShareCount | partial (AuthorizedShares: unmapped members NOT APPLICABLE, UNLIMITED; Numeric: widening) |
 | seniority | **yes** | Common, Preferred | ShareClass.{pariPassu, seniority} | heuristic (computed) |
@@ -112,8 +102,8 @@ is a direct predecessor→`securities` landing.
 
 | field | OCF-req | variant(s) | flows to (Carta) | loss |
 | --- | :---: | --- | --- | --- |
-| resulting_security_id | **yes** | Rsa | RestrictedStockAward.securityId + RestrictedStockAwardPrecededBy.securities | heuristic (computed) |
-| resulting_security_id | **yes** | Default | Certificate.securityId + CertificatePrecededBy.securities | heuristic (computed) |
+| resulting_security_id | **yes** | Rsa | RestrictedStockAward.{id, securityId} + RestrictedStockAwardPrecededBy.securities | heuristic (computed) |
+| resulting_security_id | **yes** | Default | Certificate.{id, securityId} + CertificatePrecededBy.securities | heuristic (computed) |
 | security_ids | **yes** | Rsa | RestrictedStockAwardPrecededBy.securities | heuristic (computed) |
 | security_ids | **yes** | Default | CertificatePrecededBy.securities | heuristic (computed) |
 
@@ -121,36 +111,24 @@ is a direct predecessor→`securities` landing.
 
 | field | OCF-req | variant(s) | flows to (Carta) | loss |
 | --- | :---: | --- | --- | --- |
-| balance_security_id |  | Rsa | RestrictedStockAward.securityId + RestrictedStockAwardPrecededBy.securities | heuristic (computed) |
-| balance_security_id |  | Default | Certificate.securityId + CertificatePrecededBy.securities | heuristic (computed) |
-| resulting_security_ids | **yes** | Rsa | RestrictedStockAward.securityId + RestrictedStockAwardPrecededBy.securities | heuristic (computed) |
-| resulting_security_ids | **yes** | Default | Certificate.securityId + CertificatePrecededBy.securities | heuristic (computed) |
-
-### StockIssuance — not yet admissible
-
-| field | OCF-req | variant(s) | flows to (Carta) | loss |
-| --- | :---: | --- | --- | --- |
-| security_law_exemptions | **yes** | Rsa, Default | Compliance.federalExemption | heuristic (computed) |
-
-### StockPlan — in Core (admissible)
-
-| field | OCF-req | variant(s) | flows to (Carta) | loss |
-| --- | :---: | --- | --- | --- |
-| stock_class_ids |  |  | OptionPoolSummary.shareClassId | existence-loss (select (first_stock_class_id)) |
+| balance_security_id |  | Rsa | RestrictedStockAward.{id, securityId} + RestrictedStockAwardPrecededBy.securities | heuristic (computed) |
+| balance_security_id |  | Default | Certificate.{id, securityId} + CertificatePrecededBy.securities | heuristic (computed) |
+| resulting_security_ids | **yes** | Rsa | RestrictedStockAward.{id, securityId} + RestrictedStockAwardPrecededBy.securities | heuristic (computed) |
+| resulting_security_ids | **yes** | Default | Certificate.{id, securityId} + CertificatePrecededBy.securities | heuristic (computed) |
 
 ### StockReissuance — not yet admissible
 
 | field | OCF-req | variant(s) | flows to (Carta) | loss |
 | --- | :---: | --- | --- | --- |
-| resulting_security_ids | **yes** | Rsa | RestrictedStockAward.securityId + RestrictedStockAwardPrecededBy.securities | heuristic (computed) |
-| resulting_security_ids | **yes** | Default | Certificate.securityId + CertificatePrecededBy.securities | heuristic (computed) |
+| resulting_security_ids | **yes** | Rsa | RestrictedStockAward.{id, securityId} + RestrictedStockAwardPrecededBy.securities | heuristic (computed) |
+| resulting_security_ids | **yes** | Default | Certificate.{id, securityId} + CertificatePrecededBy.securities | heuristic (computed) |
 
 ### StockRepurchase — not yet admissible
 
 | field | OCF-req | variant(s) | flows to (Carta) | loss |
 | --- | :---: | --- | --- | --- |
-| balance_security_id |  | Rsa | RestrictedStockAward.securityId + RestrictedStockAwardPrecededBy.securities | heuristic (computed) |
-| balance_security_id |  | Default | Certificate.securityId + CertificatePrecededBy.securities | heuristic (computed) |
+| balance_security_id |  | Rsa | RestrictedStockAward.{id, securityId} + RestrictedStockAwardPrecededBy.securities | heuristic (computed) |
+| balance_security_id |  | Default | Certificate.{id, securityId} + CertificatePrecededBy.securities | heuristic (computed) |
 | quantity | **yes** | Rsa | RestrictedStockAward.returnedToTreasuryQuantity | heuristic (computed) |
 | quantity | **yes** | Default | Certificate.returnedToTreasuryQuantity | heuristic (computed) |
 
@@ -158,10 +136,10 @@ is a direct predecessor→`securities` landing.
 
 | field | OCF-req | variant(s) | flows to (Carta) | loss |
 | --- | :---: | --- | --- | --- |
-| balance_security_id |  | Rsa | RestrictedStockAward.securityId + RestrictedStockAwardPrecededBy.securities | heuristic (computed) |
-| balance_security_id |  | Default | Certificate.securityId + CertificatePrecededBy.securities | heuristic (computed) |
-| resulting_security_ids | **yes** | Rsa | RestrictedStockAward.securityId + RestrictedStockAwardPrecededBy.securities | heuristic (computed) |
-| resulting_security_ids | **yes** | Default | Certificate.securityId + CertificatePrecededBy.securities | heuristic (computed) |
+| balance_security_id |  | Rsa | RestrictedStockAward.{id, securityId} + RestrictedStockAwardPrecededBy.securities | heuristic (computed) |
+| balance_security_id |  | Default | Certificate.{id, securityId} + CertificatePrecededBy.securities | heuristic (computed) |
+| resulting_security_ids | **yes** | Rsa | RestrictedStockAward.{id, securityId} + RestrictedStockAwardPrecededBy.securities | heuristic (computed) |
+| resulting_security_ids | **yes** | Default | Certificate.{id, securityId} + CertificatePrecededBy.securities | heuristic (computed) |
 
 ### VestingTerms — not yet admissible
 
@@ -181,12 +159,6 @@ is a direct predecessor→`securities` landing.
 | --- | :---: | --- | --- | --- |
 | resulting_security_ids | **yes** |  | WarrantExerciseTransaction.resultingSecurityId | existence-loss (select (first_resulting_security_id)) |
 
-### WarrantIssuance — not yet admissible
-
-| field | OCF-req | variant(s) | flows to (Carta) | loss |
-| --- | :---: | --- | --- | --- |
-| security_law_exemptions | **yes** |  | Compliance.federalExemption | heuristic (computed) |
-
 ### WarrantTransfer — in Core (admissible)
 
 | field | OCF-req | variant(s) | flows to (Carta) | loss |
@@ -199,11 +171,11 @@ Sorted by fan-in. Slots with several sources are where distinct OCF properties *
 onto one Carta field — most visibly the reverse-edge lineage collapsing onto `…PrecededBy.securities`.
 
 - `CertificatePrecededBy.securities` ← 12: `EquityCompensationExercise.resulting_security_ids [Option]`, `EquityCompensationExercise.resulting_security_ids [Sar]`, `EquityCompensationRelease.resulting_security_ids [Rsu]`, `StockCancellation.balance_security_id [Default]`, `StockConsolidation.resulting_security_id [Default]`, `StockConsolidation.security_ids [Default]`, `StockConversion.balance_security_id [Default]`, `StockConversion.resulting_security_ids [Default]`, `StockReissuance.resulting_security_ids [Default]`, `StockRepurchase.balance_security_id [Default]`, `StockTransfer.balance_security_id [Default]`, `StockTransfer.resulting_security_ids [Default]`
+- `Certificate.id` ← 10: `EquityCompensationExercise.resulting_security_ids [Option]`, `EquityCompensationExercise.resulting_security_ids [Sar]`, `StockCancellation.balance_security_id [Default]`, `StockConsolidation.resulting_security_id [Default]`, `StockConversion.balance_security_id [Default]`, `StockConversion.resulting_security_ids [Default]`, `StockReissuance.resulting_security_ids [Default]`, `StockRepurchase.balance_security_id [Default]`, `StockTransfer.balance_security_id [Default]`, `StockTransfer.resulting_security_ids [Default]`
 - `Certificate.securityId` ← 10: `EquityCompensationExercise.resulting_security_ids [Option]`, `EquityCompensationExercise.resulting_security_ids [Sar]`, `StockCancellation.balance_security_id [Default]`, `StockConsolidation.resulting_security_id [Default]`, `StockConversion.balance_security_id [Default]`, `StockConversion.resulting_security_ids [Default]`, `StockReissuance.resulting_security_ids [Default]`, `StockRepurchase.balance_security_id [Default]`, `StockTransfer.balance_security_id [Default]`, `StockTransfer.resulting_security_ids [Default]`
 - `RestrictedStockAwardPrecededBy.securities` ← 9: `StockCancellation.balance_security_id [Rsa]`, `StockConsolidation.resulting_security_id [Rsa]`, `StockConsolidation.security_ids [Rsa]`, `StockConversion.balance_security_id [Rsa]`, `StockConversion.resulting_security_ids [Rsa]`, `StockReissuance.resulting_security_ids [Rsa]`, `StockRepurchase.balance_security_id [Rsa]`, `StockTransfer.balance_security_id [Rsa]`, `StockTransfer.resulting_security_ids [Rsa]`
+- `RestrictedStockAward.id` ← 8: `StockCancellation.balance_security_id [Rsa]`, `StockConsolidation.resulting_security_id [Rsa]`, `StockConversion.balance_security_id [Rsa]`, `StockConversion.resulting_security_ids [Rsa]`, `StockReissuance.resulting_security_ids [Rsa]`, `StockRepurchase.balance_security_id [Rsa]`, `StockTransfer.balance_security_id [Rsa]`, `StockTransfer.resulting_security_ids [Rsa]`
 - `RestrictedStockAward.securityId` ← 8: `StockCancellation.balance_security_id [Rsa]`, `StockConsolidation.resulting_security_id [Rsa]`, `StockConversion.balance_security_id [Rsa]`, `StockConversion.resulting_security_ids [Rsa]`, `StockReissuance.resulting_security_ids [Rsa]`, `StockRepurchase.balance_security_id [Rsa]`, `StockTransfer.balance_security_id [Rsa]`, `StockTransfer.resulting_security_ids [Rsa]`
-- `Compliance.federalExemption` ← 4: `ConvertibleIssuance.security_law_exemptions`, `EquityCompensationIssuance.security_law_exemptions [Option, Rsu, Sar]`, `StockIssuance.security_law_exemptions [Rsa, Default]`, `WarrantIssuance.security_law_exemptions`
-- `Document.fileId` ← 2: `Document.path`, `Document.uri`
 - `ShareClassRightsAndPreferences.conversionPrice` ← 2: `StockClass.conversion_rights [Common, Preferred]`, `StockClassConversionRatioAdjustment.new_ratio_conversion_mechanism`
 - `ShareClassRightsAndPreferences.conversionRatio` ← 2: `StockClass.conversion_rights [Common, Preferred]`, `StockClassConversionRatioAdjustment.new_ratio_conversion_mechanism`
 - `Stakeholder.email` ← 2: `Stakeholder.contact_info`, `Stakeholder.primary_contact`
@@ -227,16 +199,13 @@ onto one Carta field — most visibly the reverse-edge lineage collapsing onto `
 - `Exercise.certificateId` ← 1: `EquityCompensationExercise.resulting_security_ids [Option]`
 - `OptionCancellationTransaction.reason` ← 1: `EquityCompensationCancellation.reason_text [Option]`
 - `OptionGrant.exercisePeriods` ← 1: `EquityCompensationIssuance.termination_exercise_windows [Option]`
-- `OptionPoolSummary.shareClassId` ← 1: `StockPlan.stock_class_ids`
 - `RestrictedStockAward.returnedToTreasuryQuantity` ← 1: `StockRepurchase.quantity [Rsa]`
 - `RsaCancellationTransaction.reason` ← 1: `StockCancellation.reason_text [Rsa]`
 - `RsuCancellationTransaction.reason` ← 1: `EquityCompensationCancellation.reason_text [Rsu]`
-- `SarCancellationTransaction.reason` ← 1: `EquityCompensationCancellation.reason_text [Sar]`
 - `ShareClass.authorizedShareCount` ← 1: `StockClass.initial_shares_authorized [Common, Preferred]`
 - `ShareClass.pariPassu` ← 1: `StockClass.seniority [Common, Preferred]`
 - `ShareClass.seniority` ← 1: `StockClass.seniority [Common, Preferred]`
 - `ShareClass.type` ← 1: `StockClass.class_type [Common, Preferred]`
-- `ShareClassValuation.common` ← 1: `StockClass.class_type [Common, Preferred]`
 - `Stakeholder.address` ← 1: `Stakeholder.addresses`
 - `Stakeholder.fullName` ← 1: `Stakeholder.name`
 - `Stakeholder.relationship` ← 1: `Stakeholder.current_relationships`
@@ -245,7 +214,7 @@ onto one Carta field — most visibly the reverse-edge lineage collapsing onto `
 - `WarrantExerciseTransaction.resultingSecurityId` ← 1: `WarrantExercise.resulting_security_ids`
 - `WarrantTransferTransaction.resultingSecurityId` ← 1: `WarrantTransfer.resulting_security_ids`
 
-## C. No home — no Carta target at all (233 across 46 objects)
+## C. No home — no Carta target at all (270 across 46 objects)
 
 A different animal: Carta has no field to hold these (also in core-gaps.md §a). NOT what
 rich-Core recovers — listed for contrast.
@@ -253,14 +222,14 @@ rich-Core recovers — listed for contrast.
 - **ConvertibleAcceptance** *(not yet admissible)* — **date**
 - **ConvertibleCancellation** — balance_security_id
 - **ConvertibleConversion** — balance_security_id, capitalization_definition, **reason_text**, **resulting_security_ids**, **trigger_id**
-- **ConvertibleIssuance** — board_approval_date, consideration_text, pro_rata, **seniority**, stockholder_approval_date
+- **ConvertibleIssuance** — board_approval_date, consideration_text, pro_rata, **security_law_exemptions**, **seniority**, stockholder_approval_date
 - **ConvertibleRetraction** *(not yet admissible)* — **date**, **reason_text**, **security_id**
 - **ConvertibleTransfer** *(not yet admissible)* — **amount**, balance_security_id, consideration_text, **date**, **resulting_security_ids**, **security_id**
-- **Document** *(not yet admissible)* — **md5**, related_objects
-- **EquityCompensationAcceptance** *(not yet admissible)* — **date**
-- **EquityCompensationCancellation** — balance_security_id
+- **Document** *(not yet admissible)* — **md5**, path, related_objects, uri
+- **EquityCompensationAcceptance** *(not yet admissible)* — **date**, **security_id**
+- **EquityCompensationCancellation** — balance_security_id, **date**, **quantity**, **reason_text**, **security_id**
 - **EquityCompensationExercise** — consideration_text, **date**, **quantity**, **resulting_security_ids**, **security_id**
-- **EquityCompensationIssuance** *(not yet admissible)* — base_price, board_approval_date, **compensation_type**, consideration_text, early_exercisable, exercise_price, **expiration_date**, option_grant_type, stockholder_approval_date, **termination_exercise_windows**, vesting_start_date, vestings
+- **EquityCompensationIssuance** *(not yet admissible)* — base_price, board_approval_date, **compensation_type**, consideration_text, **custom_id**, **date**, early_exercisable, exercise_price, **expiration_date**, option_grant_type, **quantity**, **security_id**, **security_law_exemptions**, **stakeholder_id**, stock_class_id, stock_plan_id, stockholder_approval_date, **termination_exercise_windows**, vesting_start_date, vesting_template_id, vestings
 - **EquityCompensationRelease** — consideration_text, **date**, **quantity**, **release_price**, **resulting_security_ids**, **security_id**, **settlement_date**
 - **EquityCompensationRepricing** — **date**, **new_exercise_price**, **security_id**
 - **EquityCompensationRetraction** *(not yet admissible)* — **date**, **reason_text**, **security_id**
@@ -278,22 +247,22 @@ rich-Core recovers — listed for contrast.
 - **StockClassSplit** *(not yet admissible)* — **date**, **split_ratio**, **stock_class_id**
 - **StockConsolidation** *(not yet admissible)* — **date**, reason_text
 - **StockConversion** *(not yet admissible)* — **date**, **quantity_converted**, **security_id**
-- **StockIssuance** *(not yet admissible)* — board_approval_date, consideration_text, issuance_type, share_numbers_issued, **stock_legend_ids**, stockholder_approval_date, vestings
+- **StockIssuance** *(not yet admissible)* — board_approval_date, consideration_text, issuance_type, **security_law_exemptions**, share_numbers_issued, **stock_legend_ids**, stockholder_approval_date, vestings
 - **StockLegendTemplate** *(not yet admissible)* — **name**, **text**
-- **StockPlan** — board_approval_date, default_cancellation_behavior, stockholder_approval_date
+- **StockPlan** — board_approval_date, default_cancellation_behavior, **initial_shares_reserved**, stock_class_id, stock_class_ids, stockholder_approval_date
 - **StockPlanPoolAdjustment** *(not yet admissible)* — board_approval_date, **date**, **shares_reserved**, **stock_plan_id**, stockholder_approval_date
-- **StockPlanReturnToPool** — **date**, **quantity**, **reason_text**
+- **StockPlanReturnToPool** — **date**, **quantity**, **reason_text**, **security_id**, **stock_plan_id**
 - **StockReissuance** *(not yet admissible)* — **date**, reason_text, **security_id**, split_transaction_id
 - **StockRepurchase** *(not yet admissible)* — consideration_text, **date**, **price**, **security_id**
 - **StockRetraction** *(not yet admissible)* — **date**, **reason_text**, **security_id**
 - **StockTransfer** — consideration_text, **security_id**
-- **Valuation** — board_approval_date, **effective_date**, provider, stockholder_approval_date, **valuation_type**
+- **Valuation** *(not yet admissible)* — board_approval_date, **effective_date**, **price_per_share**, provider, **stock_class_id**, stockholder_approval_date, **valuation_type**
 - **VestingAcceleration** *(not yet admissible)* — **date**, **quantity**, **reason_text**, **security_id**
 - **VestingEvent** *(not yet admissible)* — **date**, **event_id**, **security_id**
 - **WarrantAcceptance** *(not yet admissible)* — **date**
 - **WarrantCancellation** — balance_security_id
 - **WarrantExercise** *(not yet admissible)* — consideration_text, **trigger_id**
-- **WarrantIssuance** *(not yet admissible)* — board_approval_date, consideration_text, **exercise_triggers**, quantity_source, stockholder_approval_date, vestings
+- **WarrantIssuance** *(not yet admissible)* — board_approval_date, consideration_text, **exercise_triggers**, quantity_source, **security_law_exemptions**, stockholder_approval_date, vestings
 - **WarrantRetraction** *(not yet admissible)* — **date**, **reason_text**, **security_id**
 - **WarrantTransfer** — balance_security_id, consideration_text
 

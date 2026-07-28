@@ -1,6 +1,6 @@
 # Polymorphic Transaction Routing: OCF → Carta Per-Instrument Families
 
-Design + as-built notes for extending the `.mapping.md` convention to express how one OCF *polymorphic* transaction routes onto Carta's *dedicated* per-instrument transaction and security families. The design is **implemented** — the additive validator (`validatePolymorphicMapping`), the `--verbose` route report, per-variant target maps (§4.8), and the two migrated issuance fan-outs (`EquityCompensationIssuance` / `StockIssuance`). Landed subsequently and also implemented: the `composite:` construct (§4.9) and `StockTransfer`'s green `route_by_property:` + `composite:` (cancel + issue) mapping, now admitted into OCF Core. Every Carta type and field named below was confirmed against the pinned bundle `target-schema/Carta.schema.json`; every parser/validator claim against `scripts/lib/{mapping-validator,mapping-parser}.ts`. Where no Carta home exists, that gap is called out rather than papered over.
+Design + as-built notes for extending the `.mapping.md` convention to express how one OCF *polymorphic* transaction routes onto Carta's *dedicated* per-instrument transaction and security families. The design is **implemented** — the additive validator (`validatePolymorphicMapping`), the `--verbose` route report, per-variant target maps (§4.8), and the two migrated issuance fan-outs (`EquityCompensationIssuance` / `StockIssuance`). Landed subsequently and also implemented: the `composite:` construct (§4.9) and `StockTransfer`'s green `route_by_property:` + `composite:` (cancel + issue) mapping, now admitted into OCF Core. Retained Carta types and fields named below were confirmed against the pinned bundle `target-schema/Carta.schema.json`; older SAR examples are explicitly marked as April-bundle history. Every parser/validator claim is grounded in `scripts/lib/{mapping-validator,mapping-parser}.ts`. Where no Carta home exists, that gap is called out rather than papered over.
 
 ---
 
@@ -11,6 +11,14 @@ called a discriminator by the source schema). Carta encodes it as **dedicated tr
 security families per instrument**. The current convention assumes a 1:1 object correspondence —
 one OCF schema file maps to one Carta target object via a single `fields:` map — and that
 assumption is exactly what breaks.
+
+> **Current-schema notice (2026-06-22 bundle).** The June 22 Carta refresh removed the SAR
+> transaction definitions (`SarIssuanceTransaction`, `SarExerciseTransaction`, and
+> `SarCancellationTransaction`) as well as `SarTransactionItem`. The current mapping files retain
+> the `Sar` route labels for OCF completeness, but set their `primary_targets` and SAR-specific
+> field targets to `null`. Any SAR target pointers shown in older design examples below are
+> historical April-bundle examples and are not live mappings; the deterministic refresh checker
+> enforces that no current `.mapping.md` file references them.
 
 ### 1.1 What the current format is
 
@@ -34,7 +42,7 @@ Coverage is a single scalar matched by `/^(\d+)\/(\d+)$/`: numerator = non-`TODO
 |---|---|---|
 | **Object-level fan-out by route property** | `EquityCompensationIssuance.compensation_type` ∈ {OPTION, OPTION_NSO, OPTION_ISO, RSU, CSAR, SSAR} routes one OCF tx to 3 Carta families | `enum-remap` rewrites a *field value*; it cannot switch the *target object*. There is one `target` per field and one Carta `$def` per file. |
 | **Cross-record JOIN dependency** | `EquityCompensationExercise` carries only `security_id` — its family lives on the *issuance* record, not on itself | The route property is not on the record being mapped, so the mapping must declare the relationship. |
-| **Behavioral verb divergence** | The same OCF "exercise" verb becomes `OptionExerciseTransaction` for options, `SarExerciseTransaction` for SARs, but `RsuSettlementTransaction` for RSUs — RSUs *settle*, they do not exercise | A different Carta *transaction type* with a different field set is an object-selection decision, not a field rename; the kind vocabulary has no slot for it. |
+| **Behavioral verb divergence** | The same OCF "exercise" verb becomes `OptionExerciseTransaction` for options, while RSUs *settle* rather than exercise. The former SAR branch existed in the April bundle but has no June target. | A different Carta *transaction type* with a different field set is an object-selection decision, not a field rename; the kind vocabulary has no slot for it. |
 
 ### 1.3 The two concrete route properties (issuance level)
 
@@ -58,14 +66,14 @@ Each row is `(route property value) → (Carta transaction, Carta security objec
 |---|---|---|---|
 | EquityCompensationIssuance | OPTION / OPTION_NSO / OPTION_ISO | `OptionIssuanceTransaction` | `OptionGrant` |
 | EquityCompensationIssuance | RSU | `RsuIssuanceTransaction` | `RestrictedStockUnit` |
-| EquityCompensationIssuance | CSAR / SSAR | `SarIssuanceTransaction` | **none** (no SAR security `$def`; §6) |
+| EquityCompensationIssuance | CSAR / SSAR | **none** (SAR transaction definition removed) | **none** (SAR transaction and security definitions removed) |
 | StockIssuance | RSA | `RsaIssuanceTransaction` | `RestrictedStockAward` |
 | StockIssuance | FOUNDERS_STOCK | `CertificateIssuanceTransaction` | `Certificate` |
 | ConvertibleIssuance | NOTE / SAFE / CONVERTIBLE_SECURITY | `ConvertibleIssuanceTransaction` | `ConvertibleNote` |
 
 Notes grounded in the bundle:
 - The OPTION* → `OptionGrant.stockOptionType` step (OCF `OptionType`/`compensation_type` → Carta `StockOptionType`) is the *only* place where today's `enum-remap` applies. Everything else is object-level routing — the format's blind spot.
-- CSAR vs SSAR (cash- vs stock-settled) **collapse to one** `SarIssuanceTransaction`; Carta has no settlement-mode field to carry the distinction, so it is lost.
+- CSAR vs SSAR remain explicitly unmappable in the June bundle because the SAR transaction family was removed; no settlement-mode mapping is available.
 - `ConvertibleIssuance` needs **no** object-level routing: one family, and `convertible_type` is a `NoteBlock.noteType` enum-remap. It remains a simple single-family mapping.
 
 ### 2.2 Downstream propagation — the JOIN
@@ -97,16 +105,16 @@ The key consequence of §2.2: one OCF verb maps to different Carta *transaction 
 | OCF verb | Resolved family | Carta transaction | Note |
 |---|---|---|---|
 | Exercise | Option | `OptionExerciseTransaction` | options exercise (produces an `OptionExercise` record + resulting `Certificate`) |
-| Exercise | SAR | `SarExerciseTransaction` | SARs exercise, cash-settled (`cashAcquired`) |
+| Exercise | SAR | **none** | SAR transaction definition removed from the June bundle |
 | Exercise | RSU | **none** (invalid) | **RSUs do NOT exercise — they settle.** An OCF *exercise* against an RSU is semantically invalid ⇒ unmappable; RSU settlement is reached via the *Release* verb (next row), which targets `RsuSettlementTransaction`. |
 | Release | RSU | `RsuSettlementTransaction` (settlement record `RestrictedStockUnitSettlement`) | OCF release ≈ Carta RSU settlement. `RsuSettlementTransaction` has no price field; `release_price` lands on `RestrictedStockUnitSettlement.settlementPrice` (a distinct `$def`) |
 | Release | Option / SAR | **none** | options/SARs do not "release" — unmappable for those families |
-| Cancellation | Option / RSU / SAR / RSA / Certificate | `OptionCancellationTransaction` / `RsuCancellationTransaction` / `SarCancellationTransaction` / `RsaCancellationTransaction` / `CertificateCancellationTransaction` | **one OCF cancellation fans out to 5 Carta tx types**, each with its own `*CancellationReason` enum |
-| Repricing | Option / SAR | (mutation of `OptionGrant.exercisePrice`) | only price-bearing families; no Carta "repricing" tx exists |
+| Cancellation | Option / RSU / RSA / Certificate | `OptionCancellationTransaction` / `RsuCancellationTransaction` / `RsaCancellationTransaction` / `CertificateCancellationTransaction` | **one OCF cancellation fans out to 4 retained Carta tx types**; SAR is explicitly unmappable |
+| Repricing | Option | (mutation of `OptionGrant.exercisePrice`) | only the retained option family has a live target; SAR and RSU are explicitly unmappable |
 | Transfer | any equity-comp family | **none** | only `WarrantTransferTransaction` exists |
 | Retraction | any | **none** | Carta has no retraction tx in any family |
 | Acceptance | Option / RSU / RSA | (security field `stakeholderAcceptanceDate`) | not a tx; sets a date on the security object. Present on `OptionGrant` / `RestrictedStockUnit` / `RestrictedStockAward` only |
-| Acceptance | SAR / Certificate (default stock) | **none** | no `stakeholderAcceptanceDate` on `Certificate`, and SAR has no security `$def`; unmappable for these families |
+| Acceptance | SAR / Certificate (default stock) | **none** | SAR transaction/security definitions were removed; `Certificate` has no `stakeholderAcceptanceDate` |
 
 ---
 
@@ -116,27 +124,27 @@ The route property chooses a different transaction `$def` **and** a different se
 
 ### 3.1 `EquityCompensationIssuance` field divergence
 
-`✓` = mapped; `—` = no Carta home in that family. Targets verified against `OptionGrant`, `OptionIssuanceTransaction`, `RsuIssuanceTransaction`, `RestrictedStockUnit`, `SarIssuanceTransaction`.
+`✓` = mapped; `—` = no Carta home in that family. Targets verified against the retained `OptionGrant`, `OptionIssuanceTransaction`, `RsuIssuanceTransaction`, and `RestrictedStockUnit` definitions; the SAR column is now an explicit no-target route.
 
-| OCF field | Option (`OptionIssuanceTransaction`/`OptionGrant`) | RSU (`RsuIssuanceTransaction`/`RestrictedStockUnit`) | SAR (`SarIssuanceTransaction` only) |
+| OCF field | Option (`OptionIssuanceTransaction`/`OptionGrant`) | RSU (`RsuIssuanceTransaction`/`RestrictedStockUnit`) | SAR (no June target) |
 |---|---|---|---|
 | compensation_type | ✓ enum-remap → `OptionGrant.stockOptionType` (ISO/NSO/OTHER) | — (family implied; no type field) | — (family implied; CSAR/SSAR distinction lost) |
 | option_grant_type | ✓ enum-remap → `stockOptionType` (deprecated, redundant) | — | — |
 | quantity | ✓ `.quantity` | ✓ `.quantity` | ✓ `.quantity` |
-| **exercise_price** | ✓ `OptionIssuanceTransaction.exercisePrice` (anyOf *requires* it here) | — (no price field on `RsuIssuanceTransaction`) | — (`SarIssuanceTransaction` has no separate exercise-price slot; SAR uses `base_price`) |
-| **base_price** | — (no Carta home; options don't carry a base price) | — | ✓ `SarIssuanceTransaction.exercisePrice` (anyOf *requires* `base_price` here; OCF `base_price` → Carta `exercisePrice`) |
+| **exercise_price** | ✓ `OptionIssuanceTransaction.exercisePrice` (anyOf *requires* it here) | — (no price field on `RsuIssuanceTransaction`) | — (SAR family removed from the June bundle) |
+| **base_price** | — (no Carta home; options don't carry a base price) | — | — (SAR family removed from the June bundle) |
 | **early_exercisable** | ✓ `OptionGrant.earlyExercisable` (**Option-only home**) | — | — |
 | expiration_date | ✓ `.expirationDatetime` | — (**no expiration field on RSU**) | ✓ `.expirationDatetime` |
 | date | ✓ `.issueDatetime` | ✓ `.issueDatetime` | ✓ `.issueDatetime` |
-| security_id, stakeholder_id, custom_id, board_approval_date | ✓ on `OptionGrant` | ✓ on `RestrictedStockUnit` | partial — `SarTransactionItem` carries `securityId`/`securityLabel`/`stakeholderId`, but it is a tx-item wrapper, not a first-class security `$def`; `board_approval_date` has no home (§6.3) |
+| security_id, stakeholder_id, custom_id, board_approval_date | ✓ on `OptionGrant` | ✓ on `RestrictedStockUnit` | — (SAR transaction/security definitions removed) |
 | stock_class_id / stock_plan_id | ✓ `.shareClassId` / `.equityPlanId` | ✓ | ✓ |
 | vesting_template_id | ✓ `.vestingScheduleTemplateId` | ✓ `.vestingScheduleTemplateId` | ✓ `.vestingScheduleTemplateId` |
-| vesting_start_date | ✓ `OptionGrant.vestingStartDate` | ✓ `RestrictedStockUnit.vestingStartDate` | — (no SAR security obj) |
-| vestings | ✓ `OptionGrant.vestingEvents` | ✓ `RestrictedStockUnit.vestingEvents` | — (no SAR security obj) |
+| vesting_start_date | ✓ `OptionGrant.vestingStartDate` | ✓ `RestrictedStockUnit.vestingStartDate` | — (SAR family removed) |
+| vestings | ✓ `OptionGrant.vestingEvents` | ✓ `RestrictedStockUnit.vestingEvents` | — (SAR family removed) |
 | termination_exercise_windows | ✓ `OptionGrant.exercisePeriods` | — (RSUs settle, no exercise periods) | — |
 | stockholder_approval_date, consideration_text, security_law_exemptions, comments | — (absent in family) | — | — |
 
-Cross-variant divergence flags: `exercise_price` (Option only); `base_price` (SAR only, → `exercisePrice`); `early_exercisable` (Option only); `expiration_date` (Option/SAR, not RSU); security-identity fields (Option/RSU, not SAR).
+Cross-variant divergence flags: `exercise_price` (Option only); `base_price` (SAR route has no June target); `early_exercisable` (Option only); `expiration_date` (Option only among retained targets); security-identity fields (Option/RSU, not SAR).
 
 ### 3.2 `StockIssuance` field divergence
 
@@ -194,7 +202,7 @@ shared:                                        # fields identical across all var
 - `route_by_property.on_property` — the local routing property. The validator asserts it is an enum-typed source property via `detectEnumValues`.
 - `route_by_property.lookup_by` — the joined routing form. `key` is a property on the current record; `through.mapping` identifies the related mapping; and `through.on_property` is the enum property read from the looked-up record.
 - `variants.<label>.when` — the enum values this variant claims. Across all variants these must **partition** the source enum (pairwise disjoint; with `exhaustive: true`, every value claimed).
-- `variants.<label>.primary_targets` — the family roots (a list, because one OCF record fans out to a transaction *and* a security object). Each must resolve. For families with no security `$def` (SAR) the list holds only the transaction.
+- `variants.<label>.primary_targets` — the family roots (a list, because one OCF record fans out to a transaction *and* a security object). Each must resolve. A removed family may instead use `null` for an explicitly unmappable route; in the current bundle the SAR variant does so.
 - `variants.<label>.fields` — a complete field map for that variant, using the *exact* existing entry grammar.
 - `shared:` — fields common to every variant, expanded into each before coverage counting. A shared field whose *kind* is identical but whose Carta *home* differs by variant uses a per-variant target map (§4.8) instead of a single pointer; the rest carry one pointer (or `unmappable`) as usual.
 
@@ -272,9 +280,12 @@ a polymorphic mapping. `validateEntryShape`/`validateValuesBlock`/`validateEntry
 the source of truth for entry validation. Coverage reporting is a separate derived artifact, so
 no mapping document needs a numerator or denominator.
 
-### 4.7 Worked example — `EquityCompensationIssuance.mapping.md`
+### 4.7 Worked example — `EquityCompensationIssuance.mapping.md` (historical April bundle)
 
-The proposed `## Mapping` block. Targets verified: `OptionIssuanceTransaction` has `{issueDatetime, quantity, stockOptionType, exercisePrice, equityPlanId, shareClassId, expirationDatetime, vestingScheduleTemplateId}`; `OptionGrant` carries `earlyExercisable`, `vestingEvents`, `exercisePeriods`, `boardApprovalDate`, `stakeholderId`, `securityId`, `securityLabel`; `RsuIssuanceTransaction` has no exercise/base price; `SarIssuanceTransaction` uses `exercisePrice` (no distinct base-price field). `StockOptionType` includes `ISO`, `NSO`, `OTHER`, `STOCK_OPTION_TYPE_INTL`.
+The proposed `## Mapping` block is retained as a historical design example. Its SAR pointers
+were valid only against the April bundle; the current June mapping keeps the `Sar` route but uses
+`primary_targets: null` and null SAR field targets. The retained Option/RSU targets remain useful
+examples. `StockOptionType` includes `ISO`, `NSO`, `OTHER`, `STOCK_OPTION_TYPE_INTL`.
 
 ```yaml
 # kind vocabulary: rename | construct | select | split | combine | enum-remap | union-map | computed | unmappable | TODO
@@ -371,9 +382,12 @@ variants:
 #     per variant and are handled by per-variant target maps (§4.8), not by marking compensation_type.
 ```
 
-### 4.8 Per-variant target maps (divergent shared homes)
+### 4.8 Per-variant target maps (divergent shared homes; historical SAR example)
 
-A `shared:` field is common to every variant, but its Carta *home* often differs by variant — `quantity` lands on `OptionIssuanceTransaction` for options, `RsuIssuanceTransaction` for RSUs, `SarIssuanceTransaction` for SARs; `security_id` lands on `OptionGrant` vs `RestrictedStockUnit` and has **no** home for SARs. Rather than pin the field to one representative family, its `target:` is a **map keyed by variant label** instead of a single pointer:
+A `shared:` field is common to every variant, but its Carta *home* often differs by variant. The
+following map is preserved as an April-bundle design example; in the June bundle the SAR value is
+`null` because the SAR transaction family was removed. Rather than pin the field to one
+representative family, its `target:` is a **map keyed by variant label** instead of a single pointer:
 
 ```yaml
 shared:
@@ -523,7 +537,7 @@ When `route_by_property` is absent, simple mappings continue through the ordinar
 | **Cross-field precedence** | `compensation_type` and deprecated `option_grant_type` both target `stockOptionType`; the format lists both but cannot say which wins. Importer logic. |
 | **Shared field, divergent *kind*** | Per-variant target maps (§4.8) **solve** the divergent-*home* case — a shared field of uniform kind landing on `OptionGrant` vs `RestrictedStockUnit` now names each directly. The residual: a field whose *kind* differs per variant (e.g. `StockIssuance.issuance_type`: a structural router in RSA but `enum-remap` in default, §3.2) cannot be `shared:` at all — it lives in each variant's `fields:` instead. |
 | **One route-property axis** | Routing is on a single field. `composite:` (§4.9) adds an orthogonal *additive* step axis (family × step, all steps emitted), but a second mutually-exclusive route axis (type × settlement mode) would still need nested variants — undefined here. |
-| **Lossy collapses are recorded, not repaired** | CSAR vs SSAR collapse; `OPTION` (unspecified) → `OTHER`. Visible as enum-remap values / `no-equivalent`, but lossy by Carta's design. |
+| **Lossy gaps are recorded, not repaired** | CSAR vs SSAR are now explicitly unmappable; `OPTION` (unspecified) → `OTHER` remains a lossy enum-remap. Visible as `null`/`no-equivalent` or enum-remap values. |
 
 ### 6.2 Carta-side import assumptions
 
@@ -533,8 +547,8 @@ The model assumes Carta's importer (a) holds the full issuance set indexed so it
 
 | Item | Status |
 |---|---|
-| **No SAR security `$def`** | Carta has the full SAR *transaction* family (`SarIssuanceTransaction`, `SarExerciseTransaction`, `SarCancellationTransaction`) but **no first-class SAR security object** like `OptionGrant`. The only SAR-level container is `SarTransactionItem` (a tx-item wrapper), which carries `securityId`/`securityLabel`/`stakeholderId` — so identity fields *could* land there — but it exposes no slot for `custom_id`, `board_approval_date`, `vestings`, or `termination_exercise_windows`. **As built, the `Sar` column marks all six security-level fields (`security_id`/`custom_id`/`stakeholder_id`/`board_approval_date`/`vestings`/`vesting_start_date`) `null`** rather than routing identity onto the tx-item wrapper — `SarTransactionItem` is not a security object. **Do not invent a SAR security `$def`.** |
-| **CSAR vs SSAR** | Collapse to one `SarIssuanceTransaction`; the cash-vs-stock-settled distinction is not representable. |
+| **Removed SAR family** | The June 22 bundle removed the SAR transaction definitions and `SarTransactionItem`, so the `Sar` route has `primary_targets: null` and null SAR-specific field targets. **Do not invent a SAR target.** |
+| **CSAR vs SSAR** | Both route values are explicitly unmappable in the June bundle; no cash-vs-stock-settled distinction can be carried. |
 | **`stock_legend_ids`, `share_numbers_issued`** | OCF carries them (the former REQUIRED); no Carta home in either `StockIssuance` variant. |
 | **`early_exercisable`** | Option-only; unmappable for RSU and SAR. |
 | **No-Carta-target verbs** | `EquityCompensationTransfer` (no equity-comp transfer tx), `EquityCompensationRetraction` (no retraction tx anywhere), `EquityCompensationRelease` for non-RSU families — all per-case `unmappable`. |

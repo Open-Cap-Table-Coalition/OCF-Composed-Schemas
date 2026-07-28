@@ -13,7 +13,7 @@ required_fields:
   - stock_plan_id
   - quantity
 target_standard: Carta
-target_version: "v1alpha1 (2026-04-30)"
+target_version: "v1alpha1 (2026-06-22)"
 status: complete
 last_generated: 2026-05-18
 ---
@@ -144,20 +144,20 @@ shared:
     target:
       Option:
         - "#/$defs/OptionTransactionItem/properties/securityId"
+        - "#/$defs/OptionGrant/properties/id"
         - "#/$defs/OptionGrant/properties/securityId"
       Rsu:
         - "#/$defs/RsuTransactionItem/properties/securityId"
+        - "#/$defs/RestrictedStockUnit/properties/id"
         - "#/$defs/RestrictedStockUnit/properties/securityId"
-      Sar: "#/$defs/SarTransactionItem/properties/securityId"
+      Sar: null
     inverse:
       role: reference-only
       note: Identifies the existing cancelled security; it does not reconstruct a return event.
   stock_plan_id:
-    kind: rename
-    target: "#/$defs/OptionPoolSummary/properties/optionPoolId"
-    inverse:
-      role: reference-only
-      note: Carries the destination pool relationship only; it is not a Carta pool-ledger record.
+    kind: unmappable
+    target: null
+    reason: excluded-from-snapshot
   reason_text:
     kind: unmappable
     target: null
@@ -189,8 +189,7 @@ variants:
 
   Sar:
     when: [CSAR, SSAR]
-    primary_targets:
-      - "#/$defs/SarTransactionItem"
+    primary_targets: null
     fields: {}
 ```
 
@@ -218,5 +217,5 @@ Use a link below to open a prefilled GitHub issue. The issue can be copied into 
 
 ## Notes / open questions
 
-- Join on `security_id` to the compensation family. Carta has no return-to-pool transaction, but the aggregate result is retained: security and pool IDs identify the existing award and `OptionPoolSummary`, while Option/RSU quantity maps to `returnedToPoolQuantity`.
+- Join on `security_id` to the compensation family. Carta has no return-to-pool transaction; Option/RSU quantity still maps to `returnedToPoolQuantity`. The pool-summary definition and SAR transaction-item definition were removed, so `stock_plan_id` and the entire SAR route are explicitly excluded.
 - Repeated return events are summed into the aggregate and cannot be reconstructed as individual events. `date` and `reason_text` have no target; SAR quantity and OCF scaffolding remain unmappable.

@@ -8,7 +8,7 @@ required_fields:
   - id
   - object_type
 target_standard: Carta
-target_version: v1alpha1 (2026-04-30)
+target_version: "v1alpha1 (2026-06-22)"
 status: complete
 last_generated: 2026-05-18
 ---
@@ -118,15 +118,17 @@ fields:
     values:
       DOCUMENT: null
   path:
-    kind: computed
-    target: "#/$defs/Document/properties/fileId"
+    kind: unmappable
+    target: null
+    reason: excluded-from-snapshot
   related_objects:
     kind: unmappable
     target: null
     reason: no-equivalent
   uri:
-    kind: computed
-    target: "#/$defs/Document/properties/fileId"
+    kind: unmappable
+    target: null
+    reason: excluded-from-snapshot
   md5:
     kind: unmappable
     target: null
@@ -156,6 +158,6 @@ Use a link below to open a prefilled GitHub issue. The issue can be copied into 
 
 ## Notes / open questions
 
-- OCF `Document` carries a file path or URI plus metadata; Carta stores the uploaded file by `Document.fileId`.
-- `path` and `uri` are mutually exclusive source alternatives and both compute the returned `fileId` after upload. They are not literal value-renames.
-- `md5` and `related_objects` have no Carta Document target. Carta's `name` and `url` are server-computed outputs.
+- OCF `Document` carries a file path or URI plus metadata, but the June 22 Carta bundle removes the `Document` definition entirely.
+- `path` and `uri` are mutually exclusive source alternatives and are explicitly excluded from this snapshot; they are not literal value-renames to a retained Carta target.
+- `md5` and `related_objects` also have no target in the retained bundle. Carta's former file record is outside this snapshot.

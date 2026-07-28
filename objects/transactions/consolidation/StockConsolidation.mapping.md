@@ -10,7 +10,7 @@ required_fields:
   - resulting_security_id
   - security_ids
 target_standard: Carta
-target_version: "v1alpha1 (2026-04-30)"
+target_version: "v1alpha1 (2026-06-22)"
 status: complete
 last_generated: 2026-05-18
 ---
@@ -133,9 +133,11 @@ shared:
     kind: computed                 # result identity + lineage: the consolidated-into security records the inputs
     target:
       Rsa:
+        - "#/$defs/RestrictedStockAward/properties/id"
         - "#/$defs/RestrictedStockAward/properties/securityId"
         - "#/$defs/RestrictedStockAwardPrecededBy/properties/securities"
       Default:
+        - "#/$defs/Certificate/properties/id"
         - "#/$defs/Certificate/properties/securityId"
         - "#/$defs/CertificatePrecededBy/properties/securities"
   security_ids:

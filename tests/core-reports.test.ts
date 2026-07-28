@@ -62,7 +62,10 @@ describe("core reports (the markdown drift gate's premise)", () => {
 
   it("shares the normalized source-edge projection used by the Mapping Explorer", async () => {
     const d = await deriveCore(process.cwd());
-    const object = d.corpus.objects.find((candidate) => !candidate.aliasOf)!;
+    const object = d.corpus.objects.find(
+      (candidate) =>
+        !candidate.aliasOf && sourceEdgesFor(d.corpus, candidate).some((edge) => edge.field)
+    )!;
     const edge = sourceEdgesFor(d.corpus, object).find((candidate) => candidate.field)!;
     const index = sourceFieldTargetIndex(d.corpus);
     const key = `${edge.source} ${edge.variant} ${edge.field}`;

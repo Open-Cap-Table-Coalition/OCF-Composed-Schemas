@@ -11,7 +11,7 @@ required_fields:
   - price
   - quantity
 target_standard: Carta
-target_version: "v1alpha1 (2026-04-30)"
+target_version: "v1alpha1 (2026-06-22)"
 status: complete
 last_generated: 2026-05-18
 ---
@@ -145,9 +145,11 @@ shared:
     kind: computed                 # remainder identity + lineage on the post-repurchase security
     target:
       Rsa:
+        - "#/$defs/RestrictedStockAward/properties/id"
         - "#/$defs/RestrictedStockAward/properties/securityId"
         - "#/$defs/RestrictedStockAwardPrecededBy/properties/securities"
       Default:
+        - "#/$defs/Certificate/properties/id"
         - "#/$defs/Certificate/properties/securityId"
         - "#/$defs/CertificatePrecededBy/properties/securities"
 

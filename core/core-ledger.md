@@ -24,22 +24,22 @@ corpus for legacy discriminator compatibility.
 | Document | — | 0 | 0 | ✗ | no-payload |
 | EquityCompensationAcceptance | Option | 2 | 0 | ✗ | no-payload |
 | EquityCompensationAcceptance | Rsu | 2 | 0 | ✗ | no-payload |
-| EquityCompensationAcceptance | Sar | 1 | 0 | ✗ | no-payload |
+| EquityCompensationAcceptance | Sar | 0 | 0 | ✗ | no-payload |
 | EquityCompensationCancellation | Option | 3 | 1 | ✓ | — |
 | EquityCompensationCancellation | Rsu | 3 | 1 | ✓ | — |
-| EquityCompensationCancellation | Sar | 3 | 1 | ✓ | — |
+| EquityCompensationCancellation | Sar | 0 | 0 | ✗ | no-payload |
 | EquityCompensationExercise | Option | 3 | 1 | ✓ | — |
 | EquityCompensationExercise | Rsu | 0 | 0 | ✗ | no-payload |
-| EquityCompensationExercise | Sar | 3 | 1 | ✓ | — |
+| EquityCompensationExercise | Sar | 0 | 0 | ✗ | no-payload |
 | EquityCompensationIssuance | Option | 16 | 9 | ✗ | vesting_template_id→VestingTerms |
 | EquityCompensationIssuance | Rsu | 11 | 4 | ✗ | vesting_template_id→VestingTerms |
-| EquityCompensationIssuance | Sar | 10 | 3 | ✗ | vesting_template_id→VestingTerms |
+| EquityCompensationIssuance | Sar | 0 | 0 | ✗ | no-payload |
 | EquityCompensationRelease | Option | 0 | 0 | ✗ | no-payload |
 | EquityCompensationRelease | Rsu | 5 | 3 | ✓ | — |
 | EquityCompensationRelease | Sar | 0 | 0 | ✗ | no-payload |
 | EquityCompensationRepricing | Option | 1 | 1 | ✓ | — |
 | EquityCompensationRepricing | Rsu | 0 | 0 | ✗ | no-payload |
-| EquityCompensationRepricing | Sar | 1 | 1 | ✓ | — |
+| EquityCompensationRepricing | Sar | 0 | 0 | ✗ | no-payload |
 | EquityCompensationRetraction | Option | 0 | 0 | ✗ | no-payload |
 | EquityCompensationRetraction | Rsu | 0 | 0 | ✗ | no-payload |
 | EquityCompensationRetraction | Sar | 0 | 0 | ✗ | no-payload |
@@ -68,11 +68,11 @@ corpus for legacy discriminator compatibility.
 | StockIssuance | Default | 10 | 3 | ✗ | vesting_terms_id→VestingTerms |
 | StockIssuance | Rsa | 12 | 5 | ✗ | vesting_terms_id→VestingTerms |
 | StockLegendTemplate | — | 0 | 0 | ✗ | no-payload |
-| StockPlan | — | 4 | 2 | ✓ | — |
+| StockPlan | — | 1 | 1 | ✓ | — |
 | StockPlanPoolAdjustment | — | 0 | 0 | ✗ | no-payload |
-| StockPlanReturnToPool | Option | 3 | 1 | ✓ | — |
-| StockPlanReturnToPool | Rsu | 3 | 1 | ✓ | — |
-| StockPlanReturnToPool | Sar | 2 | 0 | ✗ | no-payload |
+| StockPlanReturnToPool | Option | 2 | 1 | ✓ | — |
+| StockPlanReturnToPool | Rsu | 2 | 1 | ✓ | — |
+| StockPlanReturnToPool | Sar | 0 | 0 | ✗ | no-payload |
 | StockReissuance | Default | 0 | 0 | ✗ | no-payload |
 | StockReissuance | Rsa | 0 | 0 | ✗ | no-payload |
 | StockRepurchase | Default | 0 | 0 | ✗ | no-payload |
@@ -81,7 +81,7 @@ corpus for legacy discriminator compatibility.
 | StockRetraction | Rsa | 0 | 0 | ✗ | no-payload |
 | StockTransfer | Default | 2 | 1 | ✓ | — |
 | StockTransfer | Rsa | 2 | 1 | ✓ | — |
-| Valuation | — | 2 | 1 | ✓ | — |
+| Valuation | — | 0 | 0 | ✗ | no-payload |
 | VestingAcceleration | — | 0 | 0 | ✗ | no-payload |
 | VestingEvent | — | 0 | 0 | ✗ | no-payload |
 | VestingTerms | — | 1 | 0 | ✗ | no-payload |
@@ -111,9 +111,9 @@ values its `const:` supplies implicitly (the reason codes we always know).
 | Document  | — | id | out | no-destination | kind unmappable |
 | Document  | — | comments | out | no-destination | kind unmappable |
 | Document  | — | object_type | out | no-destination | kind unmappable |
-| Document  | — | path | out | heuristic | kind computed |
+| Document  | — | path | out | no-destination | kind unmappable |
 | Document  | — | related_objects | out | no-destination | kind unmappable |
-| Document  | — | uri | out | heuristic | kind computed |
+| Document  | — | uri | out | no-destination | kind unmappable |
 | Document  | — | md5 | out | no-destination | kind unmappable |
 | Financing  | — | id | out | no-destination | kind unmappable |
 | Financing  | — | comments | out | no-destination | kind unmappable |
@@ -185,26 +185,26 @@ values its `const:` supplies implicitly (the reason codes we always know).
 | StockLegendTemplate  | — | object_type | out | no-destination | kind unmappable |
 | StockLegendTemplate  | — | name | out | no-destination | kind unmappable |
 | StockLegendTemplate  | — | text | out | no-destination | kind unmappable |
-| StockPlan | — | id | core | direct |  |
+| StockPlan | — | id | out | no-destination | kind unmappable |
 | StockPlan | — | comments | out | no-destination | kind unmappable |
 | StockPlan | — | object_type | out | no-destination | kind unmappable |
 | StockPlan | — | plan_name | core | direct |  |
 | StockPlan | — | board_approval_date | out | no-destination | kind unmappable |
 | StockPlan | — | stockholder_approval_date | out | no-destination | kind unmappable |
-| StockPlan | — | initial_shares_reserved | core | widening |  |
+| StockPlan | — | initial_shares_reserved | out | no-destination | kind unmappable |
 | StockPlan | — | default_cancellation_behavior | out | no-destination | kind unmappable |
-| StockPlan | — | stock_class_id | core | direct |  |
-| StockPlan | — | stock_class_ids | out | existence-loss | select (first_stock_class_id) |
-| Valuation | — | id | out | no-destination | kind unmappable |
-| Valuation | — | comments | out | no-destination | kind unmappable |
-| Valuation | — | object_type | out | no-destination | kind unmappable |
-| Valuation | — | provider | out | no-destination | kind unmappable |
-| Valuation | — | board_approval_date | out | no-destination | kind unmappable |
-| Valuation | — | stockholder_approval_date | out | no-destination | kind unmappable |
-| Valuation | — | price_per_share | core | direct |  |
-| Valuation | — | effective_date | out | no-destination | kind unmappable |
-| Valuation | — | stock_class_id | core | direct |  |
-| Valuation | — | valuation_type | out | no-destination | kind unmappable |
+| StockPlan | — | stock_class_id | out | no-destination | kind unmappable |
+| StockPlan | — | stock_class_ids | out | no-destination | kind unmappable |
+| Valuation  | — | id | out | no-destination | kind unmappable |
+| Valuation  | — | comments | out | no-destination | kind unmappable |
+| Valuation  | — | object_type | out | no-destination | kind unmappable |
+| Valuation  | — | provider | out | no-destination | kind unmappable |
+| Valuation  | — | board_approval_date | out | no-destination | kind unmappable |
+| Valuation  | — | stockholder_approval_date | out | no-destination | kind unmappable |
+| Valuation  | — | price_per_share | out | no-destination | kind unmappable |
+| Valuation  | — | effective_date | out | no-destination | kind unmappable |
+| Valuation  | — | stock_class_id | out | no-destination | kind unmappable |
+| Valuation  | — | valuation_type | out | no-destination | kind unmappable |
 | VestingTerms  | — | id | core | direct |  |
 | VestingTerms  | — | object_type | out | no-destination | kind unmappable |
 | VestingTerms  | — | statements | out | heuristic | items: VestingStatement drops schedule, event_condition (per type mapping) |
@@ -226,7 +226,7 @@ values its `const:` supplies implicitly (the reason codes we always know).
 | EquityCompensationAcceptance  | Sar | id | out | no-destination | kind unmappable |
 | EquityCompensationAcceptance  | Sar | comments | out | no-destination | kind unmappable |
 | EquityCompensationAcceptance  | Sar | object_type | out | no-destination | kind unmappable |
-| EquityCompensationAcceptance  | Sar | security_id | core | direct |  |
+| EquityCompensationAcceptance  | Sar | security_id | out | no-destination | kind unmappable |
 | EquityCompensationAcceptance  | Sar | date | out | no-destination | kind unmappable |
 | StockAcceptance  | Rsa | id | out | no-destination | kind unmappable |
 | StockAcceptance  | Rsa | comments | out | no-destination | kind unmappable |
@@ -297,14 +297,14 @@ values its `const:` supplies implicitly (the reason codes we always know).
 | EquityCompensationCancellation | Rsu | reason_text | out | heuristic | kind computed |
 | EquityCompensationCancellation | Rsu | date | core | widening |  |
 | EquityCompensationCancellation | Rsu | quantity | core | widening |  |
-| EquityCompensationCancellation | Sar | id | out | no-destination | kind unmappable |
-| EquityCompensationCancellation | Sar | comments | out | no-destination | kind unmappable |
-| EquityCompensationCancellation | Sar | object_type | out | no-destination | kind unmappable |
-| EquityCompensationCancellation | Sar | balance_security_id | out | no-destination | kind unmappable |
-| EquityCompensationCancellation | Sar | security_id | core | direct |  |
-| EquityCompensationCancellation | Sar | reason_text | out | heuristic | kind computed |
-| EquityCompensationCancellation | Sar | date | core | widening |  |
-| EquityCompensationCancellation | Sar | quantity | core | widening |  |
+| EquityCompensationCancellation  | Sar | id | out | no-destination | kind unmappable |
+| EquityCompensationCancellation  | Sar | comments | out | no-destination | kind unmappable |
+| EquityCompensationCancellation  | Sar | object_type | out | no-destination | kind unmappable |
+| EquityCompensationCancellation  | Sar | balance_security_id | out | no-destination | kind unmappable |
+| EquityCompensationCancellation  | Sar | security_id | out | no-destination | kind unmappable |
+| EquityCompensationCancellation  | Sar | reason_text | out | no-destination | kind unmappable |
+| EquityCompensationCancellation  | Sar | date | out | no-destination | kind unmappable |
+| EquityCompensationCancellation  | Sar | quantity | out | no-destination | kind unmappable |
 | StockCancellation | Rsa | id | out | no-destination | kind unmappable |
 | StockCancellation | Rsa | comments | out | no-destination | kind unmappable |
 | StockCancellation | Rsa | object_type | out | no-destination | kind unmappable |
@@ -399,14 +399,14 @@ values its `const:` supplies implicitly (the reason codes we always know).
 | EquityCompensationExercise  | Rsu | date | out | no-destination | kind unmappable |
 | EquityCompensationExercise  | Rsu | quantity | out | no-destination | kind unmappable |
 | EquityCompensationExercise  | Rsu | resulting_security_ids | out | no-destination | kind unmappable |
-| EquityCompensationExercise | Sar | id | out | no-destination | kind unmappable |
-| EquityCompensationExercise | Sar | comments | out | no-destination | kind unmappable |
-| EquityCompensationExercise | Sar | object_type | out | no-destination | kind unmappable |
-| EquityCompensationExercise | Sar | consideration_text | out | no-destination | kind unmappable |
-| EquityCompensationExercise | Sar | security_id | core | direct |  |
-| EquityCompensationExercise | Sar | date | core | widening |  |
-| EquityCompensationExercise | Sar | quantity | core | widening |  |
-| EquityCompensationExercise | Sar | resulting_security_ids | out | heuristic | kind computed; ⚑ possible reverse-edge (ruling B) — target is an array; confirm lossless lineage |
+| EquityCompensationExercise  | Sar | id | out | no-destination | kind unmappable |
+| EquityCompensationExercise  | Sar | comments | out | no-destination | kind unmappable |
+| EquityCompensationExercise  | Sar | object_type | out | no-destination | kind unmappable |
+| EquityCompensationExercise  | Sar | consideration_text | out | no-destination | kind unmappable |
+| EquityCompensationExercise  | Sar | security_id | out | no-destination | kind unmappable |
+| EquityCompensationExercise  | Sar | date | out | no-destination | kind unmappable |
+| EquityCompensationExercise  | Sar | quantity | out | no-destination | kind unmappable |
+| EquityCompensationExercise  | Sar | resulting_security_ids | out | heuristic | kind computed; ⚑ possible reverse-edge (ruling B) — target is an array; confirm lossless lineage |
 | WarrantExercise  | — | id | out | no-destination | kind unmappable |
 | WarrantExercise  | — | comments | out | no-destination | kind unmappable |
 | WarrantExercise  | — | object_type | out | no-destination | kind unmappable |
@@ -425,7 +425,7 @@ values its `const:` supplies implicitly (the reason codes we always know).
 | ConvertibleIssuance | — | board_approval_date | out | no-destination | kind unmappable |
 | ConvertibleIssuance | — | stockholder_approval_date | out | no-destination | kind unmappable |
 | ConvertibleIssuance | — | consideration_text | out | no-destination | kind unmappable |
-| ConvertibleIssuance | — | security_law_exemptions | out | heuristic | kind computed |
+| ConvertibleIssuance | — | security_law_exemptions | out | no-destination | kind unmappable |
 | ConvertibleIssuance | — | investment_amount | core | direct |  |
 | ConvertibleIssuance | — | convertible_type | core | value-coarsening | enum→bucket |
 | ConvertibleIssuance | — | conversion_triggers | out | heuristic | sequential_transform (select first_convertible_trigger_with_economic_terms) |
@@ -436,7 +436,7 @@ values its `const:` supplies implicitly (the reason codes we always know).
 | EquityCompensationIssuance  | Option | object_type | out | no-destination | kind unmappable |
 | EquityCompensationIssuance  | Option | stockholder_approval_date | out | no-destination | kind unmappable |
 | EquityCompensationIssuance  | Option | consideration_text | out | no-destination | kind unmappable |
-| EquityCompensationIssuance  | Option | security_law_exemptions | out | heuristic | kind computed |
+| EquityCompensationIssuance  | Option | security_law_exemptions | out | no-destination | kind unmappable |
 | EquityCompensationIssuance  | Option | date | core | widening |  |
 | EquityCompensationIssuance  | Option | security_id | core | direct |  |
 | EquityCompensationIssuance  | Option | custom_id | core | direct |  |
@@ -460,7 +460,7 @@ values its `const:` supplies implicitly (the reason codes we always know).
 | EquityCompensationIssuance  | Rsu | object_type | out | no-destination | kind unmappable |
 | EquityCompensationIssuance  | Rsu | stockholder_approval_date | out | no-destination | kind unmappable |
 | EquityCompensationIssuance  | Rsu | consideration_text | out | no-destination | kind unmappable |
-| EquityCompensationIssuance  | Rsu | security_law_exemptions | out | heuristic | kind computed |
+| EquityCompensationIssuance  | Rsu | security_law_exemptions | out | no-destination | kind unmappable |
 | EquityCompensationIssuance  | Rsu | date | core | widening |  |
 | EquityCompensationIssuance  | Rsu | security_id | core | direct |  |
 | EquityCompensationIssuance  | Rsu | custom_id | core | direct |  |
@@ -484,31 +484,31 @@ values its `const:` supplies implicitly (the reason codes we always know).
 | EquityCompensationIssuance  | Sar | object_type | out | no-destination | kind unmappable |
 | EquityCompensationIssuance  | Sar | stockholder_approval_date | out | no-destination | kind unmappable |
 | EquityCompensationIssuance  | Sar | consideration_text | out | no-destination | kind unmappable |
-| EquityCompensationIssuance  | Sar | security_law_exemptions | out | heuristic | kind computed |
-| EquityCompensationIssuance  | Sar | date | core | widening |  |
-| EquityCompensationIssuance  | Sar | security_id | core | direct |  |
-| EquityCompensationIssuance  | Sar | custom_id | core | direct |  |
-| EquityCompensationIssuance  | Sar | stakeholder_id | core | direct |  |
+| EquityCompensationIssuance  | Sar | security_law_exemptions | out | no-destination | kind unmappable |
+| EquityCompensationIssuance  | Sar | date | out | no-destination | kind unmappable |
+| EquityCompensationIssuance  | Sar | security_id | out | no-destination | kind unmappable |
+| EquityCompensationIssuance  | Sar | custom_id | out | no-destination | kind unmappable |
+| EquityCompensationIssuance  | Sar | stakeholder_id | out | no-destination | kind unmappable |
 | EquityCompensationIssuance  | Sar | board_approval_date | out | no-destination | kind unmappable |
-| EquityCompensationIssuance  | Sar | stock_plan_id | core | direct |  |
-| EquityCompensationIssuance  | Sar | stock_class_id | core | direct |  |
-| EquityCompensationIssuance  | Sar | quantity | core | widening |  |
-| EquityCompensationIssuance  | Sar | vesting_template_id | core | direct |  |
+| EquityCompensationIssuance  | Sar | stock_plan_id | out | no-destination | kind unmappable |
+| EquityCompensationIssuance  | Sar | stock_class_id | out | no-destination | kind unmappable |
+| EquityCompensationIssuance  | Sar | quantity | out | no-destination | kind unmappable |
+| EquityCompensationIssuance  | Sar | vesting_template_id | out | no-destination | kind unmappable |
 | EquityCompensationIssuance  | Sar | vestings | out | no-destination | kind unmappable |
 | EquityCompensationIssuance  | Sar | vesting_start_date | out | no-destination | kind unmappable |
 | EquityCompensationIssuance  | Sar | compensation_type | out | no-destination | kind unmappable |
 | EquityCompensationIssuance  | Sar | option_grant_type | out | no-destination | kind unmappable |
 | EquityCompensationIssuance  | Sar | exercise_price | out | no-destination | kind unmappable |
-| EquityCompensationIssuance  | Sar | base_price | core | direct |  |
+| EquityCompensationIssuance  | Sar | base_price | out | no-destination | kind unmappable |
 | EquityCompensationIssuance  | Sar | early_exercisable | out | no-destination | kind unmappable |
-| EquityCompensationIssuance  | Sar | expiration_date | core | widening |  |
+| EquityCompensationIssuance  | Sar | expiration_date | out | no-destination | kind unmappable |
 | EquityCompensationIssuance  | Sar | termination_exercise_windows | out | no-destination | kind unmappable |
 | StockIssuance  | Rsa | id | out | no-destination | kind unmappable |
 | StockIssuance  | Rsa | comments | out | no-destination | kind unmappable |
 | StockIssuance  | Rsa | object_type | out | no-destination | kind unmappable |
 | StockIssuance  | Rsa | stockholder_approval_date | out | no-destination | kind unmappable |
 | StockIssuance  | Rsa | consideration_text | out | no-destination | kind unmappable |
-| StockIssuance  | Rsa | security_law_exemptions | out | heuristic | kind computed |
+| StockIssuance  | Rsa | security_law_exemptions | out | no-destination | kind unmappable |
 | StockIssuance  | Rsa | share_numbers_issued | out | no-destination | kind unmappable |
 | StockIssuance  | Rsa | stock_legend_ids | out | no-destination | kind unmappable |
 | StockIssuance  | Rsa | date | core | widening |  |
@@ -529,7 +529,7 @@ values its `const:` supplies implicitly (the reason codes we always know).
 | StockIssuance  | Default | object_type | out | no-destination | kind unmappable |
 | StockIssuance  | Default | stockholder_approval_date | out | no-destination | kind unmappable |
 | StockIssuance  | Default | consideration_text | out | no-destination | kind unmappable |
-| StockIssuance  | Default | security_law_exemptions | out | heuristic | kind computed |
+| StockIssuance  | Default | security_law_exemptions | out | no-destination | kind unmappable |
 | StockIssuance  | Default | share_numbers_issued | out | no-destination | kind unmappable |
 | StockIssuance  | Default | stock_legend_ids | out | no-destination | kind unmappable |
 | StockIssuance  | Default | date | core | widening |  |
@@ -555,7 +555,7 @@ values its `const:` supplies implicitly (the reason codes we always know).
 | WarrantIssuance  | — | board_approval_date | out | no-destination | kind unmappable |
 | WarrantIssuance  | — | stockholder_approval_date | out | no-destination | kind unmappable |
 | WarrantIssuance  | — | consideration_text | out | no-destination | kind unmappable |
-| WarrantIssuance  | — | security_law_exemptions | out | heuristic | kind computed |
+| WarrantIssuance  | — | security_law_exemptions | out | no-destination | kind unmappable |
 | WarrantIssuance  | — | quantity | core | widening |  |
 | WarrantIssuance  | — | exercise_price | core | direct |  |
 | WarrantIssuance  | — | purchase_price | core | direct |  |
@@ -616,12 +616,12 @@ values its `const:` supplies implicitly (the reason codes we always know).
 | EquityCompensationRepricing | Option | security_id | out | no-destination | kind unmappable |
 | EquityCompensationRepricing | Option | date | out | no-destination | kind unmappable |
 | EquityCompensationRepricing | Option | new_exercise_price | core | direct |  |
-| EquityCompensationRepricing | Sar | id | out | no-destination | kind unmappable |
-| EquityCompensationRepricing | Sar | comments | out | no-destination | kind unmappable |
-| EquityCompensationRepricing | Sar | object_type | out | no-destination | kind unmappable |
-| EquityCompensationRepricing | Sar | security_id | out | no-destination | kind unmappable |
-| EquityCompensationRepricing | Sar | date | out | no-destination | kind unmappable |
-| EquityCompensationRepricing | Sar | new_exercise_price | core | direct |  |
+| EquityCompensationRepricing  | Sar | id | out | no-destination | kind unmappable |
+| EquityCompensationRepricing  | Sar | comments | out | no-destination | kind unmappable |
+| EquityCompensationRepricing  | Sar | object_type | out | no-destination | kind unmappable |
+| EquityCompensationRepricing  | Sar | security_id | out | no-destination | kind unmappable |
+| EquityCompensationRepricing  | Sar | date | out | no-destination | kind unmappable |
+| EquityCompensationRepricing  | Sar | new_exercise_price | out | no-destination | kind unmappable |
 | EquityCompensationRepricing  | Rsu | id | out | no-destination | kind unmappable |
 | EquityCompensationRepricing  | Rsu | comments | out | no-destination | kind unmappable |
 | EquityCompensationRepricing  | Rsu | object_type | out | no-destination | kind unmappable |
@@ -692,7 +692,7 @@ values its `const:` supplies implicitly (the reason codes we always know).
 | StockPlanReturnToPool | Option | comments | out | no-destination | kind unmappable |
 | StockPlanReturnToPool | Option | object_type | out | no-destination | kind unmappable |
 | StockPlanReturnToPool | Option | date | out | no-destination | kind unmappable |
-| StockPlanReturnToPool | Option | stock_plan_id | core | direct |  |
+| StockPlanReturnToPool | Option | stock_plan_id | out | no-destination | kind unmappable |
 | StockPlanReturnToPool | Option | reason_text | out | no-destination | kind unmappable |
 | StockPlanReturnToPool | Option | security_id | core | direct |  |
 | StockPlanReturnToPool | Option | quantity | core | widening |  |
@@ -700,7 +700,7 @@ values its `const:` supplies implicitly (the reason codes we always know).
 | StockPlanReturnToPool | Rsu | comments | out | no-destination | kind unmappable |
 | StockPlanReturnToPool | Rsu | object_type | out | no-destination | kind unmappable |
 | StockPlanReturnToPool | Rsu | date | out | no-destination | kind unmappable |
-| StockPlanReturnToPool | Rsu | stock_plan_id | core | direct |  |
+| StockPlanReturnToPool | Rsu | stock_plan_id | out | no-destination | kind unmappable |
 | StockPlanReturnToPool | Rsu | reason_text | out | no-destination | kind unmappable |
 | StockPlanReturnToPool | Rsu | security_id | core | direct |  |
 | StockPlanReturnToPool | Rsu | quantity | core | widening |  |
@@ -708,9 +708,9 @@ values its `const:` supplies implicitly (the reason codes we always know).
 | StockPlanReturnToPool  | Sar | comments | out | no-destination | kind unmappable |
 | StockPlanReturnToPool  | Sar | object_type | out | no-destination | kind unmappable |
 | StockPlanReturnToPool  | Sar | date | out | no-destination | kind unmappable |
-| StockPlanReturnToPool  | Sar | stock_plan_id | core | direct |  |
+| StockPlanReturnToPool  | Sar | stock_plan_id | out | no-destination | kind unmappable |
 | StockPlanReturnToPool  | Sar | reason_text | out | no-destination | kind unmappable |
-| StockPlanReturnToPool  | Sar | security_id | core | direct |  |
+| StockPlanReturnToPool  | Sar | security_id | out | no-destination | kind unmappable |
 | StockPlanReturnToPool  | Sar | quantity | out | no-destination | kind unmappable |
 | StockClassSplit  | — | id | out | no-destination | kind unmappable |
 | StockClassSplit  | — | comments | out | no-destination | kind unmappable |

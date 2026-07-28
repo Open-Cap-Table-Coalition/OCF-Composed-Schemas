@@ -10,7 +10,7 @@ required_fields:
   - date
   - security_id
 target_standard: Carta
-target_version: "v1alpha1 (2026-04-30)"
+target_version: "v1alpha1 (2026-06-22)"
 status: complete
 last_generated: 2026-05-18
 ---
@@ -108,7 +108,8 @@ route_by_property:
 # shared: every source property. Carta has no repricing transaction; a repricing
 # is a price *mutation*, so the only mappable field (new_exercise_price) lands on
 # the resolved family's static strike via a per-variant target map. RSUs are
-# priceless, so the field has no home in that variant (null).
+# priceless, and the June 22 bundle has no SAR issuance definition, so both variants
+# have no target (null).
 shared:
   id:          { kind: unmappable, target: null, reason: ocf-internal }
   comments:    { kind: unmappable, target: null, reason: no-equivalent }
@@ -119,7 +120,7 @@ shared:
     kind: rename
     target:
       Option: "#/$defs/OptionGrant/properties/exercisePrice"
-      Sar:    "#/$defs/SarIssuanceTransaction/properties/exercisePrice"
+      Sar:    null
       Rsu:    null
 
 variants:
@@ -132,8 +133,7 @@ variants:
 
   Sar:
     when: [CSAR, SSAR]
-    primary_targets:
-      - "#/$defs/SarIssuanceTransaction"
+    primary_targets: null
     fields: {}
 
   Rsu:
@@ -165,5 +165,5 @@ Use a link below to open a prefilled GitHub issue. The issue can be copied into 
 
 ## Notes / open questions
 
-- Join on `security_id` to `EquityCompensationIssuance.compensation_type`. Option repricing updates `OptionGrant.exercisePrice`; SAR repricing updates `SarIssuanceTransaction.exercisePrice`. RSU has no repricing target.
+- Join on `security_id` to `EquityCompensationIssuance.compensation_type`. Option repricing updates `OptionGrant.exercisePrice`; SAR and RSU have no repricing target in the June 22 bundle.
 - `security_id` is only the routing key and `date` has no target; `id`, `comments`, and `object_type` are OCF scaffolding.

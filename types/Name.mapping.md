@@ -6,7 +6,7 @@ ocf_kind: type
 required_fields:
   - legal_name
 target_standard: Carta
-target_version: v1alpha1 (2026-04-30)
+target_version: "v1alpha1 (2026-06-22)"
 status: complete
 last_generated: 2026-05-18
 ---

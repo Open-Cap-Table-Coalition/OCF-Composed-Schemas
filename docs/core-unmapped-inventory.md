@@ -20,7 +20,7 @@ drops only for Sar), so "no Carta home" is a per-flavor statement here, not obje
 canonical target-first inverse report gives the Carta-side landing view. OCF-side
 distinct-field counts remain in the Core ledger and gap reports.
 
-## Magnitude — unmapped properties per OCF object (159 distinct across 46 objects; 233 per-flavor rows, 137 OCF-required)
+## Magnitude — unmapped properties per OCF object (185 distinct across 46 objects; 270 per-flavor rows, 166 OCF-required)
 
 The table below keeps the same magnitude view without relying on a graph renderer.
 Property names and their per-variant scope appear in the detailed tables that follow.
@@ -30,14 +30,14 @@ Property names and their per-variant scope appear in the detailed tables that fo
 | ConvertibleAcceptance | not yet admissible | 1 |
 | ConvertibleCancellation | in Core (admissible) | 1 |
 | ConvertibleConversion | in Core (admissible) | 5 |
-| ConvertibleIssuance | in Core (admissible) | 5 |
+| ConvertibleIssuance | in Core (admissible) | 6 |
 | ConvertibleRetraction | not yet admissible | 3 |
 | ConvertibleTransfer | not yet admissible | 6 |
-| Document | not yet admissible | 2 |
-| EquityCompensationAcceptance | not yet admissible | 1 |
-| EquityCompensationCancellation | in Core (admissible) | 1 |
+| Document | not yet admissible | 4 |
+| EquityCompensationAcceptance | not yet admissible | 2 |
+| EquityCompensationCancellation | in Core (admissible) | 5 |
 | EquityCompensationExercise | in Core (admissible) | 5 |
-| EquityCompensationIssuance | not yet admissible | 12 |
+| EquityCompensationIssuance | not yet admissible | 21 |
 | EquityCompensationRelease | in Core (admissible) | 7 |
 | EquityCompensationRepricing | in Core (admissible) | 3 |
 | EquityCompensationRetraction | not yet admissible | 3 |
@@ -55,22 +55,22 @@ Property names and their per-variant scope appear in the detailed tables that fo
 | StockClassSplit | not yet admissible | 3 |
 | StockConsolidation | not yet admissible | 2 |
 | StockConversion | not yet admissible | 3 |
-| StockIssuance | not yet admissible | 7 |
+| StockIssuance | not yet admissible | 8 |
 | StockLegendTemplate | not yet admissible | 2 |
-| StockPlan | in Core (admissible) | 3 |
+| StockPlan | in Core (admissible) | 6 |
 | StockPlanPoolAdjustment | not yet admissible | 5 |
-| StockPlanReturnToPool | in Core (admissible) | 3 |
+| StockPlanReturnToPool | in Core (admissible) | 5 |
 | StockReissuance | not yet admissible | 4 |
 | StockRepurchase | not yet admissible | 4 |
 | StockRetraction | not yet admissible | 3 |
 | StockTransfer | in Core (admissible) | 2 |
-| Valuation | in Core (admissible) | 5 |
+| Valuation | not yet admissible | 7 |
 | VestingAcceleration | not yet admissible | 4 |
 | VestingEvent | not yet admissible | 3 |
 | WarrantAcceptance | not yet admissible | 1 |
 | WarrantCancellation | in Core (admissible) | 1 |
 | WarrantExercise | not yet admissible | 2 |
-| WarrantIssuance | not yet admissible | 6 |
+| WarrantIssuance | not yet admissible | 7 |
 | WarrantRetraction | not yet admissible | 3 |
 | WarrantTransfer | in Core (admissible) | 2 |
 
@@ -101,13 +101,14 @@ Property names and their per-variant scope appear in the detailed tables that fo
 | resulting_security_ids | **yes** | Identifier for the security (or securities) that resulted from the conversion |
 | trigger_id | **yes** | What is the id of the convertible's conversion trigger that resulted in this conversion |
 
-### ConvertibleIssuance — in Core (admissible) (5 unmapped)
+### ConvertibleIssuance — in Core (admissible) (6 unmapped)
 
 | property | OCF-req | what it is (OCF) |
 | --- | :---: | --- |
 | board_approval_date |  | Date of board approval for the security |
 | consideration_text |  | Unstructured text description of consideration provided in exchange for security issuance |
 | pro_rata |  | What pro-rata (if any) is the holder entitled to buy at the next round? |
+| security_law_exemptions | **yes** | List of security law exemptions (and applicable jurisdictions) for this security |
 | seniority | **yes** | If different convertible instruments have seniorty over one another, use this value to build a seniority stack, with 1 being highest seni… |
 | stockholder_approval_date |  | Date on which the stockholders approved the security |
 
@@ -130,24 +131,31 @@ Property names and their per-variant scope appear in the detailed tables that fo
 | resulting_security_ids | **yes** | Array of identifiers for new security (or securities) created as a result of the transaction |
 | security_id | **yes** | Identifier for the security (stock, plan security, warrant, or convertible) by which it can be referenced by other transaction objects. N… |
 
-### Document — not yet admissible (2 unmapped)
+### Document — not yet admissible (4 unmapped)
 
 | property | OCF-req | what it is (OCF) |
 | --- | :---: | --- |
 | md5 | **yes** | MD5 file checksum |
+| path |  | Relative path/filename for the document. Path is understood to be a relative location within an associated ZIP archive (packaged separate… |
 | related_objects |  | List of objects which this document is related to |
+| uri |  | Uniform resource identifier for the document if not using the `path` property and associated ZIP archive separate from the OCF package. |
 
-### EquityCompensationAcceptance — not yet admissible (1 unmapped)
+### EquityCompensationAcceptance — not yet admissible (2 unmapped)
 
 | property | OCF-req | what it is (OCF) |
 | --- | :---: | --- |
 | date † | **yes** | Date on which the transaction occurred |
+| security_id † | **yes** | Identifier for the security (stock, plan security, warrant, or convertible) by which it can be referenced by other transaction objects. N… |
 
-### EquityCompensationCancellation — in Core (admissible) (1 unmapped)
+### EquityCompensationCancellation — in Core (admissible) (5 unmapped)
 
 | property | OCF-req | what it is (OCF) |
 | --- | :---: | --- |
 | balance_security_id |  | Identifier for the security that holds the remainder balance (for partial cancellations) |
+| date † | **yes** | Date on which the transaction occurred |
+| quantity † | **yes** | Quantity of non-monetary security units cancelled |
+| reason_text † | **yes** | Reason for the cancellation |
+| security_id † | **yes** | Identifier for the security (stock, plan security, warrant, or convertible) by which it can be referenced by other transaction objects. N… |
 
 ### EquityCompensationExercise — in Core (admissible) (5 unmapped)
 
@@ -159,21 +167,30 @@ Property names and their per-variant scope appear in the detailed tables that fo
 | resulting_security_ids † | **yes** | Identifier for the security (or securities) that resulted from the exercise |
 | security_id † | **yes** | Identifier for the security (stock, plan security, warrant, or convertible) by which it can be referenced by other transaction objects. N… |
 
-### EquityCompensationIssuance — not yet admissible (12 unmapped)
+### EquityCompensationIssuance — not yet admissible (21 unmapped)
 
 | property | OCF-req | what it is (OCF) |
 | --- | :---: | --- |
-| base_price † |  | Required for stock appreciation right compensation types (CSAR, SSAR). The base price used to calculate appreciation. |
+| base_price |  | Required for stock appreciation right compensation types (CSAR, SSAR). The base price used to calculate appreciation. |
 | board_approval_date † |  | Date of board approval for the security, when applicable. |
 | compensation_type † | **yes** | The kind of equity compensation. Determines which type-specific fields are required. |
 | consideration_text |  | Unstructured text description of consideration provided in exchange for the issuance. |
+| custom_id † | **yes** | Human-readable identifier for the security (e.g. 'CN-1'). |
+| date † | **yes** | Date on which the issuance transaction occurred. Distinct from the vesting commencement date, which is carried separately as `vesting_sta… |
 | early_exercisable † |  | If true, the security is exercisable prior to completion of vesting; the schedule then governs a right-of-repurchase lapse rather than th… |
 | exercise_price † |  | Required for option compensation types. The price per share at which the option can be exercised. |
 | expiration_date † | **yes** | Expiration date of the security, or null if it does not expire. |
 | option_grant_type † |  | If the security is an option, what kind. Retained from v1 for compatibility; in the new model this has been incorporated into Compensatio… |
+| quantity † | **yes** | Number of shares subject to this security. |
+| security_id † | **yes** | Identifier for the security created by this issuance. Other transactions (vesting event, exercise, cancellation, etc.) reference this id. |
+| security_law_exemptions | **yes** | Security law exemptions (and applicable jurisdictions) for this security. |
+| stakeholder_id † | **yes** | Identifier of the stakeholder holding legal title to the security. |
+| stock_class_id † |  | The stock class the security exercises/settles into. Important for plan-less options and plans that support multiple share classes. |
+| stock_plan_id † |  | If the security was issued from a stock plan, the plan's id. Plan-less options are valid and omit this field. |
 | stockholder_approval_date |  | Date of stockholder approval for the security, when applicable. |
 | termination_exercise_windows † | **yes** | Exercise periods applicable after a termination, by reason. |
 | vesting_start_date † |  | The per-grant vesting commencement date — the anchor every statement of the referenced template grids from. Required whenever `vesting_te… |
+| vesting_template_id † |  | Identifier of the v2 vesting template the security is subject to. If neither `vesting_template_id` nor `vestings` is present, the securit… |
 | vestings † |  | Optional materialized projection of exact vesting dates and amounts. A grant may be described by the declarative template (`vesting_templ… |
 
 ### EquityCompensationRelease — in Core (admissible) (7 unmapped)
@@ -318,13 +335,14 @@ Property names and their per-variant scope appear in the detailed tables that fo
 | quantity_converted | **yes** | Quantity of non-monetary security units converted |
 | security_id | **yes** | Identifier for the security (stock, plan security, warrant, or convertible) by which it can be referenced by other transaction objects. N… |
 
-### StockIssuance — not yet admissible (7 unmapped)
+### StockIssuance — not yet admissible (8 unmapped)
 
 | property | OCF-req | what it is (OCF) |
 | --- | :---: | --- |
 | board_approval_date † |  | Date of board approval for the security |
 | consideration_text |  | Unstructured text description of consideration provided in exchange for security issuance |
 | issuance_type |  | Optional field to flag certain special types of issuances (like RSAs) |
+| security_law_exemptions | **yes** | List of security law exemptions (and applicable jurisdictions) for this security |
 | share_numbers_issued |  | Range(s) of the specific share numbers included in this issuance. This is different from a certificate number you might include in the `c… |
 | stock_legend_ids | **yes** | List of stock legend ids that apply to this stock |
 | stockholder_approval_date |  | Date on which the stockholders approved the security |
@@ -337,12 +355,15 @@ Property names and their per-variant scope appear in the detailed tables that fo
 | name | **yes** | Name for the stock legend template |
 | text | **yes** | The full text of the stock legend |
 
-### StockPlan — in Core (admissible) (3 unmapped)
+### StockPlan — in Core (admissible) (6 unmapped)
 
 | property | OCF-req | what it is (OCF) |
 | --- | :---: | --- |
 | board_approval_date |  | Date on which board approved the plan |
 | default_cancellation_behavior |  | If a security issued under this Stock Plan is cancelled, what happens to the reserved shares by default? NOTE: for any given security iss… |
+| initial_shares_reserved | **yes** | The initial number of shares reserved in the pool for this stock plan by the Board or equivalent body. |
+| stock_class_id |  | [DEPRECATED in favor of stock_class_ids] Identifier of the StockClass object this plan is composed of. |
+| stock_class_ids |  | Identifiers of StockClass objects this plan is composed of |
 | stockholder_approval_date |  | This optional field tracks when the stockholders approved this stock plan. This is intended for use by US companies that want to issue In… |
 
 ### StockPlanPoolAdjustment — not yet admissible (5 unmapped)
@@ -355,13 +376,15 @@ Property names and their per-variant scope appear in the detailed tables that fo
 | stock_plan_id | **yes** | Identifier of the Stock Plan object, a subject of this transaction |
 | stockholder_approval_date |  | This optional field tracks when the stockholders approved this change to the stock plan. This is intended for use by US companies that wa… |
 
-### StockPlanReturnToPool — in Core (admissible) (3 unmapped)
+### StockPlanReturnToPool — in Core (admissible) (5 unmapped)
 
 | property | OCF-req | what it is (OCF) |
 | --- | :---: | --- |
 | date | **yes** | Date on which the transaction occurred |
 | quantity † | **yes** | How many shares were returned to the pool? |
 | reason_text | **yes** | Reason for the return to the pool |
+| security_id † | **yes** | Identifier for the security (stock, plan security, warrant, or convertible) by which it can be referenced by other transaction objects. N… |
+| stock_plan_id | **yes** | Id of the Stock Plan whose pool the reserved shares should return to. This does not have to be the same pool the securities were issued f… |
 
 ### StockReissuance — not yet admissible (4 unmapped)
 
@@ -396,13 +419,15 @@ Property names and their per-variant scope appear in the detailed tables that fo
 | consideration_text |  | Unstructured text description of consideration provided in exchange for security transfer |
 | security_id | **yes** | Identifier for the security (stock, plan security, warrant, or convertible) by which it can be referenced by other transaction objects. N… |
 
-### Valuation — in Core (admissible) (5 unmapped)
+### Valuation — not yet admissible (7 unmapped)
 
 | property | OCF-req | what it is (OCF) |
 | --- | :---: | --- |
 | board_approval_date |  | Date on which board approved the valuation. This is essential for 409A valuations, in particular, which require the Board to approve the … |
 | effective_date | **yes** | Date on which this valuation is first valid |
+| price_per_share | **yes** | Valued price per share |
 | provider |  | Entity which provided the valuation |
+| stock_class_id | **yes** | Identifier of the stock class for this valuation |
 | stockholder_approval_date |  | This optional field tracks when the stockholders approved the valuation. |
 | valuation_type | **yes** | Seam for supporting different types of valuations in future versions |
 
@@ -442,7 +467,7 @@ Property names and their per-variant scope appear in the detailed tables that fo
 | consideration_text |  | Unstructured text description of consideration provided in exchange for security exercise |
 | trigger_id | **yes** | What is the id of the warrant's exercise trigger that resulted in this exercise |
 
-### WarrantIssuance — not yet admissible (6 unmapped)
+### WarrantIssuance — not yet admissible (7 unmapped)
 
 | property | OCF-req | what it is (OCF) |
 | --- | :---: | --- |
@@ -450,6 +475,7 @@ Property names and their per-variant scope appear in the detailed tables that fo
 | consideration_text |  | Unstructured text description of consideration provided in exchange for security issuance |
 | exercise_triggers | **yes** | In event the Warrant can convert due to trigger events (e.g. Maturity, Next Qualified Financing, Change of Control, at Election of Holder… |
 | quantity_source |  | If quantity is provided, use this to specify where the number came from - e.g. was it a fixed value from the instrument (`INSTRUMENT_FIXE… |
+| security_law_exemptions | **yes** | List of security law exemptions (and applicable jurisdictions) for this security |
 | stockholder_approval_date |  | Date on which the stockholders approved the security |
 | vestings |  | List of exact vesting dates and amounts for this security. When `vestings` array is present then `vesting_terms_id` may be ignored. |
 

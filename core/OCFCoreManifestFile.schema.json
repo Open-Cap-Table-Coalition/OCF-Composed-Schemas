@@ -130,26 +130,6 @@
           "md5"
         ]
       }
-    },
-    "valuations_files": {
-      "type": "array",
-      "items": {
-        "type": "object",
-        "additionalProperties": false,
-        "properties": {
-          "filepath": {
-            "type": "string"
-          },
-          "md5": {
-            "type": "string",
-            "pattern": "^[a-fA-F0-9]{32}$"
-          }
-        },
-        "required": [
-          "filepath",
-          "md5"
-        ]
-      }
     }
   },
   "required": [
@@ -157,8 +137,7 @@
     "stakeholders_files",
     "stock_classes_files",
     "stock_plans_files",
-    "transactions_files",
-    "valuations_files"
+    "transactions_files"
   ],
   "additionalProperties": false
 }

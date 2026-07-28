@@ -51,38 +51,33 @@ describe("mapping explorer", () => {
       nestedNamespace: "ocf",
       support: true,
     });
-    expect(explorer.targets.find((target) => target.name === "OptionGrantDocuments")).toMatchObject(
-      {
-        status: "gap",
-        noSource: true,
-        support: false,
-      }
-    );
+    expect(
+      explorer.targets.find((target) => target.name === "OptionGrantDocuments")
+    ).toBeUndefined();
     expect(
       explorer.targets.find((target) => target.name === "CapitalizationTableSummary")
-    ).toMatchObject({
-      status: "report-rollup",
+    ).toBeUndefined();
+    expect(explorer.targets.find((target) => target.name === "OptionExercise")).toMatchObject({
+      status: "workflow-gap",
       noSource: true,
       support: false,
     });
-    expect(explorer.metrics.actionableTargets).toBe(1);
-    expect(explorer.metrics.explainedTargets).toBe(12);
+    expect(explorer.metrics.actionableTargets).toBe(0);
+    expect(explorer.metrics.explainedTargets).toBe(1);
   });
 
   it("keeps gap pages actionable with mapping-specific issue links", async () => {
     const { corpus, inverse, mappingDocuments } = await loadExplorer();
     const explorer = buildMappingExplorerData(corpus, inverse, [], mappingDocuments);
     const source = explorer.sources.find((item) => item.noTarget);
-    const target = explorer.targets.find((item) => item.status === "gap");
+    const target = explorer.targets.find((item) => item.status === "workflow-gap");
 
     expect(source).toBeDefined();
     expect(target).toBeDefined();
     expect(renderMappingExplorerSourcePage(source!)).toContain(
       "issues/new?template=mapping-question.yml"
     );
-    expect(renderMappingExplorerTargetPage(target!)).toContain(
-      "issues/new?title=%5BMapping+question%5D"
-    );
+    expect(renderMappingExplorerTargetPage(target!)).toContain("No standalone OCF source record");
     const index = renderMappingExplorerIndex(explorer);
     expect(index).toContain("Cap-table data map");
     expect(index).toContain("OCF records");
@@ -145,14 +140,15 @@ describe("mapping explorer", () => {
 
     expect(resources.schemaPath).toBe("target-schema/Carta.schema.json");
     expect(resources.metadata.map((item) => item.label)).toEqual(
-      expect.arrayContaining(["Version", "Standard", "Source", "Uploaded", "Uploader", "SHA-256"])
+      expect.arrayContaining(["Version", "Standard", "Source", "Uploaded", "SHA-256"])
     );
     expect(index).toContain('id="carta-core"');
     expect(index).toContain("Browse proposal ↗");
+    expect(index).toContain("Read Explainer ↗");
     expect(index).toContain("Open schema issue ↗");
     expect(index).toContain("Target-schema notes ↗");
     expect(index).toContain("Version:");
-    expect(index).toContain("Uploader:");
+    expect(index).not.toContain("Uploader:");
 
     const withReport = {
       ...resources,
@@ -175,6 +171,12 @@ describe("mapping explorer", () => {
     const stakeholder = mappingDocuments.get("objects/Stakeholder.mapping.md");
     expect(stakeholder?.questions?.length).toBeGreaterThan(0);
     const firstQuestion = stakeholder!.questions![0]!;
+    const openQuestion = {
+      ...firstQuestion,
+      answered: false,
+      answeredBy: "—",
+      answer: "Open: confirm the target policy.",
+    };
     const closedQuestion = {
       ...firstQuestion,
       answered: true,
@@ -184,16 +186,16 @@ describe("mapping explorer", () => {
     const targetQuestion = {
       ...firstQuestion,
       property: "addresses[].country",
-      target: "Compliance.countryOfResidency",
+      target: "OptionExercise.state",
     };
     const documents = new Map(mappingDocuments);
     documents.set("objects/Stakeholder.mapping.md", {
       ...stakeholder!,
-      questions: [firstQuestion, closedQuestion, targetQuestion],
+      questions: [openQuestion, closedQuestion, targetQuestion],
     });
     const explorer = buildMappingExplorerData(corpus, inverse, [], documents);
     const source = explorer.sources.find((item) => item.entity === "Stakeholder");
-    const target = explorer.targets.find((item) => item.name === "Compliance");
+    const target = explorer.targets.find((item) => item.name === "OptionExercise");
     const transfer = explorer.sources.find((item) => item.entity === "EquityCompensationTransfer");
 
     expect(source?.questions).toHaveLength(3);
@@ -203,9 +205,9 @@ describe("mapping explorer", () => {
     expect(renderMappingExplorerSourcePage(source!)).toContain(
       "issues/new?template=mapping-question.yml"
     );
-    expect(target?.questions).toHaveLength(3);
+    expect(target?.questions).toHaveLength(2);
     expect(renderMappingExplorerTargetPage(target!)).toContain("Questions about this target");
-    expect(renderMappingExplorerTargetPage(target!)).toContain("Compliance.countryOfResidency");
+    expect(renderMappingExplorerTargetPage(target!)).toContain("OptionExercise.state");
     expect(transfer?.notes.some((note) => note.includes("key causal information"))).toBe(true);
     expect(renderMappingExplorerSourcePage(transfer!)).toContain(
       "cannot represent this event without losing key causal information"
@@ -220,18 +222,11 @@ describe("mapping explorer", () => {
     expect(document).toBeDefined();
     const path = document!.fields.find((field) => field.field === "path");
     const uri = document!.fields.find((field) => field.field === "uri");
-    expect(path?.targets).toEqual([
-      {
-        object: "Document",
-        property: "fileId",
-        pointer: "#/$defs/Document/properties/fileId",
-      },
-    ]);
+    expect(path?.targets).toEqual([]);
     expect(uri?.targets).toEqual(path?.targets);
 
     const page = renderMappingExplorerSourcePage(document!);
-    expect(page).toContain("Document.fileId");
-    expect(page).not.toContain("Document.field");
+    expect(page).not.toContain("Document.fileId");
   });
 
   it("shows Carta and OCF schema types in the target slot ledger", async () => {

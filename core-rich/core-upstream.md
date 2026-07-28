@@ -7,7 +7,7 @@ narrowed form. So Core→target is lossy (expected), and a target-sourced Core d
 may not validate back as OCF without OCF relaxing a constraint. These are the
 upstream-OCF-change candidates; OCF-*required* fields (**bold**) are the strongest.
 
-## Lossy fields carried by rich Core (48 fields, 33 OCF-required)
+## Lossy fields carried by rich Core (36 fields, 24 OCF-required)
 
 Each field is grouped by OCF object and shows its narrowed Carta home. The flow map
 below makes cross-object convergence onto a shared Carta slot explicit.
@@ -25,14 +25,6 @@ below makes cross-object convergence onto a shared Carta slot explicit.
 | field | OCF-req | variant(s) | flows to (Carta) | loss |
 | --- | :---: | --- | --- | --- |
 | conversion_triggers | **yes** |  | ConvertibleIssuanceTransaction.{conversionTrigger, dayCountBasis, discountPercentage, interestAccrualPeriod, interestCompoundingPeriod, interestRate, valuationCap} + ConvertibleNote.{conversionTrigger, dayCountBasis, discountPercentage, interestAccrualPeriod, interestCompoundingPeriod, interestRate, priceCap} | heuristic (sequential_transform (select first_convertible_trigger_with_economic_terms)) |
-| security_law_exemptions | **yes** |  | Compliance.federalExemption | heuristic (computed) |
-
-### Document — in Core (admissible)
-
-| field | OCF-req | variant(s) | flows to (Carta) | loss |
-| --- | :---: | --- | --- | --- |
-| path |  |  | Document.fileId | heuristic (computed) |
-| uri |  |  | Document.fileId | heuristic (computed) |
 
 ### EquityCompensationCancellation — in Core (admissible)
 
@@ -40,20 +32,17 @@ below makes cross-object convergence onto a shared Carta slot explicit.
 | --- | :---: | --- | --- | --- |
 | reason_text | **yes** | Option | OptionCancellationTransaction.reason | heuristic (computed) |
 | reason_text | **yes** | Rsu | RsuCancellationTransaction.reason | heuristic (computed) |
-| reason_text | **yes** | Sar | SarCancellationTransaction.reason | heuristic (computed) |
 
 ### EquityCompensationExercise — in Core (admissible)
 
 | field | OCF-req | variant(s) | flows to (Carta) | loss |
 | --- | :---: | --- | --- | --- |
-| resulting_security_ids | **yes** | Option | Certificate.securityId + CertificatePrecededBy.securities + Exercise.certificateId | heuristic (computed) |
-| resulting_security_ids | **yes** | Sar | Certificate.securityId + CertificatePrecededBy.securities | heuristic (computed) |
+| resulting_security_ids | **yes** | Option | Certificate.{id, securityId} + CertificatePrecededBy.securities + Exercise.certificateId | heuristic (computed) |
 
 ### EquityCompensationIssuance — in Core (admissible)
 
 | field | OCF-req | variant(s) | flows to (Carta) | loss |
 | --- | :---: | --- | --- | --- |
-| security_law_exemptions | **yes** | Option, Rsu, Sar | Compliance.federalExemption | heuristic (computed) |
 | termination_exercise_windows | **yes** | Option | OptionGrant.exercisePeriods | existence-loss (select (first_termination_window)) |
 
 ### EquityCompensationRelease — in Core (admissible)
@@ -76,8 +65,8 @@ below makes cross-object convergence onto a shared Carta slot explicit.
 
 | field | OCF-req | variant(s) | flows to (Carta) | loss |
 | --- | :---: | --- | --- | --- |
-| balance_security_id |  | Rsa | RestrictedStockAward.securityId + RestrictedStockAwardPrecededBy.securities | heuristic (computed) |
-| balance_security_id |  | Default | Certificate.securityId + CertificatePrecededBy.securities | heuristic (computed) |
+| balance_security_id |  | Rsa | RestrictedStockAward.{id, securityId} + RestrictedStockAwardPrecededBy.securities | heuristic (computed) |
+| balance_security_id |  | Default | Certificate.{id, securityId} + CertificatePrecededBy.securities | heuristic (computed) |
 | reason_text | **yes** | Rsa | RsaCancellationTransaction.reason | heuristic (computed) |
 | reason_text | **yes** | Default | CertificateCancellationTransaction.reason | heuristic (computed) |
 
@@ -85,7 +74,7 @@ below makes cross-object convergence onto a shared Carta slot explicit.
 
 | field | OCF-req | variant(s) | flows to (Carta) | loss |
 | --- | :---: | --- | --- | --- |
-| class_type | **yes** | Common, Preferred | ShareClass.type + ShareClassValuation.common | heuristic (computed) |
+| class_type | **yes** | Common, Preferred | ShareClass.type | heuristic (computed) |
 | conversion_rights |  | Common, Preferred | ShareClassRightsAndPreferences.{conversionPrice, conversionRatio} | heuristic (sequential_transform (select first_ratio_conversion_right)) |
 | initial_shares_authorized | **yes** | Common, Preferred | ShareClass.authorizedShareCount | partial (AuthorizedShares: unmapped members NOT APPLICABLE, UNLIMITED; Numeric: widening) |
 | seniority | **yes** | Common, Preferred | ShareClass.{pariPassu, seniority} | heuristic (computed) |
@@ -96,24 +85,12 @@ below makes cross-object convergence onto a shared Carta slot explicit.
 | --- | :---: | --- | --- | --- |
 | new_ratio_conversion_mechanism | **yes** |  | ShareClassRightsAndPreferences.{conversionPrice, conversionRatio} | heuristic (split) |
 
-### StockIssuance — in Core (admissible)
-
-| field | OCF-req | variant(s) | flows to (Carta) | loss |
-| --- | :---: | --- | --- | --- |
-| security_law_exemptions | **yes** | Rsa, Default | Compliance.federalExemption | heuristic (computed) |
-
-### StockPlan — in Core (admissible)
-
-| field | OCF-req | variant(s) | flows to (Carta) | loss |
-| --- | :---: | --- | --- | --- |
-| stock_class_ids |  |  | OptionPoolSummary.shareClassId | existence-loss (select (first_stock_class_id)) |
-
 ### StockRepurchase — in Core (admissible)
 
 | field | OCF-req | variant(s) | flows to (Carta) | loss |
 | --- | :---: | --- | --- | --- |
-| balance_security_id |  | Rsa | RestrictedStockAward.securityId + RestrictedStockAwardPrecededBy.securities | heuristic (computed) |
-| balance_security_id |  | Default | Certificate.securityId + CertificatePrecededBy.securities | heuristic (computed) |
+| balance_security_id |  | Rsa | RestrictedStockAward.{id, securityId} + RestrictedStockAwardPrecededBy.securities | heuristic (computed) |
+| balance_security_id |  | Default | Certificate.{id, securityId} + CertificatePrecededBy.securities | heuristic (computed) |
 | quantity | **yes** | Rsa | RestrictedStockAward.returnedToTreasuryQuantity | heuristic (computed) |
 | quantity | **yes** | Default | Certificate.returnedToTreasuryQuantity | heuristic (computed) |
 
@@ -121,10 +98,10 @@ below makes cross-object convergence onto a shared Carta slot explicit.
 
 | field | OCF-req | variant(s) | flows to (Carta) | loss |
 | --- | :---: | --- | --- | --- |
-| balance_security_id |  | Rsa | RestrictedStockAward.securityId + RestrictedStockAwardPrecededBy.securities | heuristic (computed) |
-| balance_security_id |  | Default | Certificate.securityId + CertificatePrecededBy.securities | heuristic (computed) |
-| resulting_security_ids | **yes** | Rsa | RestrictedStockAward.securityId + RestrictedStockAwardPrecededBy.securities | heuristic (computed) |
-| resulting_security_ids | **yes** | Default | Certificate.securityId + CertificatePrecededBy.securities | heuristic (computed) |
+| balance_security_id |  | Rsa | RestrictedStockAward.{id, securityId} + RestrictedStockAwardPrecededBy.securities | heuristic (computed) |
+| balance_security_id |  | Default | Certificate.{id, securityId} + CertificatePrecededBy.securities | heuristic (computed) |
+| resulting_security_ids | **yes** | Rsa | RestrictedStockAward.{id, securityId} + RestrictedStockAwardPrecededBy.securities | heuristic (computed) |
+| resulting_security_ids | **yes** | Default | Certificate.{id, securityId} + CertificatePrecededBy.securities | heuristic (computed) |
 
 ### VestingTerms — in Core (admissible)
 
@@ -138,12 +115,6 @@ below makes cross-object convergence onto a shared Carta slot explicit.
 | --- | :---: | --- | --- | --- |
 | reason_text | **yes** |  | WarrantCancellationTransaction.reason | heuristic (computed) |
 
-### WarrantIssuance — in Core (admissible)
-
-| field | OCF-req | variant(s) | flows to (Carta) | loss |
-| --- | :---: | --- | --- | --- |
-| security_law_exemptions | **yes** |  | Compliance.federalExemption | heuristic (computed) |
-
 ### WarrantTransfer — in Core (admissible)
 
 | field | OCF-req | variant(s) | flows to (Carta) | loss |
@@ -152,12 +123,12 @@ below makes cross-object convergence onto a shared Carta slot explicit.
 
 ## Flow map — Carta slot ← OCF sources (the narrowest are the strongest upstream asks)
 
-- `CertificatePrecededBy.securities` ← 7: `EquityCompensationExercise.resulting_security_ids [Option]`, `EquityCompensationExercise.resulting_security_ids [Sar]`, `EquityCompensationRelease.resulting_security_ids [Rsu]`, `StockCancellation.balance_security_id [Default]`, `StockRepurchase.balance_security_id [Default]`, `StockTransfer.balance_security_id [Default]`, `StockTransfer.resulting_security_ids [Default]`
-- `Certificate.securityId` ← 6: `EquityCompensationExercise.resulting_security_ids [Option]`, `EquityCompensationExercise.resulting_security_ids [Sar]`, `StockCancellation.balance_security_id [Default]`, `StockRepurchase.balance_security_id [Default]`, `StockTransfer.balance_security_id [Default]`, `StockTransfer.resulting_security_ids [Default]`
-- `Compliance.federalExemption` ← 4: `ConvertibleIssuance.security_law_exemptions`, `EquityCompensationIssuance.security_law_exemptions [Option, Rsu, Sar]`, `StockIssuance.security_law_exemptions [Rsa, Default]`, `WarrantIssuance.security_law_exemptions`
+- `CertificatePrecededBy.securities` ← 6: `EquityCompensationExercise.resulting_security_ids [Option]`, `EquityCompensationRelease.resulting_security_ids [Rsu]`, `StockCancellation.balance_security_id [Default]`, `StockRepurchase.balance_security_id [Default]`, `StockTransfer.balance_security_id [Default]`, `StockTransfer.resulting_security_ids [Default]`
+- `Certificate.id` ← 5: `EquityCompensationExercise.resulting_security_ids [Option]`, `StockCancellation.balance_security_id [Default]`, `StockRepurchase.balance_security_id [Default]`, `StockTransfer.balance_security_id [Default]`, `StockTransfer.resulting_security_ids [Default]`
+- `Certificate.securityId` ← 5: `EquityCompensationExercise.resulting_security_ids [Option]`, `StockCancellation.balance_security_id [Default]`, `StockRepurchase.balance_security_id [Default]`, `StockTransfer.balance_security_id [Default]`, `StockTransfer.resulting_security_ids [Default]`
+- `RestrictedStockAward.id` ← 4: `StockCancellation.balance_security_id [Rsa]`, `StockRepurchase.balance_security_id [Rsa]`, `StockTransfer.balance_security_id [Rsa]`, `StockTransfer.resulting_security_ids [Rsa]`
 - `RestrictedStockAward.securityId` ← 4: `StockCancellation.balance_security_id [Rsa]`, `StockRepurchase.balance_security_id [Rsa]`, `StockTransfer.balance_security_id [Rsa]`, `StockTransfer.resulting_security_ids [Rsa]`
 - `RestrictedStockAwardPrecededBy.securities` ← 4: `StockCancellation.balance_security_id [Rsa]`, `StockRepurchase.balance_security_id [Rsa]`, `StockTransfer.balance_security_id [Rsa]`, `StockTransfer.resulting_security_ids [Rsa]`
-- `Document.fileId` ← 2: `Document.path`, `Document.uri`
 - `ShareClassRightsAndPreferences.conversionPrice` ← 2: `StockClass.conversion_rights [Common, Preferred]`, `StockClassConversionRatioAdjustment.new_ratio_conversion_mechanism`
 - `ShareClassRightsAndPreferences.conversionRatio` ← 2: `StockClass.conversion_rights [Common, Preferred]`, `StockClassConversionRatioAdjustment.new_ratio_conversion_mechanism`
 - `Stakeholder.email` ← 2: `Stakeholder.contact_info`, `Stakeholder.primary_contact`
@@ -181,16 +152,13 @@ below makes cross-object convergence onto a shared Carta slot explicit.
 - `Exercise.certificateId` ← 1: `EquityCompensationExercise.resulting_security_ids [Option]`
 - `OptionCancellationTransaction.reason` ← 1: `EquityCompensationCancellation.reason_text [Option]`
 - `OptionGrant.exercisePeriods` ← 1: `EquityCompensationIssuance.termination_exercise_windows [Option]`
-- `OptionPoolSummary.shareClassId` ← 1: `StockPlan.stock_class_ids`
 - `RestrictedStockAward.returnedToTreasuryQuantity` ← 1: `StockRepurchase.quantity [Rsa]`
 - `RsaCancellationTransaction.reason` ← 1: `StockCancellation.reason_text [Rsa]`
 - `RsuCancellationTransaction.reason` ← 1: `EquityCompensationCancellation.reason_text [Rsu]`
-- `SarCancellationTransaction.reason` ← 1: `EquityCompensationCancellation.reason_text [Sar]`
 - `ShareClass.authorizedShareCount` ← 1: `StockClass.initial_shares_authorized [Common, Preferred]`
 - `ShareClass.pariPassu` ← 1: `StockClass.seniority [Common, Preferred]`
 - `ShareClass.seniority` ← 1: `StockClass.seniority [Common, Preferred]`
 - `ShareClass.type` ← 1: `StockClass.class_type [Common, Preferred]`
-- `ShareClassValuation.common` ← 1: `StockClass.class_type [Common, Preferred]`
 - `Stakeholder.address` ← 1: `Stakeholder.addresses`
 - `Stakeholder.fullName` ← 1: `Stakeholder.name`
 - `Stakeholder.relationship` ← 1: `Stakeholder.current_relationships`

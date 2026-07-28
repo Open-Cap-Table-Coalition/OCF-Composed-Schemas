@@ -52,7 +52,7 @@ type), as long as exactly one target object is unambiguously the destination:
 | --- | --- |
 | `InterestRate.rate` | `ConvertibleNote.interestRate` |
 | a conversion ratio | `ShareClassRightsAndPreferences.conversionRatio` |
-| `SecurityExemption.description` | `Compliance.federalExemption` |
+| `SecurityExemption.description` | No retained Carta target; `Compliance` was removed from the June 22 bundle |
 | `TerminationWindow` | `ExercisePeriods` |
 
 > Over-applying bucket 2 to a structured type that has a clear home is the

@@ -6,10 +6,10 @@ version of the target — upstream refreshes become a deliberate event (replace 
 re-review affected mappings) rather than silent misalignment.
 
 - **Standard:** Carta Cap Table Data Schema
-- **Version:** v1alpha1 (2026-04-30)
+- **Version:** v1alpha1 (2026-06-22)
 - **Source:** Google Drive
-- **Last copied:** 2026-05-19 by MattCantor
-- **Content lock:** [`../provenance.lock.json`](../provenance.lock.json) — SHA-256 `9cb61cd0464edbba67f721c29afaba22dce15a2d59af2d0587670ad709af8a71`
+- **Last copied:** 2026-07-28
+- **Content lock:** [`../provenance.lock.json`](../provenance.lock.json) — SHA-256 `b8d54974eea8957f67ebe600097b31024a691e50d949a8a6db6227dd7a2aa06c`
 
 ## How to refresh
 

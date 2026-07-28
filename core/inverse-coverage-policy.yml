@@ -22,12 +22,6 @@
 # forward mapping can mention but that cannot seed an inverse source record).
 
 carta_defs:
-  # Carta's partial-date helper is structurally object-like, but it is not the
-  # correspondent for OCF Date. OCF Date lands on the Iso8601* wrappers below.
-  Date:
-    role: value-type
-    reason: Partial-date value helper; OCF Date maps to the Iso8601 date wrappers.
-
   # These are intentionally listed even though their one-property shape already
   # keeps them out of the object-like candidate denominator. The explicit role
   # makes the policy reusable if a future bundle changes their shape.
@@ -50,35 +44,6 @@ carta_defs:
     role: value-type
     reason: Reusable datetime wrapper, populated through owning object properties.
 
-  Corporation:
-    role: alternate
-    reason: Unused alternate issuer shape; OCF Issuer maps to Carta Issuer.
-  Vesting:
-    role: alternate
-    reason: Unreachable option-grant vesting shape; mapped OCF vesting uses schedule/event defs.
-  Acceleration:
-    role: alternate
-    reason: Child of the unreachable Carta Vesting shape.
-
-  Interest:
-    role: vendor-family
-    reason: Carta profits-interest security family has no OCF source object.
-  ThresholdDetails:
-    role: nested-obj
-    reason: Nested under Interest; supporting threshold details are not a standalone target.
-  PhantomCancellationTransaction:
-    role: vendor-family
-    reason: Carta phantom-equity transaction family has no OCF route.
-  PhantomIssuanceTransaction:
-    role: vendor-family
-    reason: Carta phantom-equity transaction family has no OCF route.
-  PiuCancellationTransaction:
-    role: vendor-family
-    reason: Carta profits-interest-unit transaction family has no OCF route.
-  PiuIssuanceTransaction:
-    role: vendor-family
-    reason: Carta profits-interest-unit transaction family has no OCF route.
-
   OptionExercise:
     role: workflow-gap
     reason: Carta exercise-request workflow object; OCF maps the realized transaction instead.
@@ -91,10 +56,3 @@ carta_defs:
   Jurisdiction:
     role: workflow-gap
     reason: Carta tax-withholding jurisdiction; OCF address/exemption jurisdictions are different concepts.
-  OptionPoolSummary:
-    role: report-rollup
-    override: true
-    reason: Carta option-pool read-model summary; the pinned API bundle has no pool ledger or standalone pool record to reconstruct.
-  OptionGrantDocuments:
-    role: gap
-    reason: Carta grant-document relationship has no OCF source relationship.

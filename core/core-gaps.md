@@ -24,6 +24,7 @@ have no Carta home. Reverse-edge `heuristic` lineage is covered by the upstream 
 - board_approval_date: no-destination — kind unmappable
 - consideration_text: no-destination — kind unmappable
 - pro_rata: no-destination — kind unmappable
+- **security_law_exemptions** (OCF-required): no-destination — kind unmappable
 - **seniority** (OCF-required): no-destination — kind unmappable
 - stockholder_approval_date: no-destination — kind unmappable
 
@@ -33,23 +34,13 @@ have no Carta home. Reverse-edge `heuristic` lineage is covered by the upstream 
 ### EquityCompensationCancellation [Rsu]
 - balance_security_id: no-destination — kind unmappable
 
-### EquityCompensationCancellation [Sar]
-- balance_security_id: no-destination — kind unmappable
-
 ### EquityCompensationExercise [Option]
-- consideration_text: no-destination — kind unmappable
-
-### EquityCompensationExercise [Sar]
 - consideration_text: no-destination — kind unmappable
 
 ### EquityCompensationRelease [Rsu]
 - consideration_text: no-destination — kind unmappable
 
 ### EquityCompensationRepricing [Option]
-- **date** (OCF-required): no-destination — kind unmappable
-- **security_id** (OCF-required): no-destination — kind unmappable
-
-### EquityCompensationRepricing [Sar]
 - **date** (OCF-required): no-destination — kind unmappable
 - **security_id** (OCF-required): no-destination — kind unmappable
 
@@ -94,16 +85,20 @@ have no Carta home. Reverse-edge `heuristic` lineage is covered by the upstream 
 ### StockPlan
 - board_approval_date: no-destination — kind unmappable
 - default_cancellation_behavior: no-destination — kind unmappable
-- stock_class_ids: existence-loss — select (first_stock_class_id)
+- **initial_shares_reserved** (OCF-required): no-destination — kind unmappable
+- stock_class_id: no-destination — kind unmappable
+- stock_class_ids: no-destination — kind unmappable
 - stockholder_approval_date: no-destination — kind unmappable
 
 ### StockPlanReturnToPool [Option]
 - **date** (OCF-required): no-destination — kind unmappable
 - **reason_text** (OCF-required): no-destination — kind unmappable
+- **stock_plan_id** (OCF-required): no-destination — kind unmappable
 
 ### StockPlanReturnToPool [Rsu]
 - **date** (OCF-required): no-destination — kind unmappable
 - **reason_text** (OCF-required): no-destination — kind unmappable
+- **stock_plan_id** (OCF-required): no-destination — kind unmappable
 
 ### StockTransfer [Default]
 - consideration_text: no-destination — kind unmappable
@@ -112,13 +107,6 @@ have no Carta home. Reverse-edge `heuristic` lineage is covered by the upstream 
 ### StockTransfer [Rsa]
 - consideration_text: no-destination — kind unmappable
 - **security_id** (OCF-required): no-destination — kind unmappable
-
-### Valuation
-- board_approval_date: no-destination — kind unmappable
-- **effective_date** (OCF-required): no-destination — kind unmappable
-- provider: no-destination — kind unmappable
-- stockholder_approval_date: no-destination — kind unmappable
-- **valuation_type** (OCF-required): no-destination — kind unmappable
 
 ### WarrantCancellation
 - balance_security_id: no-destination — kind unmappable

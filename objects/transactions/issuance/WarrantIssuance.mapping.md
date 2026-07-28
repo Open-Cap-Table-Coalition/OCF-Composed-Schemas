@@ -14,7 +14,7 @@ required_fields:
   - stakeholder_id
   - custom_id
 target_standard: Carta
-target_version: "v1alpha1 (2026-04-30)"
+target_version: "v1alpha1 (2026-06-22)"
 status: complete
 last_generated: 2026-05-18
 ---
@@ -229,8 +229,9 @@ fields:
     target: null
     reason: no-equivalent
   security_law_exemptions:
-    kind: computed
-    target: "#/$defs/Compliance/properties/federalExemption"
+    kind: unmappable
+    target: null
+    reason: excluded-from-snapshot
   quantity:
     kind: rename
     target: "#/$defs/WarrantIssuanceTransaction/properties/quantity"
@@ -303,4 +304,4 @@ Use a link below to open a prefilled GitHub issue. The issue can be copied into 
 ## Notes / open questions
 
 - Warrant issuance maps to `WarrantIssuanceTransaction` inside `WarrantTransactionItem`: date, security/stakeholder identity, label, quantity, exercise/purchase price, expiration, and vesting-template reference are retained.
-- Security-law exemptions are classified onto `Compliance.federalExemption`. Exercise triggers, vesting events, quantity-source metadata, approvals, and consideration have no target; `id`, `comments`, and `object_type` are OCF scaffolding.
+- Security-law exemptions are explicitly excluded because `Compliance` was removed. Exercise triggers, vesting events, quantity-source metadata, approvals, and consideration have no target; `id`, `comments`, and `object_type` are OCF scaffolding.

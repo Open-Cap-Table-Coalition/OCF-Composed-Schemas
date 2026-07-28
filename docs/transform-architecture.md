@@ -155,13 +155,14 @@ is a separate concern: a `report-rollup` definition can receive forward edges wh
 from standalone inverse source construction. Curated policy uses `override: true` only when that
 classification must supersede direct shape evidence.
 
-The option-pool case demonstrates why both axes are needed. `StockPlanReturnToPool.security_id`
-and `stock_plan_id` are `reference-only`; `quantity` is an `aggregate-projection`; and
-`StockPlan.initial_shares_reserved` is a `state-projection` onto `OptionPoolSummary.authorizedShares`.
-The Carta bundle exposes no pool authorization ledger, effective-date history, available-share
-field, or return-to-pool transaction. Consequently, available pool shares may be calculated as an
-OCF-side replay/read model when the complete event stream is present, but that calculation does not
-become a writable Carta field or make the inverse event reconstruction lossless. See the detailed
+The option-pool case demonstrates why both axes are needed. In the current June 22 Carta bundle,
+`StockPlanReturnToPool.security_id` and `stock_plan_id` are explicitly `unmappable`, `quantity`
+has no retained pool-summary target, and `StockPlan.initial_shares_reserved` is no longer a live
+`state-projection` because `OptionPoolSummary` was removed. The Carta bundle exposes no pool
+authorization ledger, effective-date history, available-share field, or return-to-pool transaction.
+Consequently, available pool shares may be calculated as an OCF-side replay/read model when the
+complete event stream is present, but that calculation does not become a writable Carta field or
+make the inverse event reconstruction lossless. See the detailed
 [pool mapping notes](../objects/transactions/return_to_pool/StockPlanReturnToPool.mapping.md) and
 the [inverse-semantics reference](./mapping-validation.md#inverse-semantics).
 

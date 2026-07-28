@@ -326,13 +326,13 @@ shared:
     target:
       Option: "#/$defs/OptionIssuanceTransaction/properties/quantity"
       Rsu:    "#/$defs/RsuIssuanceTransaction/properties/quantity"
-      Sar:    "#/$defs/SarIssuanceTransaction/properties/quantity"
+      Sar:    null   # SAR transaction definitions were removed from the June 22 bundle
   security_id:
     kind: rename
     target:
       Option: "#/$defs/OptionGrant/properties/securityId"
       Rsu:    "#/$defs/RestrictedStockUnit/properties/securityId"
-      Sar:    null   # no Carta security object for SARs → unmappable in this variant
+      Sar:    null   # no retained SAR transaction or security object → unmappable in this variant
 ```
 
 The validator enforces the keys **stay in sync** with the variant set: every variant must have an

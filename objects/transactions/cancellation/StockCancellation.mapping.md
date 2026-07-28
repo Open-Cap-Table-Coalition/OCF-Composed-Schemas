@@ -11,7 +11,7 @@ required_fields:
   - security_id
   - reason_text
 target_standard: Carta
-target_version: "v1alpha1 (2026-04-30)"
+target_version: "v1alpha1 (2026-06-22)"
 status: complete
 last_generated: 2026-05-18
 ---
@@ -133,9 +133,11 @@ shared:
     target:
       Rsa:
         - "#/$defs/RsaTransactionItem/properties/securityId"
+        - "#/$defs/RestrictedStockAward/properties/id"
         - "#/$defs/RestrictedStockAward/properties/securityId"
       Default:
         - "#/$defs/CertificateTransactionItem/properties/securityId"
+        - "#/$defs/Certificate/properties/id"
         - "#/$defs/Certificate/properties/securityId"
   reason_text:
     kind: computed                 # free text classified into the family's cancellation reason enum
@@ -146,9 +148,11 @@ shared:
     kind: computed                 # remainder identity + lineage on the partial-cancel security
     target:
       Rsa:
+        - "#/$defs/RestrictedStockAward/properties/id"
         - "#/$defs/RestrictedStockAward/properties/securityId"
         - "#/$defs/RestrictedStockAwardPrecededBy/properties/securities"
       Default:
+        - "#/$defs/Certificate/properties/id"
         - "#/$defs/Certificate/properties/securityId"
         - "#/$defs/CertificatePrecededBy/properties/securities"
   date:
