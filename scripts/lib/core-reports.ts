@@ -8,16 +8,9 @@
  * `Derived`; no I/O.
  */
 import { Derived } from "./core-pipeline.js";
-import { BOOKKEEPING, buildTargetIndex } from "./report-helpers.js";
-import { buildInverseCoverage } from "./inverse-coverage.js";
-import {
-  FlowRow,
-  byObjectTables,
-  flowMapLines,
-  groupByEntity,
-  groupByVariant,
-  mermaidFlow,
-} from "./report-flow.js";
+import { BOOKKEEPING } from "./report-helpers.js";
+import { sourceFieldTargetIndex } from "./mapping-source.js";
+import { FlowRow, byObjectTables, flowMapLines, groupByEntity } from "./report-flow.js";
 
 // ---------------------------------------------------------------------------
 // Membership ledger.
@@ -159,8 +152,7 @@ export function renderLedger(d: Derived): string {
 export function renderGapReport(d: Derived): string {
   const admissible = new Map(d.admissibility.map((a) => [`${a.entity} ${a.variant}`, a]));
   const reqByEntity = new Map(d.corpus.objects.map((o) => [o.entity, new Set(o.requiredFields)]));
-  const targetOf = buildTargetIndex(d.corpus.objects);
-  const inverse = buildInverseCoverage(d.corpus);
+  const targetOf = sourceFieldTargetIndex(d.corpus);
 
   // The section-(a) casualties as flow rows, for the diagram: `out`, not a heuristic
   // reverse-edge (kept for the upstream report), not bookkeeping, on an admissible
@@ -193,12 +185,9 @@ export function renderGapReport(d: Derived): string {
     "",
     "## (a) OCF richness dropped on fold-down",
     "",
-    "One diagram per OCF object — each polymorphic flavor (`Object [Variant]`) fully separate:",
-    "`existence-loss` fields narrow onto a Carta object; `no-destination` fields have no home and",
-    "drop to that flavor's own `⌀ no Carta home` sink. Edge labels = field count.",
-    "(Reverse-edge `heuristic` lineage is the upstream report's.)",
-    "",
-    ...mermaidFlow(groupByVariant(gapRows), { sink: "⌀ no Carta home" }),
+    "Each admissible OCF object is listed below with its fields that fall out of the strict",
+    "projection. `existence-loss` fields narrow onto a Carta object; `no-destination` fields",
+    "have no Carta home. Reverse-edge `heuristic` lineage is covered by the upstream report.",
     "",
   ];
 
@@ -232,30 +221,12 @@ export function renderGapReport(d: Derived): string {
   lines.push("## (b) Carta inverse coverage by object definition", "");
   lines.push(
     "The canonical target-first inverse report owns the Carta-side object panels, source paths,",
-    "role policy, open-question projection, and visual flow artifacts. This Core gap report keeps",
-    "only a compact shared-ledger summary so it cannot drift into a second inverse renderer.",
-    "See `docs/generated/mapping-inverse-report.md` and `docs/generated/mapping-flows/` for the",
-    "complete target-first evidence and visuals.",
+    "role policy, open-question projection, and visual flow artifacts. This Core gap report does",
+    "not reproduce that ledger or maintain a second target-side summary.",
     "",
-    "| Shared inverse-ledger dimension | count |",
-    "| --- | ---: |",
-    `| Carta definitions | ${inverse.metrics.totalDefs} |`,
-    `| Carta object definitions | ${inverse.metrics.objectDefs} |`,
-    `| object slots | ${inverse.metrics.objectSlots} |`,
-    `| direct executable slots | ${inverse.metrics.directSlots} |`,
-    `| reusable type-only slots | ${inverse.metrics.typeOnlySlots} |`,
-    `| implicit constant slots | ${inverse.metrics.implicitSlots} |`,
-    `| deferred slots | ${inverse.metrics.deferredSlots} |`,
-    `| structural child-container slots | ${inverse.metrics.structuralSlots} |`,
-    `| empty slots | ${inverse.metrics.emptySlots} |`,
-    "",
-    `| direct target definitions | ${inverse.metrics.directDefs} |`,
-    `| type-only target definitions | ${inverse.metrics.typeOnlyDefs} |`,
-    `| deferred target definitions | ${inverse.metrics.definitionRoleCounts.deferred} |`,
-    `| nested/support definitions | ${
-      inverse.metrics.nestedObjDefs + inverse.metrics.valueTypeDefs
-    } |`,
-    `| follow-up candidates | ${inverse.candidates.length} |`,
+    "The same `renderMappingInverseReport` renderer is materialized by `npm run mapping:artifacts`.",
+    "See `docs/generated/mapping-explorer/assets/mapping-inverse-report.md` and the Pages explorer",
+    "for the complete target-first evidence and visuals.",
     ""
   );
   return lines.join("\n") + "\n";
@@ -282,7 +253,7 @@ export function renderUpstreamReport(d: Derived): string {
     d.admissibility.filter((a) => a.admissible).map((a) => `${a.entity} ${a.variant}`)
   );
   const reqByEntity = new Map(d.corpus.objects.map((o) => [o.entity, new Set(o.requiredFields)]));
-  const targetOf = buildTargetIndex(d.corpus.objects);
+  const targetOf = sourceFieldTargetIndex(d.corpus);
 
   const rows: FlowRow[] = [];
   for (const r of d.rows) {
@@ -303,7 +274,6 @@ export function renderUpstreamReport(d: Derived): string {
     });
   }
   const groups = groupByEntity(rows);
-  const diagramGroups = groupByVariant(rows); // diagrams split polymorphic flavors apart
   const reqCount = rows.filter((r) => r.ocfRequired).length;
 
   const lines: string[] = [
@@ -316,15 +286,10 @@ export function renderUpstreamReport(d: Derived): string {
     "may not validate back as OCF without OCF relaxing a constraint. These are the",
     "upstream-OCF-change candidates; OCF-*required* fields (**bold**) are the strongest.",
     "",
-    `## Overview — where rich-Core's lossy fields flow (${rows.length} fields, ${reqCount} OCF-required)`,
+    `## Lossy fields carried by rich Core (${rows.length} fields, ${reqCount} OCF-required)`,
     "",
-    "One diagram per OCF object — each polymorphic flavor (`Object [Variant]`) fully separate — with",
-    "the Carta objects it lands on. Edge labels = the property flowing; cross-object convergence",
-    "(several sources on one Carta slot) is in the flow map below.",
-    "",
-    ...(rows.length
-      ? mermaidFlow(diagramGroups)
-      : ["(none — this profile carries no lossy-home fields.)"]),
+    "Each field is grouped by OCF object and shows its narrowed Carta home. The flow map",
+    "below makes cross-object convergence onto a shared Carta slot explicit.",
     "",
     "## By OCF object — each field and its narrowed Carta home",
     "",
