@@ -86,4 +86,4 @@ Use a link below to open a prefilled GitHub issue. The issue can be copied into 
 
 ## Notes / open questions
 
-- Carta has no tax-identifier fields anywhere in the bundled schema. The closest tax-related concepts (`OptionExerciseTaxWithholdingLineItem`, `Jurisdiction.country`) are about tax *withholding* on transactions, not stakeholder/issuer tax IDs. Both OCF Issuer and Stakeholder consequently mark their `tax_ids` arrays as unmappable.
+- Carta has no issuer or stakeholder tax-ID field. Both `tax_id` and its issuing `country` are `no-equivalent`; withholding jurisdiction is a different concept.

@@ -154,25 +154,5 @@ Use a link below to open a prefilled GitHub issue. The issue can be copied into 
 
 ## Notes / open questions
 
-- **Join-dependent (downstream).** A stock acceptance carries only `security_id`
-  and no discriminator; the security family is fixed at issuance, not on the
-  acceptance record. An importer must resolve `issuance_type` from the joined
-  `StockIssuance` first (the two-pass requirement, §2.2) before it can decide where
-  the acceptance lands. `StockIssuanceType` has exactly two values — `RSA` and
-  `FOUNDERS_STOCK` — which the two variants partition exhaustively.
-- **`date` is the only mappable field.** For an `RSA` issuance the accepted security
-  is a Carta `RestrictedStockAward`, which exposes
-  `stakeholderAcceptanceDate` (`$ref Iso8601CompleteCalendarDate`); the OCF
-  acceptance `date` is folded onto that security via the per-variant target map.
-- **`Default` (FOUNDERS_STOCK) is unmappable.** Non-RSA stock maps to a Carta
-  `Certificate`, and `Certificate` has no `stakeholderAcceptanceDate` (its only date
-  fields are `issueDate` / `canceledDate` / `lastModifiedDatetime`). Carta also has
-  no `StockAcceptanceTransaction` and no generic acceptance transaction, so there is
-  nowhere to record a founders'-stock acceptance — `primary_targets: null` and
-  `date → null` for this variant.
-- **`security_id`** is the join key (`route_by_property.lookup_by.key`); it routes the family,
-  it is not itself a stored Carta field on the resolved security.
-- **`id`, `comments`, `object_type` → unmappable.** Standard OCF object scaffolding:
-  `id` is OCF's own object identifier (Carta assigns server-side ids) and
-  `object_type` is OCF's discriminator constant (`TX_STOCK_ACCEPTANCE`), both
-  `ocf-internal`; `comments` is free-text with no Carta slot (`no-equivalent`).
+- Join on `security_id` to `StockIssuance.issuance_type`. RSA → `RestrictedStockAward.stakeholderAcceptanceDate`; FOUNDERS_STOCK has no acceptance target because Carta has no certificate acceptance field or acceptance transaction.
+- `security_id` routes the record, while `id`, `comments`, and `object_type` are OCF scaffolding.

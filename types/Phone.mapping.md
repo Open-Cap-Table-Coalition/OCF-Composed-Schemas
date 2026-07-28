@@ -92,4 +92,4 @@ Use a link below to open a prefilled GitHub issue. The issue can be copied into 
 
 ## Notes / open questions
 
-- Carta has no phone-number fields anywhere in the bundled schema. Stakeholder and Issuer carry only an `email`. OCF fields that reference `Phone` (e.g. `Issuer.phone`, `ContactInfo.phone_numbers`, `ContactInfoWithoutName.phone_numbers`) are all unmappable on the Carta side; phone data is dropped on transfer.
+- Carta exposes no phone-number field or reusable phone type. `phone_type` and `phone_number` are therefore `no-equivalent`; phone data is dropped by issuer, stakeholder, and contact mappings.

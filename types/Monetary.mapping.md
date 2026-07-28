@@ -84,4 +84,4 @@ Use a link below to open a prefilled GitHub issue. The issue can be copied into 
 
 ## Notes / open questions
 
--
+- `amount` and `currency` map to `Money.amount` and `Money.currencyCode`. The value correspondence is direct; Carta wraps the currency code in its reusable ISO type.

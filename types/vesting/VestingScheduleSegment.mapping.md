@@ -130,15 +130,5 @@ Use a link below to open a prefilled GitHub issue. The issue can be copied into 
 
 ## Notes / open questions
 
-- A `VestingScheduleSegment` maps to one Carta `VestingPeriod`, mirroring the pre-#227
-  `VestingStatement` → `VestingPeriod` projection. The `period`/`occurrences`/`period_type`
-  triple yields Carta's `length`, `lengthUnit`, and `vestingMethod`.
-- `vestingMethod` is recovered from the `(period, period_type)` pair via the lookup above.
-  Cadences OCF can express but Carta's `VestingMethod` enum cannot (e.g. every 5 days, every
-  4 months) have no exact target; those would need a custom Carta period or an approximation.
-- The segment carries no `percentage`/share-of-grant field (unlike the old `VestingStatement`),
-  so there is nothing to map onto `VestingPeriod.percentage` here — Carta derives the per-period
-  share from the period cadence and the grant total.
-- `cliff.percentage` is an OCF `Numeric` decimal (already a ratio), so it maps straight to
-  Carta's `Decimal` `cliffPercentage` with no numerator/denominator division (the old canonical
-  cliff used a `Fraction`).
+- A segment projects to one Carta `VestingPeriod`: occurrences × period becomes `length`, the unit remaps to `lengthUnit`, and the supported cadence maps to `vestingMethod`.
+- Unsupported cadence combinations have no exact Carta enum. The optional cliff splits into the period's cliff length, unit, and percentage; the segment has no grant-share percentage of its own.

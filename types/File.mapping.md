@@ -86,4 +86,5 @@ Use a link below to open a prefilled GitHub issue. The issue can be copied into 
 
 ## Notes / open questions
 
-- Carta has no in-schema file type. Files live outside the data schema and are referenced via `Document.fileId`, which is returned by the Carta Upload File endpoint. Neither the local file path nor the MD5 checksum survives the transfer — clients use these OCF fields only to locate and verify the file before uploading it. See also `types/Md5.mapping.md` and `objects/Document.mapping.md`.
+- Carta does not expose a reusable file metadata type corresponding to OCF `File`. `filepath` and `md5` have no direct target.
+- Document uploads are handled at the object level: an OCF path/URI is uploaded out-of-band and the returned Carta `fileId` is computed there.
