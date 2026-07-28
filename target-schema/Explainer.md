@@ -22,7 +22,7 @@ A few orientation notes before you dive in:
 
 - **Carta's primary model is the snapshot.** Each security (an option grant, a share certificate, a convertible note) exists as a record describing its current state - quantity outstanding, vested quantity, terms, dates. Transactions are a parallel view that record the events that produced those snapshots. Both views ship in the bundle.
 
-- **Opinionated about identity, permissive about the rest.** Each main entity requires the fields a record genuinely can't be without - its id, the issuer/holder linkage (issuerId, stakeholderId), and the core terms (issue date, quantity, name/type) - while the long tail of lifecycle and detail fields stays optional, because the snapshot model populates records progressively. Treat the schema as a floor: it enforces identity and the core economics, and an otherwise sparsely-populated record passes as long as it carries those and contradicts nothing.
+- **Opinionated about identity, permissive about the rest.** Each main entity requires the fields a record genuinely can't be without - its id, the issuer/holder linkage (issuerId, stakeholderId), and the core terms (issue date, quantity, name/type) - while the long tail of lifecycle and detail fields stays optional, because the snapshot model populates records progressively. Treat the schema as a floor: it enforces identity and the core economics, and an otherwise sparsely-populated record passes as long as it carries those and contradicts nothing. ConvertibleNote is the exception worth knowing - it additionally requires interest, dayCountBasis, interestCompoundingPeriod, cashPaid, and noteBlock, so a convertible cannot be filed as sparsely as the other entities.
 
 - **Naming convention:** \$defs keys are PascalCase (OptionGrant, Stakeholder); property names are camelCase (stakeholderId, vestingScheduleTemplateId). This follows the dominant JSON Schema convention (OpenAPI, Schema.org).
 
@@ -243,7 +243,7 @@ The plan is captured as a freeform name string on each grant (equityIncentivePla
 | repurchaseWindow | Default repurchase period for unvested / early-exercised shares | \- |
 | pourOverFromPlanId | Predecessor plan whose returned shares roll into this one | \- |
 
-**Join key:** id ↔ equityPlanId, which already exists on all seven issuance transactions (OptionIssuanceTransaction, RsuIssuanceTransaction, …). Grant *snapshots* carry only equityIncentivePlanName (a string), so a snapshot-to-plan join is name-based until a grant-level equityPlanId is added.
+**Join key:** id ↔ equityPlanId, which exists on the four plan-bearing issuance transactions (OptionIssuanceTransaction, RsuIssuanceTransaction, RsaIssuanceTransaction, CertificateIssuanceTransaction; ConvertibleIssuanceTransaction and WarrantIssuanceTransaction do not carry it). Grant *snapshots* carry only equityIncentivePlanName (a string), so a snapshot-to-plan join is name-based until a grant-level equityPlanId is added.
 
 *Calculated view (not a stored field):* available pool = authorizedShareCount − issued, where issued is the sum of outstanding grants tied to the plan.
 
@@ -391,7 +391,7 @@ changeInControlPercent, conversionTrigger, conversionDatetime,
 issueDatetime, maturityDatetime, canceledDatetime, canceledQuantity
 ```
 
-A convertible note is a debt instrument that converts into equity on a future event - typically a priced round, change of control, or maturity. A SAFE (Simple Agreement for Future Equity) is the same convert-later idea without the debt - no repayment obligation, and often no interest or maturity. Carta models both as ConvertibleNote, distinguished by the note block's noteType; a SAFE-typed record can still populate note-like fields (interest, maturity) when the instrument carries them. The conversion math is governed by priceCap (valuation ceiling), discountPercentage (conversion discount vs. round price), and changeInControlPercent (multiplier on CIC). Note-style convertibles also populate interest terms - interestRate, interestAccrualPeriod, interestCompoundingPeriod, and the [<u>day-count basis</u>](https://support.carta.com/s/article/day-count-basis) used to accrue it.
+A convertible note is a debt instrument that converts into equity on a future event - typically a priced round, change of control, or maturity. A SAFE (Simple Agreement for Future Equity) is the same convert-later idea without the debt - no repayment obligation, and often no interest or maturity. Carta models both as ConvertibleNote, distinguished by the note block's noteType. Note that interest, dayCountBasis, and interestCompoundingPeriod are required on every ConvertibleNote, SAFE or not, so a SAFE record must carry them (typically a zero rate) rather than omitting them; maturity remains optional. The conversion math is governed by priceCap (valuation ceiling), discountPercentage (conversion discount vs. round price), and changeInControlPercent (multiplier on CIC). Note-style convertibles also populate interest terms - interestRate, interestAccrualPeriod, interestCompoundingPeriod, and the [<u>day-count basis</u>](https://support.carta.com/s/article/day-count-basis) used to accrue it.
 
 Meetly's first SAFE:
 
@@ -552,7 +552,7 @@ The periods\[\] array carries VestingPeriod records - the rule definitions. A te
 "vestsPostTermination": false,
 "evaluationDate": { "value": "2025-02-15" },
 "payoutPercentage": { "value": "120" },
-"status": "PERFORMANCjE_CONDITION_STATUS_ACHIEVED"
+"status": "PERFORMANCE_CONDITION_STATUS_ACHIEVED"
 }
 }
 ```
@@ -733,7 +733,7 @@ OptionExercise (snapshot) OptionExerciseState OptionExerciseType
 Exercise (on OptionGrant[]) ExerciseStatus ExerciseType
 ```
 
-ExerciseType and OptionExerciseType have **identical values** (CASH_EXERCISE, CASHLESS_EXERCISE, NET_EXERCISE, BLENDED) but are separate schemas. ExerciseStatus and OptionExerciseState have overlapping but non-identical values (the state machines differ).
+ExerciseType and OptionExerciseType have **identical values** (CASH_EXERCISE, CASHLESS_EXERCISE, NET_EXERCISE, BLENDED) but are separate schemas. ExerciseStatus (STATUS_PENDING, STATUS_COMPLETE, STATUS_CANCELED) and OptionExerciseState (AWAITING_TAX_WITHHOLDING, PENDING, COMPLETE, CANCELED) are parallel but share no literal value - the prefixes differ and the state machines diverge.
 
 For Meetly's grant 2502, here's the snapshot view of an exercise:
 
@@ -864,7 +864,7 @@ Grouped by section of the guide. The bundle's \$defs/ is the source of truth - q
 
 - **RSU / RSA** - Restricted Stock Unit (a promise to deliver shares) vs. Restricted Stock Award (shares issued upfront, subject to forfeiture).
 
-- **SAFE** - Simple Agreement for Future Equity. A convert-later contract that, unlike a convertible note, is not debt - typically without interest or maturity, popularized by Y Combinator. Carta models it as a noteType on ConvertibleNote, so a SAFE record may still carry interest/maturity fields when the instrument has them.
+- **SAFE** - Simple Agreement for Future Equity. A convert-later contract that, unlike a convertible note, is not debt - typically without interest or maturity, popularized by Y Combinator. Carta models it as a noteType on ConvertibleNote. Because interest is required on every ConvertibleNote, a SAFE record still carries interest fields - typically zeroed - even though the instrument bears none.
 
 - **Settlement** - converting vested RSUs into delivered shares.
 

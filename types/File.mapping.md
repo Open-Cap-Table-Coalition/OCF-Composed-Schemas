@@ -87,4 +87,4 @@ Use a link below to open a prefilled GitHub issue. The issue can be copied into 
 ## Notes / open questions
 
 - Carta does not expose a reusable file metadata type corresponding to OCF `File`. `filepath` and `md5` have no direct target.
-- Document uploads are handled at the object level: an OCF path/URI is uploaded out-of-band and the returned Carta `fileId` is computed there.
+- Document uploads were previously handled at the object level, with an OCF path/URI uploaded out-of-band and the returned Carta file identifier computed there. The June 22 bundle removes Carta's document definition outright, so no such identifier slot remains; see [`Document.mapping.md`](../objects/Document.mapping.md).

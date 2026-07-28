@@ -239,7 +239,7 @@ shared:
   security_law_exemptions:
     kind: unmappable
     target: null
-    reason: excluded-from-snapshot
+    reason: target-definition-removed
   stock_class_id:
     kind: rename
     target:

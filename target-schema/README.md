@@ -30,7 +30,14 @@ This bundle is a partial snapshot. Per the schema's own description, it excludes
 - Capitalization summaries (derived views over the facts)
 - Carta product features that are out of scope (Compensation Benchmarks/CTC, Draft Securities, 409A
   FMV)
+- Document attachments
 
 References from included schemas into excluded ones are rewritten to `true` (= "accepts any value").
 When a mapping's target resolves to `true`, treat it as `unmappable` for now and note in the field's
-`notes:` that the real target lives outside the bundle.
+`notes:` that the real target lives outside the bundle. The current bundle contains no such nodes —
+the June 22 refresh dropped the excluded definitions outright rather than stubbing their references —
+so a field that lost its target to that refresh takes `reason: target-definition-removed`, not
+`excluded-from-snapshot`.
+
+For a narrative walkthrough of the bundle's objects, enums, and worked examples, see
+[`Explainer.md`](./Explainer.md).

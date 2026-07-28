@@ -190,6 +190,7 @@ export const STATUS_VOCABULARY = ["draft", "partial", "complete", "reviewed"] as
 export const REASON_VOCABULARY = [
   "no-equivalent",
   "excluded-from-snapshot",
+  "target-definition-removed",
   "out-of-scope",
   "ocf-internal",
 ] as const;

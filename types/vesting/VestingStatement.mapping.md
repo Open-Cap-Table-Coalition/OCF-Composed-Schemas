@@ -76,7 +76,7 @@ Source: [`VestingStatement.schema.json`](./VestingStatement.schema.json)
 
 ```yaml
 # kind vocabulary: rename | construct | select | split | combine | enum-remap | computed | unmappable | TODO
-# unmappable reason vocabulary: no-equivalent | excluded-from-snapshot | out-of-scope | ocf-internal
+# unmappable reason vocabulary: no-equivalent | excluded-from-snapshot | target-definition-removed | out-of-scope | ocf-internal
 status: complete
 
 # Each VestingStatement projects to one Carta VestingPeriod

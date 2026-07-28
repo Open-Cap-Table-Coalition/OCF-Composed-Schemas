@@ -106,8 +106,8 @@ them and the inverse report can project open questions onto the related Carta pr
   - Answer: No; Carta generates its own identifier.
   - Answered by: @bob
 
-- [ ] `addresses[].country`: Should this source also populate stakeholder compliance residency?
-  - Target: Compliance.countryOfResidency
+- [ ] `addresses[].country`: Should this source also populate the stakeholder's Carta address?
+  - Target: StakeholderAddress.country
   - Asked by: @alice
   - Answer: Open: investigate the required object linkage and code conversion.
   - Answered by: —
@@ -259,7 +259,8 @@ may not, must cover every property, and every `unmappable` entry must carry a `r
 | `reason` | meaning |
 | --- | --- |
 | `no-equivalent` | the target genuinely lacks the concept |
-| `excluded-from-snapshot` | the real target exists but is outside the pinned partial bundle |
+| `excluded-from-snapshot` | the real target exists but is outside the pinned partial bundle (it resolves to `true`) |
+| `target-definition-removed` | the field had a resolving target that a later bundle deleted outright |
 | `out-of-scope` | deliberately dropped from the mapping effort |
 | `ocf-internal` | OCF scaffolding (`id`, `object_type`, `comments`) with no target meaning |
 

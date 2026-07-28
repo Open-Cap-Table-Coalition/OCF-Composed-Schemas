@@ -80,7 +80,7 @@ required_fields:
   - id
   - object_type
 target_standard: Carta
-target_version: v1alpha1 (2026-04-30)
+target_version: "v1alpha1 (2026-06-22)"
 status: draft
 last_generated: 2026-05-18
 ---
@@ -300,6 +300,7 @@ Completed mappings must provide one of the validator's reasons:
 | --- | --- |
 | `no-equivalent` | Carta genuinely has no corresponding concept |
 | `excluded-from-snapshot` | A related target exists but is outside the pinned target bundle |
+| `target-definition-removed` | The field had a working target that a later Carta bundle deleted |
 | `out-of-scope` | The concept is deliberately outside this mapping effort |
 | `ocf-internal` | The property is OCF scaffolding such as `id`, `comments`, or `object_type` |
 
@@ -337,7 +338,7 @@ shared:
     target:
       Option: "#/$defs/OptionIssuanceTransaction/properties/quantity"
       Rsu: "#/$defs/RsuIssuanceTransaction/properties/quantity"
-      Sar: "#/$defs/SarIssuanceTransaction/properties/quantity"
+      Sar: null   # SAR transaction definitions were removed from the June 22 bundle
 
 variants:
   Option:
@@ -354,8 +355,7 @@ variants:
     fields: {}
   Sar:
     when: [CSAR, SSAR]
-    primary_targets:
-      - "#/$defs/SarIssuanceTransaction"
+    primary_targets: null   # no retained SAR issuance target
     fields: {}
 
 ```
@@ -404,8 +404,7 @@ variants:
     fields: {}
   Sar:
     when: [CSAR, SSAR]
-    primary_targets:
-      - "#/$defs/SarExerciseTransaction"
+    primary_targets: null   # no retained SAR exercise target
     fields: {}
 ```
 

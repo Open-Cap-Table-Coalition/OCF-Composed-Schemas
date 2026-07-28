@@ -67,7 +67,7 @@ describe("renderMappingBlock", () => {
       [
         "```yaml",
         "# kind vocabulary: rename | construct | select | split | combine | enum-remap | union-map | computed | unmappable | TODO",
-        "# unmappable reason vocabulary: no-equivalent | excluded-from-snapshot | out-of-scope | ocf-internal",
+        "# unmappable reason vocabulary: no-equivalent | excluded-from-snapshot | target-definition-removed | out-of-scope | ocf-internal",
         "status: draft",
         "",
         "fields:",

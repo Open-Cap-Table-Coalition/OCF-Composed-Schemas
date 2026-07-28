@@ -133,7 +133,7 @@ fields:
   id:
     kind: unmappable
     target: null
-    reason: excluded-from-snapshot
+    reason: target-definition-removed
   comments:
     kind: unmappable
     target: null
@@ -164,7 +164,7 @@ fields:
   initial_shares_reserved:
     kind: unmappable
     target: null
-    reason: excluded-from-snapshot
+    reason: target-definition-removed
   default_cancellation_behavior:
     kind: unmappable
     target: null
@@ -177,11 +177,11 @@ fields:
   stock_class_id:
     kind: unmappable
     target: null
-    reason: excluded-from-snapshot
+    reason: target-definition-removed
   stock_class_ids:
     kind: unmappable
     target: null
-    reason: excluded-from-snapshot
+    reason: target-definition-removed
 ```
 
 ## Ask a mapping question

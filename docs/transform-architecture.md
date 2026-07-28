@@ -156,9 +156,13 @@ from standalone inverse source construction. Curated policy uses `override: true
 classification must supersede direct shape evidence.
 
 The option-pool case demonstrates why both axes are needed. In the current June 22 Carta bundle,
-`StockPlanReturnToPool.security_id` and `stock_plan_id` are explicitly `unmappable`, `quantity`
-has no retained pool-summary target, and `StockPlan.initial_shares_reserved` is no longer a live
-`state-projection` because `OptionPoolSummary` was removed. The Carta bundle exposes no pool
+`StockPlanReturnToPool.quantity` still has a forward home — `OptionGrant.returnedToPoolQuantity`
+and its RSU equivalent — but carries `aggregate-projection`, because repeated return events are
+summed into one per-security total that cannot be split back. `security_id` likewise maps forward
+onto the transaction-item and security identities while carrying `reference-only`: it names the
+security a return concerned, without reconstructing the return event. Meanwhile `stock_plan_id` and
+`StockPlan.initial_shares_reserved` lost their targets outright when `OptionPoolSummary` was
+removed. The Carta bundle exposes no pool
 authorization ledger, effective-date history, available-share field, or return-to-pool transaction.
 Consequently, available pool shares may be calculated as an OCF-side replay/read model when the
 complete event stream is present, but that calculation does not become a writable Carta field or

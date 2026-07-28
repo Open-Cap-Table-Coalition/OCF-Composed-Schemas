@@ -231,7 +231,7 @@ fields:
   security_law_exemptions:
     kind: unmappable
     target: null
-    reason: excluded-from-snapshot
+    reason: target-definition-removed
   quantity:
     kind: rename
     target: "#/$defs/WarrantIssuanceTransaction/properties/quantity"

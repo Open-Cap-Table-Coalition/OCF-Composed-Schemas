@@ -130,15 +130,15 @@ The route property chooses a different transaction `$def` **and** a different se
 |---|---|---|---|
 | compensation_type | ✓ enum-remap → `OptionGrant.stockOptionType` (ISO/NSO/OTHER) | — (family implied; no type field) | — (family implied; CSAR/SSAR distinction lost) |
 | option_grant_type | ✓ enum-remap → `stockOptionType` (deprecated, redundant) | — | — |
-| quantity | ✓ `.quantity` | ✓ `.quantity` | ✓ `.quantity` |
+| quantity | ✓ `.quantity` | ✓ `.quantity` | — (SAR family removed) |
 | **exercise_price** | ✓ `OptionIssuanceTransaction.exercisePrice` (anyOf *requires* it here) | — (no price field on `RsuIssuanceTransaction`) | — (SAR family removed from the June bundle) |
 | **base_price** | — (no Carta home; options don't carry a base price) | — | — (SAR family removed from the June bundle) |
 | **early_exercisable** | ✓ `OptionGrant.earlyExercisable` (**Option-only home**) | — | — |
-| expiration_date | ✓ `.expirationDatetime` | — (**no expiration field on RSU**) | ✓ `.expirationDatetime` |
-| date | ✓ `.issueDatetime` | ✓ `.issueDatetime` | ✓ `.issueDatetime` |
+| expiration_date | ✓ `.expirationDatetime` | — (**no expiration field on RSU**) | — (SAR family removed) |
+| date | ✓ `.issueDatetime` | ✓ `.issueDatetime` | — (SAR family removed) |
 | security_id, stakeholder_id, custom_id, board_approval_date | ✓ on `OptionGrant` | ✓ on `RestrictedStockUnit` | — (SAR transaction/security definitions removed) |
-| stock_class_id / stock_plan_id | ✓ `.shareClassId` / `.equityPlanId` | ✓ | ✓ |
-| vesting_template_id | ✓ `.vestingScheduleTemplateId` | ✓ `.vestingScheduleTemplateId` | ✓ `.vestingScheduleTemplateId` |
+| stock_class_id / stock_plan_id | ✓ `.shareClassId` / `.equityPlanId` | ✓ | — (SAR family removed) |
+| vesting_template_id | ✓ `.vestingScheduleTemplateId` | ✓ `.vestingScheduleTemplateId` | — (SAR family removed) |
 | vesting_start_date | ✓ `OptionGrant.vestingStartDate` | ✓ `RestrictedStockUnit.vestingStartDate` | — (SAR family removed) |
 | vestings | ✓ `OptionGrant.vestingEvents` | ✓ `RestrictedStockUnit.vestingEvents` | — (SAR family removed) |
 | termination_exercise_windows | ✓ `OptionGrant.exercisePeriods` | — (RSUs settle, no exercise periods) | — |
@@ -209,8 +209,9 @@ shared:                                        # fields identical across all var
 ### 4.3 Joined-property routing
 
 ```yaml
-# Example: EquityCompensationCancellation — the one downstream verb where all three
-# families have a real Carta tx, so it shows the grammar without a verb-divergence caveat.
+# Example: EquityCompensationCancellation — Option and RSU both have a real Carta
+# cancellation tx, so the joined-routing grammar is visible without a verb-divergence
+# caveat. SAR routes to no target in the June 22 bundle (`primary_targets: null`).
 route_by_property:
   lookup_by:
     key: security_id                                    # key on THIS transaction
@@ -221,7 +222,7 @@ route_by_property:
 variants:
   Option: { when: [OPTION, OPTION_NSO, OPTION_ISO], primary_targets: ["#/$defs/OptionCancellationTransaction"], fields: { ... } }
   Rsu:    { when: [RSU],  primary_targets: ["#/$defs/RsuCancellationTransaction"], fields: { ... } }
-  Sar:    { when: [CSAR, SSAR], primary_targets: ["#/$defs/SarCancellationTransaction"], fields: { ... } }
+  Sar:    { when: [CSAR, SSAR], primary_targets: null, fields: { ... } }   # SAR cancellation tx removed
 ```
 
 For *Exercise* and *Release* the same grammar applies but some variants resolve to `unmappable` (RSUs settle rather than exercise; options/SARs do not release — §2.3). The same `route_by_property:` block supports local routing with `on_property` or joined routing with `lookup_by`.
@@ -552,7 +553,7 @@ The model assumes Carta's importer (a) holds the full issuance set indexed so it
 | **`stock_legend_ids`, `share_numbers_issued`** | OCF carries them (the former REQUIRED); no Carta home in either `StockIssuance` variant. |
 | **`early_exercisable`** | Option-only; unmappable for RSU and SAR. |
 | **No-Carta-target verbs** | `EquityCompensationTransfer` (no equity-comp transfer tx), `EquityCompensationRetraction` (no retraction tx anywhere), `EquityCompensationRelease` for non-RSU families — all per-case `unmappable`. |
-| **Phantom / Piu** | Carta-only families (`PhantomIssuanceTransaction`, `PiuIssuanceTransaction`, …). **No OCF route-property value routes to them.** They are unreachable targets, not gaps in OCF coverage; the format never names them as `primary_targets`. |
+| **Phantom / Piu** | Formerly Carta-only families (`PhantomIssuanceTransaction`, `PiuIssuanceTransaction`, …), removed from the June 22 bundle alongside the SAR family. **No OCF route-property value ever routed to them.** They were unreachable targets rather than gaps in OCF coverage, and the format never named them as `primary_targets`. |
 
 ---
 

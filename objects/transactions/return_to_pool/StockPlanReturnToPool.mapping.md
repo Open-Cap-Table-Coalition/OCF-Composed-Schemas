@@ -157,7 +157,7 @@ shared:
   stock_plan_id:
     kind: unmappable
     target: null
-    reason: excluded-from-snapshot
+    reason: target-definition-removed
   reason_text:
     kind: unmappable
     target: null

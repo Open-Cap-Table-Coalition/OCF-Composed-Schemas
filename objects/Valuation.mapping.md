@@ -134,7 +134,7 @@ fields:
   price_per_share:
     kind: unmappable
     target: null
-    reason: excluded-from-snapshot
+    reason: target-definition-removed
   effective_date:
     kind: unmappable
     target: null
@@ -142,7 +142,7 @@ fields:
   stock_class_id:
     kind: unmappable
     target: null
-    reason: excluded-from-snapshot
+    reason: target-definition-removed
   valuation_type:
     kind: unmappable
     target: null

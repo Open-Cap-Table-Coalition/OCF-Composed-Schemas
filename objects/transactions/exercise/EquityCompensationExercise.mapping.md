@@ -130,8 +130,9 @@ route_by_property:
   exhaustive: true
 
 # shared: fields whose Carta home differs by family carry a per-variant target map
-# { Option/Rsu/Sar: pointer or pointer list }. Rsu and Sar are null on every routed field —
-# the June 22 bundle has no exercise transaction target for either family.
+# { Option/Rsu/Sar: pointer or pointer list }. Rsu is null on every routed field, and the
+# June 22 bundle has no exercise transaction for Rsu or Sar. Sar still resolves the
+# resulting-security fields onto Certificate (a stock-settled SAR produces a certificate).
 shared:
   id:                 { kind: unmappable, target: null, reason: ocf-internal }
   comments:           { kind: unmappable, target: null, reason: no-equivalent }

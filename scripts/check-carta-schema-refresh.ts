@@ -12,6 +12,7 @@ const EXPECTED_VERSION = "v1alpha1 (2026-06-22)";
 const EXPECTED_SHA256 = "b8d54974eea8957f67ebe600097b31024a691e50d949a8a6db6227dd7a2aa06c";
 const EXPECTED_MAPPING_FILE_COUNT = 102;
 const EXPECTED_DEFINITION_COUNT = 99;
+const REMOVED_TARGET_REASON = "target-definition-removed";
 
 const REMOVED_DEFINITIONS = new Set([
   "Acceleration",
@@ -56,12 +57,16 @@ const REMOVED_DEFINITIONS = new Set([
   "WarrantBlockSummary",
 ]);
 
-// These are deliberate context/shape exceptions, not silent omissions. The
-// checker fails if the new bundle introduces any additional unmapped required
-// field or if one of these documented exceptions disappears unexpectedly.
+// These are deliberate context/shape exceptions, not silent omissions. Every
+// definition carrying a `required` array is audited, so the checker fails if any
+// unmapped required field appears outside this table, or if one of these
+// documented exceptions disappears unexpectedly.
 const REQUIRED_FIELD_EXCEPTIONS: Record<string, string[]> = {
   Certificate: ["issuerId"],
   ConvertibleNote: ["interest", "issuerId", "noteBlock"],
+  // Predates the June 22 refresh: NoteBlock is byte-identical between bundles and
+  // `status` has never had an OCF source. Listed so the audit can be exhaustive.
+  NoteBlock: ["status"],
   OptionExercise: ["issuerId", "optionGrantId", "quantity", "stakeholderId"],
   OptionGrant: ["issuerId"],
   PointOfContact: ["issuerId", "type"],
@@ -94,6 +99,15 @@ function targetRoot(pointer: string): string | undefined {
 function targetProperty(pointer: string, root: string): string | undefined {
   const parts = pointer.slice(`#/$defs/${root}/`.length).split("/");
   return parts[0] === "properties" ? parts[1] : undefined;
+}
+
+/** True when any parsed mapping entry is `kind: unmappable` with this `reason:`. */
+function hasUnmappableReason(value: unknown, reason: string): boolean {
+  if (Array.isArray(value)) return value.some((item) => hasUnmappableReason(item, reason));
+  if (typeof value !== "object" || value === null) return false;
+  const entry = value as Record<string, unknown>;
+  if (entry.kind === "unmappable" && entry.reason === reason) return true;
+  return Object.values(entry).some((item) => hasUnmappableReason(item, reason));
 }
 
 async function main(): Promise<number> {
@@ -181,8 +195,8 @@ async function main(): Promise<number> {
   }
 
   for (const [root, definition] of Object.entries(defs)) {
-    if (!(root in REQUIRED_FIELD_EXCEPTIONS)) continue;
     const required = new Set(definition.required ?? []);
+    if (!required.size && !(root in REQUIRED_FIELD_EXCEPTIONS)) continue;
     const mapped = mappedProperties.get(root) ?? new Set<string>();
     const missing = [...required].filter((field) => !mapped.has(field)).sort();
     const expected = [...(REQUIRED_FIELD_EXCEPTIONS[root] ?? [])].sort();
@@ -208,8 +222,17 @@ async function main(): Promise<number> {
   ];
   for (const rel of requiredExclusionFiles) {
     const markdown = await readFile(path.join(repoRoot, rel), "utf8");
-    if (!markdown.includes("reason: excluded-from-snapshot")) {
-      errors.push(`${rel}: missing explicit excluded-from-snapshot migration marker`);
+    let parsed;
+    try {
+      parsed = parseMappingDocument(markdown, rel);
+    } catch (error) {
+      errors.push(`${rel}: ${(error as Error).message}`);
+      continue;
+    }
+    // Assert the parsed mapping entry, not a substring of the file: a prose
+    // mention or an HTML comment must not be able to satisfy this check.
+    if (!hasUnmappableReason(parsed.mapping, REMOVED_TARGET_REASON)) {
+      errors.push(`${rel}: no field carries kind: unmappable / reason: ${REMOVED_TARGET_REASON}`);
     }
   }
 

@@ -6,6 +6,18 @@
       "id": "tx-sc-1",
       "date": "2024-06-01",
       "quantity": "500000"
+    },
+    {
+      "object_type": "TX_STOCK_CLASS_AUTHORIZED_SHARES_ADJUSTMENT",
+      "id": "tx-scasa-1",
+      "stock_class_id": "sc-common",
+      "new_shares_authorized": "12000000"
+    },
+    {
+      "object_type": "CE_STAKEHOLDER_RELATIONSHIP",
+      "id": "ce-shr-1",
+      "stakeholder_id": "sh-raj",
+      "relationship_started": "EMPLOYEE"
     }
   ]
 }

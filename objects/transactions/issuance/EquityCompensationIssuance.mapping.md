@@ -263,7 +263,7 @@ shared:
   security_law_exemptions:
     kind: unmappable
     target: null
-    reason: excluded-from-snapshot
+    reason: target-definition-removed
   stock_plan_id:
     kind: rename
     target:
@@ -372,9 +372,9 @@ variants:
       compensation_type:            { kind: unmappable, target: null, reason: no-equivalent }
       option_grant_type:            { kind: unmappable, target: null, reason: no-equivalent }
       exercise_price:               { kind: unmappable, target: null, reason: no-equivalent }
-      base_price:                   { kind: unmappable, target: null, reason: excluded-from-snapshot }
+      base_price:                   { kind: unmappable, target: null, reason: target-definition-removed }
       early_exercisable:            { kind: unmappable, target: null, reason: no-equivalent }
-      expiration_date:              { kind: unmappable, target: null, reason: excluded-from-snapshot }
+      expiration_date:              { kind: unmappable, target: null, reason: target-definition-removed }
       termination_exercise_windows: { kind: unmappable, target: null, reason: no-equivalent }
 
  ```

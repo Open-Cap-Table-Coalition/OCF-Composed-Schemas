@@ -226,7 +226,7 @@ fields:
   security_law_exemptions:
     kind: unmappable
     target: null
-    reason: excluded-from-snapshot
+    reason: target-definition-removed
   investment_amount:
     kind: rename
     target:

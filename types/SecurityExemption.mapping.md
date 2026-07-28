@@ -61,7 +61,7 @@ fields:
   description:
     kind: unmappable
     target: null
-    reason: excluded-from-snapshot
+    reason: target-definition-removed
   jurisdiction:
     kind: unmappable
     target: null
@@ -86,5 +86,5 @@ Use a link below to open a prefilled GitHub issue. The issue can be copied into 
 
 ## Notes / open questions
 
-- `Compliance` and `FederalExemption` are absent from the June 22 bundle, so both exemption properties are explicitly excluded from this snapshot. `jurisdiction` has no target in the retained bundle.
+- `Compliance` and `FederalExemption` were deleted from the June 22 bundle, so both exemption properties carry `reason: target-definition-removed`. `jurisdiction` has no target in the retained bundle.
 - Issuance mappings resolve list cardinality and stakeholder-level placement; this type does not invent an issuance-local exemption field.

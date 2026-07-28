@@ -410,9 +410,12 @@ for a useful, populated Core. Both artifacts ship; neither replaces the other.
 fields:
 
 1. **Rich re-admits an entity only when a lossy-home field gives it *payload*** — a non-reference,
-   non-bookkeeping member. Today that adds `Document` (via `path`/`uri`),
-   `StockClassConversionRatioAdjustment` (via `new_ratio_conversion_mechanism`), and
-   `StockRepurchase` (via its explicit treasury-quantity aggregate projection); rich is otherwise the
+   non-bookkeeping member. Today that adds `StockClassConversionRatioAdjustment` (via
+   `new_ratio_conversion_mechanism`) and `StockRepurchase` (via its explicit treasury-quantity
+   aggregate projection). `Document` qualified under the April bundle via `path`/`uri`; the June 22
+   refresh removed Carta's document definition, so `Document` now has no payload and stays out of
+   rich (it remains ratified in `core-rich/allow-list.yml`, awaiting a green mapping). Rich is
+   otherwise the
    same entity set as strict, enriched with fields (`Stakeholder` gains `name`/`addresses`/`contact_info`,
    `StockClass` gains `conversion_rights`/`seniority`, …). Rich is always a **strict superset**.
 2. **Reference-only lossy-home fields resolve but are not payload.** The reverse-edge lineage links
