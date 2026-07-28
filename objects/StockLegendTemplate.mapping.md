@@ -127,6 +127,6 @@ Use a link below to open a prefilled GitHub issue. The issue can be copied into 
 ## Notes / open questions
 
 - Carta has no stock-legend object, legend text field, or legend ID relationship. The entire OCF `StockLegendTemplate` object and `StockIssuance.stock_legend_ids` link are therefore `no-equivalent`.
-- `name` and `text` are dropped because Carta has no target; `id`, `comments`, and `object_type` are OCF scaffolding. Preserve the template in an extension or sidecar if legend fidelity is required.
-</content>
-</invoke>
+- The pinned Carta v1alpha1 bundle used by this mapping has no standalone legend object, legend text field, or legend ID relationship. The OCF object and `StockIssuance.stock_legend_ids` therefore remain `no-equivalent` for this target surface.
+- Carta's separate [Draft Issuer API](https://docs.carta.com/api-platform/docs/draft-issuer) accepts a certificate-level `legend` string (the public example uses `Default`), but its semantics and read-back behavior are not defined by this bundle. Do not treat it as a lossless target for OCF `name`/`text` without that contract.
+- `name` and `text` remain unmappable here; `id`, `comments`, and `object_type` are OCF scaffolding. Preserve the template in an extension or sidecar if legend fidelity is required.

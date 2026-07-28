@@ -224,5 +224,3 @@ Use a link below to open a prefilled GitHub issue. The issue can be copied into 
 - `initial_shares_reserved` maps to `authorizedShares` as a state projection. It does not preserve the “initial” qualifier; later `StockPlanPoolAdjustment` events must be handled separately.
 - `stock_class_id` maps directly to `shareClassId`; the array form uses `first_stock_class_id`, so additional classes are lost because Carta supports one backing class.
 - Plan approval dates and `default_cancellation_behavior` have no Carta target. `comments` and `object_type` are OCF scaffolding.
-</content>
-</invoke>

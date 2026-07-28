@@ -350,4 +350,4 @@ Use a link below to open a prefilled GitHub issue. The issue can be copied into 
 
 - Route by `issuance_type`: RSA → `RsaIssuanceTransaction`/`RestrictedStockAward`; FOUNDERS_STOCK → `CertificateIssuanceTransaction`/`Certificate`. Shared identity, date, holder/class/plan references, quantity, vesting-template, price, and cost basis populate the selected family.
 - RSA board approval and vesting events map to the award; those fields have no target for founders' stock. Security-law exemptions are computed onto `Compliance.federalExemption`.
-- Share-number ranges, stock legends, stockholder approval, consideration, and unsupported issuance fields are dropped; OCF scaffolding is not copied.
+- Share-number ranges, stock legend links, stockholder approval, consideration, and unsupported issuance fields are dropped for this pinned target bundle; OCF scaffolding is not copied. Carta's separate Draft Issuer certificate input has a `legend` string, but it is not part of this issuance target and does not establish a `StockLegendTemplate` mapping.
