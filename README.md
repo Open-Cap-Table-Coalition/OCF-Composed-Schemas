@@ -123,9 +123,11 @@ separate because they answer the OCF-side questions that the target-first invers
 not model.
 
 The generated explorer lives at [`docs/generated/mapping-explorer/`](./docs/generated/mapping-explorer/)
-for local browsing. It includes one page for every green OCF object and Carta object-like
-definition, keeps no-target/no-source gaps visible, embeds the available SVGs, links the
-interactive HTML viewer, and places a prefilled GitHub issue button on each mapping page.
+for local browsing. It includes one page for every canonical green OCF object and Carta
+object-like definition, keeps no-target/no-source gaps visible, embeds the available SVGs,
+links the interactive HTML viewer, and places a prefilled GitHub issue button on each mapping
+page. Legacy `PlanSecurity*` compatibility wrappers are intentionally omitted because their
+economic mapping is inherited from the corresponding `EquityCompensation*` object.
 The `Mapping Explorer` workflow regenerates it for every pull request (as a downloadable
 preview artifact) and publishes the `main` version to GitHub Pages.
 

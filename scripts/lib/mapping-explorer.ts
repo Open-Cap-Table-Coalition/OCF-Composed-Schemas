@@ -109,6 +109,7 @@ export interface MappingExplorerData {
   artifactNames: string[];
   metrics: {
     sourceObjects: number;
+    compatibilityWrappers: number;
     noTargetSources: number;
     targetObjects: number;
     mappedTargets: number;
@@ -421,6 +422,7 @@ export function buildMappingExplorerData(
     artifacts.map((name) => [explorerSlug(name.replace(/\.svg$/, "")), name])
   );
   const sources = corpus.objects
+    .filter((object) => !object.aliasOf)
     .map((object) => {
       const edges = sourceEdgesFor(corpus, object);
       const targetNames = [
@@ -475,6 +477,7 @@ export function buildMappingExplorerData(
     artifactNames: artifacts,
     metrics: {
       sourceObjects: sources.length,
+      compatibilityWrappers: corpus.objects.filter((object) => object.aliasOf).length,
       noTargetSources: sources.filter((source) => source.noTarget).length,
       targetObjects: targets.length,
       mappedTargets: targets.filter(isMappedTarget).length,
@@ -767,7 +770,9 @@ export function renderMappingExplorerIndex(data: MappingExplorerData): string {
       "standalone targets with no OCF source",
       "metric-warn"
     )}</section>
-    <section class="feature-grid"><div class="feature-copy"><span class="eyebrow">What you are seeing</span><h2>Evidence first, polish second.</h2><p>The explorer is generated alongside the existing inverse report and visual artifacts. Every source and target page links back to its mapping file or opens a prefilled GitHub issue for the exact gap.</p><div class="feature-list"><span><i class="dot dot-mint"></i>${html(
+    <section class="feature-grid"><div class="feature-copy"><span class="eyebrow">What you are seeing</span><h2>Evidence first, polish second.</h2><p>The explorer is generated alongside the existing inverse report and visual artifacts. Every source and target page links back to its mapping file or opens a prefilled GitHub issue for the exact gap.</p><p class="callout-copy">Legacy <code>PlanSecurity*</code> compatibility wrappers are omitted from this browseable output; their economic mapping is represented by the corresponding <code>EquityCompensation*</code> object (${html(
+      data.metrics.compatibilityWrappers
+    )} wrapper pages omitted).</p><div class="feature-list"><span><i class="dot dot-mint"></i>${html(
       data.metrics.sourceObjects
     )} OCF mapping pages</span><span><i class="dot dot-coral"></i>${html(
       data.metrics.noSourceTargets

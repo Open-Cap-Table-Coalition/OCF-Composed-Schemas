@@ -24,13 +24,10 @@ describe("core reports (the markdown drift gate's premise)", () => {
     }
   });
 
-  it("the ledger surfaces alias wrappers as `alias-of X`, not `no-payload`", async () => {
+  it("the ledger omits alias wrappers from its output tables and documents the omission", async () => {
     const ledger = renderLedger(await deriveCore(process.cwd()));
-    expect(ledger).toMatch(/PlanSecurityIssuance .*alias-of EquityCompensationIssuance/);
-    // A wrapper row must never be tagged no-payload.
-    const psiRow = ledger.split("\n").find((l) => l.includes("| PlanSecurityIssuance |"))!;
-    expect(psiRow).toContain("alias-of EquityCompensationIssuance");
-    expect(psiRow).not.toContain("no-payload");
+    expect(ledger).toContain("Compatibility wrappers (`PlanSecurity*`) are intentionally omitted");
+    expect(ledger.split("\n").some((line) => line.startsWith("| PlanSecurity"))).toBe(false);
   });
 
   it("links to the canonical inverse report and keeps only shared ledger metrics", async () => {

@@ -1,11 +1,13 @@
-╭ Carta inverse coverage report ──╮
-│ source_documents: 102           │
-│ green_carta_documents: 101      │
-╰─────────────────────────────────╯
+╭ Carta inverse coverage report ─────╮
+│ source_documents: 95               │
+│ green_carta_documents: 94          │
+│ compatibility_wrappers_excluded: 7 │
+╰────────────────────────────────────╯
 
 Evidence legend
   [object] direct OCF object route; [type] reusable mapping detail used by that route, not a separate source record.
   inverse semantics are orthogonal: record-construction (default), reference-only, state-projection, aggregate-projection, or event-reconstruction.
+  PlanSecurity* compatibility wrappers are excluded from this output; their economic mapping is represented by the corresponding EquityCompensation* object (7 wrapper documents).
 
 Simple story
   1. Carta defines 139 total definitions.

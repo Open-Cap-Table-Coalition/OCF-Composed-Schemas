@@ -71,11 +71,13 @@ async function main(argv: Args): Promise<number> {
     try {
       const corpus = await loadGreenCorpus(repoRoot);
       const inverse = buildInverseCoverage(corpus);
+      const compatibilityWrappers = corpus.objects.filter((object) => object.aliasOf).length;
       console.log(
         renderMappingInverseReport({
           inverse,
-          sourceDocuments: mappingDocuments.size,
-          greenDocuments: corpus.greenDocuments.size,
+          sourceDocuments: mappingDocuments.size - compatibilityWrappers,
+          greenDocuments: corpus.greenDocuments.size - compatibilityWrappers,
+          excludedCompatibilityWrappers: compatibilityWrappers,
           targetObject: argv.targetObject,
           mappingDocuments,
           includeRelatedObjectPropertyFlows: false,

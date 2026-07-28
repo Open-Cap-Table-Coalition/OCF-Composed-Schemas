@@ -42,6 +42,8 @@ export interface MappingInverseReportOptions {
   sourceDocuments?: number;
   /** Number of green Carta mapping documents in the repository. */
   greenDocuments?: number;
+  /** Number of compatibility-wrapper documents omitted from output counts. */
+  excludedCompatibilityWrappers?: number;
   targetObject?: string;
   /** Parsed mapping documents, used to attach open questions to inverse flows. */
   mappingDocuments?: ReadonlyMap<string, MappingQuestionDocument>;
@@ -2955,13 +2957,21 @@ export function renderMappingInverseReport(options: MappingInverseReportOptions)
   const lines = renderBox("Carta inverse coverage report", [
     `source_documents: ${sourceDocuments}`,
     `green_carta_documents: ${greenDocuments}`,
+    ...(options.excludedCompatibilityWrappers !== undefined
+      ? [`compatibility_wrappers_excluded: ${options.excludedCompatibilityWrappers}`]
+      : []),
   ]);
 
   lines.push(
     "",
     "Evidence legend",
     "  [object] direct OCF object route; [type] reusable mapping detail used by that route, not a separate source record.",
-    "  inverse semantics are orthogonal: record-construction (default), reference-only, state-projection, aggregate-projection, or event-reconstruction."
+    "  inverse semantics are orthogonal: record-construction (default), reference-only, state-projection, aggregate-projection, or event-reconstruction.",
+    ...(options.excludedCompatibilityWrappers !== undefined
+      ? [
+          `  PlanSecurity* compatibility wrappers are excluded from this output; their economic mapping is represented by the corresponding EquityCompensation* object (${options.excludedCompatibilityWrappers} wrapper documents).`,
+        ]
+      : [])
   );
 
   lines.push(...renderCoverageStory(inverse));

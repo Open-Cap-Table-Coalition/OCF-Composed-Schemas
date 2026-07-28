@@ -24,7 +24,14 @@ import {
 // ---------------------------------------------------------------------------
 
 export function renderLedger(d: Derived): string {
-  const admBy = new Map(d.admissibility.map((a) => [`${a.entity} ${a.variant}`, a]));
+  const aliasEntities = new Set(
+    d.corpus.objects.filter((object) => object.aliasOf).map((object) => object.entity)
+  );
+  const admBy = new Map(
+    d.admissibility
+      .filter((a) => !aliasEntities.has(a.entity))
+      .map((a) => [`${a.entity} ${a.variant}`, a])
+  );
   const lines: string[] = [
     "# OCF Core — membership ledger (generated)",
     "",
@@ -33,15 +40,18 @@ export function renderLedger(d: Derived): string {
     "",
     "## Admissibility (§3)",
     "",
-    "`alias-of X` marks an OCF compatibility wrapper (e.g. `PlanSecurity*`) that",
-    "`allOf`-inherits `X` and declares no mapped fields of its own — its economic",
-    "mapping lives in `X`. The core/payload counts are the wrapper's own (only",
-    "`object_type`); `admissible` mirrors `X`, so a `✓` alias does have a target.",
+    "Compatibility-wrapper aliases are detected internally for admissibility, but are",
+    "not standalone Core entities: their economic mapping lives on the canonical base.",
+    "",
+    "Compatibility wrappers (`PlanSecurity*`) are intentionally omitted from the generated",
+    "field and admissibility tables below. Their economic fields are inherited from the",
+    "corresponding `EquityCompensation*` mapping; the wrapper schemas remain in the source",
+    "corpus for legacy discriminator compatibility.",
     "",
     "| entity | variant | core | payload | admissible | blockers |",
     "| --- | --- | --- | --- | --- | --- |",
   ];
-  for (const a of d.admissibility) {
+  for (const a of d.admissibility.filter((row) => !aliasEntities.has(row.entity))) {
     const blk = a.blockers
       .map((b) =>
         b.why === "no-payload"
@@ -130,7 +140,7 @@ export function renderLedger(d: Derived): string {
     "| entity | variant | field | class | loss/reason | detail |",
     "| --- | --- | --- | --- | --- | --- |"
   );
-  for (const r of d.rows) {
+  for (const r of d.rows.filter((row) => !aliasEntities.has(row.entity))) {
     const v = r.verdict;
     const lr = v.class === "core" ? v.loss ?? "" : v.reason ?? "";
     const detail = [v.detail, v.review ? `⚑ ${v.review}` : ""].filter(Boolean).join("; ");

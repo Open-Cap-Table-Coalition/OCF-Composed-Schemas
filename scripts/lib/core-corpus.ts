@@ -25,6 +25,7 @@ import { ReferenceGraph } from "./core-admissibility.js";
 import { CoveragePolicy, loadCoveragePolicy, validateCoveragePolicy } from "./coverage-policy.js";
 import { inverseSpecOf } from "./inverse-semantics.js";
 import type { InverseRole } from "./inverse-semantics.js";
+import { compatibilityWrapperBase } from "./compatibility-wrappers.js";
 
 const REFERENCE_GRAPH = "core/reference-graph.yml";
 
@@ -331,24 +332,6 @@ export function variantFieldMaps(
   return result;
 }
 
-/** Basenames of the schemas an `allOf` composes, e.g. `EquityCompensationIssuance`. */
-function allOfRefBasenames(schema: unknown): string[] {
-  const allOf = isPlainObject(schema) ? (schema as { allOf?: unknown }).allOf : undefined;
-  if (!Array.isArray(allOf)) return [];
-  const out: string[] = [];
-  for (const el of allOf) {
-    if (isPlainObject(el) && typeof el.$ref === "string") {
-      out.push(
-        el.$ref
-          .split("/")
-          .pop()!
-          .replace(/\.schema\.json$/, "")
-      );
-    }
-  }
-  return out;
-}
-
 /**
  * The base entity a schema is a pure compatibility wrapper for, or undefined.
  * A wrapper `allOf`-composes exactly one *concrete green entity* (not an OCF
@@ -356,16 +339,8 @@ function allOfRefBasenames(schema: unknown): string[] {
  * are absent from `entityNames`) and re-declares only bookkeeping properties —
  * it adds no economic field of its own. This is the `PlanSecurity*` shape.
  */
-const WRAPPER_BOOKKEEPING = new Set(["object_type", "id", "comments"]);
 function detectAlias(schema: unknown, entityNames: Set<string>): string | undefined {
-  const base = allOfRefBasenames(schema).find((b) => entityNames.has(b));
-  if (!base) return undefined;
-  const props =
-    isPlainObject(schema) && isPlainObject((schema as { properties?: unknown }).properties)
-      ? Object.keys((schema as { properties: Record<string, unknown> }).properties)
-      : [];
-  const bookkeepingOnly = props.length > 0 && props.every((k) => WRAPPER_BOOKKEEPING.has(k));
-  return bookkeepingOnly ? base : undefined;
+  return compatibilityWrapperBase(schema, entityNames);
 }
 
 async function collectMappingFiles(repoRoot: string): Promise<string[]> {
