@@ -120,14 +120,17 @@ fields:
       VestingScheduleCliff mappings.
   event_condition:
     kind: computed
-    target: "#/$defs/VestingPeriod/properties/milestoneName"
+    target: "#/$defs/VestingPeriod/properties/performanceCondition"
     transform: |
-      milestoneName = event_condition.event_id
+      performanceCondition.name = event_condition.event_id
       The event axis gates this period on a named event, mapping to Carta's
-      milestoneName for milestone-based periods. The same value also links to
-      the v2 vesting-event transaction that records the firing. See the
-      VestingEventCondition mapping for the type-level event_id -> milestoneName
-      detail. Absent for pure DATE statements.
+      period-level performanceCondition object whose `name` carries the gate's
+      identity (the OCF event_id, which also links to the v2 vesting-event
+      transaction that records the firing). See the VestingEventCondition
+      mapping for the type-level event_id -> PerformanceCondition.name detail.
+      (Carta also exposes a bare milestoneName; performanceCondition is used
+      here to stay consistent with the VestingEventCondition mapping + the v2
+      design — worth a reviewer confirm.) Absent for pure DATE statements.
   percentage:
     kind: construct
     target: "#/$defs/VestingPeriod/properties/percentage"
@@ -157,8 +160,5 @@ Use a link below to open a prefilled GitHub issue. The issue can be copied into 
 
 ## Notes / open questions
 
-- One `VestingStatement` → one Carta `VestingPeriod` (an item of `VestingScheduleTemplate.periods[]`), matching the pre-v2 canonical `VestingStatement → Carta` mapping.
-- The statement's two optional axes line up with Carta's `VestingScheduleType` at the template level: `schedule` only → `DATE`, `event_condition` only → `MILESTONE`, both → `HYBRID`. That enum is set on the parent template, not the period, so it is not a target here.
-- `percentage` declares the destination member and Numeric lexical rule in its `construct` block.
-- `event_condition.event_id` maps to Carta's `VestingPeriod.milestoneName`, the field explicitly described for milestone-based periods. `performanceCondition` is intentionally left unset: OCF carries no condition type, description, evaluation status, or payout values from which to construct that richer object.
-- `schedule` is mapped as a `split` at the statement level because the whole sub-object spreads across one `VestingPeriod`'s time fields; the per-sub-field breakdown (occurrences/period/period_type/cliff) lives in the sibling `VestingScheduleSegment` and `VestingScheduleCliff` mappings.
+- One OCF statement projects to one Carta `VestingPeriod`. `order` and `percentage` map directly; the optional schedule expands into period, cadence, length, and cliff fields.
+- `event_condition.event_id` is computed into `VestingPeriod.performanceCondition.name`; schedule-only, event-only, and hybrid statements determine the parent schedule type.

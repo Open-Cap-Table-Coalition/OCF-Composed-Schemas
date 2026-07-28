@@ -221,53 +221,16 @@ Use a link below to open a prefilled GitHub issue. The issue can be copied into 
 
 ## Notes / open questions
 
-- **Join-dependent (downstream).** One OCF `EquityCompensationExercise` fans out by
-  the instrument family fixed at issuance: an exercise of an option grant lands on
-  `OptionExerciseTransaction`, an exercise of a SAR on `SarExerciseTransaction`. The
-  record itself carries no discriminator, only `security_id`, so an importer must
-  resolve `compensation_type` from the joined `EquityCompensationIssuance` first (the
-  two-pass requirement, docs/polymorphic-transaction-routing.md §2.2/§4.3).
-- **Rsu is wholly unmappable.** An RSU is *settled* (`Release`), not *exercised*; an
-  OCF exercise whose `security_id` resolves to a `RSU` compensation type is
-  semantically invalid and has no Carta exercise transaction to receive it. The `Rsu`
-  variant therefore has `primary_targets: null` and every routed field is `null` for it.
-- **`date` / `quantity` / `resulting_security_ids`** are the mappable fields; each
-  lands on the resolved family's exercise tx and, for Option exercises, the nested grant/result
-  records:
-  - `date` → `sharesAcquiredDatetime`. OCF `date` is a calendar date (`types/Date`,
-    `YYYY-MM-DD`); Carta's `sharesAcquiredDatetime` is a full datetime
-    (`Iso8601CompleteCalendarDateTime`) — the standard OCF-date → Carta-datetime
-    granularity widening; the same "shares acquired on exercise" event.
-  - `quantity` → exercise-transaction `quantity`, nested `Exercise.quantity`, and
-    `OptionGrant.exercisedQuantity`. OCF `types/Numeric` (stringified decimal) → Carta
-    `Decimal`; the same realized quantity is retained at event and aggregate levels.
-  - `resulting_security_ids` → **lineage on the resulting security** (kind `computed`).
-    An exercise produces shares — a Carta `Certificate` — and each resulting
-    certificate records its origin in `Certificate.precededBy.securities` (a
-    `PrecededBySecurity` array). The OCF *array* therefore round-trips **losslessly**
-    as a set of reverse lineage edges: the importer writes the exercised grant's
-    `security_id` into every resulting certificate's `precededBy.securities`. This is
-    `computed` (importer-derived placement onto records the exercise *references*), not
-    a `rename` — Carta's tx-level scalar `resultingSecurityId` is only a lossy
-    convenience pointer (a single id), whereas `precededBy.securities` carries the full
-    set, so in any snapshot the complete lineage forest stays traceable. The nested
-    `Exercise.certificateId` target is the deterministic first result for the
-    single-result exercise record; the certificate identity and lineage targets retain
-    the full array. (Cash-settled
-    SARs settle to `cashAcquired` and produce no resulting security.)
-- **`security_id`** is the join key (`route_by_property.lookup_by.key`) and, for the valid Option
-  and SAR routes, is copied to the resolved parent `*TransactionItem.securityId`. For Option it is
-  also copied to `OptionGrant.securityId`, which anchors the nested `Exercise` record inside
-  `exercises[]`; the RSU route remains null because RSUs settle via Release rather than Exercise.
-- **`consideration_text` has no home.** OCF stores free text describing consideration;
-  the nearest Carta concept is `exerciseMethod`, a constrained enum describing *how*
-  the exercise was funded (CASH / CASHLESS / …), not a free-text description — free
-  text → enum is unmappable, not a rename.
-- **`object_type`** (`TX_PLAN_SECURITY_EXERCISE` / `TX_EQUITY_COMPENSATION_EXERCISE`)
-  is the OCF record discriminator; Carta types the exercise positionally by family, so
-  there is no per-record type field to remap onto. **`id`** identifies the OCF object
-  (Carta's same-named `id` is the *exercise request* id — semantically different) and
-  **`comments`** has no Carta slot.
-- **Unused Carta fields:** on the routed exercise txs, `exerciseMethod`, `recordType`,
-  `resultingSecurityType`, and `resultingSecurityLabel` have no OCF source field here
-  and are left unpopulated.
+- **Join-dependent.** Resolve `compensation_type` by joining `security_id` to the
+  related `EquityCompensationIssuance`; route options to `OptionExerciseTransaction`
+  and SARs to `SarExerciseTransaction`.
+- **RSUs route through a different source object.** An RSU settlement is modeled
+  by `EquityCompensationRelease`, which maps to Carta's RSU settlement objects;
+  the `Rsu` variant is null only in this exercise mapping because Carta has no
+  RSU exercise target.
+- **Mapped fields.** `date`, `quantity`, and `resulting_security_ids` map to the
+  resolved exercise family; `security_id` anchors the parent transaction/grant.
+  `resulting_security_ids` is computed onto certificate lineage because Carta's
+  transaction-level result pointer is scalar.
+- **Unmapped fields.** `id`, `comments`, `object_type`, and `consideration_text`
+  have no equivalent Carta field; Carta-only exercise metadata remains unpopulated.

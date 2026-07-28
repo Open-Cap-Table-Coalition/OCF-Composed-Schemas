@@ -79,6 +79,8 @@ describe("mapping explorer", () => {
     const index = renderMappingExplorerIndex(explorer);
     expect(index).toContain("Cap-table data map");
     expect(index).toContain("OCF records");
+    expect(index).toContain("Open Cap Table Coalition");
+    expect(index).toContain("OCT-coalition-seal_horizontal%202.png");
     expect(index).toContain(`All (${explorer.metrics.sourceObjects})`);
     expect(index).toContain(
       `Mapped (${explorer.metrics.sourceObjects - explorer.metrics.noTargetSources})`
@@ -157,6 +159,28 @@ describe("mapping explorer", () => {
     expect(renderMappingExplorerSourcePage(transfer!)).toContain(
       "Cancellation + issuance is not an effective Carta replacement"
     );
+  });
+
+  it("renders the concrete Carta property for Document mappings", async () => {
+    const { corpus, inverse, mappingDocuments } = await loadExplorer();
+    const explorer = buildMappingExplorerData(corpus, inverse, [], mappingDocuments);
+    const document = explorer.sources.find((item) => item.entity === "Document");
+
+    expect(document).toBeDefined();
+    const path = document!.fields.find((field) => field.field === "path");
+    const uri = document!.fields.find((field) => field.field === "uri");
+    expect(path?.targets).toEqual([
+      {
+        object: "Document",
+        property: "fileId",
+        pointer: "#/$defs/Document/properties/fileId",
+      },
+    ]);
+    expect(uri?.targets).toEqual(path?.targets);
+
+    const page = renderMappingExplorerSourcePage(document!);
+    expect(page).toContain("Document.fileId");
+    expect(page).not.toContain("Document.field");
   });
 
   it("shows Carta and OCF schema types in the target slot ledger", async () => {

@@ -56,7 +56,7 @@ status: complete
 fields:
   event_id:
     kind: rename
-    target: "#/$defs/VestingPeriod/properties/milestoneName"
+    target: "#/$defs/PerformanceCondition/properties/name"
 ```
 
 ## Ask a mapping question
@@ -76,6 +76,4 @@ Use a link below to open a prefilled GitHub issue. The issue can be copied into 
 
 ## Notes / open questions
 
-- This is a contextual type mapping, not a standalone Carta record. A `VestingEventCondition` is nested inside an OCF `VestingStatement`, and the containing statement projects to one Carta `VestingPeriod`.
-- `event_id` → `milestoneName` is a value-preserving rename after flattening the one-property OCF object. Carta describes `milestoneName` as the name of a milestone-based period, which matches OCF's named-event gate.
-- This mapping intentionally does not populate Carta's `performanceCondition` object. OCF provides only the event identifier here; it does not provide the condition type, description, evaluation status, or payout fields required to construct a faithful performance-condition object. The enclosing `VestingStatement` mapping documents the same choice.
+- `event_id` identifies the Carta `PerformanceCondition.name` for the named-event gate. This type only names the condition; event firing/date/status are handled by the separate OCF vesting-event transaction and are not round-tripped here.

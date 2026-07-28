@@ -417,45 +417,6 @@ Use a link below to open a prefilled GitHub issue. The issue can be copied into 
 
 ## Notes / open questions
 
-- **Polymorphic by `compensation_type`.** OCF carries option grants, RSUs, and SARs in this
-  one transaction; Carta splits them into dedicated families. This mapping uses the
-  `route_by_property:` convention (see [`docs/polymorphic-transaction-routing.md`](../../../docs/polymorphic-transaction-routing.md)):
-  `OPTION*` → `OptionIssuanceTransaction` + `OptionTransactionItem` + `OptionGrant`; `RSU` →
-  `RsuIssuanceTransaction` + `RsuTransactionItem` + `RestrictedStockUnit`; `CSAR`/`SSAR` →
-  `SarIssuanceTransaction` + `SarTransactionItem`. The three `when:` sets
-  partition all six `CompensationType` values (`exhaustive: true`).
-- **`shared:` fields use per-variant target maps where the home diverges.** Issuance facts are
-  projected to both the resolved family's `*IssuanceTransaction` and, for Option/RSU, the security
-  (`date` → `issueDate`, `stock_class_id` → `shareClassId`, `quantity` → `quantity`, and
-  `vesting_template_id` → `vestingScheduleTemplateId`). `vesting_start_date` also populates the
-  nested `VestingSchedule.startDate`. Identity fields (`security_id`/`custom_id`/`stakeholder_id`/
-  `board_approval_date`/`vestings`) land on the enclosing `*TransactionItem` and, where present,
-  `OptionGrant` vs `RestrictedStockUnit`. Each per-variant target map is explicit and the validator
-  enforces the keys stay in sync with the variant set.
-- **Per-variant divergence.** `exercise_price` is Option-only; OCF `base_price` → Carta
-  `SarIssuanceTransaction.exercisePrice` (SAR-only); `early_exercisable` and
-  `termination_exercise_windows` are Option-only; the Option mapping explicitly selects the
-  first window under `first_termination_window`; RSUs settle (no exercise price, no expiration).
-  `option_grant_type` (OCF-deprecated) and `compensation_type` both target `stockOptionType`;
-  precedence is importer logic.
-- **SAR has no Carta security object.** Carta models SARs with a `SarIssuanceTransaction` and
-  `SarTransactionItem`, but no `SarGrant`/security `$def`. The identity fields therefore land on
-  the transaction item (the parent history container), while security-object-only fields such as
-  `board_approval_date`, `vestings`, and `vesting_start_date` remain `null` for SAR.
-- **Lossy by Carta's design.** CSAR vs SSAR collapse to one `SarIssuanceTransaction` (no
-  settlement-mode field). `OPTION` (unspecified) → `OTHER`.
-- **`vesting_start_date` → Carta `vestingStartDate`.** The v2 model splits the old
-  `vesting_terms_id` into `vesting_template_id` (the reusable template ref, mapped above like the
-  old field) plus this per-grant anchor. It lands on the resolved family's security object
-  (`OptionGrant` / `RestrictedStockUnit`), mirroring `vestings`; SAR has no security object so `Sar: null`.
-
-- [ ] `id`: For an `OPTION` route, should OCF `EquityCompensationIssuance.id` populate Carta `OptionGrant.id`, or is Carta's object `id` server-generated while `security_id` should remain mapped only to `OptionGrant.securityId`?
-  - Target: OptionGrant.id
-  - Asked by: @johnscrudato
-  - Answer: Open: confirm whether Carta's `id` is an externally assignable security identifier or a server-generated object identifier distinct from `securityId`.
-  - Answered by: —
-- [ ] `id`: For the `RSU` route, should OCF `EquityCompensationIssuance.id` populate Carta `RestrictedStockUnit.id`, or is Carta's object `id` server-generated while `security_id` should remain mapped only to `RestrictedStockUnit.securityId`?
-  - Target: RestrictedStockUnit.id
-  - Asked by: @johnscrudato
-  - Answer: Open: confirm whether Carta's `id` is an externally assignable security identifier or a server-generated object identifier distinct from `securityId`.
-  - Answered by: —
+- Route by `compensation_type`: Option → option issuance/item/grant, RSU → RSU issuance/item/security, and SAR → SAR issuance/item. Shared identity, dates, stakeholder/plan/class references, quantity, vesting-template, and applicable security fields follow the selected family.
+- Option-only terms include option type, exercise price, early exercise, expiration, termination windows, and vesting events; RSU and SAR leave unsupported option fields null. SAR base price maps to exercise price. Security-law exemptions are classified onto `Compliance.federalExemption`.
+- Unsupported approval/consideration fields and OCF scaffolding remain unmappable. Family-specific policies in the YAML control array selection and derived targets.

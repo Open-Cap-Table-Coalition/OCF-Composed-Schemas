@@ -166,40 +166,5 @@ Use a link below to open a prefilled GitHub issue. The issue can be copied into 
 
 ## Notes / open questions
 
-- **Join-dependent (downstream).** One OCF `EquityCompensationRetraction` carries only
-  `security_id` and no discriminator, so the instrument family is fixed at issuance, not
-  on this record. An importer must resolve `compensation_type` from the joined
-  `EquityCompensationIssuance` first (the two-pass requirement, §2.2). We declare the
-  `route_by_property` join — partitioning `CompensationType` into Option `[OPTION,
-  OPTION_NSO, OPTION_ISO]`, Rsu `[RSU]`, and Sar `[CSAR, SSAR]` — so the routing tree is
-  honest and exhaustive, even though no family has a destination.
-- **All-unmappable: Carta has no retraction transaction.** In OCF a *retraction* voids a
-  previously-recorded transaction entry — it asserts the prior transaction never validly
-  happened (entered in error and withdrawn from the ledger). This is a *ledger-correction*
-  event, semantically distinct from a *cancellation* (a real lifecycle event in which an
-  outstanding security is genuinely canceled/terminated/forfeited). Carta models the
-  lifecycle events (Issuance / Cancellation / Exercise / Settlement / Transfer) but has no
-  concept for "this previously-entered transaction is being retracted/void." Searching the
-  pinned bundle (`target-schema/Carta.schema.json`) for `retract` / `Retraction` returns
-  nothing — so `primary_targets` is `null` for every variant and 0 of 6 fields map.
-- **`security_id`** is the join key (`route_by_property.lookup_by.key`); it routes the family, it is
-  not itself a stored Carta field. `ocf-internal`.
-- **`reason_text` has no home.** OCF free-text reason for the retraction. The only
-  `reason`-bearing fields in Carta are the per-cancellation enums (`OptionCancellationReason`,
-  `RsuCancellationReason`, `SarCancellationReason`, …), each constrained to lifecycle
-  outcomes (`*_TERMINATED` / `*_CANCELED` / `*_FORFEITED`) and none accepting free text;
-  free-text → enum is unmappable by policy. With no host retraction tx there is no Carta
-  `reason` slot regardless. `no-equivalent`.
-- **`date`.** Carta transaction objects carry `effectiveDatetime`, but only on transactions
-  that exist in Carta; there is no retraction object to host a datetime. `no-equivalent`.
-- **`object_type` (`TX_PLAN_SECURITY_RETRACTION` | `TX_EQUITY_COMPENSATION_RETRACTION`).**
-  OCF scaffolding discriminator (the former is the legacy alias deprecated in OCF v2.0.0).
-  Carta types records positionally per endpoint and has no retraction type to discriminate
-  to. `ocf-internal`.
-- **`id`, `comments`.** OCF object scaffolding: `id` is OCF's own identifier (Carta assigns
-  identifiers server-side); `comments` has no Carta slot. `id` is `ocf-internal`, `comments`
-  is `no-equivalent`.
-- **Net:** 0 of 6 fields map. The correct downstream behavior is to drop the retraction
-  event and instead reflect its effect by not emitting (or removing) the underlying
-  transaction it retracts, since Carta represents ledger state rather than OCF's full
-  append-only event/correction history.
+- Join on `security_id` to the originating compensation family, but no family has a Carta retraction transaction. Option, RSU, and SAR routes therefore have no primary target and the event fields remain unmappable.
+- `date`, `security_id`, and `reason_text` have no target; `id`, `comments`, and `object_type` are OCF scaffolding.
