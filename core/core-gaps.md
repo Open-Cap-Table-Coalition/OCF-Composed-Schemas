@@ -656,26 +656,10 @@ flowchart LR
 ## (b) Carta inverse coverage by object definition
 
 The canonical target-first inverse report owns the Carta-side object panels, source paths,
-role policy, open-question projection, and visual flow artifacts. This Core gap report keeps
-only a compact shared-ledger summary so it cannot drift into a second inverse renderer.
+role policy, open-question projection, and visual flow artifacts. This Core gap report does
+not reproduce that ledger or maintain a second target-side summary.
+
+The same `renderMappingInverseReport` renderer is materialized by `npm run mapping:artifacts`.
 See `docs/generated/mapping-inverse-report.md` and `docs/generated/mapping-flows/` for the
 complete target-first evidence and visuals.
-
-| Shared inverse-ledger dimension | count |
-| --- | ---: |
-| Carta definitions | 139 |
-| Carta object definitions | 86 |
-| object slots | 588 |
-| direct executable slots | 225 |
-| reusable type-only slots | 29 |
-| implicit constant slots | 1 |
-| deferred slots | 0 |
-| structural child-container slots | 28 |
-| empty slots | 305 |
-
-| direct target definitions | 18 |
-| type-only target definitions | 7 |
-| deferred target definitions | 0 |
-| nested/support definitions | 55 |
-| follow-up candidates | 13 |
 

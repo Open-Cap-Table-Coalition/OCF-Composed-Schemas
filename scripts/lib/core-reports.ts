@@ -9,7 +9,6 @@
  */
 import { Derived } from "./core-pipeline.js";
 import { BOOKKEEPING, buildTargetIndex } from "./report-helpers.js";
-import { buildInverseCoverage } from "./inverse-coverage.js";
 import {
   FlowRow,
   byObjectTables,
@@ -160,7 +159,6 @@ export function renderGapReport(d: Derived): string {
   const admissible = new Map(d.admissibility.map((a) => [`${a.entity} ${a.variant}`, a]));
   const reqByEntity = new Map(d.corpus.objects.map((o) => [o.entity, new Set(o.requiredFields)]));
   const targetOf = buildTargetIndex(d.corpus.objects);
-  const inverse = buildInverseCoverage(d.corpus);
 
   // The section-(a) casualties as flow rows, for the diagram: `out`, not a heuristic
   // reverse-edge (kept for the upstream report), not bookkeeping, on an admissible
@@ -232,30 +230,12 @@ export function renderGapReport(d: Derived): string {
   lines.push("## (b) Carta inverse coverage by object definition", "");
   lines.push(
     "The canonical target-first inverse report owns the Carta-side object panels, source paths,",
-    "role policy, open-question projection, and visual flow artifacts. This Core gap report keeps",
-    "only a compact shared-ledger summary so it cannot drift into a second inverse renderer.",
+    "role policy, open-question projection, and visual flow artifacts. This Core gap report does",
+    "not reproduce that ledger or maintain a second target-side summary.",
+    "",
+    "The same `renderMappingInverseReport` renderer is materialized by `npm run mapping:artifacts`.",
     "See `docs/generated/mapping-inverse-report.md` and `docs/generated/mapping-flows/` for the",
     "complete target-first evidence and visuals.",
-    "",
-    "| Shared inverse-ledger dimension | count |",
-    "| --- | ---: |",
-    `| Carta definitions | ${inverse.metrics.totalDefs} |`,
-    `| Carta object definitions | ${inverse.metrics.objectDefs} |`,
-    `| object slots | ${inverse.metrics.objectSlots} |`,
-    `| direct executable slots | ${inverse.metrics.directSlots} |`,
-    `| reusable type-only slots | ${inverse.metrics.typeOnlySlots} |`,
-    `| implicit constant slots | ${inverse.metrics.implicitSlots} |`,
-    `| deferred slots | ${inverse.metrics.deferredSlots} |`,
-    `| structural child-container slots | ${inverse.metrics.structuralSlots} |`,
-    `| empty slots | ${inverse.metrics.emptySlots} |`,
-    "",
-    `| direct target definitions | ${inverse.metrics.directDefs} |`,
-    `| type-only target definitions | ${inverse.metrics.typeOnlyDefs} |`,
-    `| deferred target definitions | ${inverse.metrics.definitionRoleCounts.deferred} |`,
-    `| nested/support definitions | ${
-      inverse.metrics.nestedObjDefs + inverse.metrics.valueTypeDefs
-    } |`,
-    `| follow-up candidates | ${inverse.candidates.length} |`,
     ""
   );
   return lines.join("\n") + "\n";

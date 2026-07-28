@@ -5,6 +5,7 @@
  * `flows to` column, and an inverted flow-map (per Carta slot, its OCF sources).
  * Pure string helpers over `FlowRow[]`; no I/O, no corpus access.
  */
+import { targetPointerParts } from "./mapping-report.js";
 
 /** One OCF field and where its mapping sends it (target = display string, "—" if no home). */
 export interface FlowRow {
@@ -39,10 +40,22 @@ export interface EntityGroup {
 // --- Target parsing: `#/$defs/Obj/properties/x` → legible object.property. ---
 
 export function parsePointer(ptr: string): { object: string; prop: string } | null {
-  const m = /#\/\$defs\/([^/]+)(?:\/properties\/(.+))?$/.exec(ptr.trim());
-  if (!m) return null;
-  const prop = (m[2] ?? "").replace(/\/properties\//g, ".").replace(/\/items(?=\/|$)/g, "[]");
-  return { object: m[1] as string, prop };
+  const value = ptr.trim();
+  // `entryTargetString` keeps union-map case labels in front of the actual
+  // pointer (`Numeric → #/$defs/...`). Preserve that reader-facing form while
+  // delegating the pointer grammar to the canonical inverse-report helper.
+  const pointerStart = value.lastIndexOf("#/$defs/");
+  if (pointerStart < 0) return null;
+  const pointer = value.slice(pointerStart);
+  const parts = targetPointerParts(pointer);
+  if (
+    parts.object === pointer ||
+    parts.relative === pointer ||
+    (parts.relative !== parts.object && !pointer.includes("/properties/"))
+  )
+    return null;
+  const prop = parts.relative.replace(/\/properties\//g, ".").replace(/\/items(?=\/|$)/g, "[]");
+  return { object: parts.object, prop: prop === parts.object ? "" : prop };
 }
 
 /** Every Carta slot a target flows to (a split target names several). */

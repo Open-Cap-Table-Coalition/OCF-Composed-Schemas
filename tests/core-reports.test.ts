@@ -3,6 +3,7 @@ import { readFile } from "node:fs/promises";
 
 import { deriveCore } from "../scripts/lib/core-pipeline.js";
 import { renderLedger, renderGapReport } from "../scripts/lib/core-reports.js";
+import { parsePointer } from "../scripts/lib/report-flow.js";
 
 describe("core reports (the markdown drift gate's premise)", () => {
   it("render deterministically — two runs over the same corpus are byte-identical", async () => {
@@ -30,17 +31,31 @@ describe("core reports (the markdown drift gate's premise)", () => {
     expect(ledger.split("\n").some((line) => line.startsWith("| PlanSecurity"))).toBe(false);
   });
 
-  it("links to the canonical inverse report and keeps only shared ledger metrics", async () => {
+  it("links to the canonical inverse report instead of duplicating its ledger", async () => {
     const report = renderGapReport(await deriveCore(process.cwd()));
     expect(report).toContain(
       "The canonical target-first inverse report owns the Carta-side object panels"
     );
+    expect(report).toContain("The same `renderMappingInverseReport` renderer");
     expect(report).toContain("docs/generated/mapping-inverse-report.md");
-    expect(report).toContain("| Carta definitions | 139 |");
-    expect(report).toContain("| direct executable slots | 225 |");
-    expect(report).toContain("| follow-up candidates | 13 |");
-    expect(report).not.toContain(
-      "### Supporting CARTA definitions excluded from standalone mapping targets"
-    );
+    expect(report).not.toContain("| Shared inverse-ledger dimension | count |");
+  });
+
+  it("uses the inverse-report target-pointer parser for source-side flow tables", () => {
+    expect(parsePointer("#/$defs/ShareClass/properties/authorizedShareCount")).toEqual({
+      object: "ShareClass",
+      prop: "authorizedShareCount",
+    });
+    expect(parsePointer("#/$defs/ShareClass")).toEqual({
+      object: "ShareClass",
+      prop: "",
+    });
+    expect(
+      parsePointer("Numeric → —; Numeric → #/$defs/ShareClass/properties/authorizedShareCount")
+    ).toEqual({
+      object: "ShareClass",
+      prop: "authorizedShareCount",
+    });
+    expect(parsePointer("not-a-target-pointer")).toBeNull();
   });
 });
