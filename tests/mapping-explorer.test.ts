@@ -145,6 +145,7 @@ describe("mapping explorer", () => {
       ".hero-orbit { height: 390px; position: relative; display: grid; place-items: center; overflow: hidden; }"
     );
     expect(css).toContain(".map-guide { background: #f1f1ff; border-color: rgba(42,48,200,.22); }");
+    expect(css).toContain(".hero + .map-guide { margin-top: 42px; }");
   });
 
   it("surfaces the tracked Carta schema resources on the overview", async () => {
