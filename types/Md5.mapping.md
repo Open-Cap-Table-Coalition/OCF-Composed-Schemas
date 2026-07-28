@@ -62,4 +62,4 @@ Use a link below to open a prefilled GitHub issue. The issue can be copied into 
 
 ## Notes / open questions
 
-- Carta records no checksums. Files transferred via the Carta Upload File endpoint are referenced by a `fileId` only — file integrity is not exposed at the data-schema level. See also `objects/Document.mapping.md`.
+- Carta's file model exposes a `fileId`, not a checksum. OCF `Md5` has no type-level target; it may be used to verify an upload before the document reference is stored.

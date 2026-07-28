@@ -88,13 +88,5 @@ Use a link below to open a prefilled GitHub issue. The issue can be copied into 
 
 ## Notes / open questions
 
-- **Parent-context polymorphism.** OCF Vesting is generic; Carta has three nearly-identical vesting event types. The Carta target type for any specific OCF Vesting depends on the containing OCF object:
-
-  | OCF parent | Carta target |
-  |---|---|
-  | `EquityCompensationIssuance` (option-class) | `OptionGrantVestingEvent` |
-  | `EquityCompensationIssuance` (RSU-class) | `RestrictedStockUnitVestingEvent` |
-  | `StockIssuance` | `RestrictedStockAwardVestingEvent` |
-  | `WarrantIssuance` | unmappable — Carta has no warrant vesting event |
-
-  Field names (`vestDate`, `quantity`) are identical across the three Carta event types, so the per-field mapping above holds regardless. The `target:` paths above reference `OptionGrantVestingEvent` as a representative; the actual selection happens in the containing OCF object's mapping. The `construct` block declares the destination member and the required Numeric lexical rule.
+- The Carta vesting-event target depends on the parent: Option → `OptionGrantVestingEvent`, RSU → `RestrictedStockUnitVestingEvent`, and stock/RSA → `RestrictedStockAwardVestingEvent`. Warrant vesting has no target.
+- `date` maps to `vestDate`; `amount` is constructed into the target quantity. The representative option target is resolved by the containing mapping.

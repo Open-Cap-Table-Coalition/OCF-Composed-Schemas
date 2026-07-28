@@ -86,4 +86,4 @@ Use a link below to open a prefilled GitHub issue. The issue can be copied into 
 
 ## Notes / open questions
 
-- Carta's `Certificate` carries a quantity but not numbered share-range bounds (no `startingShareNumber`/`endingShareNumber` fields anywhere in the bundle). OCF uses `ShareNumberRange` primarily on stock issuance transactions to describe which specific share numbers were issued on a certificate; that level of granularity is not represented in Carta.
+- Carta certificates carry aggregate quantity but no starting/ending share-number bounds. Both OCF range fields are `no-equivalent`.

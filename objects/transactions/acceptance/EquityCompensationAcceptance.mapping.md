@@ -164,33 +164,5 @@ Use a link below to open a prefilled GitHub issue. The issue can be copied into 
 
 ## Notes / open questions
 
-- **Join-dependent (downstream), and acceptance is not a transaction.** Carta has no
-  acceptance *transaction*: its transaction set covers issuance / exercise / cancellation
-  but not acceptance. Instead Carta folds "the stakeholder accepted" into the security
-  object itself as `stakeholderAcceptanceDate`. One OCF `EquityCompensationAcceptance`
-  therefore does not fan out to a Carta tx — it sets a date on the resolved family's
-  security object. The record carries no discriminator, only `security_id`, so the family
-  is fixed at issuance and an importer must resolve `compensation_type` from the joined
-  `EquityCompensationIssuance` first (the two-pass requirement, §2.2 of
-  docs/polymorphic-transaction-routing.md).
-- **`date` is the only mappable field.** It is the substantive payload — the date the
-  holder accepted — and lands on the resolved family's security object via a per-variant
-  target map: Option → `OptionGrant.stakeholderAcceptanceDate`, Rsu →
-  `RestrictedStockUnit.stakeholderAcceptanceDate`. Both sides are calendar dates (OCF
-  `Date`, Carta `Iso8601CompleteCalendarDate`), so there is no date-vs-datetime widening
-  to flag.
-- **Sar has no home (`primary_targets: null`).** CSAR/SSAR have no Carta security object
-  with a `stakeholderAcceptanceDate` (there is no SAR grant object to set the field on),
-  so the entire family is unmappable here and `date`'s `Sar` target is `null`.
-- **`security_id`** is the join key (`route_by_property.lookup_by.key`); it routes the family by
-  resolving to the issuance's `compensation_type`, it is not itself a stored Carta field
-  on the accepted security — marked `ocf-internal`.
-- **`id`, `object_type`, `comments`: OCF scaffolding.** `id` is OCF's identifier for the
-  acceptance transaction object; Carta has no acceptance object for it to become
-  (`ocf-internal`). `object_type` is OCF's discriminator — neither enum member
-  (`TX_EQUITY_COMPENSATION_ACCEPTANCE` nor the v2.0.0-deprecated alias
-  `TX_PLAN_SECURITY_ACCEPTANCE`) corresponds to any Carta type (`ocf-internal`).
-  `comments` is free-text OCF metadata with no slot on the Carta security (`no-equivalent`).
-- The `when:` sets partition `CompensationType` exactly: Option `[OPTION, OPTION_NSO,
-  OPTION_ISO]`, Rsu `[RSU]`, Sar `[CSAR, SSAR]`.
-
+- Join on `security_id` to the originating `EquityCompensationIssuance` and route by `compensation_type`: Option → `OptionGrant.stakeholderAcceptanceDate`, RSU → `RestrictedStockUnit.stakeholderAcceptanceDate`, and SAR → no target. Acceptance is stored on the resolved security, not as a Carta transaction.
+- `date` is the only mappable payload. `security_id` is the routing key; `id`, `comments`, and `object_type` are OCF scaffolding.

@@ -156,8 +156,6 @@ Use a link below to open a prefilled GitHub issue. The issue can be copied into 
 
 ## Notes / open questions
 
-- OCF Document and Carta Document represent the same concept (a file attached to cap-table objects), but express it differently. OCF carries descriptive metadata inline (`path`/`uri`, `md5`, `related_objects`); Carta carries only a reference (`fileId`) to a file uploaded out-of-band, plus output-only `name` and `url`.
-- `path` / `uri` → `fileId`: not a value-preserving rename. The OCF `path` or `uri` identifies a file to upload via Carta's [Upload File](https://docs.carta.com/carta/reference/v1alpha1filesuploadfile) endpoint; that endpoint returns a `fileId` which populates Carta's `Document.fileId`. Marked `kind: computed` (stretching the vocabulary: target value is derived from the source via an external process, not a direct copy). The OCF schema's `oneOf` constraint guarantees exactly one of `path`/`uri` is present per Document, so both rows pointing at `fileId` is not a collision.
-- `md5`: no Carta counterpart. Useful for verifying upload integrity, but not stored on Carta's `Document`.
-- `related_objects`: no Carta counterpart on the Document side. Carta represents document relationships from the other side (e.g., a Grant carries a `documentList` referencing its Documents).
-- Carta's `name` and `url` are server-computed read-only outputs; no OCF counterpart is needed on the inbound direction.
+- OCF `Document` carries a file path or URI plus metadata; Carta stores the uploaded file by `Document.fileId`.
+- `path` and `uri` are mutually exclusive source alternatives and both compute the returned `fileId` after upload. They are not literal value-renames.
+- `md5` and `related_objects` have no Carta Document target. Carta's `name` and `url` are server-computed outputs.

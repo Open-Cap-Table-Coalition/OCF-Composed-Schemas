@@ -1,6 +1,6 @@
 ╭ Carta inverse coverage report ──╮
 │ source_documents: 102           │
-│ green_carta_documents: 101      │
+│ green_carta_documents: 102      │
 ╰─────────────────────────────────╯
 
 Evidence legend
@@ -22,7 +22,7 @@ Simple story
   scalar support types.
   6. 18 standalone candidates have OCF mapping evidence:
        18 direct executable, 0 deferred.
-       6 definitions also carry reusable type-only evidence across 28 slots; that evidence does not create a
+       7 definitions also carry reusable type-only evidence across 29 slots; that evidence does not create a
        standalone target.
        Completeness: 8 fully mapped, 10 partially mapped.
   7. 13 standalone candidates have no mapping evidence yet; their inventory role says whether that is expected
@@ -153,10 +153,7 @@ Standalone Carta targets with mapping evidence (18)
 │   ├─ + canceledQuantity                                                                                         │
 │   │  └─ ← StockCancellation [Default].quantity (rename)                                                         │
 │   ├─ + id                                                                                                       │
-│   │  ├─ ✗ no mapped OCF source                                                                                  │
-│   │ └─ ? open question: For the `FOUNDERS_STOCK`/Default route, should OCF `StockIssuance.id` populate Carta    │
-│   `Certificate.id`, or is Carta's object `id` server-generated while `secur… [asked by @johnscrudato;           │
-│   StockIssuance:374]                                                                                            │
+│   │  └─ ✗ no mapped OCF source                                                                                  │
 │   ├─ + issueDate                                                                                                │
 │   │  └─ ← StockIssuance [Default].date (rename)                                                                 │
 │   ├─ + issuerId                                                                                                 │
@@ -288,7 +285,7 @@ Standalone Carta targets with mapping evidence (18)
 │   │  ├─ ✗ no mapped OCF source                                                                                  │
 │   │ └─ ? open question: Should an OCF stakeholder address country also populate Carta                           │
 │   `Compliance.countryOfResidency`? Investigate whether a two-hop stakeholder linkage is required and… [asked by │
-│   @johnscrudato; Stakeholder:261]                                                                               │
+│   @johnscrudato; Stakeholder:256]                                                                               │
 │   ├─ + federalExemption                                                                                         │
 │   │  ├─ ← ConvertibleIssuance.security_law_exemptions (computed)                                                │
 │   │  │  └─ ← type SecurityExemption.description (computed)                                                      │
@@ -302,125 +299,116 @@ Standalone Carta targets with mapping evidence (18)
 │      ├─ ✗ no mapped OCF source                                                                                  │
 │      └─ ? open question: Should an OCF stakeholder address subdivision also populate Carta                      │
 │      `Compliance.stateOfResidency`? Investigate whether a two-hop stakeholder linkage is required a… [asked by  │
-│      @johnscrudato; Stakeholder:266]                                                                            │
+│      @johnscrudato; Stakeholder:261]                                                                            │
 ╰─────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
 
-╭ Carta object: ConvertibleNote ───────────────────────────────────────────────────────────────────────────────────╮
-│ name: ConvertibleNote                                                                                            │
-│ id: "#/$defs/ConvertibleNote"                                                                                    │
-│ inverse_role: direct                                                                                             │
-│ status: PARTIAL                                                                                                  │
-│ mapping_evidence: 32 (direct object: 17, reusable type detail: 15)                                               │
-│ unmapped_properties: 5                                                                                           │
-├──────────────────────────────────────────────────────────────────────────────────────────────────────────────────┤
-│ parent properties (20)                                                                                           │
-│   ├─ + canceledDatetime                                                                                          │
-│   │  └─ ← ConvertibleCancellation.date (rename)                                                                  │
-│   ├─ + canceledQuantity                                                                                          │
-│   │  └─ ← ConvertibleConversion.quantity_converted (rename)                                                      │
-│   ├─ + cashPaid                                                                                                  │
-│   │  └─ ← ConvertibleIssuance.investment_amount (rename)                                                         │
-│   ├─ + changeInControlPercent                                                                                    │
-│   │  └─ ✗ no mapped OCF source                                                                                   │
-│   ├─ + conversionDatetime                                                                                        │
-│   │  └─ ← ConvertibleConversion.date (rename)                                                                    │
-│   ├─ + conversionTrigger                                                                                         │
-│   │  └─ ← ConvertibleIssuance.conversion_triggers (sequential_transform)                                         │
-│   │     └─ ↳ selects ConvertibleConversionRight where conversion_right.type = CONVERTIBLE_CONVERSION_RIGHT       │
-│   ├─ + dayCountBasis                                                                                             │
-│   │  └─ ← ConvertibleIssuance.conversion_triggers (sequential_transform)                                         │
-│   │     ├─ ↳ selects ConvertibleConversionRight where conversion_right.type = CONVERTIBLE_CONVERSION_RIGHT       │
-│   │     └─ ← type ConvertibleConversionRight.conversion_mechanism (union-map)                                    │
-│   │        ├─ ↳ active when type = CONVERTIBLE_CONVERSION_RIGHT                                                  │
-│   │        └─ ↳ dispatches exactly one conversion_mechanism.type branch (mutually exclusive)                     │
-│   │           └─ ← type NoteConversionMechanism.day_count_convention (enum-remap)                                │
-│   │              └─ ↳ active when type = CONVERTIBLE_NOTE_CONVERSION                                             │
-│   ├─ + discountPercentage                                                                                        │
-│   │  └─ ← ConvertibleIssuance.conversion_triggers (sequential_transform)                                         │
-│   │     ├─ ↳ selects ConvertibleConversionRight where conversion_right.type = CONVERTIBLE_CONVERSION_RIGHT       │
-│   │     └─ ← type ConvertibleConversionRight.conversion_mechanism (union-map)                                    │
-│   │        ├─ ↳ active when type = CONVERTIBLE_CONVERSION_RIGHT                                                  │
-│   │        └─ ↳ dispatches exactly one conversion_mechanism.type branch (mutually exclusive)                     │
-│   │           ├─ ← type NoteConversionMechanism.conversion_discount (rename)                                     │
-│   │           │  └─ ↳ active when type = CONVERTIBLE_NOTE_CONVERSION                                             │
-│   │           └─ ← type SAFEConversionMechanism.conversion_discount (rename)                                     │
-│   │              └─ ↳ active when type = SAFE_CONVERSION                                                         │
-│   ├─ + id                                                                                                        │
-│   │  ├─ ✗ no mapped OCF source                                                                                   │
-│   │ └─ ? open question: Should OCF `ConvertibleIssuance.id` populate Carta `ConvertibleNote.id`, or is Carta's   │
-│   object `id` server-generated while `security_id` should remain ma… [asked by @johnscrudato;                    │
-│   ConvertibleIssuance:339]                                                                                       │
-│   ├─ + interest                                                                                                  │
-│   │  ├─ ✗ no mapped OCF source                                                                                   │
-│   │ └─ ? open question: Should an external accrued-interest calculation populate Carta                           │
-│   `ConvertibleNote.interest`, or is the intended mapping limited to the rate terms (`intere… [asked by           │
-│   @johnscrudato; ConvertibleIssuance:328]                                                                        │
-│   ├─ + interestAccrualPeriod                                                                                     │
-│   │  └─ ← ConvertibleIssuance.conversion_triggers (sequential_transform)                                         │
-│   │     ├─ ↳ selects ConvertibleConversionRight where conversion_right.type = CONVERTIBLE_CONVERSION_RIGHT       │
-│   │     └─ ← type ConvertibleConversionRight.conversion_mechanism (union-map)                                    │
-│   │        ├─ ↳ active when type = CONVERTIBLE_CONVERSION_RIGHT                                                  │
-│   │        └─ ↳ dispatches exactly one conversion_mechanism.type branch (mutually exclusive)                     │
-│   │           └─ ← type NoteConversionMechanism.interest_accrual_period (enum-remap)                             │
-│   │              └─ ↳ active when type = CONVERTIBLE_NOTE_CONVERSION                                             │
-│   ├─ + interestCompoundingPeriod                                                                                 │
-│   │  └─ ← ConvertibleIssuance.conversion_triggers (sequential_transform)                                         │
-│   │     ├─ ↳ selects ConvertibleConversionRight where conversion_right.type = CONVERTIBLE_CONVERSION_RIGHT       │
-│   │     └─ ← type ConvertibleConversionRight.conversion_mechanism (union-map)                                    │
-│   │        ├─ ↳ active when type = CONVERTIBLE_CONVERSION_RIGHT                                                  │
-│   │        └─ ↳ dispatches exactly one conversion_mechanism.type branch (mutually exclusive)                     │
-│   │           └─ ← type NoteConversionMechanism.compounding_type (enum-remap)                                    │
-│   │              └─ ↳ active when type = CONVERTIBLE_NOTE_CONVERSION                                             │
-│   ├─ + interestRate                                                                                              │
-│   │  └─ ← ConvertibleIssuance.conversion_triggers (sequential_transform)                                         │
-│   │     ├─ ↳ selects ConvertibleConversionRight where conversion_right.type = CONVERTIBLE_CONVERSION_RIGHT       │
-│   │     └─ ← type ConvertibleConversionRight.conversion_mechanism (union-map)                                    │
-│   │        ├─ ↳ active when type = CONVERTIBLE_CONVERSION_RIGHT                                                  │
-│   │        └─ ↳ dispatches exactly one conversion_mechanism.type branch (mutually exclusive)                     │
-│   │           └─ ← type NoteConversionMechanism.interest_rates (select)                                          │
-│   │              ├─ ↳ active when type = CONVERTIBLE_NOTE_CONVERSION                                             │
-│   │              └─ ← type InterestRate.rate (rename)                                                            │
-│   ├─ + issueDatetime                                                                                             │
-│   │  └─ ← ConvertibleIssuance.date (rename)                                                                      │
-│   ├─ + issuerId                                                                                                  │
-│   │  └─ ✗ no mapped OCF source                                                                                   │
-│   ├─ + maturityDatetime                                                                                          │
-│   │  ├─ ✗ no mapped OCF source                                                                                   │
-│   │ └─ ? open question: `conversion_triggers[].trigger_date` / `conversion_triggers[].end_date`: When the source │
-│   metadata explicitly identifies a trigger or date-window boundar… [asked by @johnscrudato;                      │
-│   ConvertibleIssuance:318]                                                                                       │
-│   ├─ + priceCap                                                                                                  │
-│   │  └─ ← ConvertibleIssuance.conversion_triggers (sequential_transform)                                         │
-│   │     ├─ ↳ selects ConvertibleConversionRight where conversion_right.type = CONVERTIBLE_CONVERSION_RIGHT       │
-│   │     └─ ← type ConvertibleConversionRight.conversion_mechanism (union-map)                                    │
-│   │        ├─ ↳ active when type = CONVERTIBLE_CONVERSION_RIGHT                                                  │
-│   │        └─ ↳ dispatches exactly one conversion_mechanism.type branch (mutually exclusive)                     │
-│   │           ├─ ← type NoteConversionMechanism.conversion_valuation_cap (rename)                                │
-│   │           │  └─ ↳ active when type = CONVERTIBLE_NOTE_CONVERSION                                             │
-│   │           └─ ← type SAFEConversionMechanism.conversion_valuation_cap (rename)                                │
-│   │              └─ ↳ active when type = SAFE_CONVERSION                                                         │
-│   ├─ + securityId                                                                                                │
-│   │  ├─ ← ConvertibleConversion.security_id (rename)                                                             │
-│   │  └─ ← ConvertibleIssuance.security_id (rename)                                                               │
-│   ├─ + securityLabel                                                                                             │
-│   │  └─ ← ConvertibleIssuance.custom_id (rename)                                                                 │
-│   └─ + stakeholderId                                                                                             │
-│      └─ ← ConvertibleIssuance.stakeholder_id (rename)                                                            │
-│                                                                                                                  │
-│ contains (1 nested variants)                                                                                     │
-│   └─ noteBlock : NoteBlock                                                                                       │
-│      ├─ ← ConvertibleIssuance (contains → NoteBlock) (structural)                                                │
-│      ├─ + id                                                                                                     │
-│      │  └─ ✗ no mapped OCF source                                                                                │
-│      ├─ + name                                                                                                   │
-│      │  └─ ✗ no mapped OCF source                                                                                │
-│      ├─ + noteType                                                                                               │
-│      │  └─ ← ConvertibleIssuance.convertible_type (enum-remap)                                                   │
-│      ├─ + prefix                                                                                                 │
-│      │  └─ ✗ no mapped OCF source                                                                                │
-│      └─ + status                                                                                                 │
-│         └─ ✗ no mapped OCF source                                                                                │
-╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+╭ Carta object: ConvertibleNote ─────────────────────────────────────────────────────────────────────────────╮
+│ name: ConvertibleNote                                                                                      │
+│ id: "#/$defs/ConvertibleNote"                                                                              │
+│ inverse_role: direct                                                                                       │
+│ status: PARTIAL                                                                                            │
+│ mapping_evidence: 32 (direct object: 17, reusable type detail: 15)                                         │
+│ unmapped_properties: 5                                                                                     │
+├────────────────────────────────────────────────────────────────────────────────────────────────────────────┤
+│ parent properties (20)                                                                                     │
+│   ├─ + canceledDatetime                                                                                    │
+│   │  └─ ← ConvertibleCancellation.date (rename)                                                            │
+│   ├─ + canceledQuantity                                                                                    │
+│   │  └─ ← ConvertibleConversion.quantity_converted (rename)                                                │
+│   ├─ + cashPaid                                                                                            │
+│   │  └─ ← ConvertibleIssuance.investment_amount (rename)                                                   │
+│   ├─ + changeInControlPercent                                                                              │
+│   │  └─ ✗ no mapped OCF source                                                                             │
+│   ├─ + conversionDatetime                                                                                  │
+│   │  └─ ← ConvertibleConversion.date (rename)                                                              │
+│   ├─ + conversionTrigger                                                                                   │
+│   │  └─ ← ConvertibleIssuance.conversion_triggers (sequential_transform)                                   │
+│   │     └─ ↳ selects ConvertibleConversionRight where conversion_right.type = CONVERTIBLE_CONVERSION_RIGHT │
+│   ├─ + dayCountBasis                                                                                       │
+│   │  └─ ← ConvertibleIssuance.conversion_triggers (sequential_transform)                                   │
+│   │     ├─ ↳ selects ConvertibleConversionRight where conversion_right.type = CONVERTIBLE_CONVERSION_RIGHT │
+│   │     └─ ← type ConvertibleConversionRight.conversion_mechanism (union-map)                              │
+│   │        ├─ ↳ active when type = CONVERTIBLE_CONVERSION_RIGHT                                            │
+│   │        └─ ↳ dispatches exactly one conversion_mechanism.type branch (mutually exclusive)               │
+│   │           └─ ← type NoteConversionMechanism.day_count_convention (enum-remap)                          │
+│   │              └─ ↳ active when type = CONVERTIBLE_NOTE_CONVERSION                                       │
+│   ├─ + discountPercentage                                                                                  │
+│   │  └─ ← ConvertibleIssuance.conversion_triggers (sequential_transform)                                   │
+│   │     ├─ ↳ selects ConvertibleConversionRight where conversion_right.type = CONVERTIBLE_CONVERSION_RIGHT │
+│   │     └─ ← type ConvertibleConversionRight.conversion_mechanism (union-map)                              │
+│   │        ├─ ↳ active when type = CONVERTIBLE_CONVERSION_RIGHT                                            │
+│   │        └─ ↳ dispatches exactly one conversion_mechanism.type branch (mutually exclusive)               │
+│   │           ├─ ← type NoteConversionMechanism.conversion_discount (rename)                               │
+│   │           │  └─ ↳ active when type = CONVERTIBLE_NOTE_CONVERSION                                       │
+│   │           └─ ← type SAFEConversionMechanism.conversion_discount (rename)                               │
+│   │              └─ ↳ active when type = SAFE_CONVERSION                                                   │
+│   ├─ + id                                                                                                  │
+│   │  └─ ✗ no mapped OCF source                                                                             │
+│   ├─ + interest                                                                                            │
+│   │  └─ ✗ no mapped OCF source                                                                             │
+│   ├─ + interestAccrualPeriod                                                                               │
+│   │  └─ ← ConvertibleIssuance.conversion_triggers (sequential_transform)                                   │
+│   │     ├─ ↳ selects ConvertibleConversionRight where conversion_right.type = CONVERTIBLE_CONVERSION_RIGHT │
+│   │     └─ ← type ConvertibleConversionRight.conversion_mechanism (union-map)                              │
+│   │        ├─ ↳ active when type = CONVERTIBLE_CONVERSION_RIGHT                                            │
+│   │        └─ ↳ dispatches exactly one conversion_mechanism.type branch (mutually exclusive)               │
+│   │           └─ ← type NoteConversionMechanism.interest_accrual_period (enum-remap)                       │
+│   │              └─ ↳ active when type = CONVERTIBLE_NOTE_CONVERSION                                       │
+│   ├─ + interestCompoundingPeriod                                                                           │
+│   │  └─ ← ConvertibleIssuance.conversion_triggers (sequential_transform)                                   │
+│   │     ├─ ↳ selects ConvertibleConversionRight where conversion_right.type = CONVERTIBLE_CONVERSION_RIGHT │
+│   │     └─ ← type ConvertibleConversionRight.conversion_mechanism (union-map)                              │
+│   │        ├─ ↳ active when type = CONVERTIBLE_CONVERSION_RIGHT                                            │
+│   │        └─ ↳ dispatches exactly one conversion_mechanism.type branch (mutually exclusive)               │
+│   │           └─ ← type NoteConversionMechanism.compounding_type (enum-remap)                              │
+│   │              └─ ↳ active when type = CONVERTIBLE_NOTE_CONVERSION                                       │
+│   ├─ + interestRate                                                                                        │
+│   │  └─ ← ConvertibleIssuance.conversion_triggers (sequential_transform)                                   │
+│   │     ├─ ↳ selects ConvertibleConversionRight where conversion_right.type = CONVERTIBLE_CONVERSION_RIGHT │
+│   │     └─ ← type ConvertibleConversionRight.conversion_mechanism (union-map)                              │
+│   │        ├─ ↳ active when type = CONVERTIBLE_CONVERSION_RIGHT                                            │
+│   │        └─ ↳ dispatches exactly one conversion_mechanism.type branch (mutually exclusive)               │
+│   │           └─ ← type NoteConversionMechanism.interest_rates (select)                                    │
+│   │              ├─ ↳ active when type = CONVERTIBLE_NOTE_CONVERSION                                       │
+│   │              └─ ← type InterestRate.rate (rename)                                                      │
+│   ├─ + issueDatetime                                                                                       │
+│   │  └─ ← ConvertibleIssuance.date (rename)                                                                │
+│   ├─ + issuerId                                                                                            │
+│   │  └─ ✗ no mapped OCF source                                                                             │
+│   ├─ + maturityDatetime                                                                                    │
+│   │  └─ ✗ no mapped OCF source                                                                             │
+│   ├─ + priceCap                                                                                            │
+│   │  └─ ← ConvertibleIssuance.conversion_triggers (sequential_transform)                                   │
+│   │     ├─ ↳ selects ConvertibleConversionRight where conversion_right.type = CONVERTIBLE_CONVERSION_RIGHT │
+│   │     └─ ← type ConvertibleConversionRight.conversion_mechanism (union-map)                              │
+│   │        ├─ ↳ active when type = CONVERTIBLE_CONVERSION_RIGHT                                            │
+│   │        └─ ↳ dispatches exactly one conversion_mechanism.type branch (mutually exclusive)               │
+│   │           ├─ ← type NoteConversionMechanism.conversion_valuation_cap (rename)                          │
+│   │           │  └─ ↳ active when type = CONVERTIBLE_NOTE_CONVERSION                                       │
+│   │           └─ ← type SAFEConversionMechanism.conversion_valuation_cap (rename)                          │
+│   │              └─ ↳ active when type = SAFE_CONVERSION                                                   │
+│   ├─ + securityId                                                                                          │
+│   │  ├─ ← ConvertibleConversion.security_id (rename)                                                       │
+│   │  └─ ← ConvertibleIssuance.security_id (rename)                                                         │
+│   ├─ + securityLabel                                                                                       │
+│   │  └─ ← ConvertibleIssuance.custom_id (rename)                                                           │
+│   └─ + stakeholderId                                                                                       │
+│      └─ ← ConvertibleIssuance.stakeholder_id (rename)                                                      │
+│                                                                                                            │
+│ contains (1 nested variants)                                                                               │
+│   └─ noteBlock : NoteBlock                                                                                 │
+│      ├─ ← ConvertibleIssuance (contains → NoteBlock) (structural)                                          │
+│      ├─ + id                                                                                               │
+│      │  └─ ✗ no mapped OCF source                                                                          │
+│      ├─ + name                                                                                             │
+│      │  └─ ✗ no mapped OCF source                                                                          │
+│      ├─ + noteType                                                                                         │
+│      │  └─ ← ConvertibleIssuance.convertible_type (enum-remap)                                             │
+│      ├─ + prefix                                                                                           │
+│      │  └─ ✗ no mapped OCF source                                                                          │
+│      └─ + status                                                                                           │
+│         └─ ✗ no mapped OCF source                                                                          │
+╰────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
 
 ╭ Carta object: ConvertibleTransactionItem ─────────────────────────────────────────────────────────────────────╮
 │ name: ConvertibleTransactionItem                                                                              │
@@ -489,10 +477,7 @@ Standalone Carta targets with mapping evidence (18)
 │      ├─ + issueDatetime                                                                                       │
 │      │  └─ ← ConvertibleIssuance.date (rename)                                                                │
 │      ├─ + maturityDatetime                                                                                    │
-│      │  ├─ ✗ no mapped OCF source                                                                             │
-│      │ └─ ? open question: `conversion_triggers[].trigger_date` / `conversion_triggers[].end_date`: If the    │
-│      source metadata explicitly identifies a maturity event, should the same… [asked by @johnscrudato;        │
-│      ConvertibleIssuance:323]                                                                                 │
+│      │  └─ ✗ no mapped OCF source                                                                             │
 │      ├─ + noteBlockId                                                                                         │
 │      │  └─ ✗ no mapped OCF source                                                                             │
 │      ├─ + precededBySecurityId                                                                                │
@@ -563,10 +548,7 @@ Standalone Carta targets with mapping evidence (18)
 │   │  └─ ← EquityCompensationIssuance [Option].expiration_date (rename)                                           │
 │   │     └─ ↳ dispatches exactly one expiration_date.type branch (mutually exclusive)                             │
 │   ├─ + id                                                                                                        │
-│   │  ├─ ✗ no mapped OCF source                                                                                   │
-│   │ └─ ? open question: For an `OPTION` route, should OCF `EquityCompensationIssuance.id` populate Carta         │
-│   `OptionGrant.id`, or is Carta's object `id` server-generated whi… [asked by @johnscrudato;                     │
-│   EquityCompensationIssuance:452]                                                                                │
+│   │  └─ ✗ no mapped OCF source                                                                                   │
 │   ├─ + isoNsoSplit                                                                                               │
 │   │  └─ ✗ no mapped OCF source                                                                                   │
 │   ├─ + issueDate                                                                                                 │
@@ -754,10 +736,7 @@ Standalone Carta targets with mapping evidence (18)
 │   │ └─ ↳ inverse semantics: state-projection — Current/denormalized plan-name state; it carries no plan-history │
 │   semantics.                                                                                                    │
 │   ├─ + id                                                                                                       │
-│   │  ├─ ✗ no mapped OCF source                                                                                  │
-│   │ └─ ? open question: For the `RSA` route, should OCF `StockIssuance.id` populate Carta                       │
-│   `RestrictedStockAward.id`, or is Carta's object `id` server-generated while `security_id` sh… [asked by       │
-│   @johnscrudato; StockIssuance:379]                                                                             │
+│   │  └─ ✗ no mapped OCF source                                                                                  │
 │   ├─ + issueDate                                                                                                │
 │   │  └─ ← StockIssuance [Rsa].date (rename)                                                                     │
 │   ├─ + issuerId                                                                                                 │
@@ -852,10 +831,7 @@ Standalone Carta targets with mapping evidence (18)
 │   ├─ + forfeitedQuantity                                                                                         │
 │   │  └─ ✗ no mapped OCF source                                                                                   │
 │   ├─ + id                                                                                                        │
-│   │  ├─ ✗ no mapped OCF source                                                                                   │
-│   │ └─ ? open question: For the `RSU` route, should OCF `EquityCompensationIssuance.id` populate Carta           │
-│   `RestrictedStockUnit.id`, or is Carta's object `id` server-generat… [asked by @johnscrudato;                   │
-│   EquityCompensationIssuance:457]                                                                                │
+│   │  └─ ✗ no mapped OCF source                                                                                   │
 │   ├─ + issueDate                                                                                                 │
 │   │  └─ ← EquityCompensationIssuance [Rsu].date (rename)                                                         │
 │   ├─ + issuerId                                                                                                  │
@@ -1249,80 +1225,77 @@ Standalone Carta targets with mapping evidence (18)
 │      └─ ✗ no mapped OCF source                                  │
 ╰─────────────────────────────────────────────────────────────────╯
 
-╭ Carta object: WarrantTransactionItem ─────────────────────────────────────────────────────────────────────────╮
-│ name: WarrantTransactionItem                                                                                  │
-│ id: "#/$defs/WarrantTransactionItem"                                                                          │
-│ inverse_role: direct                                                                                          │
-│ status: MAPPED                                                                                                │
-│ mapping_evidence: 10 (direct object: 10, reusable type detail: 0)                                             │
-│ unmapped_properties: 0                                                                                        │
-├───────────────────────────────────────────────────────────────────────────────────────────────────────────────┤
-│ parent properties (3)                                                                                         │
-│   ├─ + securityId                                                                                             │
-│   │  ├─ ← WarrantCancellation.security_id (rename)                                                            │
-│   │  ├─ ← WarrantExercise.security_id (rename)                                                                │
-│   │  ├─ ← WarrantIssuance.security_id (rename)                                                                │
-│   │  └─ ← WarrantTransfer.security_id (rename)                                                                │
-│   ├─ + securityLabel                                                                                          │
-│   │  └─ ← WarrantIssuance.custom_id (rename)                                                                  │
-│   └─ + stakeholderId                                                                                          │
-│      └─ ← WarrantIssuance.stakeholder_id (rename)                                                             │
-│                                                                                                               │
-│ contains (4 nested variants)                                                                                  │
-│   ├─ cancellations[] : WarrantCancellationTransaction                                                         │
-│   │  ├─ ← WarrantCancellation (contains items → WarrantCancellationTransaction) (structural)                  │
-│   │  ├─ + effectiveDatetime                                                                                   │
-│   │  │  └─ ← WarrantCancellation.date (rename)                                                                │
-│   │  ├─ + quantity                                                                                            │
-│   │  │  └─ ← WarrantCancellation.quantity (rename)                                                            │
-│   │  └─ + reason                                                                                              │
-│   │     └─ ← WarrantCancellation.reason_text (computed)                                                       │
-│   ├─ exercises[] : WarrantExerciseTransaction                                                                 │
-│   │  ├─ ← WarrantExercise (contains items → WarrantExerciseTransaction) (structural)                          │
-│   │  ├─ + quantity                                                                                            │
-│   │  │  └─ ✗ no mapped OCF source                                                                             │
-│   │  ├─ + resultingSecurityId                                                                                 │
-│   │  │  ├─ ← WarrantExercise.resulting_security_ids (select)                                                  │
-│   │ │ └─ ? open question: Given that OCF allows one warrant exercise to produce multiple resulting securities │
-│   while Carta `WarrantExerciseTransaction.resultingSecurityId` is scalar,… [asked by @johnscrudato;           │
-│   WarrantExercise:179]                                                                                        │
-│   │  ├─ + resultingSecurityLabel                                                                              │
-│   │  │  └─ ✗ no mapped OCF source                                                                             │
-│   │  ├─ + resultingSecurityType                                                                               │
-│   │  │  └─ ✗ no mapped OCF source                                                                             │
-│   │  ├─ + settledQuantity                                                                                     │
-│   │  │  └─ ✗ no mapped OCF source                                                                             │
-│   │  ├─ + sharesAcquiredDatetime                                                                              │
-│   │  │  └─ ← WarrantExercise.date (rename)                                                                    │
-│   │  └─ + withheldQuantity                                                                                    │
-│   │     └─ ✗ no mapped OCF source                                                                             │
-│   ├─ issuance : WarrantIssuanceTransaction                                                                    │
-│   │  ├─ ← WarrantIssuance (contains → WarrantIssuanceTransaction) (structural)                                │
-│   │  ├─ + exercisePrice                                                                                       │
-│   │  │  └─ ← WarrantIssuance.exercise_price (rename)                                                          │
-│   │  ├─ + expirationDatetime                                                                                  │
-│   │  │  └─ ← WarrantIssuance.warrant_expiration_date (rename)                                                 │
-│   │  ├─ + issueDatetime                                                                                       │
-│   │  │  └─ ← WarrantIssuance.date (rename)                                                                    │
-│   │  ├─ + purchasePrice                                                                                       │
-│   │  │  └─ ← WarrantIssuance.purchase_price (rename)                                                          │
-│   │  ├─ + quantity                                                                                            │
-│   │  │  └─ ← WarrantIssuance.quantity (rename)                                                                │
-│   │  ├─ + shareClassId                                                                                        │
-│   │  │  └─ ✗ no mapped OCF source                                                                             │
-│   │  └─ + vestingScheduleTemplateId                                                                           │
-│   │     └─ ← WarrantIssuance.vesting_terms_id (rename)                                                        │
-│   └─ transfers[] : WarrantTransferTransaction                                                                 │
-│      ├─ ← WarrantTransfer (contains items → WarrantTransferTransaction) (structural)                          │
-│      ├─ + quantity                                                                                            │
-│      │  └─ ← WarrantTransfer.quantity (rename)                                                                │
-│      ├─ + resultingSecurityId                                                                                 │
-│      │  └─ ← WarrantTransfer.resulting_security_ids (select)                                                  │
-│      ├─ + resultingSecurityLabel                                                                              │
-│      │  └─ ✗ no mapped OCF source                                                                             │
-│      └─ + transferredDatetime                                                                                 │
-│         └─ ← WarrantTransfer.date (rename)                                                                    │
-╰───────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+╭ Carta object: WarrantTransactionItem ────────────────────────────────────────────────────────╮
+│ name: WarrantTransactionItem                                                                 │
+│ id: "#/$defs/WarrantTransactionItem"                                                         │
+│ inverse_role: direct                                                                         │
+│ status: MAPPED                                                                               │
+│ mapping_evidence: 10 (direct object: 10, reusable type detail: 0)                            │
+│ unmapped_properties: 0                                                                       │
+├──────────────────────────────────────────────────────────────────────────────────────────────┤
+│ parent properties (3)                                                                        │
+│   ├─ + securityId                                                                            │
+│   │  ├─ ← WarrantCancellation.security_id (rename)                                           │
+│   │  ├─ ← WarrantExercise.security_id (rename)                                               │
+│   │  ├─ ← WarrantIssuance.security_id (rename)                                               │
+│   │  └─ ← WarrantTransfer.security_id (rename)                                               │
+│   ├─ + securityLabel                                                                         │
+│   │  └─ ← WarrantIssuance.custom_id (rename)                                                 │
+│   └─ + stakeholderId                                                                         │
+│      └─ ← WarrantIssuance.stakeholder_id (rename)                                            │
+│                                                                                              │
+│ contains (4 nested variants)                                                                 │
+│   ├─ cancellations[] : WarrantCancellationTransaction                                        │
+│   │  ├─ ← WarrantCancellation (contains items → WarrantCancellationTransaction) (structural) │
+│   │  ├─ + effectiveDatetime                                                                  │
+│   │  │  └─ ← WarrantCancellation.date (rename)                                               │
+│   │  ├─ + quantity                                                                           │
+│   │  │  └─ ← WarrantCancellation.quantity (rename)                                           │
+│   │  └─ + reason                                                                             │
+│   │     └─ ← WarrantCancellation.reason_text (computed)                                      │
+│   ├─ exercises[] : WarrantExerciseTransaction                                                │
+│   │  ├─ ← WarrantExercise (contains items → WarrantExerciseTransaction) (structural)         │
+│   │  ├─ + quantity                                                                           │
+│   │  │  └─ ✗ no mapped OCF source                                                            │
+│   │  ├─ + resultingSecurityId                                                                │
+│   │  │  └─ ← WarrantExercise.resulting_security_ids (select)                                 │
+│   │  ├─ + resultingSecurityLabel                                                             │
+│   │  │  └─ ✗ no mapped OCF source                                                            │
+│   │  ├─ + resultingSecurityType                                                              │
+│   │  │  └─ ✗ no mapped OCF source                                                            │
+│   │  ├─ + settledQuantity                                                                    │
+│   │  │  └─ ✗ no mapped OCF source                                                            │
+│   │  ├─ + sharesAcquiredDatetime                                                             │
+│   │  │  └─ ← WarrantExercise.date (rename)                                                   │
+│   │  └─ + withheldQuantity                                                                   │
+│   │     └─ ✗ no mapped OCF source                                                            │
+│   ├─ issuance : WarrantIssuanceTransaction                                                   │
+│   │  ├─ ← WarrantIssuance (contains → WarrantIssuanceTransaction) (structural)               │
+│   │  ├─ + exercisePrice                                                                      │
+│   │  │  └─ ← WarrantIssuance.exercise_price (rename)                                         │
+│   │  ├─ + expirationDatetime                                                                 │
+│   │  │  └─ ← WarrantIssuance.warrant_expiration_date (rename)                                │
+│   │  ├─ + issueDatetime                                                                      │
+│   │  │  └─ ← WarrantIssuance.date (rename)                                                   │
+│   │  ├─ + purchasePrice                                                                      │
+│   │  │  └─ ← WarrantIssuance.purchase_price (rename)                                         │
+│   │  ├─ + quantity                                                                           │
+│   │  │  └─ ← WarrantIssuance.quantity (rename)                                               │
+│   │  ├─ + shareClassId                                                                       │
+│   │  │  └─ ✗ no mapped OCF source                                                            │
+│   │  └─ + vestingScheduleTemplateId                                                          │
+│   │     └─ ← WarrantIssuance.vesting_terms_id (rename)                                       │
+│   └─ transfers[] : WarrantTransferTransaction                                                │
+│      ├─ ← WarrantTransfer (contains items → WarrantTransferTransaction) (structural)         │
+│      ├─ + quantity                                                                           │
+│      │  └─ ← WarrantTransfer.quantity (rename)                                               │
+│      ├─ + resultingSecurityId                                                                │
+│      │  └─ ← WarrantTransfer.resulting_security_ids (select)                                 │
+│      ├─ + resultingSecurityLabel                                                             │
+│      │  └─ ✗ no mapped OCF source                                                            │
+│      └─ + transferredDatetime                                                                │
+│         └─ ← WarrantTransfer.date (rename)                                                   │
+╰──────────────────────────────────────────────────────────────────────────────────────────────╯
 
 Standalone candidates requiring inventory detail (13)
 ╭ Carta object: CapitalizationTableSummary ──────────────────────────────────────────╮
