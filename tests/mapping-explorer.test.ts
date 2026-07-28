@@ -81,6 +81,10 @@ describe("mapping explorer", () => {
     expect(index).toContain("OCF records");
     expect(index).toContain("Open Cap Table Coalition");
     expect(index).toContain("OCT-coalition-seal_horizontal%202.png");
+    expect(index).toContain("Choose a side, then open a record.");
+    expect(index).toContain("The Flow viewer shows relationships across records");
+    expect(index).not.toContain('class="feature-grid"');
+    expect(index).not.toContain('class="featured-visual"');
     expect(index).toContain(`All (${explorer.metrics.sourceObjects})`);
     expect(index).toContain(
       `Mapped (${explorer.metrics.sourceObjects - explorer.metrics.noTargetSources})`
@@ -117,6 +121,12 @@ describe("mapping explorer", () => {
     expect(css).toContain("overflow-wrap: anywhere");
     expect(css).toContain(".nav-links { display: flex; flex-wrap: wrap;");
     expect(css).toContain(".nav-row { height: auto; min-height: 72px;");
+    expect(css).toContain(".map-guide { display: grid;");
+    expect(css).toContain(".map-guide-steps { display: grid; grid-template-columns: repeat(3");
+    expect(css).toContain(
+      ".hero-orbit { height: 390px; position: relative; display: grid; place-items: center; overflow: hidden; }"
+    );
+    expect(css).toContain(".map-guide { background: #f1f1ff; border-color: rgba(42,48,200,.22); }");
   });
 
   it("renders authored mapping notes and open/closed questions", async () => {
