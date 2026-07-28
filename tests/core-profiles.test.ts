@@ -111,10 +111,10 @@ describe("deriveCore profiles over the real corpus", () => {
 });
 
 describe("upstream-OCF report", () => {
-  it("rich groups lossy-home members by object with a flow diagram; strict lists none", async () => {
+  it("rich groups lossy-home members by object; strict lists none", async () => {
     const rich = renderUpstreamReport(await deriveCore(process.cwd(), RICH_PROFILE));
     expect(rich).toContain("upstream-OCF change candidates");
-    expect(rich).toContain("```mermaid"); // visual flow diagram
+    expect(rich).not.toContain("```mermaid");
     expect(rich).toContain("### Stakeholder — in Core (admissible)"); // grouped by object
     // name explicitly selects legal_name into the flattened Carta fullName, OCF-required.
     expect(rich).toMatch(/\| name \| \*\*yes\*\* \|.*Stakeholder\.fullName.*select \(legal_name\)/);

@@ -8,14 +8,13 @@
  * `existence-loss` structure/array→scalar, or `heuristic` combine/split/computed)
  * vs NO HOME (`no-destination`, Carta has no field at all) — and presents the flow:
  *
- *   Overview — a mermaid diagram of OCF objects → the Carta objects they flow to.
  *   A. Lossy home GROUPED BY OCF OBJECT, each field showing where it flows in Carta.
  *   B. Flow map — the inverse: one entry per Carta slot, listing every OCF property
  *      that lands on it, so convergence (many→one reverse edges) is obvious.
  *   C. No home, grouped by object, for contrast (also in core-gaps.md).
  *
- * The visual layer (mermaid, grouping, flow map) is shared with the upstream and
- * gap reports via scripts/lib/report-flow. OCF bookkeeping is excluded; variants
+ * The source-to-target projection is shared with the Mapping Explorer through the
+ * normalized `Corpus.mappingEdges` model. OCF bookkeeping is excluded; variants
  * that map identically are collapsed.
  *
  *   npm run core:lossy            # write docs/core-lossy-inventory.md + print summary
@@ -25,15 +24,9 @@ import { writeFile } from "node:fs/promises";
 import { pathToFileURL } from "node:url";
 
 import { deriveCore, Derived, RICH_PROFILE } from "./lib/core-pipeline.js";
-import { BOOKKEEPING, buildTargetIndex } from "./lib/report-helpers.js";
-import {
-  FlowRow,
-  byObjectTables,
-  flowMapLines,
-  groupByEntity,
-  groupByVariant,
-  mermaidFlow,
-} from "./lib/report-flow.js";
+import { BOOKKEEPING } from "./lib/report-helpers.js";
+import { sourceFieldTargetIndex } from "./lib/mapping-source.js";
+import { FlowRow, byObjectTables, flowMapLines, groupByEntity } from "./lib/report-flow.js";
 
 const OUT_FILE = "docs/core-lossy-inventory.md";
 // "Lossy home" = the reasons the rich profile promotes to members (single source
@@ -44,7 +37,7 @@ const LOSSY_HOME = RICH_PROFILE.memberReasons;
 function collectLossy(d: Derived): { lossy: FlowRow[]; nohome: FlowRow[] } {
   const admBy = new Map(d.admissibility.map((a) => [`${a.entity} ${a.variant}`, a]));
   const reqBy = new Map(d.corpus.objects.map((o) => [o.entity, new Set(o.requiredFields)]));
-  const targetOf = buildTargetIndex(d.corpus.objects);
+  const targetOf = sourceFieldTargetIndex(d.corpus);
 
   const lossy: FlowRow[] = [];
   const nohome: FlowRow[] = [];
@@ -93,7 +86,6 @@ export async function writeLossyInventory(base: string = process.cwd()): Promise
 
 function render(lossy: FlowRow[], nohome: FlowRow[]): string {
   const groupedLossy = groupByEntity(lossy);
-  const diagramLossy = groupByVariant(lossy); // diagrams split polymorphic flavors apart
   const noHomeGroups = groupByEntity(nohome);
   const reqCount = lossy.filter((r) => r.ocfRequired).length;
 
@@ -109,18 +101,8 @@ function render(lossy: FlowRow[], nohome: FlowRow[]): string {
     "",
     "Fields that today fall **out** of Core, split by whether Carta offers a home at all.",
     "`OCF-req` marks fields OCF itself requires — a lossy home on a required field is the",
-    "strongest rich-Core / upstream-OCF signal. The **overview diagram** shows the whole flow;",
-    "**A** breaks it down per OCF object; **B** inverts it (per Carta slot); **C** is no-home.",
-    "",
-    "## Overview — flow diagrams, one per OCF object flavor",
-    "",
-    "One diagram per OCF object — each polymorphic flavor (`Object [Variant]`) fully separate —",
-    "flowing to the Carta objects it lands on. OCF source nodes are green (in strict Core) or dashed",
-    "grey (not yet admissible); each edge is labelled with the property flowing. Largest-first.",
-    "Cross-object convergence onto a shared Carta slot (e.g. the reverse-edge lineage on the two",
-    "`…PrecededBy`) is in flow map **B** below.",
-    "",
-    ...mermaidFlow(diagramLossy),
+    "strongest rich-Core / upstream-OCF signal. **A** breaks it down per OCF object;",
+    "**B** inverts it (per Carta slot); **C** is no-home.",
     "",
     `## A. Lossy home — by OCF object, flowing to Carta (${lossy.length} (entity,variant,field) rows across ${groupedLossy.length} objects; ${reqCount} OCF-required)`,
     "",

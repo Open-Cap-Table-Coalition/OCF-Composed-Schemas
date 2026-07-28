@@ -39,7 +39,7 @@ The deck **does not re-run the analysis** — it synthesizes the committed, gene
 | Deck content | Source doc |
 | --- | --- |
 | OCF-side left-behind (`ocf_left`, with required flags) | `core/core-gaps.md` §(a) |
-| what lands (`ocf_mapped` / `carta_mapped`) | `docs/generated/mapping-inverse-report.md` and the mapping-flow gallery (canonical target-first evidence) |
+| what lands (`ocf_mapped` / `carta_mapped`) | `docs/generated/mapping-explorer/assets/mapping-inverse-report.md` and the Pages flow assets (canonical target-first evidence) |
 | Carta-side concepts (`carta_left`) | canonical inverse report empty-slot panels plus `core-rich/core-gaps.md` inverse candidates, de-noised into concept labels |
 | the marquee OCF gaps (§3) | `core/core-gaps.md` §(b3) "true gaps" |
 | the full examples (whole object + kind per field) | the object's `objects/*.mapping.md` `fields:` block (`EXAMPLES` in `gen_mapping.py`) |

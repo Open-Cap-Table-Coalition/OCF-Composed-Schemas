@@ -17,180 +17,63 @@ itself requires; an unmapped field on an **in-Core** object is the sharper loss.
 it is unmappable in **at least one** variant. Ones marked `†` also **land in another variant**
 of the same object (e.g. `EquityCompensationIssuance.board_approval_date` maps for Option/Rsu,
 drops only for Sar), so "no Carta home" is a per-flavor statement here, not object-level. The
-magnitude diagrams split flavors apart; the canonical target-first inverse report gives the
-Carta-side landing view. OCF-side distinct-field counts remain in the Core ledger and gap reports.
+canonical target-first inverse report gives the Carta-side landing view. OCF-side
+distinct-field counts remain in the Core ledger and gap reports.
 
 ## Magnitude — unmapped properties per OCF object (159 distinct across 46 objects; 233 per-flavor rows, 137 OCF-required)
 
-Each OCF object → the void, edge labelled with how many of its properties are dropped.
-Green = the object is in strict Core (we carry it but lose these fields); dashed grey = the
-object isn't admissible anyway. Property names are in the tables below.
+The table below keeps the same magnitude view without relying on a graph renderer.
+Property names and their per-variant scope appear in the detailed tables that follow.
 
-**In-Core objects (we carry the object, drop these fields)**
+| OCF object | Core status | dropped properties |
+| --- | --- | ---: |
+| ConvertibleAcceptance | not yet admissible | 1 |
+| ConvertibleCancellation | in Core (admissible) | 1 |
+| ConvertibleConversion | in Core (admissible) | 5 |
+| ConvertibleIssuance | in Core (admissible) | 5 |
+| ConvertibleRetraction | not yet admissible | 3 |
+| ConvertibleTransfer | not yet admissible | 6 |
+| Document | not yet admissible | 2 |
+| EquityCompensationAcceptance | not yet admissible | 1 |
+| EquityCompensationCancellation | in Core (admissible) | 1 |
+| EquityCompensationExercise | in Core (admissible) | 5 |
+| EquityCompensationIssuance | not yet admissible | 12 |
+| EquityCompensationRelease | in Core (admissible) | 7 |
+| EquityCompensationRepricing | in Core (admissible) | 3 |
+| EquityCompensationRetraction | not yet admissible | 3 |
+| EquityCompensationTransfer | not yet admissible | 6 |
+| Financing | not yet admissible | 3 |
+| Issuer | in Core (admissible) | 9 |
+| IssuerAuthorizedSharesAdjustment | not yet admissible | 5 |
+| Stakeholder | in Core (admissible) | 2 |
+| StakeholderRelationshipChangeEvent | in Core (admissible) | 1 |
+| StakeholderStatusChangeEvent | not yet admissible | 2 |
+| StockAcceptance | not yet admissible | 1 |
+| StockClass | in Core (admissible) | 3 |
+| StockClassAuthorizedSharesAdjustment | in Core (admissible) | 3 |
+| StockClassConversionRatioAdjustment | not yet admissible | 1 |
+| StockClassSplit | not yet admissible | 3 |
+| StockConsolidation | not yet admissible | 2 |
+| StockConversion | not yet admissible | 3 |
+| StockIssuance | not yet admissible | 7 |
+| StockLegendTemplate | not yet admissible | 2 |
+| StockPlan | in Core (admissible) | 3 |
+| StockPlanPoolAdjustment | not yet admissible | 5 |
+| StockPlanReturnToPool | in Core (admissible) | 3 |
+| StockReissuance | not yet admissible | 4 |
+| StockRepurchase | not yet admissible | 4 |
+| StockRetraction | not yet admissible | 3 |
+| StockTransfer | in Core (admissible) | 2 |
+| Valuation | in Core (admissible) | 5 |
+| VestingAcceleration | not yet admissible | 4 |
+| VestingEvent | not yet admissible | 3 |
+| WarrantAcceptance | not yet admissible | 1 |
+| WarrantCancellation | in Core (admissible) | 1 |
+| WarrantExercise | not yet admissible | 2 |
+| WarrantIssuance | not yet admissible | 6 |
+| WarrantRetraction | not yet admissible | 3 |
+| WarrantTransfer | in Core (admissible) | 2 |
 
-```mermaid
-flowchart LR
-  classDef adm fill:#e6f4ea,stroke:#34a853,color:#0b3d20;
-  classDef notadm fill:#f1f3f4,stroke:#9aa0a6,color:#5f6368,stroke-dasharray:4 3;
-  classDef sink fill:#fce8e6,stroke:#d93025,color:#5c0d06;
-  subgraph SRC["OCF source objects"]
-    direction TB
-    o0["ConvertibleCancellation"]:::adm
-    o1["ConvertibleConversion"]:::adm
-    o2["ConvertibleIssuance"]:::adm
-    o3["EquityCompensationCancellation [Option]"]:::adm
-    o4["EquityCompensationCancellation [Rsu]"]:::adm
-    o5["EquityCompensationCancellation [Sar]"]:::adm
-    o6["EquityCompensationExercise [Option]"]:::adm
-    o7["EquityCompensationExercise [Sar]"]:::adm
-    o8["EquityCompensationRelease [Rsu]"]:::adm
-    o9["EquityCompensationRepricing [Option]"]:::adm
-    o10["EquityCompensationRepricing [Sar]"]:::adm
-    o11["Issuer"]:::adm
-    o12["Stakeholder"]:::adm
-    o13["StakeholderRelationshipChangeEvent"]:::adm
-    o14["StockClass [Common]"]:::adm
-    o15["StockClass [Preferred]"]:::adm
-    o16["StockClassAuthorizedSharesAdjustment"]:::adm
-    o17["StockPlan"]:::adm
-    o18["StockPlanReturnToPool [Option]"]:::adm
-    o19["StockPlanReturnToPool [Rsu]"]:::adm
-    o20["StockTransfer [Default]"]:::adm
-    o21["StockTransfer [Rsa]"]:::adm
-    o22["Valuation"]:::adm
-    o23["WarrantCancellation"]:::adm
-    o24["WarrantTransfer"]:::adm
-  end
-  void["⌀ not mapped (no Carta home)"]:::sink
-  o0 -->|1| void
-  o1 -->|5| void
-  o2 -->|5| void
-  o3 -->|1| void
-  o4 -->|1| void
-  o5 -->|1| void
-  o6 -->|1| void
-  o7 -->|1| void
-  o8 -->|1| void
-  o9 -->|2| void
-  o10 -->|2| void
-  o11 -->|9| void
-  o12 -->|2| void
-  o13 -->|1| void
-  o14 -->|3| void
-  o15 -->|3| void
-  o16 -->|3| void
-  o17 -->|3| void
-  o18 -->|2| void
-  o19 -->|2| void
-  o20 -->|2| void
-  o21 -->|2| void
-  o22 -->|5| void
-  o23 -->|1| void
-  o24 -->|2| void
-```
-
-**Not-yet-admissible objects**
-
-```mermaid
-flowchart LR
-  classDef adm fill:#e6f4ea,stroke:#34a853,color:#0b3d20;
-  classDef notadm fill:#f1f3f4,stroke:#9aa0a6,color:#5f6368,stroke-dasharray:4 3;
-  classDef sink fill:#fce8e6,stroke:#d93025,color:#5c0d06;
-  subgraph SRC["OCF source objects"]
-    direction TB
-    o0["ConvertibleAcceptance"]:::notadm
-    o1["ConvertibleRetraction"]:::notadm
-    o2["ConvertibleTransfer"]:::notadm
-    o3["Document"]:::notadm
-    o4["EquityCompensationAcceptance [Sar]"]:::notadm
-    o5["EquityCompensationExercise [Rsu]"]:::notadm
-    o6["EquityCompensationIssuance [Option]"]:::notadm
-    o7["EquityCompensationIssuance [Rsu]"]:::notadm
-    o8["EquityCompensationIssuance [Sar]"]:::notadm
-    o9["EquityCompensationRelease [Option]"]:::notadm
-    o10["EquityCompensationRelease [Sar]"]:::notadm
-    o11["EquityCompensationRepricing [Rsu]"]:::notadm
-    o12["EquityCompensationRetraction [Option]"]:::notadm
-    o13["EquityCompensationRetraction [Rsu]"]:::notadm
-    o14["EquityCompensationRetraction [Sar]"]:::notadm
-    o15["EquityCompensationTransfer [Option]"]:::notadm
-    o16["EquityCompensationTransfer [Rsu]"]:::notadm
-    o17["EquityCompensationTransfer [Sar]"]:::notadm
-    o18["Financing"]:::notadm
-    o19["IssuerAuthorizedSharesAdjustment"]:::notadm
-    o20["StakeholderStatusChangeEvent"]:::notadm
-    o21["StockAcceptance [Default]"]:::notadm
-    o22["StockClassConversionRatioAdjustment"]:::notadm
-    o23["StockClassSplit"]:::notadm
-    o24["StockConsolidation [Default]"]:::notadm
-    o25["StockConsolidation [Rsa]"]:::notadm
-    o26["StockConversion [Default]"]:::notadm
-    o27["StockConversion [Rsa]"]:::notadm
-    o28["StockIssuance [Default]"]:::notadm
-    o29["StockIssuance [Rsa]"]:::notadm
-    o30["StockLegendTemplate"]:::notadm
-    o31["StockPlanPoolAdjustment"]:::notadm
-    o32["StockPlanReturnToPool [Sar]"]:::notadm
-    o33["StockReissuance [Default]"]:::notadm
-    o34["StockReissuance [Rsa]"]:::notadm
-    o35["StockRepurchase [Default]"]:::notadm
-    o36["StockRepurchase [Rsa]"]:::notadm
-    o37["StockRetraction [Default]"]:::notadm
-    o38["StockRetraction [Rsa]"]:::notadm
-    o39["VestingAcceleration"]:::notadm
-    o40["VestingEvent"]:::notadm
-    o41["WarrantAcceptance"]:::notadm
-    o42["WarrantExercise"]:::notadm
-    o43["WarrantIssuance"]:::notadm
-    o44["WarrantRetraction"]:::notadm
-  end
-  void["⌀ not mapped (no Carta home)"]:::sink
-  o0 -->|1| void
-  o1 -->|3| void
-  o2 -->|6| void
-  o3 -->|2| void
-  o4 -->|1| void
-  o5 -->|5| void
-  o6 -->|3| void
-  o7 -->|9| void
-  o8 -->|10| void
-  o9 -->|7| void
-  o10 -->|7| void
-  o11 -->|3| void
-  o12 -->|3| void
-  o13 -->|3| void
-  o14 -->|3| void
-  o15 -->|6| void
-  o16 -->|6| void
-  o17 -->|6| void
-  o18 -->|3| void
-  o19 -->|5| void
-  o20 -->|2| void
-  o21 -->|1| void
-  o22 -->|1| void
-  o23 -->|3| void
-  o24 -->|2| void
-  o25 -->|2| void
-  o26 -->|3| void
-  o27 -->|3| void
-  o28 -->|7| void
-  o29 -->|5| void
-  o30 -->|2| void
-  o31 -->|5| void
-  o32 -->|3| void
-  o33 -->|4| void
-  o34 -->|4| void
-  o35 -->|4| void
-  o36 -->|4| void
-  o37 -->|3| void
-  o38 -->|3| void
-  o39 -->|4| void
-  o40 -->|3| void
-  o41 -->|1| void
-  o42 -->|2| void
-  o43 -->|6| void
-  o44 -->|3| void
-```
 
 ## By OCF object — the dropped properties
 

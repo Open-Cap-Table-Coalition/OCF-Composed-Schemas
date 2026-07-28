@@ -21,11 +21,9 @@ import { pathToFileURL } from "node:url";
 
 import { deriveCore, Derived, isMember, RICH_PROFILE } from "./lib/core-pipeline.js";
 import { BOOKKEEPING } from "./lib/report-helpers.js";
-import { FlowRow, groupByEntity, groupByVariant, mermaidVoid } from "./lib/report-flow.js";
+import { FlowRow, groupByEntity } from "./lib/report-flow.js";
 
 const OUT_FILE = "docs/core-unmapped-inventory.md";
-const VOID = "⌀ not mapped (no Carta home)";
-
 interface Row extends FlowRow {
   description: string;
 }
@@ -110,9 +108,6 @@ function render(
   distinctCount: number
 ): string {
   const groups = groupByEntity(rows);
-  const flavorGroups = groupByVariant(rows); // diagrams split polymorphic flavors apart
-  const inCore = flavorGroups.filter((g) => g.admissible);
-  const notYet = flavorGroups.filter((g) => !g.admissible);
   const reqCount = rows.filter((r) => r.ocfRequired).length;
 
   const lines: string[] = [
@@ -135,22 +130,23 @@ function render(
     "it is unmappable in **at least one** variant. Ones marked `†` also **land in another variant**",
     "of the same object (e.g. `EquityCompensationIssuance.board_approval_date` maps for Option/Rsu,",
     'drops only for Sar), so "no Carta home" is a per-flavor statement here, not object-level. The',
-    "magnitude diagrams split flavors apart; the canonical target-first inverse report gives the",
-    "Carta-side landing view. OCF-side distinct-field counts remain in the Core ledger and gap reports.",
+    "canonical target-first inverse report gives the Carta-side landing view. OCF-side",
+    "distinct-field counts remain in the Core ledger and gap reports.",
     "",
     `## Magnitude — unmapped properties per OCF object (${distinctCount} distinct across ${groups.length} objects; ${rows.length} per-flavor rows, ${reqCount} OCF-required)`,
     "",
-    "Each OCF object → the void, edge labelled with how many of its properties are dropped.",
-    "Green = the object is in strict Core (we carry it but lose these fields); dashed grey = the",
-    "object isn't admissible anyway. Property names are in the tables below.",
+    "The table below keeps the same magnitude view without relying on a graph renderer.",
+    "Property names and their per-variant scope appear in the detailed tables that follow.",
     "",
-    "**In-Core objects (we carry the object, drop these fields)**",
+    "| OCF object | Core status | dropped properties |",
+    "| --- | --- | ---: |",
+    ...groups.map(
+      (g) =>
+        `| ${g.entity} | ${g.admissible ? "in Core (admissible)" : "not yet admissible"} | ${
+          g.fields.length
+        } |`
+    ),
     "",
-    ...(inCore.length ? mermaidVoid(inCore, VOID) : ["(none)"]),
-    "",
-    "**Not-yet-admissible objects**",
-    "",
-    ...(notYet.length ? mermaidVoid(notYet, VOID) : ["(none)"]),
     "",
     "## By OCF object — the dropped properties",
     "",

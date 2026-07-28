@@ -10,8 +10,12 @@ import { renderLossyInventory } from "../scripts/derive-core-lossy-inventory.js"
 describe("analysis docs (core:check gate 3)", () => {
   it("render deterministically — two runs over the same corpus are byte-identical", async () => {
     const [s1, s2] = await Promise.all([deriveCore(process.cwd()), deriveCore(process.cwd())]);
-    expect(renderUnmappedInventory(s1)).toEqual(renderUnmappedInventory(s2));
-    expect(renderLossyInventory(s1)).toEqual(renderLossyInventory(s2));
+    const unmapped = renderUnmappedInventory(s1);
+    const lossy = renderLossyInventory(s1);
+    expect(unmapped).toEqual(renderUnmappedInventory(s2));
+    expect(lossy).toEqual(renderLossyInventory(s2));
+    expect(unmapped).not.toContain("```mermaid");
+    expect(lossy).not.toContain("```mermaid");
   });
 
   it("the committed docs/*.md match a fresh render (must rebuild after a change)", async () => {

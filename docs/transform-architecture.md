@@ -44,7 +44,7 @@ Four stages, each with a distinct *shape*:
 | **Mapping** | a declarative DSL | OCF schema → a `fields:` map of per-property transforms |
 | **Validate** | a pure rules function | (mapping, source schema, target bundle) → `error[]` |
 | **Project** | a filter / restriction | mapping corpus → an OCF-shaped Core projection |
-| **Report** | a re-cut / render | the derived ledger → markdown + mermaid |
+| **Report** | a re-cut / render | the derived ledger → Markdown tables and flow maps |
 
 The rest of this guide walks each stage: its shape, its rules, and one illustrative example.
 
@@ -368,7 +368,7 @@ into Core.
 ### Shape
 
 The source-side loss inventories re-derive the Core ledger (a cheap `deriveCore` call under the
-strict profile) and recut its verdicts into Markdown tables and Mermaid diagrams. The canonical
+strict profile) and recut its verdicts into Markdown tables and flow maps. The canonical
 target-first inverse report and visuals load the green mapping corpus once, build the shared
 Carta-side inverse ledger, and render the text report, SVG gallery, and interactive HTML viewer.
 The key discipline is the same in both paths: **no report re-implements classification.** The loss
@@ -396,9 +396,10 @@ credited as *filled* targets, not phantom gaps.
 ### Canonical target-first artifacts
 
 Run `npm run mapping:artifacts` to regenerate the checked-in
-[`mapping-inverse-report.md`](./generated/mapping-inverse-report.md),
-[native SVG gallery](./generated/mapping-flows/README.md), and
-[interactive viewer](./generated/mapping-flows-interactive/index.html). The report preserves the
+[Mapping Explorer](./generated/mapping-explorer/index.html), including its
+[inverse report](./generated/mapping-explorer/assets/mapping-inverse-report.md),
+[native SVG assets](./generated/mapping-explorer/assets/mapping-flows/), and
+[interactive viewer](./generated/mapping-explorer/assets/mapping-flows-interactive/index.html). The report preserves the
 target-first audit ledger; the SVGs preserve exact source-property → target-property edges and
 containment for every mapped Carta target with executable object evidence.
 
@@ -441,4 +442,4 @@ If you remember nothing else, remember these — they're the DNA the whole syste
 | Mapping | `objects/…`, `types/…` `*.mapping.md` | — | [mapping-validation](./mapping-validation.md), [polymorphic-transaction-routing](./polymorphic-transaction-routing.md) |
 | Validate | `npm run mapping:validate` | `scripts/lib/mapping-{parser,validator}.ts` | [mapping-validation](./mapping-validation.md) |
 | Project | `npm run core:build` / `core:check` | `scripts/lib/core-{pipeline,classifier,admissibility,schema-emitter}.ts` | [ocf-core-goal](./ocf-core-goal.md), [ocf-core-spec](./ocf-core-spec.md) |
-| Report | `core:build` emits the **gated** ledger/gap reports (`core/`, `core-rich/`) and the OCF-side loss inventories; `mapping:artifacts` emits the canonical Carta-side inverse report and visuals | `scripts/lib/report-flow.ts`, `scripts/derive-core-*.ts`, `scripts/lib/mapping-inverse-report.ts`, `scripts/generate-mapping-inverse-artifacts.ts` | generated `core/core-{ledger,gaps}.md`, `docs/core-{lossy-inventory,unmapped-inventory}.md`, `docs/generated/mapping-{inverse-report,flows,flows-interactive}` |
+| Report | `core:build` emits the **gated** ledger/gap reports (`core/`, `core-rich/`) and the OCF-side loss inventories; `mapping:artifacts` emits the canonical Carta-side inverse report and Pages explorer | `scripts/lib/report-flow.ts`, `scripts/derive-core-*.ts`, `scripts/lib/mapping-inverse-report.ts`, `scripts/generate-mapping-inverse-artifacts.ts` | generated `core/core-{ledger,gaps}.md`, `docs/core-{lossy-inventory,unmapped-inventory}.md`, `docs/generated/mapping-explorer/**` |

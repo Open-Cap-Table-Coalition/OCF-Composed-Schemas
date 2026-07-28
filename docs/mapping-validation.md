@@ -50,12 +50,12 @@ derived coverage stays reviewable, and enum remaps are checked value-by-value.
   native UML-like source/target class graph with explicit property and containment edges; it does not
   depend on Mermaid or GitHub's graph renderer. Dense families switch to target-specific mapping lanes
   that retain exact field mappings without crossing the whole graph. Parent-level mapped properties are
-  shown in the Carta parent node, including their count. The checked-in report and gallery are [available here](generated/mapping-inverse-report.md),
-  and [here](generated/mapping-flows/README.md); CI uploads the SVGs alongside the text report. The checked-in
+  shown in the Carta parent node, including their count. The checked-in report and Pages explorer are [available here](generated/mapping-explorer/assets/mapping-inverse-report.md),
+  and [here](generated/mapping-explorer/index.html); CI uploads the SVGs alongside the text report. The checked-in
   artifacts are drift-checked by `npm run mapping:artifacts:check`. CI also uploads a self-contained interactive HTML
   viewer; the job summary links to it when the artifact is available. A reproducible copy is checked in
-  at [generated/mapping-flows-interactive/index.html](generated/mapping-flows-interactive/index.html)
-  for local serving, while GitHub renders the checked-in SVGs inline. The HTML viewer supports
+  at [generated/mapping-explorer/assets/mapping-flows-interactive/index.html](generated/mapping-explorer/assets/mapping-flows-interactive/index.html)
+  for local serving, while the Pages explorer renders the checked-in SVGs inline. The HTML viewer supports
   lane/route dimming, fit-width/zoom controls, and click-to-focus mapping arrows. Each target-side
   graph uses one Carta aggregate boundary with inset contained-type panels for nested variants.
   Target properties with no mapped OCF source remain explicit in each panel.

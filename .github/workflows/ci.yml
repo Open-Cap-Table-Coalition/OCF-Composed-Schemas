@@ -89,7 +89,7 @@ jobs:
           for svg in ci-artifacts/mapping-flows/*.svg; do
             [ -e "$svg" ] || continue
             name=$(basename "$svg" .svg)
-            echo "![${name}](${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/blob/${preview_ref}/docs/generated/mapping-flows/${name}.svg?raw=true)" >> "$GITHUB_STEP_SUMMARY"
+            echo "![${name}](${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/blob/${preview_ref}/docs/generated/mapping-explorer/assets/mapping-flows/${name}.svg?raw=true)" >> "$GITHUB_STEP_SUMMARY"
           done
           exit "$status"
       - name: Upload inverse coverage report
