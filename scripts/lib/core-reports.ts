@@ -234,8 +234,8 @@ export function renderGapReport(d: Derived): string {
     "not reproduce that ledger or maintain a second target-side summary.",
     "",
     "The same `renderMappingInverseReport` renderer is materialized by `npm run mapping:artifacts`.",
-    "See `docs/generated/mapping-inverse-report.md` and `docs/generated/mapping-flows/` for the",
-    "complete target-first evidence and visuals.",
+    "See `docs/generated/mapping-explorer/assets/mapping-inverse-report.md` and the Pages explorer",
+    "for the complete target-first evidence and visuals.",
     ""
   );
   return lines.join("\n") + "\n";

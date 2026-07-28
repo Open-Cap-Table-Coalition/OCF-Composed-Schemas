@@ -37,7 +37,7 @@ describe("core reports (the markdown drift gate's premise)", () => {
       "The canonical target-first inverse report owns the Carta-side object panels"
     );
     expect(report).toContain("The same `renderMappingInverseReport` renderer");
-    expect(report).toContain("docs/generated/mapping-inverse-report.md");
+    expect(report).toContain("docs/generated/mapping-explorer/assets/mapping-inverse-report.md");
     expect(report).not.toContain("| Shared inverse-ledger dimension | count |");
   });
 

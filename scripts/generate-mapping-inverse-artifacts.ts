@@ -1,13 +1,13 @@
 #!/usr/bin/env node
 /**
- * Materialize the canonical inverse report and its reviewable visual artifacts.
+ * Materialize the canonical inverse report and the reviewable Pages explorer.
  *
  * CI renders the same values into its uploaded artifact directory. This command
- * exists for the checked-in docs/generated copy and for a byte-for-byte drift
- * check, so the gallery and report cannot silently diverge from the CI renderer.
+ * exists for the checked-in Pages explorer copy and for a byte-for-byte drift
+ * check against the CI renderer.
  */
 import path from "node:path";
-import { mkdir, readFile, readdir, stat, unlink, writeFile } from "node:fs/promises";
+import { mkdir, readFile, readdir, unlink, writeFile } from "node:fs/promises";
 import yargs from "yargs";
 import { hideBin } from "yargs/helpers";
 
@@ -15,7 +15,6 @@ import { loadGreenCorpus } from "./lib/core-corpus.js";
 import { buildInverseCoverage } from "./lib/inverse-coverage.js";
 import { collectMappingFiles, loadMappingDocuments } from "./lib/mapping-input.js";
 import {
-  renderMappingFlowGalleryReadme,
   renderMappingFlowHtml,
   renderMappingFlowSvgs,
   renderMappingInverseReport,
@@ -51,40 +50,6 @@ async function compareOrWrite(
   if (!check) {
     await mkdir(path.dirname(file), { recursive: true });
     await writeFile(file, expected, "utf8");
-  }
-}
-
-async function compareOrWriteSvgDirectory(
-  directory: string,
-  artifacts: ReadonlyMap<string, string>,
-  check: boolean,
-  failures: string[]
-): Promise<void> {
-  try {
-    await stat(directory);
-  } catch {
-    if (check) failures.push(`missing: ${path.relative(process.cwd(), directory)}`);
-    else await mkdir(directory, { recursive: true });
-  }
-
-  let existing: string[] = [];
-  try {
-    existing = (await readdir(directory, { withFileTypes: true }))
-      .filter((entry) => entry.isFile() && entry.name.endsWith(".svg"))
-      .map((entry) => entry.name)
-      .sort();
-  } catch {
-    // The missing-directory case is handled above.
-  }
-  const expectedNames = [...artifacts.keys()].sort();
-  for (const stale of existing.filter((name) => !artifacts.has(name))) {
-    if (check) {
-      failures.push(`stale artifact: ${path.relative(process.cwd(), path.join(directory, stale))}`);
-    }
-    if (!check) await unlink(path.join(directory, stale));
-  }
-  for (const name of expectedNames) {
-    await compareOrWrite(path.join(directory, name), artifacts.get(name)!, check, failures);
   }
 }
 
@@ -193,7 +158,6 @@ async function main(args: Args): Promise<number> {
     }) + "\n";
   const svgArtifacts = renderMappingFlowSvgs({ inverse, mappingDocuments });
   const html = renderMappingFlowHtml({ inverse, mappingDocuments });
-  const readme = renderMappingFlowGalleryReadme([...svgArtifacts.keys()]);
   const explorer = buildMappingExplorerData(
     corpus,
     inverse,
@@ -203,41 +167,16 @@ async function main(args: Args): Promise<number> {
   const explorerFiles = buildExplorerSiteFiles(explorer, report, html, svgArtifacts);
 
   const outputRoot = path.resolve(repoRoot, args.base);
-  const generatedRoot = path.join(outputRoot, "docs/generated");
   const failures: string[] = [];
-  await compareOrWrite(
-    path.join(generatedRoot, "mapping-inverse-report.md"),
-    report,
-    args.check,
-    failures
-  );
-  await compareOrWriteSvgDirectory(
-    path.join(generatedRoot, "mapping-flows"),
-    svgArtifacts,
-    args.check,
-    failures
-  );
-  await compareOrWrite(
-    path.join(generatedRoot, "mapping-flows", "README.md"),
-    readme,
-    args.check,
-    failures
-  );
-  await compareOrWrite(
-    path.join(generatedRoot, "mapping-flows-interactive", "index.html"),
-    html,
-    args.check,
-    failures
-  );
   await compareOrWriteSite(
-    path.join(generatedRoot, "mapping-explorer"),
+    path.join(outputRoot, "docs/generated/mapping-explorer"),
     explorerFiles,
     args.check,
     failures
   );
 
   if (failures.length > 0) {
-    console.error("Mapping inverse artifacts: FAIL");
+    console.error("Mapping Explorer artifacts: FAIL");
     for (const failure of failures) console.error(`✗ ${failure}`);
     return 1;
   }

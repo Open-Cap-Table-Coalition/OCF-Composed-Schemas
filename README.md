@@ -105,7 +105,7 @@ If your product implements OCF v1 and you want to understand what a Carta fold-d
 2. [`docs/core-unmapped-inventory.md`](./docs/core-unmapped-inventory.md) lists OCF properties with **no Carta home at all**. These are the fields a fold cannot represent in the pinned target bundle.
 3. [`core-rich/core-upstream.md`](./core-rich/core-upstream.md) turns lossy-home fields into **proposed upstream-OCF change candidates**. OCF-required fields are highlighted because they are the strongest signal that a Core-compatible or relaxed representation may be needed.
 4. [`core/core-gaps.md`](./core/core-gaps.md) and [`core-rich/core-gaps.md`](./core-rich/core-gaps.md) group the losses by OCF object and separately call out Carta concepts for which OCF has no source concept.
-5. [`docs/generated/mapping-inverse-report.md`](./docs/generated/mapping-inverse-report.md) and the [mapping-flow gallery](./docs/generated/mapping-flows/README.md) are the canonical Carta-side inverse coverage report and visuals. They are target-first evidence, not a Carta-to-OCF round-trip guarantee; field-level inverse semantics are documented in [`docs/mapping-validation.md`](./docs/mapping-validation.md#inverse-semantics).
+5. The [generated Mapping Explorer](./docs/generated/mapping-explorer/index.html) is the canonical Carta-side inverse coverage report and visual surface; its [raw inverse report](./docs/generated/mapping-explorer/assets/mapping-inverse-report.md) and [interactive flow viewer](./docs/generated/mapping-explorer/assets/mapping-flows-interactive/index.html) are target-first evidence, not a Carta-to-OCF round-trip guarantee. Field-level inverse semantics are documented in [`docs/mapping-validation.md`](./docs/mapping-validation.md#inverse-semantics).
 
 These are proposed **fold-down differences and change candidates**, not instructions for an OCF v1 implementation to silently discard data. A full OCF consumer can continue to use the composed OCF schemas; the reports show what needs an explicit policy when that data is sent to Carta.
 
@@ -117,8 +117,8 @@ npm run core:unmapped
 npm run mapping:artifacts
 ```
 
-`npm run mapping:artifacts:check` verifies that the checked-in inverse report, SVG gallery,
-interactive viewer, and generated mapping explorer match the same renderer used by CI. The Core loss inventories remain
+`npm run mapping:artifacts:check` verifies that the checked-in Mapping Explorer, its inverse report,
+SVG assets, and interactive viewer match the same renderer used by CI. The Core loss inventories remain
 separate because they answer the OCF-side questions that the target-first inverse ledger does
 not model.
 
