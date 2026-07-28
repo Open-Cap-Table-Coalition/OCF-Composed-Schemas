@@ -241,47 +241,5 @@ Use a link below to open a prefilled GitHub issue. The issue can be copied into 
 
 ## Notes / open questions
 
-- **Join-dependent (downstream).** One OCF `EquityCompensationRelease` routes by the
-  instrument family fixed at issuance, but the record itself carries no discriminator —
-  only `security_id`. An importer must first resolve `compensation_type` from the joined
-  `EquityCompensationIssuance` (the two-pass requirement,
-  docs/polymorphic-transaction-routing.md §2.2), then route. For the valid RSU route,
-  `security_id` is both the `route_by_property.lookup_by.key` and the parent transaction item's
-  stored placement key; it also anchors `RestrictedStockUnit.settlements[]`. Option/SAR remain
-  null because they have no release surface.
-- **Only RSUs release.** "Release" here means a vested equity-comp security settling
-  into shares. Carta models this *only* as RSU settlement — there is no
-  `…ReleaseTransaction` for options or SARs — so the **Option** and **Sar** variants
-  have `primary_targets: null` (the release *event* is unmappable for them) and every
-  shared field routes to `null` for them; options and SARs simply do not release. The
-  **Rsu** variant lands on the two Carta defs that describe the
-  same RSU-settlement event from two angles: `RsuSettlementTransaction` (the transaction
-  record) and `RestrictedStockUnitSettlement` (the settlement line-item carrying the
-  economics, nested under `RestrictedStockUnit.settlements`).
-- **Mappable Rsu fields.** `date` → `RsuSettlementTransaction.settlementDatetime` (OCF
-  calendar date widening to a Carta datetime); `settlement_date` →
-  `RestrictedStockUnitSettlement.settlementDate` (clean calendar-date match, deliberately
-  a distinct node from the transaction `date`); `release_price` → both
-  `RestrictedStockUnitSettlement.settlementPrice` and `RestrictedStockUnit.releasePricePerShare`;
-  `quantity` → `RsuSettlementTransaction.settledQuantity`,
-  `RestrictedStockUnitSettlement.releaseQuantity`, and `RestrictedStockUnit.releasedQuantity`.
-  The security copies are aggregate read-model facts; the settlement line retains the event detail.
-  Numeric-string ↔ Decimal and Monetary ↔ Money conversions are unchanged.
-- **`resulting_security_ids` round-trips as reverse lineage (kind `computed`).** An RSU
-  release/settlement produces shares — a Carta `Certificate` — and each resulting
-  certificate records its origin in `Certificate.precededBy.securities` (a
-  `PrecededBySecurity` array). The OCF *array* therefore round-trips **losslessly** as a
-  set of reverse lineage edges: the importer writes the released RSU's id into every
-  resulting certificate's `precededBy.securities`. This is `computed` (importer-derived
-  placement onto the records the release *references*), not the lossy tx-level scalar
-  `RsuSettlementTransaction.resultingSecurityId` (a single id that cannot represent
-  multiple results). **Option** and **Sar** stay `null` — they do not release.
-- **`consideration_text` has no home.** OCF stores free text describing consideration
-  given for the release; Carta exposes no free-text consideration field on either RSU
-  settlement def, so `no-equivalent` in every variant.
-- **`object_type` / `id` / `comments` (`ocf-internal`).** `object_type`'s enum
-  (`TX_PLAN_SECURITY_RELEASE`, the v1 alias deprecated in v2.0.0, and
-  `TX_EQUITY_COMPENSATION_RELEASE`) is positionally encoded by the routed Carta def, with
-  no per-record type discriminator to remap onto. OCF `id` identifies the OCF transaction
-  object (Carta's same-named `RsuSettlementTransaction.id` is a *different* settlement-tx
-  identifier, so reusing it would be wrong), and `comments` has no Carta slot.
+- Join on `security_id` to `EquityCompensationIssuance.compensation_type`. Only RSU routes to Carta: `RsuSettlementTransaction`, `RsuTransactionItem`, and `RestrictedStockUnitSettlement`. Option and SAR variants have no release target; they use exercise or other family events.
+- RSU date, settlement date, release price, and quantity populate the settlement and RSU state; resulting security IDs are computed as certificate lineage. `consideration_text` and OCF scaffolding have no target.

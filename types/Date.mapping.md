@@ -62,36 +62,5 @@ Use a link below to open a prefilled GitHub issue. The issue can be copied into 
 
 ## Notes / open questions
 
-- OCF `Type - Date` is a bare scalar (`type: string`, `format: date`) with zero
-  `properties`, so there is no per-field mapping table here
-  and the type-level correspondence is documented below (same pattern as
-  `types/Md5.mapping.md`).
-- Carta DOES model this concept. The faithful target is
-  `#/$defs/Iso8601CompleteCalendarDate`, whose single string member
-  `#/$defs/Iso8601CompleteCalendarDate/properties/value` is constrained to the
-  exact same lexical form as OCF Date — `[0-9]{4}-[0-9]{2}-[0-9]{2}` (a 10-char
-  ISO-8601 complete calendar date, e.g. `2022-01-28`). This is a 1:1 lexical
-  match: an OCF Date string drops straight into that `value` field with no
-  transformation. `Iso8601CompleteCalendarDate` is the canonical date type used
-  throughout the Carta bundle (referenced 34 times — every `issueDate`,
-  `vestingStartDate`, `boardApprovalDate`, `terminationDate`, etc. is typed by
-  it), confirming it is the intended home for OCF date values.
-- Note the structural difference, which is why the wrapper type (not a bare
-  string) is the correspondent: OCF Date is the JSON string itself, whereas
-  Carta wraps the string in a one-member object (`{ "value": "2022-01-28" }`).
-  Mappings of OCF objects whose fields `$ref` this Date type (e.g. issuance
-  `date`, `board_approval_date`, vesting/exercise dates) therefore target the
-  relevant `Iso8601CompleteCalendarDate`-typed property on the corresponding
-  Carta object and carry the OCF date string into that object's `value`.
-- Carta also defines a separate structured `#/$defs/Date` (integer
-  `year`/`month`/`day`, supporting partial dates such as a year-only or
-  month/day anniversary). It is referenced only once in the bundle and accepts
-  shapes OCF Date cannot express. It is the wrong correspondent for OCF's
-  complete ISO-8601 date and is recorded here only for completeness; the
-  representative target for OCF Date is `Iso8601CompleteCalendarDate`.
-- For datetimes (OCF `DateTime`, out of scope for this file), Carta's parallel
-  `#/$defs/Iso8601CompleteCalendarDateTime` is the analogous wrapper (a
-  `value` string constrained to
-  `[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(?:\.[0-9]{1,3})?Z`,
-  referenced 53 times across the bundle). It carries a time-of-day component
-  OCF Date cannot express, so it is not the correspondent for OCF Date.
+- OCF's complete ISO date corresponds to Carta `Iso8601CompleteCalendarDate.value`; the only shape difference is Carta's single-value wrapper.
+- Carta's structured partial `Date` and full datetime wrapper are different concepts. Object mappings choose the appropriate date/datetime property.

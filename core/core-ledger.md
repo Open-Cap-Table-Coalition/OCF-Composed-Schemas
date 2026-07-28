@@ -15,16 +15,16 @@ corpus for legacy discriminator compatibility.
 
 | entity | variant | core | payload | admissible | blockers |
 | --- | --- | --- | --- | --- | --- |
-| ConvertibleAcceptance | — | 0 | 0 | ✗ | no-payload |
+| ConvertibleAcceptance | — | 1 | 0 | ✗ | no-payload |
 | ConvertibleCancellation | — | 3 | 1 | ✓ | — |
 | ConvertibleConversion | — | 3 | 1 | ✓ | — |
 | ConvertibleIssuance | — | 6 | 2 | ✓ | — |
 | ConvertibleRetraction | — | 0 | 0 | ✗ | no-payload |
 | ConvertibleTransfer | — | 0 | 0 | ✗ | no-payload |
 | Document | — | 0 | 0 | ✗ | no-payload |
-| EquityCompensationAcceptance | Option | 1 | 0 | ✗ | no-payload |
-| EquityCompensationAcceptance | Rsu | 1 | 0 | ✗ | no-payload |
-| EquityCompensationAcceptance | Sar | 0 | 0 | ✗ | no-payload |
+| EquityCompensationAcceptance | Option | 2 | 0 | ✗ | no-payload |
+| EquityCompensationAcceptance | Rsu | 2 | 0 | ✗ | no-payload |
+| EquityCompensationAcceptance | Sar | 1 | 0 | ✗ | no-payload |
 | EquityCompensationCancellation | Option | 3 | 1 | ✓ | — |
 | EquityCompensationCancellation | Rsu | 3 | 1 | ✓ | — |
 | EquityCompensationCancellation | Sar | 3 | 1 | ✓ | — |
@@ -52,8 +52,8 @@ corpus for legacy discriminator compatibility.
 | Stakeholder | — | 4 | 2 | ✓ | — |
 | StakeholderRelationshipChangeEvent | — | 3 | 2 | ✓ | — |
 | StakeholderStatusChangeEvent | — | 1 | 0 | ✗ | no-payload |
-| StockAcceptance | Default | 0 | 0 | ✗ | no-payload |
-| StockAcceptance | Rsa | 1 | 0 | ✗ | no-payload |
+| StockAcceptance | Default | 1 | 0 | ✗ | no-payload |
+| StockAcceptance | Rsa | 2 | 0 | ✗ | no-payload |
 | StockCancellation | Default | 3 | 1 | ✓ | — |
 | StockCancellation | Rsa | 3 | 1 | ✓ | — |
 | StockClassAuthorizedSharesAdjustment | — | 2 | 1 | ✓ | — |
@@ -85,7 +85,7 @@ corpus for legacy discriminator compatibility.
 | VestingAcceleration | — | 0 | 0 | ✗ | no-payload |
 | VestingEvent | — | 0 | 0 | ✗ | no-payload |
 | VestingTerms | — | 1 | 0 | ✗ | no-payload |
-| WarrantAcceptance | — | 0 | 0 | ✗ | no-payload |
+| WarrantAcceptance | — | 1 | 0 | ✗ | no-payload |
 | WarrantCancellation | — | 3 | 1 | ✓ | — |
 | WarrantExercise | — | 2 | 0 | ✗ | no-payload |
 | WarrantIssuance | — | 9 | 4 | ✗ | vesting_terms_id→VestingTerms |
@@ -212,37 +212,37 @@ values its `const:` supplies implicitly (the reason codes we always know).
 | ConvertibleAcceptance  | — | comments | out | no-destination | kind unmappable |
 | ConvertibleAcceptance  | — | object_type | out | no-destination | kind unmappable |
 | ConvertibleAcceptance  | — | date | out | no-destination | kind unmappable |
-| ConvertibleAcceptance  | — | security_id | out | no-destination | kind unmappable |
+| ConvertibleAcceptance  | — | security_id | core | direct |  |
 | EquityCompensationAcceptance  | Option | id | out | no-destination | kind unmappable |
 | EquityCompensationAcceptance  | Option | comments | out | no-destination | kind unmappable |
 | EquityCompensationAcceptance  | Option | object_type | out | no-destination | kind unmappable |
-| EquityCompensationAcceptance  | Option | security_id | out | no-destination | kind unmappable |
+| EquityCompensationAcceptance  | Option | security_id | core | direct |  |
 | EquityCompensationAcceptance  | Option | date | core | widening |  |
 | EquityCompensationAcceptance  | Rsu | id | out | no-destination | kind unmappable |
 | EquityCompensationAcceptance  | Rsu | comments | out | no-destination | kind unmappable |
 | EquityCompensationAcceptance  | Rsu | object_type | out | no-destination | kind unmappable |
-| EquityCompensationAcceptance  | Rsu | security_id | out | no-destination | kind unmappable |
+| EquityCompensationAcceptance  | Rsu | security_id | core | direct |  |
 | EquityCompensationAcceptance  | Rsu | date | core | widening |  |
 | EquityCompensationAcceptance  | Sar | id | out | no-destination | kind unmappable |
 | EquityCompensationAcceptance  | Sar | comments | out | no-destination | kind unmappable |
 | EquityCompensationAcceptance  | Sar | object_type | out | no-destination | kind unmappable |
-| EquityCompensationAcceptance  | Sar | security_id | out | no-destination | kind unmappable |
+| EquityCompensationAcceptance  | Sar | security_id | core | direct |  |
 | EquityCompensationAcceptance  | Sar | date | out | no-destination | kind unmappable |
 | StockAcceptance  | Rsa | id | out | no-destination | kind unmappable |
 | StockAcceptance  | Rsa | comments | out | no-destination | kind unmappable |
 | StockAcceptance  | Rsa | object_type | out | no-destination | kind unmappable |
-| StockAcceptance  | Rsa | security_id | out | no-destination | kind unmappable |
+| StockAcceptance  | Rsa | security_id | core | direct |  |
 | StockAcceptance  | Rsa | date | core | widening |  |
 | StockAcceptance  | Default | id | out | no-destination | kind unmappable |
 | StockAcceptance  | Default | comments | out | no-destination | kind unmappable |
 | StockAcceptance  | Default | object_type | out | no-destination | kind unmappable |
-| StockAcceptance  | Default | security_id | out | no-destination | kind unmappable |
+| StockAcceptance  | Default | security_id | core | direct |  |
 | StockAcceptance  | Default | date | out | no-destination | kind unmappable |
 | WarrantAcceptance  | — | id | out | no-destination | kind unmappable |
 | WarrantAcceptance  | — | comments | out | no-destination | kind unmappable |
 | WarrantAcceptance  | — | object_type | out | no-destination | kind unmappable |
 | WarrantAcceptance  | — | date | out | no-destination | kind unmappable |
-| WarrantAcceptance  | — | security_id | out | no-destination | kind unmappable |
+| WarrantAcceptance  | — | security_id | core | direct |  |
 | IssuerAuthorizedSharesAdjustment  | — | id | out | no-destination | kind unmappable |
 | IssuerAuthorizedSharesAdjustment  | — | comments | out | no-destination | kind unmappable |
 | IssuerAuthorizedSharesAdjustment  | — | object_type | out | no-destination | kind unmappable |

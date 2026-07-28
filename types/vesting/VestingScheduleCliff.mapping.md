@@ -104,6 +104,5 @@ Use a link below to open a prefilled GitHub issue. The issue can be copied into 
 
 ## Notes / open questions
 
-- A `VestingScheduleCliff` lands on Carta's `VestingPeriod` cliff fields: `length`/`period_type`/`percentage` map to `cliffLength`/`cliffLengthUnit`/`cliffPercentage`. This matches the pre-#227 `canonical/vesting` cliff mapping, which pointed the same fields at `VestingPeriod`.
-- `period_type` is an `enum-remap` because OCF's `PeriodType` (`DAYS`/`MONTHS`/`YEARS`) is plural while Carta's `PeriodUnit` (`#/$defs/PeriodUnit`, referenced by `cliffLengthUnit`) is singular (`DAY`/`MONTH`/`YEAR`). The two enums are 1:1, so the remap is total.
-- `percentage` declares the destination member and Numeric lexical rule in its `construct` block. The pre-#227 canonical mapping computed this from a `numerator`/`denominator` fraction; #129 simplified the cliff share to a single decimal.
+- `length`, `period_type`, and `percentage` map to Carta `VestingPeriod.cliffLength`, `cliffLengthUnit`, and `cliffPercentage`.
+- Period units remap DAYS/MONTHS/YEARS to DAY/MONTH/YEAR; the percentage is constructed as Carta's Decimal wrapper.

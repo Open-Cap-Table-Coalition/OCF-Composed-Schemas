@@ -165,24 +165,5 @@ Use a link below to open a prefilled GitHub issue. The issue can be copied into 
 
 ## Notes / open questions
 
-- **Join-dependent (downstream).** One OCF `EquityCompensationRepricing` carries only
-  `security_id` and no discriminator, so the instrument family is undecidable from the
-  record alone. An importer must first resolve `compensation_type` from the joined
-  `EquityCompensationIssuance` (the family fixed at issuance) and only then knows which
-  price field the new strike applies to — the two-pass requirement
-  (docs/polymorphic-transaction-routing.md §2.2/§4.3).
-- **Carta has no repricing transaction.** A repricing is a *mutation* of the existing
-  strike, not a discrete Carta event. So `new_exercise_price` does not land on a
-  repricing tx; it lands on the price-bearing field of the resolved family:
-  `OptionGrant.exercisePrice` for the option family and
-  `SarIssuanceTransaction.exercisePrice` for the SAR family, via the per-variant target
-  map.
-- **RSUs are priceless.** RSUs have no exercise price, so there is no field for the new
-  strike to land on; `new_exercise_price` is `null` in the `Rsu` variant and that
-  variant has `primary_targets: null` — the whole family is unmappable here.
-- **`date` has no home.** Because Carta records the strike as a single static value with
-  no repricing event, there is no Carta repricing transaction and therefore no
-  event-date slot to carry the *when* of the price change; `date` is `no-equivalent`.
-- **`security_id`** is the join key (`route_by_property.lookup_by.key`); it routes the family and
-  is not itself a stored Carta field. **`id`/`object_type`** are OCF object scaffolding
-  (`ocf-internal`) and **`comments`** has no Carta slot (`no-equivalent`).
+- Join on `security_id` to `EquityCompensationIssuance.compensation_type`. Option repricing updates `OptionGrant.exercisePrice`; SAR repricing updates `SarIssuanceTransaction.exercisePrice`. RSU has no repricing target.
+- `security_id` is only the routing key and `date` has no target; `id`, `comments`, and `object_type` are OCF scaffolding.
