@@ -4,7 +4,6 @@
  * each re-implement.
  */
 import { isPlainObject } from "./mapping-validator.js";
-import { GreenObject } from "./core-corpus.js";
 
 /** OCF object scaffolding that carries no economic effect — excluded from gap/loss reports. */
 export const BOOKKEEPING = new Set(["id", "object_type", "comments"]);
@@ -43,19 +42,4 @@ export function entryTargetString(entry: unknown): string {
     return `${source ?? "?"} → ${targetString(mapping.target)}`;
   });
   return cases.join("; ") || "—";
-}
-
-/** `"<entity> <variant> <field>"` → the Carta target the mapping names, as a display string. */
-export function buildTargetIndex(objects: GreenObject[]): Map<string, string> {
-  const targetOf = new Map<string, string>();
-  for (const o of objects) {
-    for (const [variant, fields] of o.variants) {
-      for (const [field, entry] of Object.entries(fields)) {
-        if (isPlainObject(entry)) {
-          targetOf.set(`${o.entity} ${variant} ${field}`, entryTargetString(entry));
-        }
-      }
-    }
-  }
-  return targetOf;
 }

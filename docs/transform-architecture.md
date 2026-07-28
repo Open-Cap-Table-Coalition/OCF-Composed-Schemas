@@ -44,7 +44,7 @@ Four stages, each with a distinct *shape*:
 | **Mapping** | a declarative DSL | OCF schema → a `fields:` map of per-property transforms |
 | **Validate** | a pure rules function | (mapping, source schema, target bundle) → `error[]` |
 | **Project** | a filter / restriction | mapping corpus → an OCF-shaped Core projection |
-| **Report** | a re-cut / render | the derived ledger → markdown + mermaid |
+| **Report** | a re-cut / render | the derived ledger → Markdown tables and flow maps |
 
 The rest of this guide walks each stage: its shape, its rules, and one illustrative example.
 
@@ -368,7 +368,7 @@ into Core.
 ### Shape
 
 The source-side loss inventories re-derive the Core ledger (a cheap `deriveCore` call under the
-strict profile) and recut its verdicts into Markdown tables and Mermaid diagrams. The canonical
+strict profile) and recut its verdicts into Markdown tables and flow maps. The canonical
 target-first inverse report and visuals load the green mapping corpus once, build the shared
 Carta-side inverse ledger, and render the text report, SVG gallery, and interactive HTML viewer.
 The key discipline is the same in both paths: **no report re-implements classification.** The loss

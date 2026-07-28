@@ -13,6 +13,7 @@ import { targetPointerParts } from "./mapping-report.js";
 import type { MappingReportDocument } from "./mapping-report.js";
 import type { MappingQuestion } from "./mapping-questions.js";
 import { questionTargetParts } from "./mapping-questions.js";
+import { sourceEdgesFor } from "./mapping-source.js";
 
 const MAPPING_EXPLORER_TITLE = "Cap-table data map";
 const MAPPING_EXPLORER_BRAND = "Open Cap Table Coalition";
@@ -161,12 +162,6 @@ function targetLabel(target: ExplorerTargetRef): string {
 function uniqueTargets(edges: readonly MappingEdge[]): ExplorerTargetRef[] {
   return [...new Map(edges.map((edge) => [edge.target, edgeTarget(edge)])).values()].sort(
     (a, b) => a.object.localeCompare(b.object) || a.property.localeCompare(b.property)
-  );
-}
-
-function sourceEdgesFor(corpus: Corpus, object: GreenObject): MappingEdge[] {
-  return corpus.mappingEdges.filter(
-    (edge) => edge.rel === object.rel && edge.sourceKind === "object"
   );
 }
 

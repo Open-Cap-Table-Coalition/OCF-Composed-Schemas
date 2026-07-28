@@ -3,6 +3,7 @@ import { readFile } from "node:fs/promises";
 
 import { deriveCore } from "../scripts/lib/core-pipeline.js";
 import { renderLedger, renderGapReport } from "../scripts/lib/core-reports.js";
+import { sourceEdgesFor, sourceFieldTargetIndex } from "../scripts/lib/mapping-source.js";
 import { parsePointer } from "../scripts/lib/report-flow.js";
 
 describe("core reports (the markdown drift gate's premise)", () => {
@@ -57,5 +58,25 @@ describe("core reports (the markdown drift gate's premise)", () => {
       prop: "authorizedShareCount",
     });
     expect(parsePointer("not-a-target-pointer")).toBeNull();
+  });
+
+  it("shares the normalized source-edge projection used by the Mapping Explorer", async () => {
+    const d = await deriveCore(process.cwd());
+    const object = d.corpus.objects.find((candidate) => !candidate.aliasOf)!;
+    const edge = sourceEdgesFor(d.corpus, object).find((candidate) => candidate.field)!;
+    const index = sourceFieldTargetIndex(d.corpus);
+    const key = `${edge.source} ${edge.variant} ${edge.field}`;
+    const expected = [
+      ...new Set(
+        sourceEdgesFor(d.corpus, object)
+          .filter(
+            (candidate) => candidate.variant === edge.variant && candidate.field === edge.field
+          )
+          .map((candidate) => candidate.target)
+      ),
+    ]
+      .sort()
+      .join(" + ");
+    expect(index.get(key)).toBe(expected);
   });
 });
