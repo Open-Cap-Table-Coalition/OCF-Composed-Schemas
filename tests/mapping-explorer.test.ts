@@ -171,9 +171,9 @@ describe("mapping explorer", () => {
     expect(target?.questions).toHaveLength(3);
     expect(renderMappingExplorerTargetPage(target!)).toContain("Questions about this target");
     expect(renderMappingExplorerTargetPage(target!)).toContain("Compliance.countryOfResidency");
-    expect(transfer?.notes.some((note) => note.includes("Cancellation + issuance"))).toBe(true);
+    expect(transfer?.notes.some((note) => note.includes("key causal information"))).toBe(true);
     expect(renderMappingExplorerSourcePage(transfer!)).toContain(
-      "Cancellation + issuance is not an effective Carta replacement"
+      "cannot represent this event without losing key causal information"
     );
   });
 
