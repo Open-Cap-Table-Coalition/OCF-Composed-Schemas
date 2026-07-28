@@ -126,7 +126,9 @@ The generated explorer lives at [`docs/generated/mapping-explorer/`](./docs/gene
 for local browsing. It includes one page for every canonical green OCF object and Carta
 object-like definition, keeps no-target/no-source gaps visible, embeds the available SVGs,
 links the interactive HTML viewer, and places a prefilled GitHub issue button on each mapping
-page. Legacy `PlanSecurity*` compatibility wrappers are intentionally omitted because their
+page. The overview also links to the tracked Carta OCF Core proposal in `target-schema/`, shows
+its current provenance metadata, discovers optional Markdown reports from that directory, and
+provides a schema-level issue button. Legacy `PlanSecurity*` compatibility wrappers are intentionally omitted because their
 economic mapping is inherited from the corresponding `EquityCompensation*` object.
 The `Mapping Explorer` workflow regenerates it for every pull request (as a downloadable
 preview artifact) and publishes the `main` version to GitHub Pages.

@@ -9,6 +9,7 @@ import {
   renderMappingExplorerSourcePage,
   renderMappingExplorerTargetPage,
 } from "../scripts/lib/mapping-explorer.js";
+import { loadCartaSchemaResources } from "../scripts/lib/carta-schema.js";
 
 describe("mapping explorer", () => {
   async function loadExplorer() {
@@ -134,6 +135,39 @@ describe("mapping explorer", () => {
       ".hero-orbit { height: 390px; position: relative; display: grid; place-items: center; overflow: hidden; }"
     );
     expect(css).toContain(".map-guide { background: #f1f1ff; border-color: rgba(42,48,200,.22); }");
+  });
+
+  it("surfaces the tracked Carta schema resources on the overview", async () => {
+    const { corpus, inverse, mappingDocuments } = await loadExplorer();
+    const resources = await loadCartaSchemaResources(process.cwd());
+    const explorer = buildMappingExplorerData(corpus, inverse, [], mappingDocuments, resources);
+    const index = renderMappingExplorerIndex(explorer);
+
+    expect(resources.schemaPath).toBe("target-schema/Carta.schema.json");
+    expect(resources.metadata.map((item) => item.label)).toEqual(
+      expect.arrayContaining(["Version", "Standard", "Source", "Uploaded", "Uploader", "SHA-256"])
+    );
+    expect(index).toContain('id="carta-core"');
+    expect(index).toContain("Browse proposal ↗");
+    expect(index).toContain("Open schema issue ↗");
+    expect(index).toContain("Target-schema notes ↗");
+    expect(index).toContain("Version:");
+    expect(index).toContain("Uploader:");
+
+    const withReport = {
+      ...resources,
+      reports: [
+        {
+          path: "target-schema/Carta.report.md",
+          label: "Carta Report",
+          url: "https://github.com/Open-Cap-Table-Coalition/OCF-Composed-Schemas/blob/main/target-schema/Carta.report.md",
+        },
+      ],
+    };
+    const reportIndex = renderMappingExplorerIndex(
+      buildMappingExplorerData(corpus, inverse, [], mappingDocuments, withReport)
+    );
+    expect(reportIndex).toContain("Read Carta Report ↗");
   });
 
   it("renders authored mapping notes and open/closed questions", async () => {

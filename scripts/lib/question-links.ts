@@ -37,6 +37,27 @@ export function cartaCoverageIssueUrl(target: string): string {
   return `${REPOSITORY_URL}/issues/new?${params.toString()}`;
 }
 
+/** Open a prefilled issue for the pinned Carta schema bundle itself. */
+export function cartaSchemaIssueUrl(
+  schemaPath: string,
+  context: { title?: string; version?: string; sha256?: string } = {}
+): string {
+  const lines = [
+    `Schema file: ${mappingFileUrl(schemaPath)}`,
+    ...(context.version ? [`Version: ${context.version}`] : []),
+    ...(context.sha256 ? [`SHA-256: ${context.sha256}`] : []),
+    "",
+    "Please describe the issue with the Carta OCF Core proposal or its tracked provenance.",
+  ];
+  const params = new URLSearchParams({
+    title: context.title
+      ? `[Carta schema] ${context.title}`
+      : "[Carta schema] Review the Carta OCF Core proposal",
+    body: lines.join("\n"),
+  });
+  return `${REPOSITORY_URL}/issues/new?${params.toString()}`;
+}
+
 function tableCell(value: string): string {
   return value.replaceAll("|", "\\|").replaceAll("\n", " ");
 }

@@ -28,6 +28,7 @@ import {
   renderMappingExplorerSourcePage,
   renderMappingExplorerTargetPage,
 } from "./lib/mapping-explorer.js";
+import { loadCartaSchemaResources } from "./lib/carta-schema.js";
 
 interface Args {
   base: string;
@@ -198,7 +199,8 @@ async function main(args: Args): Promise<number> {
     corpus,
     inverse,
     [...svgArtifacts.keys()],
-    mappingDocuments
+    mappingDocuments,
+    await loadCartaSchemaResources(repoRoot)
   );
   const explorerFiles = buildExplorerSiteFiles(explorer, report, html, svgArtifacts);
 
