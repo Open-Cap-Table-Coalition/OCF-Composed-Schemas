@@ -16,7 +16,7 @@ drops only for Sar), so "no Carta home" is a per-flavor statement here, not obje
 magnitude diagrams split flavors apart; the canonical target-first inverse report gives the
 Carta-side landing view. OCF-side distinct-field counts remain in the Core ledger and gap reports.
 
-## Magnitude — unmapped properties per OCF object (163 distinct across 46 objects; 240 per-flavor rows, 144 OCF-required)
+## Magnitude — unmapped properties per OCF object (159 distinct across 46 objects; 233 per-flavor rows, 137 OCF-required)
 
 Each OCF object → the void, edge labelled with how many of its properties are dropped.
 Green = the object is in strict Core (we carry it but lose these fields); dashed grey = the
@@ -98,112 +98,105 @@ flowchart LR
     o1["ConvertibleRetraction"]:::notadm
     o2["ConvertibleTransfer"]:::notadm
     o3["Document"]:::notadm
-    o4["EquityCompensationAcceptance [Option]"]:::notadm
-    o5["EquityCompensationAcceptance [Rsu]"]:::notadm
-    o6["EquityCompensationAcceptance [Sar]"]:::notadm
-    o7["EquityCompensationExercise [Rsu]"]:::notadm
-    o8["EquityCompensationIssuance [Option]"]:::notadm
-    o9["EquityCompensationIssuance [Rsu]"]:::notadm
-    o10["EquityCompensationIssuance [Sar]"]:::notadm
-    o11["EquityCompensationRelease [Option]"]:::notadm
-    o12["EquityCompensationRelease [Sar]"]:::notadm
-    o13["EquityCompensationRepricing [Rsu]"]:::notadm
-    o14["EquityCompensationRetraction [Option]"]:::notadm
-    o15["EquityCompensationRetraction [Rsu]"]:::notadm
-    o16["EquityCompensationRetraction [Sar]"]:::notadm
-    o17["EquityCompensationTransfer [Option]"]:::notadm
-    o18["EquityCompensationTransfer [Rsu]"]:::notadm
-    o19["EquityCompensationTransfer [Sar]"]:::notadm
-    o20["Financing"]:::notadm
-    o21["IssuerAuthorizedSharesAdjustment"]:::notadm
-    o22["StakeholderStatusChangeEvent"]:::notadm
-    o23["StockAcceptance [Default]"]:::notadm
-    o24["StockAcceptance [Rsa]"]:::notadm
-    o25["StockClassConversionRatioAdjustment"]:::notadm
-    o26["StockClassSplit"]:::notadm
-    o27["StockConsolidation [Default]"]:::notadm
-    o28["StockConsolidation [Rsa]"]:::notadm
-    o29["StockConversion [Default]"]:::notadm
-    o30["StockConversion [Rsa]"]:::notadm
-    o31["StockIssuance [Default]"]:::notadm
-    o32["StockIssuance [Rsa]"]:::notadm
-    o33["StockLegendTemplate"]:::notadm
-    o34["StockPlanPoolAdjustment"]:::notadm
-    o35["StockPlanReturnToPool [Sar]"]:::notadm
-    o36["StockReissuance [Default]"]:::notadm
-    o37["StockReissuance [Rsa]"]:::notadm
-    o38["StockRepurchase [Default]"]:::notadm
-    o39["StockRepurchase [Rsa]"]:::notadm
-    o40["StockRetraction [Default]"]:::notadm
-    o41["StockRetraction [Rsa]"]:::notadm
-    o42["VestingAcceleration"]:::notadm
-    o43["VestingEvent"]:::notadm
-    o44["WarrantAcceptance"]:::notadm
-    o45["WarrantExercise"]:::notadm
-    o46["WarrantIssuance"]:::notadm
-    o47["WarrantRetraction"]:::notadm
+    o4["EquityCompensationAcceptance [Sar]"]:::notadm
+    o5["EquityCompensationExercise [Rsu]"]:::notadm
+    o6["EquityCompensationIssuance [Option]"]:::notadm
+    o7["EquityCompensationIssuance [Rsu]"]:::notadm
+    o8["EquityCompensationIssuance [Sar]"]:::notadm
+    o9["EquityCompensationRelease [Option]"]:::notadm
+    o10["EquityCompensationRelease [Sar]"]:::notadm
+    o11["EquityCompensationRepricing [Rsu]"]:::notadm
+    o12["EquityCompensationRetraction [Option]"]:::notadm
+    o13["EquityCompensationRetraction [Rsu]"]:::notadm
+    o14["EquityCompensationRetraction [Sar]"]:::notadm
+    o15["EquityCompensationTransfer [Option]"]:::notadm
+    o16["EquityCompensationTransfer [Rsu]"]:::notadm
+    o17["EquityCompensationTransfer [Sar]"]:::notadm
+    o18["Financing"]:::notadm
+    o19["IssuerAuthorizedSharesAdjustment"]:::notadm
+    o20["StakeholderStatusChangeEvent"]:::notadm
+    o21["StockAcceptance [Default]"]:::notadm
+    o22["StockClassConversionRatioAdjustment"]:::notadm
+    o23["StockClassSplit"]:::notadm
+    o24["StockConsolidation [Default]"]:::notadm
+    o25["StockConsolidation [Rsa]"]:::notadm
+    o26["StockConversion [Default]"]:::notadm
+    o27["StockConversion [Rsa]"]:::notadm
+    o28["StockIssuance [Default]"]:::notadm
+    o29["StockIssuance [Rsa]"]:::notadm
+    o30["StockLegendTemplate"]:::notadm
+    o31["StockPlanPoolAdjustment"]:::notadm
+    o32["StockPlanReturnToPool [Sar]"]:::notadm
+    o33["StockReissuance [Default]"]:::notadm
+    o34["StockReissuance [Rsa]"]:::notadm
+    o35["StockRepurchase [Default]"]:::notadm
+    o36["StockRepurchase [Rsa]"]:::notadm
+    o37["StockRetraction [Default]"]:::notadm
+    o38["StockRetraction [Rsa]"]:::notadm
+    o39["VestingAcceleration"]:::notadm
+    o40["VestingEvent"]:::notadm
+    o41["WarrantAcceptance"]:::notadm
+    o42["WarrantExercise"]:::notadm
+    o43["WarrantIssuance"]:::notadm
+    o44["WarrantRetraction"]:::notadm
   end
   void["⌀ not mapped (no Carta home)"]:::sink
-  o0 -->|2| void
+  o0 -->|1| void
   o1 -->|3| void
   o2 -->|6| void
   o3 -->|2| void
   o4 -->|1| void
-  o5 -->|1| void
-  o6 -->|2| void
-  o7 -->|5| void
-  o8 -->|3| void
-  o9 -->|9| void
-  o10 -->|10| void
-  o11 -->|7| void
-  o12 -->|7| void
+  o5 -->|5| void
+  o6 -->|3| void
+  o7 -->|9| void
+  o8 -->|10| void
+  o9 -->|7| void
+  o10 -->|7| void
+  o11 -->|3| void
+  o12 -->|3| void
   o13 -->|3| void
   o14 -->|3| void
-  o15 -->|3| void
-  o16 -->|3| void
+  o15 -->|6| void
+  o16 -->|6| void
   o17 -->|6| void
-  o18 -->|6| void
-  o19 -->|6| void
-  o20 -->|3| void
-  o21 -->|5| void
-  o22 -->|2| void
-  o23 -->|2| void
-  o24 -->|1| void
-  o25 -->|1| void
+  o18 -->|3| void
+  o19 -->|5| void
+  o20 -->|2| void
+  o21 -->|1| void
+  o22 -->|1| void
+  o23 -->|3| void
+  o24 -->|2| void
+  o25 -->|2| void
   o26 -->|3| void
-  o27 -->|2| void
-  o28 -->|2| void
-  o29 -->|3| void
-  o30 -->|3| void
-  o31 -->|7| void
-  o32 -->|5| void
-  o33 -->|2| void
-  o34 -->|5| void
-  o35 -->|3| void
+  o27 -->|3| void
+  o28 -->|7| void
+  o29 -->|5| void
+  o30 -->|2| void
+  o31 -->|5| void
+  o32 -->|3| void
+  o33 -->|4| void
+  o34 -->|4| void
+  o35 -->|4| void
   o36 -->|4| void
-  o37 -->|4| void
-  o38 -->|4| void
+  o37 -->|3| void
+  o38 -->|3| void
   o39 -->|4| void
   o40 -->|3| void
-  o41 -->|3| void
-  o42 -->|4| void
-  o43 -->|3| void
-  o44 -->|2| void
-  o45 -->|2| void
-  o46 -->|6| void
-  o47 -->|3| void
+  o41 -->|1| void
+  o42 -->|2| void
+  o43 -->|6| void
+  o44 -->|3| void
 ```
 
 ## By OCF object — the dropped properties
 
 `†` = also maps in another variant of this object (dropped only in some flavors).
 
-### ConvertibleAcceptance — not yet admissible (2 unmapped)
+### ConvertibleAcceptance — not yet admissible (1 unmapped)
 
 | property | OCF-req | what it is (OCF) |
 | --- | :---: | --- |
 | date | **yes** | Date on which the transaction occurred |
-| security_id | **yes** | Identifier for the security (stock, plan security, warrant, or convertible) by which it can be referenced by other transaction objects. N… |
 
 ### ConvertibleCancellation — in Core (admissible) (1 unmapped)
 
@@ -257,12 +250,11 @@ flowchart LR
 | md5 | **yes** | MD5 file checksum |
 | related_objects |  | List of objects which this document is related to |
 
-### EquityCompensationAcceptance — not yet admissible (2 unmapped)
+### EquityCompensationAcceptance — not yet admissible (1 unmapped)
 
 | property | OCF-req | what it is (OCF) |
 | --- | :---: | --- |
 | date † | **yes** | Date on which the transaction occurred |
-| security_id | **yes** | Identifier for the security (stock, plan security, warrant, or convertible) by which it can be referenced by other transaction objects. N… |
 
 ### EquityCompensationCancellation — in Core (admissible) (1 unmapped)
 
@@ -388,12 +380,11 @@ flowchart LR
 | date | **yes** | Date on which the transaction occurred |
 | new_status | **yes** | Denoting the beginning of this activity status on the change date |
 
-### StockAcceptance — not yet admissible (2 unmapped)
+### StockAcceptance — not yet admissible (1 unmapped)
 
 | property | OCF-req | what it is (OCF) |
 | --- | :---: | --- |
 | date † | **yes** | Date on which the transaction occurred |
-| security_id | **yes** | Identifier for the security (stock, plan security, warrant, or convertible) by which it can be referenced by other transaction objects. N… |
 
 ### StockClass — in Core (admissible) (3 unmapped)
 
@@ -545,12 +536,11 @@ flowchart LR
 | event_id | **yes** | Identifier of the named event that fired. Matches `event_id` on the `event_condition` of some VestingStatement on this security's template. |
 | security_id | **yes** | Identifier of the security whose VestingStatement(s) reference this event. The firing is scoped to a single security; cross-grant fan-out… |
 
-### WarrantAcceptance — not yet admissible (2 unmapped)
+### WarrantAcceptance — not yet admissible (1 unmapped)
 
 | property | OCF-req | what it is (OCF) |
 | --- | :---: | --- |
 | date | **yes** | Date on which the transaction occurred |
-| security_id | **yes** | Identifier for the security (stock, plan security, warrant, or convertible) by which it can be referenced by other transaction objects. N… |
 
 ### WarrantCancellation — in Core (admissible) (1 unmapped)
 

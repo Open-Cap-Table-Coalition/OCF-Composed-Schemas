@@ -92,7 +92,7 @@ Source: [`StockAcceptance.schema.json`](./StockAcceptance.schema.json)
 # alone: it is resolved by joining security_id back to the StockIssuance and
 # reading that issuance's issuance_type. An RSA acceptance lands on
 # RestrictedStockAward.stakeholderAcceptanceDate; founders' / default stock maps to
-# a Certificate, which has no acceptance field, so that variant is unmappable.
+# a Certificate, which has no acceptance field, so only its identity is retained.
 # See docs/polymorphic-transaction-routing.md §2.2/§4.3.
 status: complete
 
@@ -104,14 +104,22 @@ route_by_property:
       on_property: issuance_type
   exhaustive: true
 
-# shared: every source property. `date` is the only mappable field and its Carta
-# home differs by variant, so it carries a per-variant target map keyed by EVERY
-# variant label (null = no acceptance slot in that variant).
+# shared: every source property. `date` and `security_id` have per-variant homes:
+# RSA acceptance updates the award's stakeholderAcceptanceDate, while founders'
+# stock has only the ordinary certificate identity and no acceptance-date slot.
 shared:
   id:          { kind: unmappable, target: null, reason: ocf-internal }
   comments:    { kind: unmappable, target: null, reason: no-equivalent }
   object_type: { kind: unmappable, target: null, reason: ocf-internal }
-  security_id: { kind: unmappable, target: null, reason: ocf-internal }
+  security_id:
+    kind: rename
+    target:
+      Rsa:
+        - "#/$defs/RsaTransactionItem/properties/securityId"
+        - "#/$defs/RestrictedStockAward/properties/securityId"
+      Default:
+        - "#/$defs/CertificateTransactionItem/properties/securityId"
+        - "#/$defs/Certificate/properties/securityId"
   date:
     kind: rename
     target:
@@ -164,14 +172,16 @@ Use a link below to open a prefilled GitHub issue. The issue can be copied into 
   is a Carta `RestrictedStockAward`, which exposes
   `stakeholderAcceptanceDate` (`$ref Iso8601CompleteCalendarDate`); the OCF
   acceptance `date` is folded onto that security via the per-variant target map.
-- **`Default` (FOUNDERS_STOCK) is unmappable.** Non-RSA stock maps to a Carta
+- **`Default` (FOUNDERS_STOCK) has only an identity home.** Non-RSA stock maps to a Carta
   `Certificate`, and `Certificate` has no `stakeholderAcceptanceDate` (its only date
-  fields are `issueDate` / `canceledDate` / `lastModifiedDatetime`). Carta also has
-  no `StockAcceptanceTransaction` and no generic acceptance transaction, so there is
-  nowhere to record a founders'-stock acceptance — `primary_targets: null` and
-  `date → null` for this variant.
-- **`security_id`** is the join key (`route_by_property.lookup_by.key`); it routes the family,
-  it is not itself a stored Carta field on the resolved security.
+  fields are `issueDate` / `canceledDate` / `lastModifiedDatetime`). The acceptance date
+  and standalone event therefore remain unmappable (`primary_targets: null`, `date → null`),
+  but `security_id` is still preserved on `CertificateTransactionItem.securityId` and
+  `Certificate.securityId` so the referenced stock is not lost.
+- **`security_id`** is the join key (`route_by_property.lookup_by.key`) and is also copied to
+  the resolved Carta identity: `RsaTransactionItem.securityId` plus
+  `RestrictedStockAward.securityId` for RSA, or `CertificateTransactionItem.securityId`
+  plus `Certificate.securityId` for founders' stock.
 - **`id`, `comments`, `object_type` → unmappable.** Standard OCF object scaffolding:
   `id` is OCF's own object identifier (Carta assigns server-side ids) and
   `object_type` is OCF's discriminator constant (`TX_STOCK_ACCEPTANCE`), both

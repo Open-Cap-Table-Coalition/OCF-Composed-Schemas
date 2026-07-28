@@ -108,13 +108,24 @@ route_by_property:
   exhaustive: true
 
 # shared: every source property. `date` lands on the resolved family's security object
-# (stakeholderAcceptanceDate), so it carries a per-variant target map { Option/Rsu/Sar }.
-# Sar has no Carta security object, so its acceptance date is unmappable (null).
+# (stakeholderAcceptanceDate), and `security_id` anchors the resolved Carta transaction
+# item plus the security object where one exists. Both therefore carry per-variant target
+# maps { Option/Rsu/Sar }. SAR has no first-class Carta security object or acceptance-date
+# field, so only its transaction-item identity can be retained.
 shared:
   id:          { kind: unmappable, target: null, reason: ocf-internal }
   comments:    { kind: unmappable, target: null, reason: no-equivalent }
   object_type: { kind: unmappable, target: null, reason: ocf-internal }
-  security_id: { kind: unmappable, target: null, reason: ocf-internal }
+  security_id:
+    kind: rename
+    target:
+      Option:
+        - "#/$defs/OptionTransactionItem/properties/securityId"
+        - "#/$defs/OptionGrant/properties/securityId"
+      Rsu:
+        - "#/$defs/RsuTransactionItem/properties/securityId"
+        - "#/$defs/RestrictedStockUnit/properties/securityId"
+      Sar:    "#/$defs/SarTransactionItem/properties/securityId"
   date:
     kind: rename
     target:
@@ -179,12 +190,16 @@ Use a link below to open a prefilled GitHub issue. The issue can be copied into 
   `RestrictedStockUnit.stakeholderAcceptanceDate`. Both sides are calendar dates (OCF
   `Date`, Carta `Iso8601CompleteCalendarDate`), so there is no date-vs-datetime widening
   to flag.
-- **Sar has no home (`primary_targets: null`).** CSAR/SSAR have no Carta security object
-  with a `stakeholderAcceptanceDate` (there is no SAR grant object to set the field on),
-  so the entire family is unmappable here and `date`'s `Sar` target is `null`.
-- **`security_id`** is the join key (`route_by_property.lookup_by.key`); it routes the family by
-  resolving to the issuance's `compensation_type`, it is not itself a stored Carta field
-  on the accepted security — marked `ocf-internal`.
+- **Sar has no acceptance-date home (`primary_targets: null`).** CSAR/SSAR have no Carta
+  security object with a `stakeholderAcceptanceDate` (there is no SAR grant object to set
+  the field on), so the acceptance date is unmappable here and `date`'s `Sar` target is
+  `null`; the SAR transaction-item identity is still retained through `security_id`.
+- **`security_id`** is the join key (`route_by_property.lookup_by.key`) and is also preserved
+  on the resolved Carta aggregate: `OptionTransactionItem.securityId` plus
+  `OptionGrant.securityId` for options, `RsuTransactionItem.securityId` plus
+  `RestrictedStockUnit.securityId` for RSUs, and `SarTransactionItem.securityId` for SARs.
+  The SAR path preserves the referenced instrument identity only; Carta has no SAR security
+  object and no acceptance-date field.
 - **`id`, `object_type`, `comments`: OCF scaffolding.** `id` is OCF's identifier for the
   acceptance transaction object; Carta has no acceptance object for it to become
   (`ocf-internal`). `object_type` is OCF's discriminator — neither enum member
@@ -193,4 +208,3 @@ Use a link below to open a prefilled GitHub issue. The issue can be copied into 
   `comments` is free-text OCF metadata with no slot on the Carta security (`no-equivalent`).
 - The `when:` sets partition `CompensationType` exactly: Option `[OPTION, OPTION_NSO,
   OPTION_ISO]`, Rsu `[RSU]`, Sar `[CSAR, SSAR]`.
-
