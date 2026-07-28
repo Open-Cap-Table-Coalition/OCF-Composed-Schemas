@@ -10,6 +10,7 @@ import {
   renderMappingExplorerTargetPage,
 } from "../scripts/lib/mapping-explorer.js";
 import { loadCartaSchemaResources } from "../scripts/lib/carta-schema.js";
+import { cartaCoverageIssueUrl } from "../scripts/lib/question-links.js";
 
 describe("mapping explorer", () => {
   async function loadExplorer() {
@@ -78,6 +79,20 @@ describe("mapping explorer", () => {
       "issues/new?template=mapping-question.yml"
     );
     expect(renderMappingExplorerTargetPage(target!)).toContain("No standalone OCF source record");
+    expect(renderMappingExplorerTargetPage(target!)).not.toContain("Open coverage issue ↗");
+
+    // The June 22 bundle leaves zero real definitions in the actionable branch
+    // (`noSource` + status gap/review), so cover it with a synthetic target rather
+    // than losing the assertion that an actionable gap offers a coverage issue link.
+    for (const status of ["gap", "review"] as const) {
+      const actionable = { ...target!, status, sourceMappings: [] };
+      const page = renderMappingExplorerTargetPage(actionable);
+      expect(page).toContain("No OCF source record or field mapping is currently derived.");
+      expect(page).toContain("Open coverage issue ↗");
+      expect(page).toContain(cartaCoverageIssueUrl(actionable.name).replace(/&/gu, "&amp;"));
+      expect(page).not.toContain("No standalone OCF source record");
+    }
+
     const index = renderMappingExplorerIndex(explorer);
     expect(index).toContain("Cap-table data map");
     expect(index).toContain("OCF records");
@@ -214,19 +229,39 @@ describe("mapping explorer", () => {
     );
   });
 
-  it("renders the concrete Carta property for Document mappings", async () => {
+  it("renders the concrete Carta property, never a placeholder name", async () => {
     const { corpus, inverse, mappingDocuments } = await loadExplorer();
     const explorer = buildMappingExplorerData(corpus, inverse, [], mappingDocuments);
-    const document = explorer.sources.find((item) => item.entity === "Document");
 
+    // Positive case: a live pointer renders as Object.property, derived from the
+    // pointer itself rather than a serialized property name.
+    const issuer = explorer.sources.find((item) => item.entity === "Issuer");
+    expect(issuer).toBeDefined();
+    const legalName = issuer!.fields.find((field) => field.field === "legal_name");
+    expect(legalName?.targets).toEqual([
+      {
+        object: "Issuer",
+        property: "legalName",
+        pointer: "#/$defs/Issuer/properties/legalName",
+      },
+    ]);
+    expect(renderMappingExplorerSourcePage(issuer!)).toContain("Issuer.legalName");
+
+    // Regression guard on targetLabel(): no source page may render the generic
+    // placeholder label in place of a real property name.
+    for (const source of explorer.sources) {
+      expect(renderMappingExplorerSourcePage(source)).not.toMatch(/>[A-Za-z]+\.field</u);
+    }
+
+    // Document lost its Carta definition in the June 22 bundle, so path/uri now
+    // resolve to no target at all rather than to Document.fileId.
+    const document = explorer.sources.find((item) => item.entity === "Document");
     expect(document).toBeDefined();
     const path = document!.fields.find((field) => field.field === "path");
     const uri = document!.fields.find((field) => field.field === "uri");
     expect(path?.targets).toEqual([]);
     expect(uri?.targets).toEqual(path?.targets);
-
-    const page = renderMappingExplorerSourcePage(document!);
-    expect(page).not.toContain("Document.fileId");
+    expect(renderMappingExplorerSourcePage(document!)).not.toContain("Document.fileId");
   });
 
   it("shows Carta and OCF schema types in the target slot ledger", async () => {

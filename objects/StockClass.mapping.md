@@ -171,11 +171,16 @@ shared:
       - "#/$defs/Certificate/properties/shareClassName"
       - "#/$defs/RestrictedStockAward/properties/shareClassName"
   class_type:
-    kind: computed
+    kind: enum-remap
     target: "#/$defs/ShareClass/properties/type"
+    values:
+      COMMON: COMMON
+      PREFERRED: PREFERRED
     note: >-
-      Preserve COMMON/PREFERRED on ShareClass.type. The former valuation read-model boolean
-      target was removed from the June 22 bundle.
+      Lossless 1:1 onto ShareClassType. This was `computed` only because it additionally
+      derived the valuation read-model's boolean `common` flag (COMMON → true); that
+      `ShareClassValuation` target was removed from the June 22 bundle, leaving a straight
+      enum correspondence with no derivation.
   default_id_prefix:
     kind: rename
     target: "#/$defs/ShareClass/properties/prefix"

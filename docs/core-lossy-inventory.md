@@ -12,7 +12,7 @@ Fields that today fall **out** of Core, split by whether Carta offers a home at 
 strongest rich-Core / upstream-OCF signal. **A** breaks it down per OCF object;
 **B** inverts it (per Carta slot); **C** is no-home.
 
-## A. Lossy home — by OCF object, flowing to Carta (48 (entity,variant,field) rows across 19 objects; 34 OCF-required)
+## A. Lossy home — by OCF object, flowing to Carta (46 (entity,variant,field) rows across 19 objects; 32 OCF-required)
 
 Each field HAS a Carta home but the fold loses fidelity: `existence-loss` = the shape
 collapses (object/array → scalar); `heuristic` = a non-1:1 transform (combine/split/computed).
@@ -87,7 +87,6 @@ is a direct predecessor→`securities` landing.
 
 | field | OCF-req | variant(s) | flows to (Carta) | loss |
 | --- | :---: | --- | --- | --- |
-| class_type | **yes** | Common, Preferred | ShareClass.type | heuristic (computed) |
 | conversion_rights |  | Common, Preferred | ShareClassRightsAndPreferences.{conversionPrice, conversionRatio} | heuristic (sequential_transform (select first_ratio_conversion_right)) |
 | initial_shares_authorized | **yes** | Common, Preferred | ShareClass.authorizedShareCount | partial (AuthorizedShares: unmapped members NOT APPLICABLE, UNLIMITED; Numeric: widening) |
 | seniority | **yes** | Common, Preferred | ShareClass.{pariPassu, seniority} | heuristic (computed) |
@@ -205,7 +204,6 @@ onto one Carta field — most visibly the reverse-edge lineage collapsing onto `
 - `ShareClass.authorizedShareCount` ← 1: `StockClass.initial_shares_authorized [Common, Preferred]`
 - `ShareClass.pariPassu` ← 1: `StockClass.seniority [Common, Preferred]`
 - `ShareClass.seniority` ← 1: `StockClass.seniority [Common, Preferred]`
-- `ShareClass.type` ← 1: `StockClass.class_type [Common, Preferred]`
 - `Stakeholder.address` ← 1: `Stakeholder.addresses`
 - `Stakeholder.fullName` ← 1: `Stakeholder.name`
 - `Stakeholder.relationship` ← 1: `Stakeholder.current_relationships`

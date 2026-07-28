@@ -110,110 +110,116 @@ Supporting CARTA definitions excluded from standalone mapping targets (45)
     - #/$defs/PointOfContact — namespace: ocf; parent(s): —
 
 Standalone Carta targets with mapping evidence (15)
-╭ Carta object: Certificate ───────────────────────────────────────────────────────────────────────────╮
-│ name: Certificate                                                                                    │
-│ id: "#/$defs/Certificate"                                                                            │
-│ inverse_role: direct                                                                                 │
-│ status: PARTIAL                                                                                      │
-│ mapping_evidence: 43 (direct object: 43, reusable type detail: 0)                                    │
-│ unmapped_properties: 5                                                                               │
-├──────────────────────────────────────────────────────────────────────────────────────────────────────┤
-│ resulting Carta object flavors (1)                                                                   │
-│ └── StockIssuance.Default → Certificate                                                              │
-│     ├── when: StockIssuance.issuance_type = [FOUNDERS_STOCK]                                         │
-│     └── properties: id, issueDate, pricePerShare, quantity, securityId, securityLabel, shareClassId, │
-│     stakeholderId, vestingScheduleTemplateId                                                         │
-│                                                                                                      │
-│ conditional property flows (2 discriminators)                                                        │
-│ ├── StockClass :: class_type                                                                         │
-│ │   └── Common [COMMON] or Preferred [PREFERRED] → shareClassName                                    │
-│ └── EquityCompensationExercise :: security_id → compensation_type (lookup)                           │
-│     └── Option [OPTION, OPTION_NSO, OPTION_ISO] or Sar [CSAR, SSAR] → id, precededBy, securityId     │
-│                                                                                                      │
-│ aggregate mapping ledger                                                                             │
-│ parent properties (18)                                                                               │
-│   ├─ + canceledDate                                                                                  │
-│   │  └─ ← StockCancellation [Default].date (rename)                                                  │
-│   ├─ + canceledQuantity                                                                              │
-│   │  └─ ← StockCancellation [Default].quantity (rename)                                              │
-│   ├─ + dividendAccrualStartDate                                                                      │
-│   │  └─ ✗ no mapped OCF source                                                                       │
-│   ├─ + id                                                                                            │
-│   │  ├─ ← StockAcceptance [Default].security_id (rename)                                             │
-│   │  ├─ ← StockCancellation [Default].balance_security_id (computed)                                 │
-│   │  ├─ ← StockCancellation [Default].security_id (rename)                                           │
-│   │  ├─ ← StockConsolidation [Default].resulting_security_id (computed)                              │
-│   │  ├─ ← StockConversion [Default].balance_security_id (computed)                                   │
-│   │  ├─ ← StockConversion [Default].resulting_security_ids (computed)                                │
-│   │  ├─ ← EquityCompensationExercise [shared].resulting_security_ids (computed)                      │
-│   │  ├─ ← StockIssuance [Default].security_id (rename)                                               │
-│   │  ├─ ← StockReissuance [Default].resulting_security_ids (computed)                                │
-│   │  ├─ ← StockRepurchase [Default].balance_security_id (computed)                                   │
-│   │  ├─ ← StockTransfer [Default].balance_security_id (computed)                                     │
-│   │  └─ ← StockTransfer [Default].resulting_security_ids (computed)                                  │
-│   ├─ + issueDate                                                                                     │
-│   │  └─ ← StockIssuance [Default].date (rename)                                                      │
-│   ├─ + issuerId                                                                                      │
-│   │  └─ ✗ no mapped OCF source                                                                       │
-│   ├─ + lastModifiedDatetime                                                                          │
-│   │  └─ ✗ no mapped OCF source                                                                       │
-│   ├─ + pricePerShare                                                                                 │
-│   │  └─ ← StockIssuance [Default].share_price (rename)                                               │
-│   ├─ + quantity                                                                                      │
-│   │  └─ ← StockIssuance [Default].quantity (rename)                                                  │
-│   ├─ + returnedInvestedCapital                                                                       │
-│   │  └─ ✗ no mapped OCF source                                                                       │
-│   ├─ + returnedToPoolQuantity                                                                        │
-│   │  └─ ✗ no mapped OCF source                                                                       │
-│   ├─ + returnedToTreasuryQuantity                                                                    │
-│   │  └─ ← StockRepurchase [Default].quantity (computed)                                              │
-│   ├─ + securityId                                                                                    │
-│   │  ├─ ← StockAcceptance [Default].security_id (rename)                                             │
-│   │  ├─ ← StockCancellation [Default].balance_security_id (computed)                                 │
-│   │  ├─ ← StockCancellation [Default].security_id (rename)                                           │
-│   │  ├─ ← StockConsolidation [Default].resulting_security_id (computed)                              │
-│   │  ├─ ← StockConversion [Default].balance_security_id (computed)                                   │
-│   │  ├─ ← StockConversion [Default].resulting_security_ids (computed)                                │
-│   │  ├─ ← EquityCompensationExercise [shared].resulting_security_ids (computed)                      │
-│   │  ├─ ← StockIssuance [Default].security_id (rename)                                               │
-│   │  ├─ ← StockReissuance [Default].resulting_security_ids (computed)                                │
-│   │  ├─ ← StockRepurchase [Default].balance_security_id (computed)                                   │
-│   │  ├─ ← StockTransfer [Default].balance_security_id (computed)                                     │
-│   │  └─ ← StockTransfer [Default].resulting_security_ids (computed)                                  │
-│   ├─ + securityLabel                                                                                 │
-│   │  └─ ← StockIssuance [Default].custom_id (rename)                                                 │
-│   ├─ + shareClassId                                                                                  │
-│   │  └─ ← StockIssuance [Default].stock_class_id (rename)                                            │
-│   ├─ + shareClassName                                                                                │
-│   │  └─ ← StockClass [shared].name (rename)                                                          │
-│   ├─ + stakeholderId                                                                                 │
-│   │  └─ ← StockIssuance [Default].stakeholder_id (rename)                                            │
-│   └─ + vestingScheduleTemplateId                                                                     │
-│      └─ ← StockIssuance [Default].vesting_terms_id (rename)                                          │
-│                                                                                                      │
-│ contains (1 nested variants)                                                                         │
-│   └─ precededBy : CertificatePrecededBy                                                              │
-│      ├─ ← StockCancellation [Default] (contains → CertificatePrecededBy) (structural)                │
-│      ├─ ← StockConsolidation [Default] (contains → CertificatePrecededBy) (structural)               │
-│      ├─ ← StockConversion [Default] (contains → CertificatePrecededBy) (structural)                  │
-│      ├─ ← EquityCompensationExercise [shared] (contains → CertificatePrecededBy) (structural)        │
-│      ├─ ← StockReissuance [Default] (contains → CertificatePrecededBy) (structural)                  │
-│      ├─ ← StockRepurchase [Default] (contains → CertificatePrecededBy) (structural)                  │
-│      ├─ ← StockTransfer [Default] (contains → CertificatePrecededBy) (structural)                    │
-│      ├─ + reason                                                                                     │
-│      │  └─ ✗ no mapped OCF source                                                                    │
-│      └─ + securities                                                                                 │
-│         ├─ ← StockCancellation [Default].balance_security_id (computed)                              │
-│         ├─ ← StockConsolidation [Default].resulting_security_id (computed)                           │
-│         ├─ ← StockConsolidation [Default].security_ids (computed)                                    │
-│         ├─ ← StockConversion [Default].balance_security_id (computed)                                │
-│         ├─ ← StockConversion [Default].resulting_security_ids (computed)                             │
-│         ├─ ← EquityCompensationExercise [shared].resulting_security_ids (computed)                   │
-│         ├─ ← StockReissuance [Default].resulting_security_ids (computed)                             │
-│         ├─ ← StockRepurchase [Default].balance_security_id (computed)                                │
-│         ├─ ← StockTransfer [Default].balance_security_id (computed)                                  │
-│         └─ ← StockTransfer [Default].resulting_security_ids (computed)                               │
-╰──────────────────────────────────────────────────────────────────────────────────────────────────────╯
+╭ Carta object: Certificate ────────────────────────────────────────────────────────────────────────────────────╮
+│ name: Certificate                                                                                             │
+│ id: "#/$defs/Certificate"                                                                                     │
+│ inverse_role: direct                                                                                          │
+│ status: PARTIAL                                                                                               │
+│ mapping_evidence: 43 (direct object: 43, reusable type detail: 0)                                             │
+│ unmapped_properties: 5                                                                                        │
+├───────────────────────────────────────────────────────────────────────────────────────────────────────────────┤
+│ resulting Carta object flavors (1)                                                                            │
+│ └── StockIssuance.Default → Certificate                                                                       │
+│     ├── when: StockIssuance.issuance_type = [FOUNDERS_STOCK]                                                  │
+│     └── properties: id, issueDate, pricePerShare, quantity, securityId, securityLabel, shareClassId,          │
+│     stakeholderId, vestingScheduleTemplateId                                                                  │
+│                                                                                                               │
+│ conditional property flows (2 discriminators)                                                                 │
+│ ├── StockClass :: class_type                                                                                  │
+│ │   └── Common [COMMON] or Preferred [PREFERRED] → shareClassName                                             │
+│ └── EquityCompensationExercise :: security_id → compensation_type (lookup)                                    │
+│     └── Option [OPTION, OPTION_NSO, OPTION_ISO] or Sar [CSAR, SSAR] → id, precededBy, securityId              │
+│                                                                                                               │
+│ aggregate mapping ledger                                                                                      │
+│ parent properties (18)                                                                                        │
+│   ├─ + canceledDate                                                                                           │
+│   │  └─ ← StockCancellation [Default].date (rename)                                                           │
+│   ├─ + canceledQuantity                                                                                       │
+│   │  └─ ← StockCancellation [Default].quantity (rename)                                                       │
+│   ├─ + dividendAccrualStartDate                                                                               │
+│   │  └─ ✗ no mapped OCF source                                                                                │
+│   ├─ + id                                                                                                     │
+│   │  ├─ ← StockAcceptance [Default].security_id (rename)                                                      │
+│   │  ├─ ← StockCancellation [Default].balance_security_id (computed)                                          │
+│   │  ├─ ← StockCancellation [Default].security_id (rename)                                                    │
+│   │  ├─ ← StockConsolidation [Default].resulting_security_id (computed)                                       │
+│   │  ├─ ← StockConversion [Default].balance_security_id (computed)                                            │
+│   │  ├─ ← StockConversion [Default].resulting_security_ids (computed)                                         │
+│   │  ├─ ← EquityCompensationExercise [shared].resulting_security_ids (computed)                               │
+│   │  ├─ ← StockIssuance [Default].security_id (rename)                                                        │
+│   │  ├─ ← StockReissuance [Default].resulting_security_ids (computed)                                         │
+│   │  ├─ ← StockRepurchase [Default].balance_security_id (computed)                                            │
+│   │  ├─ ← StockTransfer [Default].balance_security_id (computed)                                              │
+│   │  └─ ← StockTransfer [Default].resulting_security_ids (computed)                                           │
+│   ├─ + issueDate                                                                                              │
+│   │  └─ ← StockIssuance [Default].date (rename)                                                               │
+│   ├─ + issuerId                                                                                               │
+│   │  └─ ✗ no mapped OCF source                                                                                │
+│   ├─ + lastModifiedDatetime                                                                                   │
+│   │  └─ ✗ no mapped OCF source                                                                                │
+│   ├─ + pricePerShare                                                                                          │
+│   │  └─ ← StockIssuance [Default].share_price (rename)                                                        │
+│   ├─ + quantity                                                                                               │
+│   │  └─ ← StockIssuance [Default].quantity (rename)                                                           │
+│   ├─ + returnedInvestedCapital                                                                                │
+│   │  ├─ ✗ no mapped OCF source                                                                                │
+│   │ └─ ? open question: Is the June 22 `Certificate.returnedInvestedCapital` the intended home for repurchase │
+│   consideration — i.e. `price × quantity`? The field is new in this bund… [asked by @johnscrudato;            │
+│   StockRepurchase:198]                                                                                        │
+│   ├─ + returnedToPoolQuantity                                                                                 │
+│   │  └─ ✗ no mapped OCF source                                                                                │
+│   ├─ + returnedToTreasuryQuantity                                                                             │
+│   │  └─ ← StockRepurchase [Default].quantity (computed)                                                       │
+│   ├─ + securityId                                                                                             │
+│   │  ├─ ← StockAcceptance [Default].security_id (rename)                                                      │
+│   │  ├─ ← StockCancellation [Default].balance_security_id (computed)                                          │
+│   │  ├─ ← StockCancellation [Default].security_id (rename)                                                    │
+│   │  ├─ ← StockConsolidation [Default].resulting_security_id (computed)                                       │
+│   │  ├─ ← StockConversion [Default].balance_security_id (computed)                                            │
+│   │  ├─ ← StockConversion [Default].resulting_security_ids (computed)                                         │
+│   │  ├─ ← EquityCompensationExercise [shared].resulting_security_ids (computed)                               │
+│   │  ├─ ← StockIssuance [Default].security_id (rename)                                                        │
+│   │  ├─ ← StockReissuance [Default].resulting_security_ids (computed)                                         │
+│   │  ├─ ← StockRepurchase [Default].balance_security_id (computed)                                            │
+│   │  ├─ ← StockTransfer [Default].balance_security_id (computed)                                              │
+│   │  ├─ ← StockTransfer [Default].resulting_security_ids (computed)                                           │
+│   │ └─ ? open question: Writing one OCF `security_id` into both `Certificate.id` and `Certificate.securityId` │
+│   (and the RSA equivalents) asserts that the two slots hold the same value… [asked by @johnscrudato;          │
+│   StockIssuance:358]                                                                                          │
+│   ├─ + securityLabel                                                                                          │
+│   │  └─ ← StockIssuance [Default].custom_id (rename)                                                          │
+│   ├─ + shareClassId                                                                                           │
+│   │  └─ ← StockIssuance [Default].stock_class_id (rename)                                                     │
+│   ├─ + shareClassName                                                                                         │
+│   │  └─ ← StockClass [shared].name (rename)                                                                   │
+│   ├─ + stakeholderId                                                                                          │
+│   │  └─ ← StockIssuance [Default].stakeholder_id (rename)                                                     │
+│   └─ + vestingScheduleTemplateId                                                                              │
+│      └─ ← StockIssuance [Default].vesting_terms_id (rename)                                                   │
+│                                                                                                               │
+│ contains (1 nested variants)                                                                                  │
+│   └─ precededBy : CertificatePrecededBy                                                                       │
+│      ├─ ← StockCancellation [Default] (contains → CertificatePrecededBy) (structural)                         │
+│      ├─ ← StockConsolidation [Default] (contains → CertificatePrecededBy) (structural)                        │
+│      ├─ ← StockConversion [Default] (contains → CertificatePrecededBy) (structural)                           │
+│      ├─ ← EquityCompensationExercise [shared] (contains → CertificatePrecededBy) (structural)                 │
+│      ├─ ← StockReissuance [Default] (contains → CertificatePrecededBy) (structural)                           │
+│      ├─ ← StockRepurchase [Default] (contains → CertificatePrecededBy) (structural)                           │
+│      ├─ ← StockTransfer [Default] (contains → CertificatePrecededBy) (structural)                             │
+│      ├─ + reason                                                                                              │
+│      │  └─ ✗ no mapped OCF source                                                                             │
+│      └─ + securities                                                                                          │
+│         ├─ ← StockCancellation [Default].balance_security_id (computed)                                       │
+│         ├─ ← StockConsolidation [Default].resulting_security_id (computed)                                    │
+│         ├─ ← StockConsolidation [Default].security_ids (computed)                                             │
+│         ├─ ← StockConversion [Default].balance_security_id (computed)                                         │
+│         ├─ ← StockConversion [Default].resulting_security_ids (computed)                                      │
+│         ├─ ← EquityCompensationExercise [shared].resulting_security_ids (computed)                            │
+│         ├─ ← StockReissuance [Default].resulting_security_ids (computed)                                      │
+│         ├─ ← StockRepurchase [Default].balance_security_id (computed)                                         │
+│         ├─ ← StockTransfer [Default].balance_security_id (computed)                                           │
+│         └─ ← StockTransfer [Default].resulting_security_ids (computed)                                        │
+╰───────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
 
 ╭ Carta object: CertificateTransactionItem ────────────────────────────────────────────────────────────────╮
 │ name: CertificateTransactionItem                                                                         │
@@ -1051,7 +1057,7 @@ Standalone Carta targets with mapping evidence (15)
 │   ├─ + seniority                                                                                             │
 │   │  └─ ← StockClass [shared].seniority (computed)                                                           │
 │   └─ + type                                                                                                  │
-│      └─ ← StockClass [shared].class_type (computed)                                                          │
+│      └─ ← StockClass [shared].class_type (enum-remap)                                                        │
 │                                                                                                              │
 │ contains (1 nested variants)                                                                                 │
 │   └─ preferredShareClassDetails : PreferredShareClassDetails                                                 │

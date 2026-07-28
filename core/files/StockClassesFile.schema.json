@@ -14,6 +14,14 @@
         "type": "object",
         "title": "StockClass",
         "properties": {
+          "class_type": {
+            "type": "string",
+            "enum": [
+              "COMMON",
+              "PREFERRED"
+            ],
+            "description": "The type of this stock class (e.g. Preferred or Common)"
+          },
           "default_id_prefix": {
             "type": "string",
             "description": "Default prefix for certificate numbers in certificated shares (e.g. CS- in CS-1). If certificate IDs have a dash, the prefix should end i…"

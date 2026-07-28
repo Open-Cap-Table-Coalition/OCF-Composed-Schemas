@@ -78,6 +78,23 @@ fields:
       length = occurrences * period, normalized to the unit required by the
       June 22 Carta schema. (See period_type for the source unit; see period
       for vestingMethod.)
+
+      EXACT for MONTHS and YEARS sources: (n, MONTHS) -> n months;
+      (n, YEARS) -> n * 12 months.
+
+      LOSSY and UNDETERMINED for DAYS sources. `length` is int32 and the June 22
+      conditional forces lengthUnit = MONTH for DAILY and WEEKLY, so a segment
+      measured in days has an exact integer-month form only when the total is a
+      whole number of months. 100 daily occurrences (~3.29 months) and 10 weekly
+      occurrences (70 days, ~2.30 months) do not. No rounding convention is
+      asserted here: truncate, round-half-up, and nearest-whole-month all change
+      the vested-through date, and picking one is a semantic decision for the
+      mapping owners. See the open question below before implementing.
+    inverse:
+      role: aggregate-projection
+      note: >-
+        A day-denominated segment folded into whole months cannot be split back to
+        its original occurrence count and cadence.
   period:
     kind: computed
     target: "#/$defs/VestingPeriod/properties/vestingMethod"
@@ -100,7 +117,10 @@ fields:
       DAILY, WEEKLY, MONTHLY, BI_MONTHLY, QUARTERLY, SEMI_ANNUALLY, and
       ANNUALLY vesting methods. Normalize the source period/occurrence value
       into months before emitting length; do not emit DAY or YEAR for these
-      cadence methods.
+      cadence methods. This is a constant for the cadence methods above, so the
+      source DAYS/MONTHS/YEARS distinction is not recoverable from lengthUnit
+      alone — see occurrences for the day-source rounding gap. `cliffLengthUnit`
+      is NOT covered by the conditional and still carries DAY/MONTH/YEAR.
   cliff:
     kind: split
     target:
@@ -135,3 +155,10 @@ Use a link below to open a prefilled GitHub issue. The issue can be copied into 
 
 - A segment projects to one Carta `VestingPeriod`: occurrences × period becomes `length`, the supported cadence maps to `vestingMethod`, and the June 22 conditional requires the emitted cadence period to use `lengthUnit: MONTH`.
 - Unsupported cadence combinations have no exact Carta enum. The optional cliff splits into the period's cliff length, unit, and percentage; the segment has no grant-share percentage of its own.
+- Because `lengthUnit` is pinned to `MONTH` for every supported cadence, day-denominated segments are lossy: `length` is an int32 count of months, so a DAILY or WEEKLY total that is not a whole number of months cannot round-trip.
+
+- [ ] `occurrences`: How should a day-denominated segment be rounded when `occurrences * period` days is not a whole number of months? The June 22 `VestingPeriod` conditional pins `lengthUnit` to `MONTH` for DAILY and WEEKLY, and `length` is int32, so 100 daily occurrences (~3.29 months) and 10 weekly occurrences (~2.30 months) have no exact form. Truncation, round-half-up, and nearest-whole-month each shift the vested-through date differently, and Carta's importer behavior here is unknown.
+  - Target: VestingPeriod.length
+  - Asked by: @johnscrudato
+  - Answer: Open: confirm whether Carta expects a specific rounding rule for sub-month cadences, or whether day-denominated schedules should instead be rejected at import rather than silently rounded.
+  - Answered by: —

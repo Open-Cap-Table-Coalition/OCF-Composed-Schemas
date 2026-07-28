@@ -131,9 +131,17 @@ status: complete
 
 fields:
   id:
-    kind: unmappable
-    target: null
-    reason: target-definition-removed
+    kind: rename
+    target:
+      - "#/$defs/OptionIssuanceTransaction/properties/equityPlanId"
+      - "#/$defs/RsuIssuanceTransaction/properties/equityPlanId"
+      - "#/$defs/RsaIssuanceTransaction/properties/equityPlanId"
+      - "#/$defs/CertificateIssuanceTransaction/properties/equityPlanId"
+    inverse:
+      role: reference-only
+      note: >-
+        Denormalized plan FK on each plan-bearing issuance transaction; it names the plan a
+        security was issued under without reconstructing a Carta plan record.
   comments:
     kind: unmappable
     target: null
@@ -211,5 +219,6 @@ Use a link below to open a prefilled GitHub issue. The issue can be copied into 
 ## Notes / open questions
 
 - OCF `StockPlan` has no retained pool-summary target in the June 22 bundle. `plan_name` still maps to the denormalized award plan-name fields on Option, RSA, and RSU records.
-- `id`, `initial_shares_reserved`, `stock_class_id`, and `stock_class_ids` are explicitly excluded because `OptionPoolSummary` was removed; pool history and backing-class state cannot be represented in the retained bundle.
+- `id` keeps a home despite the `OptionPoolSummary` removal: the retained bundle carries `equityPlanId` on all four plan-bearing issuance transactions (`OptionIssuanceTransaction`, `RsuIssuanceTransaction`, `RsaIssuanceTransaction`, `CertificateIssuanceTransaction`), which is the same plan-identifier space the issuance mappings already write from `stock_plan_id`. It is `reference-only`: the FK names the plan without reconstituting a plan record, exactly as `plan_name` is a `state-projection` of the plan's current name. Only the *pool ledger* was lost, not plan identity.
+- `initial_shares_reserved`, `stock_class_id`, and `stock_class_ids` are explicitly excluded because `OptionPoolSummary` was removed; pool history and backing-class state cannot be represented in the retained bundle.
 - Plan approval dates and `default_cancellation_behavior` have no Carta target. `comments` and `object_type` are OCF scaffolding.

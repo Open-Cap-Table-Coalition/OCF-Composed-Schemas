@@ -12,6 +12,10 @@ const EXPECTED_VERSION = "v1alpha1 (2026-06-22)";
 const EXPECTED_SHA256 = "b8d54974eea8957f67ebe600097b31024a691e50d949a8a6db6227dd7a2aa06c";
 const EXPECTED_MAPPING_FILE_COUNT = 102;
 const EXPECTED_DEFINITION_COUNT = 99;
+// Pinned so a silent loss of coverage fails the refresh instead of merely printing a
+// smaller number. Raise it deliberately when a mapping gains a target; lowering it
+// requires the same review as removing a pointer.
+const EXPECTED_TARGET_POINTER_COUNT = 256;
 const REMOVED_TARGET_REASON = "target-definition-removed";
 
 const REMOVED_DEFINITIONS = new Set([
@@ -174,6 +178,12 @@ async function main(): Promise<number> {
     const filePointers = new Set<string>();
     collectTargetPointers(parsed.mapping, filePointers);
     for (const pointer of filePointers) pointers.add(pointer);
+  }
+
+  if (pointers.size !== EXPECTED_TARGET_POINTER_COUNT) {
+    errors.push(
+      `found ${pointers.size} distinct live target pointers, expected ${EXPECTED_TARGET_POINTER_COUNT}`
+    );
   }
 
   for (const pointer of pointers) {

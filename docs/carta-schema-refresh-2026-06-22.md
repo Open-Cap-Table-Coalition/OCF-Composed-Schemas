@@ -58,6 +58,20 @@ npm run core:check
 npm run core:validate-sample
 ```
 
-The checker verifies the pinned SHA/version, all 102 mapping versions, zero dangling Carta JSON pointers, zero pointers to the removed-definition set, explicit `target-definition-removed` markers on the SAR/compliance/summary/document mappings, and the generated Explainer link. It is intentionally separate from the general mapping validator so this refresh cannot silently pass with an incomplete migration. All five commands now run in CI, so the migration can no longer depend on someone remembering to invoke them.
+The checker verifies the pinned SHA/version, all 102 mapping versions, zero dangling Carta JSON pointers, zero pointers to the removed-definition set, the pinned count of 256 distinct live target pointers, an exhaustive required-field audit over every definition carrying a `required` array (with the documented exceptions enumerated in the script), explicit `target-definition-removed` markers on the SAR/compliance/summary/document mappings, and the generated Explainer link. It is intentionally separate from the general mapping validator so this refresh cannot silently pass with an incomplete migration. All five commands now run in CI, so the migration can no longer depend on someone remembering to invoke them.
+
+## Open questions raised by this refresh
+
+These are recorded as auditable unchecked questions in the mapping files rather than resolved by inference:
+
+- `StockRepurchase.price` → `Certificate.returnedInvestedCapital` (new in this bundle): is repurchase consideration (`price × quantity`) the intended content? `RestrictedStockAward` has no equivalent field.
+- `VestingScheduleSegment.occurrences` → `VestingPeriod.length`: the `lengthUnit: MONTH` conditional plus an int32 `length` leaves day-denominated cadences with no exact integer-month form, and no rounding convention is asserted.
+- `StockIssuance.security_id` → `Certificate.id` *and* `Certificate.securityId`: the bundle documents `securityId` as an API cross-reference UUID, so writing one OCF value into both slots needs confirmation. June 22 making `id` required is what introduced this pattern across the issuance/exercise/cancellation/repurchase mappings.
+
+## Corrections applied after the initial migration pass
+
+- `StockClass.class_type` was left `kind: computed` after its second target (`ShareClassValuation.common`) was removed. With only the 1:1 `ShareClass.type` enum remaining it is `enum-remap`; the stale `computed` suppressed the field from strict Core as a heuristic loss.
+- `StockPlan.id` was marked `target-definition-removed` even though the retained bundle keeps `equityPlanId` on all four plan-bearing issuance transactions. Restored as a `reference-only` rename, mirroring how `plan_name` keeps its denormalized homes; only the pool *ledger* was lost, not plan identity.
+- The two answered `Stakeholder` residency questions had their original question text overwritten with their answers. Restored per [`CODEX.md`](../CODEX.md): answered questions keep the original inquiry for the audit trail, and the answer records that the bundle removal made them moot without deciding the alpha-2 → alpha-3 or two-hop-linkage sub-questions.
 
 The last two matter specifically for a bundle refresh: narrowing the target bundle narrows the derived Core packages, and `core:check` only re-derives and diffs those packages. The hand-maintained fixtures under `core*/sample/` are outside that gate — `core:validate-sample` is the only check that covers them.

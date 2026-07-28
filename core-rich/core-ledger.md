@@ -68,7 +68,7 @@ corpus for legacy discriminator compatibility.
 | StockIssuance | Default | 10 | 3 | ✓ | — |
 | StockIssuance | Rsa | 12 | 5 | ✓ | — |
 | StockLegendTemplate | — | 0 | 0 | ✗ | no-payload |
-| StockPlan | — | 1 | 1 | ✓ | — |
+| StockPlan | — | 2 | 1 | ✓ | — |
 | StockPlanPoolAdjustment | — | 0 | 0 | ✗ | no-payload |
 | StockPlanReturnToPool | Option | 2 | 1 | ✓ | — |
 | StockPlanReturnToPool | Rsu | 2 | 1 | ✓ | — |
@@ -152,7 +152,7 @@ values its `const:` supplies implicitly (the reason codes we always know).
 | StockClass | Common | comments | out | no-destination | kind unmappable |
 | StockClass | Common | object_type | out | no-destination | kind unmappable |
 | StockClass | Common | name | core | direct |  |
-| StockClass | Common | class_type | out | heuristic | kind computed |
+| StockClass | Common | class_type | core | value-coarsening | enum→bucket |
 | StockClass | Common | default_id_prefix | core | direct |  |
 | StockClass | Common | initial_shares_authorized | out | partial | AuthorizedShares: unmapped members NOT APPLICABLE, UNLIMITED; Numeric: widening |
 | StockClass | Common | board_approval_date | out | no-destination | kind unmappable |
@@ -168,7 +168,7 @@ values its `const:` supplies implicitly (the reason codes we always know).
 | StockClass | Preferred | comments | out | no-destination | kind unmappable |
 | StockClass | Preferred | object_type | out | no-destination | kind unmappable |
 | StockClass | Preferred | name | core | direct |  |
-| StockClass | Preferred | class_type | out | heuristic | kind computed |
+| StockClass | Preferred | class_type | core | value-coarsening | enum→bucket |
 | StockClass | Preferred | default_id_prefix | core | direct |  |
 | StockClass | Preferred | initial_shares_authorized | out | partial | AuthorizedShares: unmapped members NOT APPLICABLE, UNLIMITED; Numeric: widening |
 | StockClass | Preferred | board_approval_date | out | no-destination | kind unmappable |
@@ -185,7 +185,7 @@ values its `const:` supplies implicitly (the reason codes we always know).
 | StockLegendTemplate  | — | object_type | out | no-destination | kind unmappable |
 | StockLegendTemplate  | — | name | out | no-destination | kind unmappable |
 | StockLegendTemplate  | — | text | out | no-destination | kind unmappable |
-| StockPlan | — | id | out | no-destination | kind unmappable |
+| StockPlan | — | id | core | direct |  |
 | StockPlan | — | comments | out | no-destination | kind unmappable |
 | StockPlan | — | object_type | out | no-destination | kind unmappable |
 | StockPlan | — | plan_name | core | direct |  |

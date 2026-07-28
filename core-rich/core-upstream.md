@@ -7,7 +7,7 @@ narrowed form. So Core→target is lossy (expected), and a target-sourced Core d
 may not validate back as OCF without OCF relaxing a constraint. These are the
 upstream-OCF-change candidates; OCF-*required* fields (**bold**) are the strongest.
 
-## Lossy fields carried by rich Core (36 fields, 24 OCF-required)
+## Lossy fields carried by rich Core (34 fields, 22 OCF-required)
 
 Each field is grouped by OCF object and shows its narrowed Carta home. The flow map
 below makes cross-object convergence onto a shared Carta slot explicit.
@@ -74,7 +74,6 @@ below makes cross-object convergence onto a shared Carta slot explicit.
 
 | field | OCF-req | variant(s) | flows to (Carta) | loss |
 | --- | :---: | --- | --- | --- |
-| class_type | **yes** | Common, Preferred | ShareClass.type | heuristic (computed) |
 | conversion_rights |  | Common, Preferred | ShareClassRightsAndPreferences.{conversionPrice, conversionRatio} | heuristic (sequential_transform (select first_ratio_conversion_right)) |
 | initial_shares_authorized | **yes** | Common, Preferred | ShareClass.authorizedShareCount | partial (AuthorizedShares: unmapped members NOT APPLICABLE, UNLIMITED; Numeric: widening) |
 | seniority | **yes** | Common, Preferred | ShareClass.{pariPassu, seniority} | heuristic (computed) |
@@ -158,7 +157,6 @@ below makes cross-object convergence onto a shared Carta slot explicit.
 - `ShareClass.authorizedShareCount` ← 1: `StockClass.initial_shares_authorized [Common, Preferred]`
 - `ShareClass.pariPassu` ← 1: `StockClass.seniority [Common, Preferred]`
 - `ShareClass.seniority` ← 1: `StockClass.seniority [Common, Preferred]`
-- `ShareClass.type` ← 1: `StockClass.class_type [Common, Preferred]`
 - `Stakeholder.address` ← 1: `Stakeholder.addresses`
 - `Stakeholder.fullName` ← 1: `Stakeholder.name`
 - `Stakeholder.relationship` ← 1: `Stakeholder.current_relationships`
