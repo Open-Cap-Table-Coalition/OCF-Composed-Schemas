@@ -39,6 +39,10 @@ Authored mappings live primarily under [`objects/`](./objects/) and [`types/`](.
 
 The target schema is pinned under [`target-schema/`](./target-schema/). Generated reports and the Mapping Explorer are derived from that schema plus the authored mappings; they should not be edited by hand.
 
+The Mapping Explorer overview also links to the tracked Carta OCF Core proposal, displays its
+version and provenance metadata, discovers optional Markdown reports under `target-schema/`, and
+provides a schema-level prefilled GitHub issue button.
+
 ## Regenerate and check the outputs
 
 After changing mappings or schemas:

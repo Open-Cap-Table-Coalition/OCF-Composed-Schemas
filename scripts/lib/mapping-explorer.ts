@@ -1,4 +1,5 @@
 import { cartaCoverageIssueUrl, mappingFileUrl, mappingIssueUrl } from "./question-links.js";
+import { defaultCartaSchemaResources, type CartaSchemaResources } from "./carta-schema.js";
 import { sourcePropertyNode, sourceSchemaPropertyNode } from "./inverse-coverage.js";
 import type {
   CartaDefCoverage,
@@ -115,6 +116,7 @@ export interface ExplorerTarget {
 export interface MappingExplorerData {
   sources: ExplorerSource[];
   targets: ExplorerTarget[];
+  cartaSchema: CartaSchemaResources;
   artifactNames: string[];
   metrics: {
     sourceObjects: number;
@@ -440,7 +442,8 @@ export function buildMappingExplorerData(
   corpus: Corpus,
   inverse: InverseCoverageLedger,
   artifactNames: readonly string[],
-  mappingDocuments: ReadonlyMap<string, MappingReportDocument>
+  mappingDocuments: ReadonlyMap<string, MappingReportDocument>,
+  cartaSchema: CartaSchemaResources = defaultCartaSchemaResources()
 ): MappingExplorerData {
   const artifacts = [...artifactNames].filter((name) => name.endsWith(".svg")).sort();
   const artifactBySlug = new Map(
@@ -499,6 +502,7 @@ export function buildMappingExplorerData(
   return {
     sources,
     targets,
+    cartaSchema,
     artifactNames: artifacts,
     metrics: {
       sourceObjects: sources.length,
@@ -724,6 +728,34 @@ function targetScopeLegend(data: MappingExplorerData): string {
   )}</div></aside>`;
 }
 
+function cartaSchemaPanel(data: MappingExplorerData): string {
+  const resources = data.cartaSchema;
+  const metadata = resources.metadata.length
+    ? `<div class="chip-row">${resources.metadata
+        .map(
+          (item) =>
+            `<span class="mini-chip"><strong>${html(item.label)}:</strong>&nbsp;${html(
+              item.value
+            )}</span>`
+        )
+        .join("")}</div>`
+    : "";
+  const reports = resources.reports
+    .map((report) => externalLink(report.url, `Read ${report.label} ↗`, "button button-quiet"))
+    .join("");
+  return `<section id="carta-core" class="map-guide" aria-labelledby="carta-core-title"><div class="map-guide-heading"><span class="eyebrow">Schema source</span><h2 id="carta-core-title">Carta OCF Core proposal</h2><p>Browse the current Carta schema bundle tracked in <code>${html(
+    resources.schemaPath
+  )}</code>, with its repository metadata and review entry point.</p>${metadata}</div><div><div class="hero-actions">${externalLink(
+    resources.schemaUrl,
+    "Browse proposal ↗",
+    "button button-primary"
+  )}${externalLink(resources.issueUrl, "Open schema issue ↗", "button button-quiet")}${
+    resources.readmeUrl
+      ? externalLink(resources.readmeUrl, "Target-schema notes ↗", "button button-quiet")
+      : ""
+  }${reports}</div></div></section>`;
+}
+
 function directionTabs(): string {
   return `<nav class="direction-tabs" aria-label="Mapping direction" data-side-tabs role="tablist"><button id="source-side-tab" class="direction-tab is-active" data-side-tab="source" aria-controls="ocf-objects" aria-selected="true" role="tab" type="button"><span class="direction-tab-kicker">01 / source side</span><strong>OCF records</strong></button><button id="target-side-tab" class="direction-tab" data-side-tab="target" aria-controls="carta-targets" aria-selected="false" role="tab" type="button"><span class="direction-tab-kicker">02 / destination side</span><strong>Carta records</strong></button></nav>`;
 }
@@ -810,6 +842,7 @@ export function renderMappingExplorerIndex(data: MappingExplorerData): string {
     <section class="map-guide" aria-labelledby="map-guide-title"><div class="map-guide-heading"><span class="eyebrow">Start here</span><h2 id="map-guide-title">Choose a side, then open a record.</h2><p>Use the tabs below to switch between the source records and the destination records. The Flow viewer shows relationships across records. It is a fixed diagram, so there are no layer controls.</p><p class="callout-copy">Legacy <code>PlanSecurity*</code> compatibility wrappers are omitted from this browseable output; their economic mapping is represented by the corresponding <code>EquityCompensation*</code> object (${html(
       data.metrics.compatibilityWrappers
     )} wrapper pages omitted).</p></div><ol class="map-guide-steps"><li class="map-guide-step"><span class="map-guide-number">1</span><div><strong>OCF records</strong><span>See a source record and where its fields go.</span></div></li><li class="map-guide-step"><span class="map-guide-number">2</span><div><strong>Carta records</strong><span>See destination definitions, support types, and gaps.</span></div></li><li class="map-guide-step"><span class="map-guide-number">3</span><div><strong>Inspect the details</strong><span>Read the field-level mapping, transformation, and open questions.</span></div></li></ol></section>
+    ${cartaSchemaPanel(data)}
     ${directionTabs()}
     <section id="ocf-objects" class="directory-section" data-side-panel="source" aria-labelledby="source-side-tab" role="tabpanel"><div class="section-heading"><div><span class="eyebrow">01 / source side</span><h2>OCF records</h2><p>These are the source-side OCF records and events. Open one to see each field, its Carta destination, and any known loss or open question.</p></div>${filterBar(
       "OCF records",

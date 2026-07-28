@@ -1,4 +1,8 @@
-import { renderQuestionLinks, upsertQuestionLinks } from "../scripts/lib/question-links.js";
+import {
+  cartaSchemaIssueUrl,
+  renderQuestionLinks,
+  upsertQuestionLinks,
+} from "../scripts/lib/question-links.js";
 
 describe("mapping question links", () => {
   it("renders prefilled issue links for mapping-level and source properties", () => {
@@ -44,5 +48,21 @@ describe("mapping question links", () => {
     expect(second.match(/## Ask a mapping question/g)).toHaveLength(1);
     expect(second).toContain("property_path=security_id");
     expect(second).toContain("- Existing human-authored note");
+  });
+
+  it("renders a schema-level issue link with tracked context", () => {
+    const url = new URL(
+      cartaSchemaIssueUrl("target-schema/Carta.schema.json", {
+        title: "Carta Cap Table Data Schema",
+        version: "v1alpha1 (2026-04-30)",
+        sha256: "abc123",
+      })
+    );
+
+    expect(url.pathname).toBe("/Open-Cap-Table-Coalition/OCF-Composed-Schemas/issues/new");
+    expect(url.searchParams.get("title")).toBe("[Carta schema] Carta Cap Table Data Schema");
+    expect(url.searchParams.get("body")).toContain("target-schema/Carta.schema.json");
+    expect(url.searchParams.get("body")).toContain("v1alpha1 (2026-04-30)");
+    expect(url.searchParams.get("body")).toContain("SHA-256: abc123");
   });
 });
