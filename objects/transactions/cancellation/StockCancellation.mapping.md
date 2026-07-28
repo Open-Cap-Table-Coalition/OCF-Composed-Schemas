@@ -212,38 +212,5 @@ Use a link below to open a prefilled GitHub issue. The issue can be copied into 
 
 ## Notes / open questions
 
-- **Join-dependent (downstream).** One OCF `StockCancellation` fans out to two Carta
-  cancellation transactions — `RsaCancellationTransaction` (restricted stock awards)
-  and `CertificateCancellationTransaction` (founders / plain certificated stock) —
-  selected by the stock family fixed at issuance. The record itself carries no
-  discriminator, only `security_id`, so an importer must resolve `issuance_type` from
-  the joined `StockIssuance` first (the two-pass requirement, §2.2). Routing an RSA
-  cancel into the Certificate family would be the bug-#219 misroute; the
-  `route_by_property` join prevents it.
-- **`date` / `quantity`** land on both the resolved family's cancellation tx
-  (`effectiveDatetime` / `quantity`) and security aggregate (`canceledDate` /
-  `canceledQuantity`) via explicit per-variant target arrays. **Granularity to flag:** OCF
-  `date` is a calendar date and Carta `effectiveDatetime` is a full datetime, so an importer
-  must widen the OCF date (the reverse is lossy).
-- **`reason_text` lands lossily (kind `computed`).** Carta's cancellation `reason` is
-  an enum (`CertificateCancellationReason` / the RSA equivalent) and OCF `reason_text`
-  is free text, so this is not a member-for-member `enum-remap`: an importer must
-  classify the free text into the family's enum, keeping the bucket and dropping the
-  prose. It lands on the resolved family's cancellation tx `reason` via a per-variant
-  target map, mirroring `date`/`quantity` — and matching the `ConvertibleCancellation`
-  / `WarrantCancellation` siblings, which map the identical field the same way.
-- **`security_id`** is the join key (`route_by_property.lookup_by.key`) and is copied to both the
-  resolved parent `*TransactionItem.securityId` and security `securityId`; the latter anchors the
-  cancellation's security-level projections. The cancellation leaf itself still carries no id.
-- **`balance_security_id` round-trips as identity plus lineage (kind `computed`).** The remainder
-  security minted by a partial cancellation is itself a stock security —
-  `RestrictedStockAward` for the RSA family, `Certificate` for the default family — and
-  both carry `precededBy.securities` (a `PrecededBySecurity` array). The remainder
-  records the cancelled security as its predecessor, so an importer writes the remainder id to
-  the security and the cancelled `security_id` into its `precededBy.securities`: this reverse
-  lineage edge round-trips losslessly, it is not unmappable. (The cancellation tx *itself* still
-  holds no balance field — only the security lineage carries it.)
-- **`id`, `comments`, `object_type`** are OCF scaffolding with no Carta home: `id`
-  is OCF's own object identifier, `comments` is free-text metadata, and `object_type`
-  (the fixed `const TX_STOCK_CANCELLATION`) is the transaction discriminator — Carta
-  selects the kind by which `$def` it instantiates, so the string has no target.
+- Join on `security_id` to `StockIssuance.issuance_type`: RSA and FOUNDERS_STOCK route to their corresponding cancellation transaction and security/item.
+- `date` and `quantity` populate event and security state. Free-text `reason_text` is classified into the family enum; `balance_security_id` is retained through successor-security lineage. `id`, `comments`, and `object_type` are OCF scaffolding.

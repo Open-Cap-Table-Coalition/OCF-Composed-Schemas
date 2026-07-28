@@ -152,4 +152,4 @@ Use a link below to open a prefilled GitHub issue. The issue can be copied into 
 
 ## Notes / open questions
 
-- Same reason as `types/CapitalizationDefinition.mapping.md`: Carta does not represent fully-diluted *rule definitions* — the booleans here (whether to include outstanding shares, unissued options, promised-option top-ups, new money, etc.) have no counterpart in the bundle. Carta exposes aggregate share counts but not the inclusion/exclusion policy used to compute them.
+- Carta exposes calculated capitalization totals but no reusable rule definition. The include/exclude flags in `CapitalizationDefinitionRules` are all `no-equivalent`.

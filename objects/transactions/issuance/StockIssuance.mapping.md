@@ -348,36 +348,6 @@ Use a link below to open a prefilled GitHub issue. The issue can be copied into 
 
 ## Notes / open questions
 
-- **Polymorphic by `issuance_type`.** An RSA is, in OCF, a `StockIssuance` flagged
-  `issuance_type: RSA` (actually-issued stock with a repurchase/forfeiture right) — see
-  [`docs/type-mapping-policy.md`](../../../docs/type-mapping-policy.md). Carta promotes it to a
-  dedicated `RestrictedStockAward` security. This mapping routes `RSA` → `RsaIssuanceTransaction` +
-  `RsaTransactionItem` + `RestrictedStockAward`; everything else (`FOUNDERS_STOCK`, and
-  `issuance_type` **absent**, which the importer treats as the `Default` route) →
-  `CertificateIssuanceTransaction` + `CertificateTransactionItem` + `Certificate`.
-  See [`docs/polymorphic-transaction-routing.md`](../../../docs/polymorphic-transaction-routing.md).
-- **Per-variant divergence.** `board_approval_date` and `vestings` (explicit event array) exist on
-  `RestrictedStockAward` but **not** on `Certificate` (which carries only
-  `vestingScheduleTemplateId`), so they are RSA-only; `share_price`/`cost_basis` land on the
-  resolved family's security/transaction object.
-- **Security projections are deliberate fan-outs.** The issuance `date`, `stock_class_id`,
-  `quantity`, and `vesting_terms_id` populate both the family transaction and the issued security
-  (`issueDate`, `shareClassId`, `quantity`, `vestingScheduleTemplateId`). The transaction remains
-  the event record, while the security carries the same facts as Carta's read model exposes them.
-  The `shared:` target maps are explicit per-variant arrays, and the validator enforces the keys stay
-  in sync with the variant set.
-- **Genuinely unmappable.** `share_numbers_issued` (no Carta range type), `stock_legend_ids`
-  (OCF-required; no Carta legend store), and `issuance_type` itself (no Carta field records the
-  RSA/founders flavor; `CertificateIssuanceReason` is a *why-issued* enum, a different concept) have
-  no Carta home in either variant.
-
-- [ ] `id`: For the `FOUNDERS_STOCK`/Default route, should OCF `StockIssuance.id` populate Carta `Certificate.id`, or is Carta's object `id` server-generated while `security_id` should remain mapped only to `Certificate.securityId`?
-  - Target: Certificate.id
-  - Asked by: @johnscrudato
-  - Answer: Open: confirm whether Carta's `id` is an externally assignable security identifier or a server-generated object identifier distinct from `securityId`.
-  - Answered by: —
-- [ ] `id`: For the `RSA` route, should OCF `StockIssuance.id` populate Carta `RestrictedStockAward.id`, or is Carta's object `id` server-generated while `security_id` should remain mapped only to `RestrictedStockAward.securityId`?
-  - Target: RestrictedStockAward.id
-  - Asked by: @johnscrudato
-  - Answer: Open: confirm whether Carta's `id` is an externally assignable security identifier or a server-generated object identifier distinct from `securityId`.
-  - Answered by: —
+- Route by `issuance_type`: RSA → `RsaIssuanceTransaction`/`RestrictedStockAward`; FOUNDERS_STOCK → `CertificateIssuanceTransaction`/`Certificate`. Shared identity, date, holder/class/plan references, quantity, vesting-template, price, and cost basis populate the selected family.
+- RSA board approval and vesting events map to the award; those fields have no target for founders' stock. Security-law exemptions are computed onto `Compliance.federalExemption`.
+- Share-number ranges, stock legend links, stockholder approval, consideration, and unsupported issuance fields are dropped for this pinned target bundle; OCF scaffolding is not copied. Carta's separate Draft Issuer certificate input has a `legend` string, but it is not part of this issuance target and does not establish a `StockLegendTemplate` mapping.

@@ -215,32 +215,5 @@ Use a link below to open a prefilled GitHub issue. The issue can be copied into 
 
 ## Notes / open questions
 
-- **Join-dependent (downstream).** One OCF `EquityCompensationCancellation` fans out
-  to three Carta cancellation transactions — `OptionCancellationTransaction`,
-  `RsuCancellationTransaction`, `SarCancellationTransaction` — selected by the
-  instrument family fixed at issuance. The record itself carries no discriminator,
-  only `security_id`, so an importer must resolve `compensation_type` from the joined
-  `EquityCompensationIssuance` first (the two-pass requirement, §2.2).
-- **`date` / `quantity`** land on both the resolved family's cancellation tx
-  (`effectiveDatetime` / `quantity`) and the Option/RSU security's cancellation aggregates
-  (`canceledDate` / `canceledQuantity`) via explicit per-variant target arrays.
-- **`reason_text` lands lossily (kind `computed`).** Carta's cancellation `reason` is
-  an enum (`OptionCancellationReason` / `RsuCancellationReason` / `SarCancellationReason`)
-  and OCF `reason_text` is free text, so this is not a member-for-member `enum-remap`:
-  an importer classifies the free text into the resolved family's enum, keeping the
-  bucket and dropping the prose. It lands on the family's cancellation tx `reason` via
-  a per-variant target map, mirroring `date`/`quantity` — and matching the
-  `ConvertibleCancellation` / `WarrantCancellation` siblings.
-- **`security_id`** is the join key (`route_by_property.lookup_by.key`) and is copied to both the
-  resolved parent `*TransactionItem.securityId` and the Option/RSU security `securityId` to anchor
-  the security-level projections. The cancellation leaf itself still carries no id.
-  **`balance_security_id`** (partial-cancel remainder) has no Carta equivalent on any cancellation tx.
-- **Lineage asymmetry — why `balance_security_id` stays unmappable here.** A partial
-  equity-comp cancellation mints a new balance security in the *same* family — an
-  `OptionGrant` / `RestrictedStockUnit` / `SarTransactionItem` — and Carta's
-  equity-comp security objects carry **no `precededBy` edge**; only the stock
-  securities (`Certificate`, `RestrictedStockAward`) do. So unlike the stock families,
-  `balance_security_id` has no Carta reverse-lineage home to be `computed` onto and
-  remains genuinely unmappable. Contrast the stock-side `StockCancellation` (#182),
-  where the same field *is* recorded via the resulting security's
-  `precededBy.securities`.
+- Join on `security_id` to `EquityCompensationIssuance.compensation_type`: Option, RSU, and SAR route to their corresponding cancellation transaction and parent security/item.
+- `date` and `quantity` populate the event and applicable security aggregates. Free-text `reason_text` is classified into the family cancellation enum; `balance_security_id` has no target. `id`, `comments`, and `object_type` are OCF scaffolding.

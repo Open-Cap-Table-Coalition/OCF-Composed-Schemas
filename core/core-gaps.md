@@ -667,14 +667,14 @@ complete target-first evidence and visuals.
 | Carta object definitions | 86 |
 | object slots | 588 |
 | direct executable slots | 225 |
-| reusable type-only slots | 28 |
+| reusable type-only slots | 29 |
 | implicit constant slots | 1 |
 | deferred slots | 0 |
 | structural child-container slots | 28 |
-| empty slots | 306 |
+| empty slots | 305 |
 
 | direct target definitions | 18 |
-| type-only target definitions | 6 |
+| type-only target definitions | 7 |
 | deferred target definitions | 0 |
 | nested/support definitions | 55 |
 | follow-up candidates | 13 |

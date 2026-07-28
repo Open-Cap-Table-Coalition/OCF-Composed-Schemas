@@ -91,4 +91,5 @@ Use a link below to open a prefilled GitHub issue. The issue can be copied into 
 
 ## Notes / open questions
 
-- OCF's `StockParent` is a generic parent-security reference (a stock issuance came from a stock plan, a prior stock entry, a warrant exercise, or a convertible conversion). Carta represents these lineage relationships positionally via specific typed transaction and `*PrecededBy` shapes (`CertificatePrecededBy`/`CertificatePrecededByReason`, `RestrictedStockAwardPrecededBy`/`RestrictedStockAwardPrecededByReason`, and the various `*ExerciseTransaction`/`*ConversionTransaction` types) rather than via a single polymorphic `parent` reference. There is no Carta type that corresponds to `StockParent` itself.
+- Carta represents parent-security relationships through typed transaction and `precededBy` structures, not a generic polymorphic parent reference.
+- `parent_object_type` and `parent_object_id` therefore have no type-level target; object mappings preserve supported lineage in their specific target shapes.

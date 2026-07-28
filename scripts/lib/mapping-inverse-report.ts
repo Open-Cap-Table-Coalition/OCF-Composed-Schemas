@@ -2108,6 +2108,8 @@ export function renderMappingFlowHtml(options: MappingFlowSvgOptions): string {
     }
     h1 { margin: 0 0 4px; font-size: 22px; }
     .hint { color: #475569; font-size: 13px; }
+    .back-link { display: inline-block; margin-bottom: 8px; color: #1d4ed8; font-size: 12px; font-weight: 700; text-decoration: none; }
+    .back-link:hover { text-decoration: underline; }
     .toolbar {
       display: flex;
       flex-wrap: wrap;
@@ -2157,6 +2159,7 @@ export function renderMappingFlowHtml(options: MappingFlowSvgOptions): string {
 </head>
 <body>
   <header>
+    <a class="back-link" href="../../index.html">← Back to mapping explorer</a>
     <h1>Interactive polymorphic mapping flows</h1>
     <div class="hint">Toggle target lanes or source routes. Click a property arrow to focus one mapping; shift-click to select several.</div>
     <div class="toolbar">
@@ -2732,21 +2735,58 @@ function boxLine(content: string, innerWidth: number): string {
   return `│ ${content.padEnd(innerWidth - 2)} │`;
 }
 
+const REPORT_CONTENT_WIDTH = 112;
+
+/** Keep the fixed-width report readable in GitHub's narrow document column. */
+function wrapReportLine(line: string, width = REPORT_CONTENT_WIDTH): string[] {
+  if (line.length <= width) return [line];
+
+  const indentation = line.match(/^\s*/u)?.[0] ?? "";
+  const words = line.slice(indentation.length).split(/\s+/u).filter(Boolean);
+  const lines: string[] = [];
+  const available = Math.max(1, width - indentation.length);
+  let current = indentation;
+
+  for (const word of words) {
+    if (current.length > indentation.length && current.length + 1 + word.length <= width) {
+      current += ` ${word}`;
+      continue;
+    }
+
+    if (current.length > indentation.length) {
+      lines.push(current);
+      current = indentation;
+    }
+
+    let remaining = word;
+    while (remaining.length > available) {
+      lines.push(indentation + remaining.slice(0, available));
+      remaining = remaining.slice(available);
+    }
+    current += remaining;
+  }
+
+  if (current.length > indentation.length) lines.push(current);
+  return lines.length > 0 ? lines : [line];
+}
+
 function renderBox(title: string, metadata: string[], body: string[] = []): string[] {
   const titleText = ` ${title} `;
+  const wrappedMetadata = metadata.flatMap((line) => wrapReportLine(line));
+  const wrappedBody = body.flatMap((line) => wrapReportLine(line));
   const innerWidth =
     Math.max(
       titleText.length,
-      ...metadata.map((line) => line.length),
-      ...body.map((line) => line.length)
+      ...wrappedMetadata.map((line) => line.length),
+      ...wrappedBody.map((line) => line.length)
     ) + 2;
   const lines = [
     `╭${titleText}${"─".repeat(innerWidth - titleText.length)}╮`,
-    ...metadata.map((line) => boxLine(line, innerWidth)),
+    ...wrappedMetadata.map((line) => boxLine(line, innerWidth)),
   ];
-  if (body.length > 0) {
+  if (wrappedBody.length > 0) {
     lines.push(`├${"─".repeat(innerWidth)}┤`);
-    lines.push(...body.map((line) => boxLine(line, innerWidth)));
+    lines.push(...wrappedBody.map((line) => boxLine(line, innerWidth)));
   }
   lines.push(`╰${"─".repeat(innerWidth)}╯`);
   return lines;
@@ -2853,14 +2893,14 @@ function renderCoverageStory(inverse: InverseCoverageLedger): string[] {
     `       ${counts["vendor-family"]} CARTA-specific families without OCF sources, ${counts["workflow-gap"]} workflow/data gaps,`,
     `       ${counts.gap} actionable gaps, ${counts.review} requiring review.`,
     `  Check: ${story.totalDefs} = ${story.nonObjectDefs} non-object + ${story.objectDefs} object-shaped; ${story.nonObjectDefs} = ${story.scalarEnumDefs} scalar enum + ${story.scalarValueTypeDefs} scalar support${otherNonObjectText}; ${story.standaloneCandidateDefs} = ${story.mappedDefs} + ${story.unmappedCandidateDefs}; ${story.objectDefs} = ${story.standaloneCandidateDefs} + ${story.nonEntityObjectDefs}.`,
-  ];
+  ].flatMap((line) => wrapReportLine(line));
 }
 
 function wrapReportText(
   text: string,
   firstPrefix: string,
   continuationPrefix: string,
-  width = 112
+  width = REPORT_CONTENT_WIDTH
 ): string[] {
   const words = text.split(/\s+/).filter(Boolean);
   const lines: string[] = [];
@@ -2931,7 +2971,7 @@ function renderExcludedRows(rows: InverseExcludedRoleRow[]): string[] {
       "nested"
     )
   );
-  return lines;
+  return lines.flatMap((line) => wrapReportLine(line));
 }
 
 function rowForTarget(
@@ -2960,8 +3000,12 @@ export function renderMappingInverseReport(options: MappingInverseReportOptions)
   lines.push(
     "",
     "Evidence legend",
-    "  [object] direct OCF object route; [type] reusable mapping detail used by that route, not a separate source record.",
-    "  inverse semantics are orthogonal: record-construction (default), reference-only, state-projection, aggregate-projection, or event-reconstruction."
+    ...wrapReportLine(
+      "  [object] direct OCF object route; [type] reusable mapping detail used by that route, not a separate source record."
+    ),
+    ...wrapReportLine(
+      "  inverse semantics are orthogonal: record-construction (default), reference-only, state-projection, aggregate-projection, or event-reconstruction."
+    )
   );
 
   lines.push(...renderCoverageStory(inverse));

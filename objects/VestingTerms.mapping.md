@@ -100,8 +100,6 @@ Use a link below to open a prefilled GitHub issue. The issue can be copied into 
 
 ## Notes / open questions
 
-- `VestingTerms` is the parent of OCF's new statements-based vesting model. Its Carta analogue is `VestingScheduleTemplate`: a reusable schedule shape whose statements live as `periods[]` in the template. This mirrors the pre-#227 `canonical/vesting/VestingScheduleTemplate.mapping.md` targets exactly.
-- `id` → the template's `id`. OCF's `id` is the identifier an issuance's `vesting_template_id` references, which is the same role Carta's `VestingScheduleTemplate.id` plays, so it is a genuine `rename` rather than `ocf-internal`. Note Carta's `id` has `maxLength: 50`; OCF imposes no length bound, so a long OCF id could need truncation/remapping at export time.
-- `statements` → `periods[]`. Each OCF `VestingStatement` projects to one Carta `VestingPeriod`; the per-statement field projection (`order`/`occurrences`/`period`/`period_type`/`cliff`/`percentage` → Carta `VestingPeriod`) is documented on `types/vesting/VestingStatement.mapping.md`, not here.
-- `object_type` is the OCF type discriminator (const `VESTING_TERMS`); Carta has no equivalent, so it is `ocf-internal`.
-- Carta's `VestingScheduleTemplate` also exposes `issuerId`, `name`, `description`, `vestingScheduleType`, and `uuid`, which have no OCF source on `VestingTerms` and are left unset by this mapping.
+- OCF `VestingTerms` maps to Carta `VestingScheduleTemplate`: `id` → `id`, and each `VestingStatement` in `statements` projects to one `VestingPeriod` in `periods[]`.
+- The per-statement projection is defined in [`VestingStatement.mapping.md`](../types/vesting/VestingStatement.mapping.md). Carta-only issuer, name, description, schedule-type, and UUID fields remain unset.
+- `object_type` is OCF scaffolding; Carta types the schedule positionally.

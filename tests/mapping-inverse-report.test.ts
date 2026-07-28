@@ -80,6 +80,23 @@ function structuralEdge(
 }
 
 describe("renderMappingInverseReport", () => {
+  it("gives the standalone flow viewer a clear way back to the map", () => {
+    const html = renderMappingFlowHtml({
+      inverse: ledger({ Stakeholder: { properties: { name: {} } } }, [
+        objectFieldEdge(
+          "objects/Stakeholder.mapping.md",
+          "Stakeholder",
+          "name",
+          "Stakeholder.name"
+        ),
+      ]),
+      mappingDocuments: new Map(),
+    });
+
+    expect(html).toContain('class="back-link" href="../../index.html"');
+    expect(html).toContain("Back to mapping explorer");
+  });
+
   it("renders ledger edges into target properties and shows unmapped target properties", () => {
     const inverse = ledger(
       {
@@ -118,6 +135,28 @@ describe("renderMappingInverseReport", () => {
     expect(out).toContain("[type] types/Note.mapping.md :: conversion_discount (rename)");
     expect(out).toContain("priceCap");
     expect(out).toContain("✗ no mapped OCF source");
+  });
+
+  it("wraps wide report panels for narrow document views", () => {
+    const inverse = ledger(
+      {
+        WideTarget: { properties: { targetProperty: {} } },
+      },
+      [
+        objectFieldEdge(
+          "objects/transactions/very-long-family/ExtremelyLongSourceTransaction.mapping.md",
+          "ExtremelyLongSourceTransaction",
+          "very_long_source_field_that_needs_a_wrapped_line",
+          "#/$defs/WideTarget/properties/targetProperty"
+        ),
+      ]
+    );
+
+    const out = renderMappingInverseReport({ inverse, targetObject: "WideTarget" });
+    const longestLine = Math.max(...out.split("\n").map((line) => line.length));
+
+    expect(longestLine).toBeLessThanOrEqual(116);
+    expect(out).toContain("ExtremelyLongSourceTransaction.mapping.md");
   });
 
   it("renders inverse semantics without changing forward slot evidence", () => {
@@ -637,7 +676,8 @@ describe("renderMappingInverseReport", () => {
     expect(out).toContain("Option [OPTION] or Sar [CSAR] → securityId");
     expect(out.match(/:: date \(rename\)/g)).toHaveLength(1);
     expect(out.match(/:: name \[shared\] \(rename\)/g)).toHaveLength(1);
-    expect(out.match(/:: security_id \[shared\] \(rename\)/g)).toHaveLength(1);
+    const normalized = out.replace(/[╭╰├┤│─]/gu, "").replace(/\s+/gu, " ");
+    expect(normalized.match(/:: security_id \[shared\] \(rename\)/g)).toHaveLength(1);
   });
 
   it("renders the outer and inner discriminator chain for nested convertible mechanisms", () => {
@@ -757,16 +797,18 @@ describe("renderMappingInverseReport", () => {
       "selects ConvertibleConversionRight where conversion_right.type = CONVERTIBLE_CONVERSION_RIGHT"
     );
     expect(out).toContain("active when type = CONVERTIBLE_CONVERSION_RIGHT");
-    expect(out).toContain(
-      "[type] types/conversion_rights/ConvertibleConversionRight.mapping.md :: conversion_mechanism (union-map)"
+    const normalized = out.replace(/[╭╰├┤│─]/gu, "").replace(/\s+/gu, " ");
+    expect(normalized).toContain(
+      "[type] types/conversion_rights/ConvertibleConversionRight.mapping.md ::"
     );
+    expect(normalized).toContain("conversion_mechanism (union-map)");
     expect(out).toContain(
       "dispatches exactly one conversion_mechanism.type branch (mutually exclusive)"
     );
-    expect(out).toContain(
+    expect(normalized).toContain(
       "[type] types/conversion_mechanisms/SAFEConversionMechanism.mapping.md :: conversion_discount (rename)"
     );
-    expect(out).toContain(
+    expect(normalized).toContain(
       "[type] types/conversion_mechanisms/NoteConversionMechanism.mapping.md :: conversion_discount (rename)"
     );
   });

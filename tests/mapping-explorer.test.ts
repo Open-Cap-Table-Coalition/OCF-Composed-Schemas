@@ -44,13 +44,29 @@ describe("mapping explorer", () => {
       nestedNamespace: "ocf",
       support: true,
     });
+    expect(explorer.targets.find((target) => target.name === "OptionGrantDocuments")).toMatchObject(
+      {
+        status: "gap",
+        noSource: true,
+        support: false,
+      }
+    );
+    expect(
+      explorer.targets.find((target) => target.name === "CapitalizationTableSummary")
+    ).toMatchObject({
+      status: "report-rollup",
+      noSource: true,
+      support: false,
+    });
+    expect(explorer.metrics.actionableTargets).toBe(1);
+    expect(explorer.metrics.explainedTargets).toBe(12);
   });
 
   it("keeps gap pages actionable with mapping-specific issue links", async () => {
     const { corpus, inverse, mappingDocuments } = await loadExplorer();
     const explorer = buildMappingExplorerData(corpus, inverse, [], mappingDocuments);
     const source = explorer.sources.find((item) => item.noTarget);
-    const target = explorer.targets.find((item) => item.noSource);
+    const target = explorer.targets.find((item) => item.status === "gap");
 
     expect(source).toBeDefined();
     expect(target).toBeDefined();
@@ -61,19 +77,21 @@ describe("mapping explorer", () => {
       "issues/new?title=%5BMapping+question%5D"
     );
     const index = renderMappingExplorerIndex(explorer);
-    expect(index).toContain("Carta OCF Core Mapping Explorer");
-    expect(index).toContain("OCF source objects");
+    expect(index).toContain("Cap-table data map");
+    expect(index).toContain("OCF records");
+    expect(index).toContain("Open Cap Table Coalition");
+    expect(index).toContain("OCT-coalition-seal_horizontal%202.png");
     expect(index).toContain(`All (${explorer.metrics.sourceObjects})`);
     expect(index).toContain(
       `Mapped (${explorer.metrics.sourceObjects - explorer.metrics.noTargetSources})`
     );
-    expect(index).toContain(
-      `All (${explorer.metrics.mappedTargets + explorer.metrics.noSourceTargets})`
-    );
+    expect(index).toContain(`All (${explorer.metrics.targetObjects})`);
     expect(index).toContain(`Mapped (${explorer.metrics.mappedTargets})`);
-    expect(index).toContain(`Gaps (${explorer.metrics.noSourceTargets})`);
+    expect(index).toContain(`Needs a decision (${explorer.metrics.actionableTargets})`);
+    expect(index).toContain(`No standalone record (${explorer.metrics.explainedTargets})`);
     expect(index).toContain(`Support (${explorer.metrics.supportTargets})`);
-    expect(index).not.toContain('data-filter-button="support"');
+    expect(index).toContain('data-filter-button="support"');
+    expect(index).toContain('data-filter-button="explained"');
     expect(index).toContain("Target page scope");
     expect(index).toContain("Full inventory + analysis →");
     expect(index).toContain('data-side-tab="source"');
@@ -81,10 +99,12 @@ describe("mapping explorer", () => {
     expect(index).toContain('data-side-panel="target"');
     expect(index).toMatch(/styles\.css\?v=[a-z0-9]+/);
     expect(index).toMatch(/app\.js\?v=[a-z0-9]+/);
-    expect(renderMappingExplorerAppJs()).toContain("setSide(sideFromHash())");
-    const targetDirectory = index.split('data-directory="Carta targets">')[1] ?? "";
-    expect(targetDirectory).not.toContain('data-status="support"');
-    expect(targetDirectory).not.toContain(">PointOfContact</a>");
+    expect(renderMappingExplorerAppJs()).toContain(
+      "setSide(sideFromHash(), Boolean(window.location.hash))"
+    );
+    const targetDirectory = index.split('data-directory="Carta records">')[1] ?? "";
+    expect(targetDirectory).toContain('data-status="support"');
+    expect(targetDirectory).toContain(">PointOfContact</a>");
   });
 
   it("keeps directory cards inside responsive grid tracks", () => {
@@ -95,6 +115,8 @@ describe("mapping explorer", () => {
     expect(css).toContain("appearance: none");
     expect(css).toContain(".card { min-width: 0;");
     expect(css).toContain("overflow-wrap: anywhere");
+    expect(css).toContain(".nav-links { display: flex; flex-wrap: wrap;");
+    expect(css).toContain(".nav-row { height: auto; min-height: 72px;");
   });
 
   it("renders authored mapping notes and open/closed questions", async () => {
@@ -137,6 +159,28 @@ describe("mapping explorer", () => {
     expect(renderMappingExplorerSourcePage(transfer!)).toContain(
       "Cancellation + issuance is not an effective Carta replacement"
     );
+  });
+
+  it("renders the concrete Carta property for Document mappings", async () => {
+    const { corpus, inverse, mappingDocuments } = await loadExplorer();
+    const explorer = buildMappingExplorerData(corpus, inverse, [], mappingDocuments);
+    const document = explorer.sources.find((item) => item.entity === "Document");
+
+    expect(document).toBeDefined();
+    const path = document!.fields.find((field) => field.field === "path");
+    const uri = document!.fields.find((field) => field.field === "uri");
+    expect(path?.targets).toEqual([
+      {
+        object: "Document",
+        property: "fileId",
+        pointer: "#/$defs/Document/properties/fileId",
+      },
+    ]);
+    expect(uri?.targets).toEqual(path?.targets);
+
+    const page = renderMappingExplorerSourcePage(document!);
+    expect(page).toContain("Document.fileId");
+    expect(page).not.toContain("Document.field");
   });
 
   it("shows Carta and OCF schema types in the target slot ledger", async () => {

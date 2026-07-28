@@ -120,4 +120,4 @@ Use a link below to open a prefilled GitHub issue. The issue can be copied into 
 
 ## Notes / open questions
 
-- Carta has no concept of a named, configurable capitalization-rule definition. OCF uses `CapitalizationDefinition` (and `CapitalizationDefinitionRules`) to express *which* stock classes/plans/securities are included or excluded when calculating fully-diluted capitalization. Carta exposes aggregate quantities (e.g. `fullyDilutedShares` on `OptionPoolSummary`, `CapitalizationTableSummary`) but not the rule definitions that produced them. The README also notes that Carta capitalization-summary types are an excluded part of the bundle in any case.
+- Carta exposes capitalization totals, not the inclusion/exclusion rule set that OCF `CapitalizationDefinition` describes. All four rule inputs are `no-equivalent` and must be handled outside the Carta snapshot if needed.

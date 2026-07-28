@@ -168,7 +168,7 @@ Use a link below to open a prefilled GitHub issue. The issue can be copied into 
   `StockIssuance` first (the two-pass requirement, §2.2) before it can decide where
   the acceptance lands. `StockIssuanceType` has exactly two values — `RSA` and
   `FOUNDERS_STOCK` — which the two variants partition exhaustively.
-- **`date` is the only mappable field.** For an `RSA` issuance the accepted security
+- **`date` is the only acceptance-specific field.** For an `RSA` issuance the accepted security
   is a Carta `RestrictedStockAward`, which exposes
   `stakeholderAcceptanceDate` (`$ref Iso8601CompleteCalendarDate`); the OCF
   acceptance `date` is folded onto that security via the per-variant target map.

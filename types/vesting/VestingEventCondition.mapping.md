@@ -5,13 +5,13 @@ ocf_title: Type - Vesting Event Condition
 ocf_kind: type
 required_fields:
   - event_id
-target_standard: TBD
-target_version: TBD
-status: draft
+target_standard: Carta
+target_version: v1alpha1 (2026-04-30)
+status: complete
 last_generated: 2026-06-29
 ---
 
-# Type - Vesting Event Condition → TBD
+# Type - Vesting Event Condition → Carta
 
 > The named-event axis of a VestingStatement: a gating event (referenced by `event_id`) that must fire before the statement releases. Its firing is recorded by a v2 vesting-event transaction. Present ⟺ the statement is gated.
 
@@ -51,12 +51,12 @@ Source: [`VestingEventCondition.schema.json`](./VestingEventCondition.schema.jso
 ```yaml
 # kind vocabulary: rename | select | split | combine | enum-remap | computed | unmappable | TODO
 # unmappable reason vocabulary: no-equivalent | excluded-from-snapshot | out-of-scope | ocf-internal
-status: draft
+status: complete
 
 fields:
   event_id:
-    kind: TODO
-    target: TODO
+    kind: rename
+    target: "#/$defs/PerformanceCondition/properties/name"
 ```
 
 ## Ask a mapping question
@@ -76,4 +76,4 @@ Use a link below to open a prefilled GitHub issue. The issue can be copied into 
 
 ## Notes / open questions
 
--
+- `event_id` identifies the Carta `PerformanceCondition.name` for the named-event gate. This type only names the condition; event firing/date/status are handled by the separate OCF vesting-event transaction and are not round-tripped here.

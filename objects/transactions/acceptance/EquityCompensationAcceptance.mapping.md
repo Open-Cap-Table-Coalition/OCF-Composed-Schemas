@@ -184,7 +184,7 @@ Use a link below to open a prefilled GitHub issue. The issue can be copied into 
   is fixed at issuance and an importer must resolve `compensation_type` from the joined
   `EquityCompensationIssuance` first (the two-pass requirement, §2.2 of
   docs/polymorphic-transaction-routing.md).
-- **`date` is the only mappable field.** It is the substantive payload — the date the
+- **`date` is the only acceptance-specific field.** It is the substantive payload — the date the
   holder accepted — and lands on the resolved family's security object via a per-variant
   target map: Option → `OptionGrant.stakeholderAcceptanceDate`, Rsu →
   `RestrictedStockUnit.stakeholderAcceptanceDate`. Both sides are calendar dates (OCF

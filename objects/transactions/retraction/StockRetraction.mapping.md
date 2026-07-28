@@ -157,42 +157,5 @@ Use a link below to open a prefilled GitHub issue. The issue can be copied into 
 
 ## Notes / open questions
 
-- **Join-dependent (downstream), but all routes converge.** One OCF `StockRetraction`
-  carries no discriminator, only `security_id`, so the stock family is fixed at
-  issuance and recovered by joining `security_id` back to the `StockIssuance` and
-  reading its `issuance_type` (`RSA` → `Rsa`; `FOUNDERS_STOCK` / absent → `Default`) —
-  the two-pass requirement, see [`docs/polymorphic-transaction-routing.md`](../../../docs/polymorphic-transaction-routing.md) §2.2. Unlike a cancellation,
-  every family resolves to the same answer here: **Carta has no retraction
-  transaction in any stock family**, so `primary_targets` is `null` for both variants
-  and there are no mappable fields.
-- **Carta has no retraction transaction.** Carta's stock-transaction surface is the
-  `Certificate*Transaction` family (`CertificateIssuanceTransaction`,
-  `CertificateCancellationTransaction`) plus the RSA variants; none models a
-  retraction. A retraction (`primitives/objects/transactions/retraction/Retraction.schema.json`,
-  composed here via `allOf`) *withdraws a previously-recorded transaction* — a
-  data-correction/reversal against the ledger — whereas a cancellation is a real
-  corporate event that retires an outstanding security. Carta records only resulting
-  ledger state, not OCF's transaction-by-transaction event log with reversals, so a
-  retraction is dropped entirely on import; the faithful behavior is *not replaying*
-  the retracted transaction in the first place.
-- Per-field justification (all six unmappable in both families):
-    - `security_id`: the `route_by_property.lookup_by.key` join key. It routes the family back to
-      the issuance; it is not itself a stored Carta field on any retraction tx (none
-      exists). `ocf-internal`.
-    - `reason_text`: free-text reason for the retraction. Carta has no free-text reason
-      field on any transaction — the only `reason`-named fields are closed enums
-      (`CertificateCancellationReason`, etc.) scoped to cancellation semantics — so
-      free-text → enum is unmappable, not a rename. `no-equivalent`.
-    - `object_type` (const `TX_STOCK_RETRACTION`): OCF scaffolding identifying the
-      transaction concept; Carta assigns transaction kinds structurally and has no
-      retraction transaction onto which to remap it. `ocf-internal`.
-    - `date`: OCF records the calendar date the retraction took effect; with no Carta
-      retraction transaction there is no `effectiveDatetime`-style slot to carry it
-      (and note the date-vs-datetime granularity gap). `no-equivalent`.
-    - `id`, `comments`: OCF object scaffolding — `id` is OCF's own identifier (Carta
-      assigns identifiers server-side) and `comments` has no Carta slot. `ocf-internal`
-      / `no-equivalent`.
-- Consistency: the sibling retraction transactions (`ConvertibleRetraction`,
-  `EquityCompensationRetraction`, `PlanSecurityRetraction`, `WarrantRetraction`) share
-  the identical 6-field shape and the same "Carta has no retraction" conclusion, so all
-  five should route all-unmappable in the same way.
+- Join on `security_id` to the stock issuance family, but Carta has no stock retraction transaction. RSA and FOUNDERS_STOCK routes have no target, so date, security reference, and reason are dropped.
+- `id`, `comments`, and `object_type` are OCF scaffolding; retraction is not treated as cancellation.
