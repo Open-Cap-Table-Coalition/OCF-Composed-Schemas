@@ -5,13 +5,13 @@ ocf_title: Type - Vesting Event Condition
 ocf_kind: type
 required_fields:
   - event_id
-target_standard: TBD
-target_version: TBD
-status: draft
+target_standard: Carta
+target_version: v1alpha1 (2026-04-30)
+status: complete
 last_generated: 2026-06-29
 ---
 
-# Type - Vesting Event Condition → TBD
+# Type - Vesting Event Condition → Carta
 
 > The named-event axis of a VestingStatement: a gating event (referenced by `event_id`) that must fire before the statement releases. Its firing is recorded by a v2 vesting-event transaction. Present ⟺ the statement is gated.
 
@@ -51,12 +51,12 @@ Source: [`VestingEventCondition.schema.json`](./VestingEventCondition.schema.jso
 ```yaml
 # kind vocabulary: rename | select | split | combine | enum-remap | computed | unmappable | TODO
 # unmappable reason vocabulary: no-equivalent | excluded-from-snapshot | out-of-scope | ocf-internal
-status: draft
+status: complete
 
 fields:
   event_id:
-    kind: TODO
-    target: TODO
+    kind: rename
+    target: "#/$defs/VestingPeriod/properties/milestoneName"
 ```
 
 ## Ask a mapping question
@@ -76,4 +76,6 @@ Use a link below to open a prefilled GitHub issue. The issue can be copied into 
 
 ## Notes / open questions
 
--
+- This is a contextual type mapping, not a standalone Carta record. A `VestingEventCondition` is nested inside an OCF `VestingStatement`, and the containing statement projects to one Carta `VestingPeriod`.
+- `event_id` → `milestoneName` is a value-preserving rename after flattening the one-property OCF object. Carta describes `milestoneName` as the name of a milestone-based period, which matches OCF's named-event gate.
+- This mapping intentionally does not populate Carta's `performanceCondition` object. OCF provides only the event identifier here; it does not provide the condition type, description, evaluation status, or payout fields required to construct a faithful performance-condition object. The enclosing `VestingStatement` mapping documents the same choice.

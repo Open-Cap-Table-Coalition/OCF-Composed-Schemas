@@ -80,6 +80,23 @@ function structuralEdge(
 }
 
 describe("renderMappingInverseReport", () => {
+  it("gives the standalone flow viewer a clear way back to the map", () => {
+    const html = renderMappingFlowHtml({
+      inverse: ledger({ Stakeholder: { properties: { name: {} } } }, [
+        objectFieldEdge(
+          "objects/Stakeholder.mapping.md",
+          "Stakeholder",
+          "name",
+          "Stakeholder.name"
+        ),
+      ]),
+      mappingDocuments: new Map(),
+    });
+
+    expect(html).toContain('class="back-link" href="../../index.html"');
+    expect(html).toContain("Back to mapping explorer");
+  });
+
   it("renders ledger edges into target properties and shows unmapped target properties", () => {
     const inverse = ledger(
       {

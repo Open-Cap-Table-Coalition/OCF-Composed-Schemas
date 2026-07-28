@@ -2108,6 +2108,8 @@ export function renderMappingFlowHtml(options: MappingFlowSvgOptions): string {
     }
     h1 { margin: 0 0 4px; font-size: 22px; }
     .hint { color: #475569; font-size: 13px; }
+    .back-link { display: inline-block; margin-bottom: 8px; color: #1d4ed8; font-size: 12px; font-weight: 700; text-decoration: none; }
+    .back-link:hover { text-decoration: underline; }
     .toolbar {
       display: flex;
       flex-wrap: wrap;
@@ -2157,6 +2159,7 @@ export function renderMappingFlowHtml(options: MappingFlowSvgOptions): string {
 </head>
 <body>
   <header>
+    <a class="back-link" href="../../index.html">← Back to mapping explorer</a>
     <h1>Interactive polymorphic mapping flows</h1>
     <div class="hint">Toggle target lanes or source routes. Click a property arrow to focus one mapping; shift-click to select several.</div>
     <div class="toolbar">

@@ -1,6 +1,6 @@
 ╭ Carta inverse coverage report ──╮
 │ source_documents: 102           │
-│ green_carta_documents: 101      │
+│ green_carta_documents: 102      │
 ╰─────────────────────────────────╯
 
 Evidence legend

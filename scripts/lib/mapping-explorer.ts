@@ -14,7 +14,7 @@ import type { MappingReportDocument } from "./mapping-report.js";
 import type { MappingQuestion } from "./mapping-questions.js";
 import { questionTargetParts } from "./mapping-questions.js";
 
-const MAPPING_EXPLORER_TITLE = "Carta OCF Core Mapping Explorer";
+const MAPPING_EXPLORER_TITLE = "Cap-table data map";
 let mappingExplorerAssetVersionCache: string | undefined;
 
 function mappingExplorerAssetVersion(): string {
@@ -69,6 +69,7 @@ export interface ExplorerSource {
 export interface ExplorerEvidence {
   rel: string;
   source: string;
+  sourceSlug?: string;
   variant: string;
   field?: string;
   sourceType: string;
@@ -113,6 +114,8 @@ export interface MappingExplorerData {
     targetObjects: number;
     mappedTargets: number;
     noSourceTargets: number;
+    actionableTargets: number;
+    explainedTargets: number;
     supportTargets: number;
     visualTargets: number;
   };
@@ -122,6 +125,8 @@ interface DirectoryFilterCounts {
   all: number;
   mapped: number;
   gap: number;
+  explained?: number;
+  support?: number;
 }
 
 export function explorerSlug(value: string): string {
@@ -288,10 +293,12 @@ function evidenceFor(
   objects: ReadonlyMap<string, GreenObject>,
   edge: MappingEdge
 ): ExplorerEvidence {
+  const object = objects.get(edge.source);
   const sourceType = sourceTypeForEdge(corpus, objects, edge);
   return {
     rel: edge.rel,
     source: edge.source,
+    sourceSlug: edge.sourceKind === "object" && object ? explorerSlug(object.entity) : undefined,
     variant: edge.variant,
     field: edge.field,
     sourceType: sourceType.label,
@@ -410,6 +417,14 @@ function isSupportTarget(row: Pick<ExplorerTarget, "status">): boolean {
   return row.status === "nested-obj" || row.status === "value-type";
 }
 
+function isActionableTarget(target: Pick<ExplorerTarget, "noSource" | "status">): boolean {
+  return target.noSource && (target.status === "gap" || target.status === "review");
+}
+
+function isExplainedTarget(target: Pick<ExplorerTarget, "noSource" | "status">): boolean {
+  return target.noSource && !isActionableTarget(target);
+}
+
 export function buildMappingExplorerData(
   corpus: Corpus,
   inverse: InverseCoverageLedger,
@@ -479,6 +494,8 @@ export function buildMappingExplorerData(
       targetObjects: targets.length,
       mappedTargets: targets.filter(isMappedTarget).length,
       noSourceTargets: targets.filter((target) => target.noSource).length,
+      actionableTargets: targets.filter(isActionableTarget).length,
+      explainedTargets: targets.filter(isExplainedTarget).length,
       supportTargets: targets.filter(isSupportTarget).length,
       visualTargets: targets.filter((target) => target.svgFile !== undefined).length,
     },
@@ -511,15 +528,17 @@ function schemaTypeLink(label: string, href: string): string {
 }
 
 function sourceStatus(source: ExplorerSource): string {
-  if (source.noTarget) return source.aliasOf ? "Inherited mapping" : "No target";
+  if (source.noTarget) return source.aliasOf ? "Inherited rules" : "No Carta destination";
   return "Mapped";
 }
 
 function targetStatus(target: ExplorerTarget): string {
-  if (target.noSource) return "No OCF source";
   if (target.support) {
-    return target.nestedNamespace === "ocf" ? "Nested OCF type" : "Support definition";
+    return target.nestedNamespace === "ocf" ? "OCF helper type" : "Carta support type";
   }
+  if (isActionableTarget(target)) return "Needs mapping decision";
+  if (target.noSource && target.sourceMappings.length > 0) return "No standalone OCF record";
+  if (isExplainedTarget(target)) return "No standalone OCF record";
   if (target.status === "direct") return "Mapped target";
   if (target.status === "deferred") return "Deferred evidence";
   return target.status;
@@ -628,7 +647,7 @@ function shell(title: string, relative: string, body: string): string {
   <div class="page-glow page-glow-one"></div><div class="page-glow page-glow-two"></div>
   <header class="site-header"><div class="container nav-row">
     ${link(`${relative}index.html`, MAPPING_EXPLORER_TITLE, "brand")}
-    <nav class="nav-links" aria-label="Primary"><a href="${relative}index.html#ocf-objects">OCF objects</a><a href="${relative}index.html#carta-targets">Carta targets</a><a href="${relative}assets/mapping-flows-interactive/index.html">Interactive viewer</a></nav>
+    <nav class="nav-links" aria-label="Primary"><a href="${relative}index.html#ocf-objects">OCF records</a><a href="${relative}index.html#carta-targets">Carta records</a><a href="${relative}assets/mapping-flows-interactive/index.html">Flow viewer</a></nav>
   </div></header>
   <main class="container">${body}</main>
   <footer class="site-footer"><div class="container footer-row"><span>Generated from the green mapping corpus and inverse coverage ledger.</span><span>OCF Composed Schemas</span></div></footer>
@@ -643,7 +662,11 @@ function metric(value: number, label: string, tone = ""): string {
   )}</span></div>`;
 }
 
-function filterBar(group: string, counts: DirectoryFilterCounts): string {
+function filterBar(
+  group: string,
+  counts: DirectoryFilterCounts,
+  options: { gapLabel?: string; explainedLabel?: string; supportLabel?: string } = {}
+): string {
   return `<div class="filter-controls" data-filter-group="${html(
     group
   )}"><input data-filter-input type="search" placeholder="Search ${html(
@@ -654,26 +677,40 @@ function filterBar(group: string, counts: DirectoryFilterCounts): string {
     counts.all
   )})</button><button class="filter-button" data-filter-button="mapped" type="button">Mapped (${html(
     counts.mapped
-  )})</button><button class="filter-button" data-filter-button="gap" type="button">Gaps (${html(
-    counts.gap
-  )})</button></div></div>`;
+  )})</button><button class="filter-button" data-filter-button="gap" type="button">${html(
+    options.gapLabel ?? "Gaps"
+  )} (${html(counts.gap)})</button>${
+    counts.explained === undefined
+      ? ""
+      : `<button class="filter-button" data-filter-button="explained" type="button">${html(
+          options.explainedLabel ?? "Explained"
+        )} (${html(counts.explained)})</button>`
+  }${
+    counts.support === undefined
+      ? ""
+      : `<button class="filter-button" data-filter-button="support" type="button">${html(
+          options.supportLabel ?? "Support"
+        )} (${html(counts.support)})</button>`
+  }</div></div>`;
 }
 
 function targetScopeLegend(data: MappingExplorerData): string {
   return `<aside class="directory-legend" aria-label="Carta target directory scope"><div><span class="eyebrow">Target page scope</span><p><strong>Mapped (${html(
     data.metrics.mappedTargets
-  )})</strong> are standalone Carta definitions with OCF evidence. <strong>Gaps (${html(
-    data.metrics.noSourceTargets
-  )})</strong> are standalone candidates without an OCF source. <strong>Support (${html(
+  )})</strong> have a direct OCF record route. <strong>Needs a decision (${html(
+    data.metrics.actionableTargets
+  )})</strong> are gaps that need a mapping choice. <strong>No standalone record (${html(
+    data.metrics.explainedTargets
+  )})</strong> are documented exclusions such as summaries, alternate shapes, or Carta-only workflows. <strong>Support (${html(
     data.metrics.supportTargets
-  )})</strong> are nested object or value-type definitions kept in the full inventory and analysis, not shown in this standalone target directory.</p></div><div class="legend-links">${link(
+  )})</strong> are nested helpers used inside other Carta records. Every definition is listed here; use the detail page for the slot-level evidence.</p></div><div class="legend-links">${link(
     "assets/mapping-inverse-report.md",
     "Full inventory + analysis →"
   )}</div></aside>`;
 }
 
 function directionTabs(): string {
-  return `<nav class="direction-tabs" aria-label="Mapping direction" data-side-tabs role="tablist"><button id="source-side-tab" class="direction-tab is-active" data-side-tab="source" aria-controls="ocf-objects" aria-selected="true" role="tab" type="button"><span class="direction-tab-kicker">01 / source side</span><strong>OCF objects</strong></button><button id="target-side-tab" class="direction-tab" data-side-tab="target" aria-controls="carta-targets" aria-selected="false" role="tab" type="button"><span class="direction-tab-kicker">02 / target side</span><strong>Carta targets</strong></button></nav>`;
+  return `<nav class="direction-tabs" aria-label="Mapping direction" data-side-tabs role="tablist"><button id="source-side-tab" class="direction-tab is-active" data-side-tab="source" aria-controls="ocf-objects" aria-selected="true" role="tab" type="button"><span class="direction-tab-kicker">01 / source side</span><strong>OCF records</strong></button><button id="target-side-tab" class="direction-tab" data-side-tab="target" aria-controls="carta-targets" aria-selected="false" role="tab" type="button"><span class="direction-tab-kicker">02 / destination side</span><strong>Carta records</strong></button></nav>`;
 }
 
 function sourceCard(source: ExplorerSource): string {
@@ -682,13 +719,13 @@ function sourceCard(source: ExplorerSource): string {
         .slice(0, 3)
         .map((name) => `<span class="mini-chip">${html(name)}</span>`)
         .join("")
-    : '<span class="muted">No Carta target evidence</span>';
+    : '<span class="muted">No Carta destination</span>';
   return `<article class="card directory-card${
     source.noTarget ? " is-gap" : ""
   }" data-card data-status="${source.noTarget ? "gap" : "mapped"}" data-search="${html(
     `${source.entity} ${source.rel} ${source.targetNames.join(" ")}`
   )}">
-    <div class="card-top"><span class="eyebrow">OCF object</span><span class="status-pill ${
+    <div class="card-top"><span class="eyebrow">OCF record</span><span class="status-pill ${
       source.noTarget ? "status-gap" : "status-ok"
     }">${html(sourceStatus(source))}</span></div>
     <h3>${link(`sources/${source.slug}.html`, source.entity, "card-title")}</h3>
@@ -705,19 +742,29 @@ function sourceCard(source: ExplorerSource): string {
 }
 
 function targetCard(target: ExplorerTarget): string {
-  const statusClass = target.noSource
-    ? "status-gap"
-    : target.support
+  const statusClass = target.support
     ? "status-support"
+    : target.noSource
+    ? isActionableTarget(target)
+      ? "status-gap"
+      : "status-explained"
     : "status-ok";
-  const activeStatus = target.noSource ? "gap" : target.support ? "support" : "mapped";
+  const activeStatus = target.support
+    ? "support"
+    : target.noSource
+    ? isActionableTarget(target)
+      ? "gap"
+      : "explained"
+    : "mapped";
   const visual = target.svgFile ? '<span class="mini-chip">SVG visual</span>' : "";
   return `<article class="card directory-card${
-    target.noSource ? " is-gap" : ""
+    isActionableTarget(target) ? " is-gap" : ""
   }" data-card data-status="${activeStatus}" data-search="${html(
-    `${target.name} ${target.status} ${target.reason ?? ""}`
+    `${target.name} ${target.status} ${target.reason ?? ""} ${target.properties.join(
+      " "
+    )} ${target.sourceMappings.map((mapping) => mapping.source).join(" ")}`
   )}">
-    <div class="card-top"><span class="eyebrow">Carta target</span><span class="status-pill ${statusClass}">${html(
+    <div class="card-top"><span class="eyebrow">Carta record</span><span class="status-pill ${statusClass}">${html(
     targetStatus(target)
   )}</span></div>
     <h3>${link(`targets/${target.slug}.html`, target.name, "card-title")}</h3>
@@ -731,7 +778,7 @@ function targetCard(target: ExplorerTarget): string {
     )} source mapping${target.sourceMappings.length === 1 ? "" : "s"}</span>${visual}</div>
     <div class="chip-row">${questionChip(target.questions)}</div>
     <div class="card-footer">${
-      target.noSource
+      isActionableTarget(target) && target.sourceMappings.length === 0
         ? externalLink(target.issueUrl, "Open coverage issue", "text-link issue-link")
         : link(`targets/${target.slug}.html`, "Inspect target →")
     }</div>
@@ -740,7 +787,6 @@ function targetCard(target: ExplorerTarget): string {
 
 export function renderMappingExplorerIndex(data: MappingExplorerData): string {
   const featured = data.artifactNames[0];
-  const standaloneTargets = data.targets.filter((target) => !target.support);
   const featuredVisual = featured
     ? `<div class="featured-visual"><img src="assets/mapping-flows/${html(
         featured
@@ -755,46 +801,49 @@ export function renderMappingExplorerIndex(data: MappingExplorerData): string {
   return shell(
     "Overview",
     "",
-    `<section class="hero"><div class="hero-copy"><span class="eyebrow accent">OCF ↔ Carta / generated explorer</span><h1>See every mapped edge — and every honest gap.</h1><p class="hero-lede">A calm, searchable front door for the mapping corpus. Browse source objects, Carta targets, generated SVGs, and the interactive flow viewer without losing the evidence underneath.</p><div class="hero-actions"><a class="button button-primary" href="#ocf-objects">Browse the corpus</a><a class="button button-quiet" href="assets/mapping-flows-interactive/index.html">Open interactive viewer ↗</a></div></div><div class="hero-orbit"><div class="orbit-ring ring-one"></div><div class="orbit-ring ring-two"></div><div class="orbit-core"><span>single</span><strong>source</strong><span>of truth</span></div><span class="orbit-tag tag-one">OCF</span><span class="orbit-tag tag-two">CARTA</span><span class="orbit-tag tag-three">SVG</span></div></section>
+    `<section class="hero"><div class="hero-copy"><span class="eyebrow accent">OCF ↔ Carta / cap-table data</span><h1>How cap-table records move from OCF to Carta.</h1><p class="hero-lede"><strong>OCF</strong> is the Open Cap Format: the source-side records and events that describe a cap table. <strong>Carta</strong> is the destination data model in this comparison. Start with an OCF record to see where each field goes, or switch to Carta records to see what is mapped, derived, or still unmatched.</p><div class="hero-actions"><a class="button button-primary" href="#ocf-objects">Start with OCF records</a><a class="button button-quiet" href="#carta-targets">View Carta records</a></div></div><div class="hero-orbit"><div class="orbit-ring ring-one"></div><div class="orbit-ring ring-two"></div><div class="orbit-core"><span>source</span><strong>→</strong><span>destination</span></div><span class="orbit-tag tag-one">OCF</span><span class="orbit-tag tag-two">CARTA</span><span class="orbit-tag tag-three">MAP</span></div></section>
     <section class="metrics-grid" aria-label="Coverage summary">${metric(
       data.metrics.sourceObjects,
-      "OCF source objects"
-    )}${metric(data.metrics.noTargetSources, "with no target evidence", "metric-warn")}${metric(
+      "OCF records"
+    )}${metric(data.metrics.noTargetSources, "with no Carta destination", "metric-warn")}${metric(
       data.metrics.targetObjects,
-      "Carta definitions in inventory"
+      "Carta definitions"
     )}${metric(
       data.metrics.noSourceTargets,
-      "standalone targets with no OCF source",
+      "without a standalone OCF record",
       "metric-warn"
     )}</section>
-    <section class="feature-grid"><div class="feature-copy"><span class="eyebrow">What you are seeing</span><h2>Evidence first, polish second.</h2><p>The explorer is generated alongside the existing inverse report and visual artifacts. Every source and target page links back to its mapping file or opens a prefilled GitHub issue for the exact gap.</p><div class="feature-list"><span><i class="dot dot-mint"></i>${html(
+    <section class="feature-grid"><div class="feature-copy"><span class="eyebrow">How to use this map</span><h2>Follow a field from source to destination.</h2><p>The explorer is generated from the authored mapping files and the pinned Carta schema. Every page shows the evidence underneath the summary, with a direct link to the source mapping or a prefilled issue when a decision is still needed.</p><div class="feature-list"><span><i class="dot dot-mint"></i>${html(
       data.metrics.sourceObjects
-    )} OCF mapping pages</span><span><i class="dot dot-coral"></i>${html(
-      data.metrics.noSourceTargets
-    )} Carta source gaps</span><span><i class="dot dot-blue"></i>${html(
+    )} OCF record pages</span><span><i class="dot dot-coral"></i>${html(
+      data.metrics.actionableTargets
+    )} Carta entries needing a decision</span><span><i class="dot dot-blue"></i>${html(
       data.metrics.visualTargets
     )} SVG previews + interactive HTML</span></div></div>${featuredVisual}</section>
     ${directionTabs()}
-    <section id="ocf-objects" class="directory-section" data-side-panel="source" aria-labelledby="source-side-tab" role="tabpanel"><div class="section-heading"><div><span class="eyebrow">01 / source side</span><h2>OCF objects</h2><p>Each page keeps the authored mapping visible, including objects with no Carta target evidence.</p></div>${filterBar(
-      "OCF objects",
+    <section id="ocf-objects" class="directory-section" data-side-panel="source" aria-labelledby="source-side-tab" role="tabpanel"><div class="section-heading"><div><span class="eyebrow">01 / source side</span><h2>OCF records</h2><p>These are the source-side OCF records and events. Open one to see each field, its Carta destination, and any known loss or open question.</p></div>${filterBar(
+      "OCF records",
       {
         all: data.metrics.sourceObjects,
         mapped: data.metrics.sourceObjects - data.metrics.noTargetSources,
         gap: data.metrics.noTargetSources,
       }
-    )}</div><div class="directory-grid" data-directory="OCF objects">${data.sources
+    )}</div><div class="directory-grid" data-directory="OCF records">${data.sources
       .map(sourceCard)
       .join("")}</div></section>
-    <section id="carta-targets" class="directory-section" data-side-panel="target" aria-labelledby="target-side-tab" role="tabpanel" hidden><div class="section-heading"><div><span class="eyebrow">02 / target side</span><h2>Carta targets</h2><p>Standalone Carta targets are browseable here: mapped definitions and source gaps. Support definitions remain in the full inventory and analysis linked below.</p></div>${filterBar(
-      "Carta targets",
+    <section id="carta-targets" class="directory-section" data-side-panel="target" aria-labelledby="target-side-tab" role="tabpanel" hidden><div class="section-heading"><div><span class="eyebrow">02 / destination side</span><h2>Carta records</h2><p>Every Carta definition is listed here. Mapped entries have a direct OCF record route; entries needing review lack a standalone route; support entries are nested helpers used inside another Carta record.</p></div>${filterBar(
+      "Carta records",
       {
-        all: data.metrics.mappedTargets + data.metrics.noSourceTargets,
+        all: data.metrics.targetObjects,
         mapped: data.metrics.mappedTargets,
-        gap: data.metrics.noSourceTargets,
-      }
+        gap: data.metrics.actionableTargets,
+        explained: data.metrics.explainedTargets,
+        support: data.metrics.supportTargets,
+      },
+      { gapLabel: "Needs a decision", explainedLabel: "No standalone record" }
     )}</div>${targetScopeLegend(
       data
-    )}<div class="directory-grid" data-directory="Carta targets">${standaloneTargets
+    )}<div class="directory-grid" data-directory="Carta records">${data.targets
       .map(targetCard)
       .join("")}</div></section>
     <section class="closing-band"><div><span class="eyebrow accent">Need the raw ledger?</span><h2>Keep the generated report close.</h2></div><div class="hero-actions"><a class="button button-primary" href="assets/mapping-inverse-report.md">Read inverse report</a><a class="button button-quiet" href="https://github.com/Open-Cap-Table-Coalition/OCF-Composed-Schemas">View repository ↗</a></div></section>`
@@ -804,9 +853,12 @@ export function renderMappingExplorerIndex(data: MappingExplorerData): string {
 function sourceFieldRow(field: ExplorerSourceField): string {
   const targets = field.targets.length
     ? field.targets
-        .map(
-          (target) =>
-            `<span class="target-token">${html(`${target.object}.${target.property}`)}</span>`
+        .map((target) =>
+          link(
+            `../targets/${explorerSlug(target.object)}.html`,
+            `${target.object}.${target.property}`,
+            "target-token target-link"
+          )
         )
         .join("")
     : '<span class="muted">No Carta target</span>';
@@ -828,13 +880,13 @@ export function renderMappingExplorerSourcePage(source: ExplorerSource): string 
   const status = source.noTarget
     ? source.aliasOf
       ? "Inherited mapping"
-      : "No target evidence"
+      : "No Carta destination"
     : "Mapped";
   const alert = source.noTarget
     ? `<div class="callout callout-warn"><span class="callout-icon">!</span><div><strong>${
         source.aliasOf
-          ? "This object inherits its economic mapping."
-          : "No executable Carta target is declared for this OCF object."
+          ? "This record inherits its economic mapping."
+          : "No executable Carta destination is declared for this OCF record."
       }</strong><p>${
         source.aliasOf
           ? `The mapping is carried by ${html(
@@ -849,7 +901,7 @@ export function renderMappingExplorerSourcePage(source: ExplorerSource): string 
           link(`../targets/${explorerSlug(name)}.html`, name, "target-token target-link")
         )
         .join("")
-    : '<span class="muted">No Carta target evidence</span>';
+    : '<span class="muted">No Carta destination</span>';
   const rows = source.fields.length
     ? source.fields.map(sourceFieldRow).join("")
     : '<tr><td colspan="5" class="empty-cell">No field-level mapping entries were derived.</td></tr>';
@@ -857,11 +909,11 @@ export function renderMappingExplorerSourcePage(source: ExplorerSource): string 
   return shell(
     source.entity,
     relative,
-    `<div class="breadcrumbs">${link("../index.html", "Explorer")} <span>/</span> ${link(
+    `<div class="breadcrumbs">${link("../index.html", "Data map")} <span>/</span> ${link(
       "../index.html#ocf-objects",
-      "OCF objects"
+      "OCF records"
     )} <span>/</span> <strong>${html(source.entity)}</strong></div>
-    <section class="detail-hero"><div><span class="eyebrow">OCF source object</span><h1>${html(
+    <section class="detail-hero"><div><span class="eyebrow">OCF source record</span><h1>${html(
       source.entity
     )}</h1><p class="path-label">${html(
       source.rel
@@ -886,7 +938,7 @@ ${alert}${renderNotesPanel(source.notes)}${renderQuestionPanel(
       "Questions about this mapping",
       "Property-level review threads stay close to the evidence. Open a prefilled issue for a new decision or follow the mapping link back to the authored file."
     )}
-    <section class="detail-grid"><div class="detail-main"><div class="section-heading compact"><div><span class="eyebrow">Field evidence</span><h2>Where the source fields go</h2></div></div><div class="table-wrap"><table><thead><tr><th>Variant</th><th>OCF field</th><th>Carta target</th><th>DSL kind</th><th></th></tr></thead><tbody>${rows}</tbody></table></div></div><aside class="detail-aside"><div class="side-card"><span class="eyebrow">Carta destinations</span><h3>${html(
+    <section class="detail-grid"><div class="detail-main"><div class="section-heading compact"><div><span class="eyebrow">Field evidence</span><h2>Where the OCF fields go</h2></div></div><div class="table-wrap"><table><thead><tr><th>Variant</th><th>OCF field</th><th>Carta destination</th><th>Mapping kind</th><th></th></tr></thead><tbody>${rows}</tbody></table></div></div><aside class="detail-aside"><div class="side-card"><span class="eyebrow">Carta destinations</span><h3>${html(
       source.targetNames.length
     )}</h3><div class="token-stack">${targetChips}</div></div><div class="side-card"><span class="eyebrow">Keep exploring</span><p>Open the target-first inverse ledger or inspect the full interactive flow viewer.</p>${link(
       "../assets/mapping-inverse-report.md",
@@ -900,18 +952,24 @@ ${alert}${renderNotesPanel(source.notes)}${renderQuestionPanel(
 
 function targetEvidenceList(target: ExplorerTarget): string {
   if (target.sourceMappings.length === 0) {
-    return `<div class="callout callout-warn"><span class="callout-icon">!</span><div><strong>No OCF source mapping is currently derived.</strong><p>This target is kept in the explorer as a first-class coverage gap.</p>${externalLink(
-      target.issueUrl,
-      "Open coverage issue ↗",
-      "button button-primary"
-    )}</div></div>`;
+    const heading = target.support
+      ? "Supporting definition; no standalone OCF record is expected."
+      : isActionableTarget(target)
+      ? "No OCF source record or field mapping is currently derived."
+      : "No standalone OCF source record is expected for this definition.";
+    const action = isActionableTarget(target)
+      ? externalLink(target.issueUrl, "Open coverage issue ↗", "button button-primary")
+      : "";
+    return `<div class="callout callout-warn"><span class="callout-icon">!</span><div><strong>${heading}</strong><p>This Carta definition is kept in the explorer as an explicit coverage item.</p>${action}</div></div>`;
   }
   return `<div class="evidence-list">${target.sourceMappings
     .map(
       (evidence) =>
-        `<div class="evidence-row"><div><strong>${html(
-          evidence.source
-        )}</strong><span class="muted">${html(evidence.variant)}${
+        `<div class="evidence-row"><div><strong>${
+          evidence.sourceSlug
+            ? link(`../sources/${evidence.sourceSlug}.html`, evidence.source, "text-link")
+            : html(evidence.source)
+        }</strong><span class="muted">${html(evidence.variant)}${
           evidence.field ? ` · ${html(evidence.field)}` : ""
         } · OCF type: ${schemaTypeLink(
           evidence.sourceType,
@@ -931,7 +989,11 @@ function targetSlotRow(slot: ExplorerTargetSlot, target: ExplorerTarget): string
         .slice(0, 4)
         .map(
           (item) =>
-            `<span class="source-token"><span>${html(item.source)}${
+            `<span class="source-token"><span>${
+              item.sourceSlug
+                ? link(`../sources/${item.sourceSlug}.html`, item.source, "text-link")
+                : html(item.source)
+            }${
               item.field ? `.${html(item.field)}` : ""
             }</span><span class="schema-type"><span class="schema-type-label">OCF type</span> ${schemaTypeLink(
               item.sourceType,
@@ -940,7 +1002,11 @@ function targetSlotRow(slot: ExplorerTargetSlot, target: ExplorerTarget): string
         )
         .join("")
     : '<span class="muted">No OCF source evidence</span>';
-  const issue = slot.evidence[0]?.issueUrl ?? target.issueUrl;
+  const action = slot.evidence.length
+    ? externalLink(slot.evidence[0]!.issueUrl, "Issue ↗", "table-link")
+    : isActionableTarget(target)
+    ? externalLink(target.issueUrl, "Coverage ↗", "table-link")
+    : `<span class="muted">Documented</span>`;
   return `<tr><td><span class="mono strong">${html(
     slot.property
   )}</span><span class="schema-type"><span class="schema-type-label">Carta type</span> ${schemaTypeLink(
@@ -948,19 +1014,17 @@ function targetSlotRow(slot: ExplorerTargetSlot, target: ExplorerTarget): string
     slot.typeUrl
   )}</span></td><td><span class="kind-token status-${slot.status}">${html(
     slot.status
-  )}</span></td><td><div class="token-stack">${evidence}</div></td><td>${externalLink(
-    issue,
-    slot.evidence.length ? "Issue ↗" : "Coverage ↗",
-    "table-link"
-  )}</td></tr>`;
+  )}</span></td><td><div class="token-stack">${evidence}</div></td><td>${action}</td></tr>`;
 }
 
 export function renderMappingExplorerTargetPage(target: ExplorerTarget): string {
   const relative = "../";
-  const statusClass = target.noSource
-    ? "status-gap"
-    : target.support
+  const statusClass = target.support
     ? "status-support"
+    : target.noSource
+    ? isActionableTarget(target)
+      ? "status-gap"
+      : "status-explained"
     : "status-ok";
   const issueAction = target.sourceMappings.length
     ? externalLink(
@@ -968,7 +1032,9 @@ export function renderMappingExplorerTargetPage(target: ExplorerTarget): string 
         "Ask about mapping ↗",
         "button button-primary"
       )
-    : externalLink(target.issueUrl, "Open coverage issue ↗", "button button-primary");
+    : isActionableTarget(target)
+    ? externalLink(target.issueUrl, "Open coverage issue ↗", "button button-primary")
+    : link("../index.html#carta-targets", "Back to Carta records ↗", "button button-primary");
   const visual = target.svgFile
     ? `<div class="artifact-frame"><div class="artifact-toolbar"><span>Generated SVG artifact</span>${link(
         `../assets/mapping-flows/${target.svgFile}`,
@@ -996,11 +1062,11 @@ export function renderMappingExplorerTargetPage(target: ExplorerTarget): string 
   return shell(
     target.name,
     relative,
-    `<div class="breadcrumbs">${link("../index.html", "Explorer")} <span>/</span> ${link(
+    `<div class="breadcrumbs">${link("../index.html", "Data map")} <span>/</span> ${link(
       "../index.html#carta-targets",
-      "Carta targets"
+      "Carta records"
     )} <span>/</span> <strong>${html(target.name)}</strong></div>
-    <section class="detail-hero"><div><span class="eyebrow">Carta target definition</span><h1>${html(
+    <section class="detail-hero"><div><span class="eyebrow">Carta record definition</span><h1>${html(
       target.name
     )}</h1><p class="path-label">#/$defs/${html(
       target.name
@@ -1039,9 +1105,9 @@ export function renderMappingExplorerAppJs(): string {
     "  const normalize = (value) => value.toLowerCase().trim();",
     '  const sideFromHash = () => window.location.hash === "#carta-targets" ? "target" : "source";',
     "  const setSide = (side, scrollToPanel = false) => {",
-    '    document.querySelectorAll("[data-side-panel]").forEach((panel) => { panel.hidden = panel.dataset.sidePanel !== side; });',
+    '    document.querySelectorAll("[data-side-panel]").forEach((panel) => { const active = panel.dataset.sidePanel === side; panel.hidden = !active; panel.setAttribute("aria-hidden", String(!active)); });',
     '    document.querySelectorAll("[data-side-tab]").forEach((button) => { const active = button.dataset.sideTab === side; button.classList.toggle("is-active", active); button.setAttribute("aria-selected", String(active)); });',
-    '    if (scrollToPanel) { const panel = document.querySelector(`[data-side-panel="${side}"]`); panel?.scrollIntoView({ behavior: "smooth", block: "start" }); }',
+    '    if (scrollToPanel) { const panel = document.querySelector(`[data-side-panel="${side}"]`); panel?.scrollIntoView({ behavior: "auto", block: "start" }); }',
     "  };",
     "  const apply = () => {",
     "    const query = normalize(state.query);",
@@ -1072,8 +1138,8 @@ export function renderMappingExplorerAppJs(): string {
     '  document.querySelectorAll("[data-side-tab]").forEach((button) => {',
     '    button.addEventListener("click", () => { const side = button.dataset.sideTab || "source"; history.replaceState(null, "", side === "target" ? "#carta-targets" : "#ocf-objects"); setSide(side, true); });',
     "  });",
-    "  setSide(sideFromHash());",
-    '  window.addEventListener("hashchange", () => setSide(sideFromHash()));',
+    "  setSide(sideFromHash(), Boolean(window.location.hash));",
+    '  window.addEventListener("hashchange", () => setSide(sideFromHash(), true));',
     "})();",
   ].join("\n");
 }
@@ -1109,7 +1175,7 @@ export function renderMappingExplorerCss(): string {
     ".filter-controls { display: flex; flex-direction: column; gap: 9px; align-items: end; } .filter-controls input { width: 240px; background: rgba(255,255,255,.05); border: 1px solid var(--line); border-radius: 10px; padding: 11px 13px; color: var(--ink); outline: none; } .filter-controls input:focus { border-color: var(--mint); } .filter-buttons { display: flex; gap: 6px; } .filter-button { border: 1px solid var(--line); background: transparent; color: var(--muted); border-radius: 999px; padding: 7px 11px; font-size: 11px; cursor: pointer; } .filter-button.is-active, .filter-button:hover { background: rgba(143,240,206,.11); border-color: rgba(143,240,206,.4); color: var(--mint); }",
     ".directory-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; } .card { min-width: 0; padding: 20px; min-height: 210px; display: flex; flex-direction: column; } .card.is-gap { border-color: rgba(255,146,127,.27); background: linear-gradient(145deg, rgba(74,31,42,.46), rgba(17,26,44,.72)); } .card-top, .card-footer { min-width: 0; display: flex; align-items: center; justify-content: space-between; gap: 12px; }",
     ".card-title { display: block; min-width: 0; font-size: 22px; letter-spacing: -.05em; text-decoration: none; margin: 17px 0 10px; overflow-wrap: anywhere; word-break: break-word; } .card-title:hover { color: var(--mint); } .card-copy { color: var(--muted); font-size: 12px; margin: 0 0 18px; overflow-wrap: anywhere; }",
-    ".status-pill, .kind-token { display: inline-flex; align-items: center; border-radius: 999px; padding: 5px 8px; font-size: 10px; font-weight: 800; letter-spacing: .03em; text-transform: uppercase; } .status-ok, .kind-mapped { color: var(--mint); background: rgba(143,240,206,.1); } .status-gap, .kind-gap { color: var(--coral); background: rgba(255,146,127,.1); } .status-support { color: var(--gold); background: rgba(255,211,139,.1); }",
+    ".status-pill, .kind-token { display: inline-flex; align-items: center; border-radius: 999px; padding: 5px 8px; font-size: 10px; font-weight: 800; letter-spacing: .03em; text-transform: uppercase; } .status-ok, .kind-mapped { color: var(--mint); background: rgba(143,240,206,.1); } .status-gap, .kind-gap { color: var(--coral); background: rgba(255,146,127,.1); } .status-explained { color: var(--blue); background: rgba(145,185,255,.1); } .status-support { color: var(--gold); background: rgba(255,211,139,.1); }",
     ".mini-chip, .target-token, .source-token { display: inline-flex; align-items: center; min-width: 0; max-width: 100%; width: max-content; border: 1px solid var(--line); background: rgba(255,255,255,.035); border-radius: 999px; padding: 5px 8px; color: var(--muted); font-size: 11px; overflow-wrap: anywhere; word-break: break-word; } .chip-row, .token-stack { min-width: 0; display: flex; flex-wrap: wrap; gap: 6px; } .card-footer { margin-top: auto; padding-top: 18px; } .issue-link { color: var(--coral); }",
     ".closing-band { display: flex; align-items: center; justify-content: space-between; gap: 28px; margin: 45px 0 100px; padding: 36px 40px; border: 1px solid rgba(143,240,206,.2); border-radius: 24px; background: linear-gradient(110deg, rgba(143,240,206,.08), rgba(145,185,255,.08)); } .site-footer { border-top: 1px solid var(--line); color: var(--subtle); font-size: 11px; } .footer-row { display: flex; justify-content: space-between; gap: 20px; padding: 25px 0; }",
     ".breadcrumbs { padding: 42px 0 20px; color: var(--subtle); font-size: 12px; } .breadcrumbs span { padding: 0 8px; color: var(--line); } .breadcrumbs strong { color: var(--ink); } .detail-hero { display: flex; align-items: end; justify-content: space-between; gap: 30px; padding: 34px 0 18px; } .detail-hero h1 { font-size: clamp(40px, 6vw, 68px); line-height: 1; letter-spacing: -.07em; margin: 10px 0; } .path-label { font: 12px ui-monospace, SFMono-Regular, Menlo, monospace; color: var(--subtle); margin: 0; } .detail-actions { justify-content: end; margin: 0; }",
@@ -1120,7 +1186,7 @@ export function renderMappingExplorerCss(): string {
     ".kind-select, .kind-rename, .kind-computed, .kind-enum-remap, .kind-combine, .kind-split, .kind-construct { color: var(--blue); background: rgba(145,185,255,.1); } .status-direct, .status-type-only, .status-implicit, .status-deferred, .status-structural { color: var(--mint); background: rgba(143,240,206,.1); } .status-empty { color: var(--coral); background: rgba(255,146,127,.1); } .status-nested-obj, .status-value-type { color: var(--gold); background: rgba(255,211,139,.1); }",
     ".evidence-list { display: grid; gap: 8px; } .evidence-row { display: flex; align-items: center; justify-content: space-between; gap: 20px; border: 1px solid var(--line); background: rgba(17,26,44,.72); border-radius: 14px; padding: 13px 15px; } .evidence-row strong { display: block; } .evidence-row .muted { display: block; margin-top: 3px; } .muted { color: var(--muted); } .artifact-section { margin: 10px 0 34px; } .artifact-frame { padding: 15px; background: #f4f8ff; } .artifact-frame img { display: block; width: 100%; max-height: 620px; object-fit: contain; } .artifact-frame .artifact-toolbar { color: #65728a; } .empty-state { display: flex; flex-direction: column; gap: 6px; align-items: center; justify-content: center; min-height: 180px; padding: 25px; color: var(--muted); text-align: center; } .space-top { margin-top: 45px; } [hidden] { display: none !important; }",
     "@media (max-width: 900px) { .hero { grid-template-columns: 1fr; padding-top: 60px; } .hero-orbit { height: 300px; } .metrics-grid { grid-template-columns: repeat(2, 1fr); } .feature-grid { grid-template-columns: 1fr; } .directory-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } .detail-grid { grid-template-columns: 1fr; } .detail-aside { grid-template-columns: repeat(2, 1fr); } .detail-hero { align-items: start; flex-direction: column; } .detail-actions { justify-content: start; } }",
-    "@media (max-width: 620px) { .container { width: min(100% - 26px, 1180px); } .nav-links { display: none; } .hero h1 { font-size: 48px; } .hero-lede { font-size: 16px; } .metrics-grid, .directory-grid, .detail-aside { grid-template-columns: 1fr; } .section-heading { align-items: start; flex-direction: column; } .filter-controls { align-items: stretch; width: 100%; } .filter-controls input { width: 100%; } .closing-band, .footer-row { align-items: start; flex-direction: column; } .closing-band { padding: 27px; } .featured-visual img { height: 220px; } }",
+    "@media (max-width: 620px) { .container { width: min(100% - 26px, 1180px); } .nav-row { height: auto; min-height: 72px; padding-top: 12px; padding-bottom: 12px; align-items: flex-start; } .brand { max-width: 42%; } .nav-links { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 6px 10px; font-size: 10px; line-height: 1.3; } .hero h1 { font-size: 48px; } .hero-lede { font-size: 16px; } .metrics-grid, .directory-grid, .detail-aside { grid-template-columns: 1fr; } .section-heading { align-items: start; flex-direction: column; } .filter-controls { align-items: stretch; width: 100%; } .filter-controls input { width: 100%; } .closing-band, .footer-row { align-items: start; flex-direction: column; } .closing-band { padding: 27px; } .featured-visual img { height: 220px; } }",
     ".notes-panel { margin: 16px 0 34px; padding: 22px; border: 1px solid rgba(145,185,255,.22); border-radius: 20px; background: linear-gradient(110deg, rgba(145,185,255,.06), rgba(17,26,44,.72)); } .notes-panel .section-heading { margin-bottom: 16px; } .notes-panel .section-heading h2 { margin: 6px 0 5px; font-size: 26px; } .notes-panel .section-heading p { margin: 0; font-size: 12px; max-width: 680px; } .notes-list { display: grid; gap: 10px; } .notes-list p { margin: 0; color: var(--ink); font-size: 13px; } .notes-list code { color: var(--blue); font: 11px ui-monospace, SFMono-Regular, Menlo, monospace; }",
     ".question-panel { margin: 16px 0 34px; padding: 22px; border: 1px solid rgba(255,211,139,.22); border-radius: 20px; background: linear-gradient(110deg, rgba(255,211,139,.06), rgba(17,26,44,.72)); }",
     ".question-panel-heading { display: flex; justify-content: space-between; align-items: start; gap: 24px; margin-bottom: 16px; } .question-panel-heading h2 { margin: 6px 0 5px; font-size: 26px; letter-spacing: -.05em; } .question-panel-heading p { margin: 0; color: var(--muted); font-size: 12px; max-width: 680px; }",
@@ -1140,7 +1206,7 @@ export function renderMappingExplorerCss(): string {
     ".directory-section { border-top: 1px solid var(--line); } .filter-controls input { background: #fff; border: 1px solid var(--line); border-radius: 0; color: var(--ink); } .filter-controls input:focus { border-color: var(--primary); } .filter-button { border-radius: 0; color: var(--muted); text-transform: uppercase; letter-spacing: .08em; } .filter-button.is-active, .filter-button:hover { background: #f1f1ff; border-color: var(--primary); color: var(--primary); } .card { padding: 20px; } .card.is-gap { border-color: rgba(42,48,200,.35); background: #f1f1ff; } .card-title { font-weight: 400; letter-spacing: .03em; } .card-title:hover { color: var(--primary); }",
     ".direction-tabs { background: #f1f1ff; } .direction-tab { background: #fff; color: var(--muted); } .direction-tab.is-active { background: var(--primary); color: #fff; } .direction-tab:hover { color: var(--primary); } .direction-tab.is-active:hover { color: #fff; } .direction-tab:focus-visible { outline-color: var(--primary); }",
     ".button { border-radius: 0; padding: 12px 18px; font-size: 11px; font-weight: 400; letter-spacing: .1em; text-transform: uppercase; transition: background-color .18s ease, color .18s ease, border-color .18s ease; } .button:hover { transform: none; border-color: var(--primary); } .button-primary { background: var(--primary); color: #fff; border-color: var(--primary); } .button-primary:hover { background: #111114; border-color: #111114; } .button-quiet { background: #fff; color: var(--primary); border-color: var(--primary); } .button-quiet:hover { background: #f1f1ff; }",
-    ".status-pill, .kind-token, .mini-chip, .target-token, .source-token, .question-state { border-radius: 0; } .status-pill, .kind-token { font-weight: 400; letter-spacing: .08em; } .status-ok, .kind-mapped, .status-gap, .kind-gap, .status-support, .kind-select, .kind-rename, .kind-computed, .kind-enum-remap, .kind-combine, .kind-split, .kind-construct, .status-direct, .status-type-only, .status-implicit, .status-deferred, .status-structural, .status-empty, .status-nested-obj, .status-value-type { color: var(--primary); background: #f1f1ff; } .mini-chip, .target-token, .source-token { background: #f1f1ff; color: var(--primary); border-color: rgba(42,48,200,.24); } .issue-link, .table-link, .question-action, .question-target { color: var(--primary); }",
+    ".status-pill, .kind-token, .mini-chip, .target-token, .source-token, .question-state { border-radius: 0; } .status-pill, .kind-token { font-weight: 400; letter-spacing: .08em; } .status-ok, .kind-mapped, .status-gap, .kind-gap, .status-explained, .status-support, .kind-select, .kind-rename, .kind-computed, .kind-enum-remap, .kind-combine, .kind-split, .kind-construct, .status-direct, .status-type-only, .status-implicit, .status-deferred, .status-structural, .status-empty, .status-nested-obj, .status-value-type { color: var(--primary); background: #f1f1ff; } .mini-chip, .target-token, .source-token { background: #f1f1ff; color: var(--primary); border-color: rgba(42,48,200,.24); } .issue-link, .table-link, .question-action, .question-target { color: var(--primary); }",
     ".closing-band { margin-bottom: 100px; padding: 36px 40px; border: 1px solid rgba(42,48,200,.25); border-radius: 0; background: #f1f1ff; } .site-footer { background: var(--primary); border-top: 0; color: rgba(255,255,255,.8); } .footer-row { color: rgba(255,255,255,.8); }",
     '.breadcrumbs { color: var(--subtle); text-transform: uppercase; letter-spacing: .08em; } .detail-hero h1 { font-family: "Gotham", "Helvetica Neue", Arial, sans-serif; font-size: clamp(36px, 5.2vw, 60px); font-weight: 400; letter-spacing: .04em; } .callout { border-radius: 0; border-color: rgba(42,48,200,.28); background: #f1f1ff; color: var(--muted); } .callout strong { color: var(--ink); } .callout-icon { border-radius: 50%; background: var(--primary); color: #fff; }',
     ".table-wrap { border-radius: 0; background: #fff; } th, td { border-color: var(--line); } th { color: var(--primary); font-weight: 400; } .evidence-row { border-radius: 0; background: #fff; } .artifact-frame { background: #f1f1ff; }",
