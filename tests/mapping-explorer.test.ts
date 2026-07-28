@@ -89,6 +89,7 @@ describe("mapping explorer", () => {
     expect(index).toContain("OCT-coalition-seal_horizontal%202.png");
     expect(index).toContain("Choose a side, then open a record.");
     expect(index).toContain("The Flow viewer shows relationships across records");
+    expect(index).not.toContain('class="metrics-grid"');
     expect(index).not.toContain('class="feature-grid"');
     expect(index).not.toContain('class="featured-visual"');
     expect(index).toContain(`All (${explorer.metrics.sourceObjects})`);
