@@ -234,3 +234,22 @@ Use a link below to open a prefilled GitHub issue. The issue can be copied into 
   transaction-level result pointer is scalar.
 - **Unmapped fields.** `id`, `comments`, `object_type`, and `consideration_text`
   have no equivalent Carta field; Carta-only exercise metadata remains unpopulated.
+- **Carta `OptionExercise` needs clarification.** The pinned Carta bundle defines
+  `OptionExercise` as a top-level object with request/workflow-oriented fields such as
+  `state` (`PENDING`, `COMPLETE`, `CANCELED`), tax withholding, and money movement. This
+  mapping instead routes the realized OCF exercise to the nested
+  `OptionExerciseTransaction` (and related `Exercise`, grant, and certificate structures),
+  which is why the inverse explorer currently labels `OptionExercise` as having no
+  standalone OCF record. That may be correct if `OptionExercise` is a request/workflow
+  object distinct from a completed exercise transaction, but the target schema and routing
+  documentation also describe an option exercise as producing an `OptionExercise` record.
+  Carta should clarify the lifecycle and intended data/API role of `OptionExercise` versus
+  `OptionExerciseTransaction`/`Exercise`, and whether a completed OCF
+  `EquityCompensationExercise` should populate `OptionExercise` in addition to the realized
+  transaction structures.
+
+- [ ] Is Carta `OptionExercise` intended to represent an exercise request/workflow, including pending or canceled state, tax withholding, and money movement, distinct from the completed exercise transaction represented by `OptionExerciseTransaction`/`Exercise`? If so, should a completed OCF `EquityCompensationExercise` map only to the realized transaction structures, or should it also populate `OptionExercise`?
+  - Target: OptionExercise.state
+  - Asked by: @johnscrudato
+  - Answer: Open: confirm the lifecycle, API/data role, and intended mapping relationship between Carta `OptionExercise`, `OptionExerciseTransaction`, and `Exercise`.
+  - Answered by: —
