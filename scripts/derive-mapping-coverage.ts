@@ -11,6 +11,7 @@ import {
 } from "./lib/mapping-coverage.js";
 import { parseMappingDocument } from "./lib/mapping-parser.js";
 import { RawSchema } from "./lib/registry.js";
+import { compatibilityWrapperBase } from "./lib/compatibility-wrappers.js";
 
 const MAPPING_DIRS = ["objects", "types"] as const;
 const OUTPUT = "docs/mapping-coverage.md";
@@ -20,6 +21,7 @@ interface MappingRecord {
   frontmatter: Record<string, unknown>;
   mapping: Record<string, unknown>;
   sourceSchema: RawSchema;
+  compatibilityBase?: string;
 }
 
 function escapeHtml(value: string): string {
@@ -86,18 +88,25 @@ async function collectMappings(repoRoot: string): Promise<MappingRecord[]> {
     const sourceSchema = JSON.parse(
       await readFile(path.join(repoRoot, schemaRel), "utf8")
     ) as RawSchema;
-    records.push({ ...parsed, rel, sourceSchema });
+    records.push({
+      ...parsed,
+      rel,
+      sourceSchema,
+      compatibilityBase: compatibilityWrapperBase(sourceSchema),
+    });
   }
   return records;
 }
 
 function render(records: MappingRecord[]): string {
+  const wrappers = records.filter((record) => record.compatibilityBase);
+  const canonicalRecords = records.filter((record) => !record.compatibilityBase);
   const rows: string[] = [];
   const incomplete: string[] = [];
   let mapped = 0;
   let total = 0;
 
-  for (const record of records) {
+  for (const record of canonicalRecords) {
     const coverage = deriveMappingCoverage(record.mapping, record.sourceSchema);
     const status = statusOf(record.mapping);
     const link = `[\`${record.rel}\`](../${record.rel})`;
@@ -133,7 +142,11 @@ function render(records: MappingRecord[]): string {
     "",
     "Legend: 🟩 valid mapping entry · 🟨 TODO · ⬜ missing entry · 🟥 invalid entry. Hover a cell in a rendered Markdown viewer to see its field name and state.",
     "",
-    `**${records.length} mapping files · ${totalRows} mapping slices · ${mapped}/${total} derived field entries mapped · ${incompleteRows} ${incompleteLabel} need attention**`,
+    `**${canonicalRecords.length} mapping files · ${totalRows} mapping slices · ${mapped}/${total} derived field entries mapped · ${incompleteRows} ${incompleteLabel} need attention**`,
+    "",
+    "Legacy `PlanSecurity*` compatibility wrappers are intentionally omitted from this generated inventory (" +
+      wrappers.length +
+      " files). Their economic fields are inherited from the corresponding `EquityCompensation*` mapping; the authored wrapper files remain available for schema compatibility and validation.",
     "",
     "## Heatmap",
     "",

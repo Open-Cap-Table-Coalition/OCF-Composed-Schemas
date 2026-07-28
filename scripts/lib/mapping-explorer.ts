@@ -117,6 +117,7 @@ export interface MappingExplorerData {
   artifactNames: string[];
   metrics: {
     sourceObjects: number;
+    compatibilityWrappers: number;
     noTargetSources: number;
     targetObjects: number;
     mappedTargets: number;
@@ -451,6 +452,7 @@ export function buildMappingExplorerData(
     artifacts.map((name) => [explorerSlug(name.replace(/\.svg$/, "")), name])
   );
   const sources = corpus.objects
+    .filter((object) => !object.aliasOf)
     .map((object) => {
       const edges = sourceEdgesFor(corpus, object);
       const targetNames = [
@@ -505,6 +507,7 @@ export function buildMappingExplorerData(
     artifactNames: artifacts,
     metrics: {
       sourceObjects: sources.length,
+      compatibilityWrappers: corpus.objects.filter((object) => object.aliasOf).length,
       noTargetSources: sources.filter((source) => source.noTarget).length,
       targetObjects: targets.length,
       mappedTargets: targets.filter(isMappedTarget).length,
@@ -826,7 +829,9 @@ export function renderMappingExplorerIndex(data: MappingExplorerData): string {
       "without a standalone OCF record",
       "metric-warn"
     )}</section>
-    <section class="map-guide" aria-labelledby="map-guide-title"><div class="map-guide-heading"><span class="eyebrow">Start here</span><h2 id="map-guide-title">Choose a side, then open a record.</h2><p>Use the tabs below to switch between the source records and the destination records. The Flow viewer shows relationships across records. It is a fixed diagram, so there are no layer controls.</p></div><ol class="map-guide-steps"><li class="map-guide-step"><span class="map-guide-number">1</span><div><strong>OCF records</strong><span>See a source record and where its fields go.</span></div></li><li class="map-guide-step"><span class="map-guide-number">2</span><div><strong>Carta records</strong><span>See destination definitions, support types, and gaps.</span></div></li><li class="map-guide-step"><span class="map-guide-number">3</span><div><strong>Inspect the details</strong><span>Read the field-level mapping, transformation, and open questions.</span></div></li></ol></section>
+    <section class="map-guide" aria-labelledby="map-guide-title"><div class="map-guide-heading"><span class="eyebrow">Start here</span><h2 id="map-guide-title">Choose a side, then open a record.</h2><p>Use the tabs below to switch between the source records and the destination records. The Flow viewer shows relationships across records. It is a fixed diagram, so there are no layer controls.</p><p class="callout-copy">Legacy <code>PlanSecurity*</code> compatibility wrappers are omitted from this browseable output; their economic mapping is represented by the corresponding <code>EquityCompensation*</code> object (${html(
+      data.metrics.compatibilityWrappers
+    )} wrapper pages omitted).</p></div><ol class="map-guide-steps"><li class="map-guide-step"><span class="map-guide-number">1</span><div><strong>OCF records</strong><span>See a source record and where its fields go.</span></div></li><li class="map-guide-step"><span class="map-guide-number">2</span><div><strong>Carta records</strong><span>See destination definitions, support types, and gaps.</span></div></li><li class="map-guide-step"><span class="map-guide-number">3</span><div><strong>Inspect the details</strong><span>Read the field-level mapping, transformation, and open questions.</span></div></li></ol></section>
     ${directionTabs()}
     <section id="ocf-objects" class="directory-section" data-side-panel="source" aria-labelledby="source-side-tab" role="tabpanel"><div class="section-heading"><div><span class="eyebrow">01 / source side</span><h2>OCF records</h2><p>These are the source-side OCF records and events. Open one to see each field, its Carta destination, and any known loss or open question.</p></div>${filterBar(
       "OCF records",

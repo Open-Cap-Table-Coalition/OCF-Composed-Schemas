@@ -30,7 +30,13 @@ describe("mapping explorer", () => {
       mappingDocuments
     );
 
-    expect(explorer.sources).toHaveLength(corpus.objects.length);
+    expect(explorer.sources).toHaveLength(
+      corpus.objects.filter((object) => !object.aliasOf).length
+    );
+    expect(explorer.metrics.compatibilityWrappers).toBe(
+      corpus.objects.filter((object) => object.aliasOf).length
+    );
+    expect(explorer.sources.some((source) => source.entity.startsWith("PlanSecurity"))).toBe(false);
     expect(explorer.targets).toHaveLength(inverse.defs.length);
     expect(explorer.metrics.noTargetSources).toBe(
       explorer.sources.filter((source) => source.noTarget).length

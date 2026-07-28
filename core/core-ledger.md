@@ -5,10 +5,13 @@ build and pinned by `npm run core:check`. One row per `(entity, variant, field)`
 
 ## Admissibility (§3)
 
-`alias-of X` marks an OCF compatibility wrapper (e.g. `PlanSecurity*`) that
-`allOf`-inherits `X` and declares no mapped fields of its own — its economic
-mapping lives in `X`. The core/payload counts are the wrapper's own (only
-`object_type`); `admissible` mirrors `X`, so a `✓` alias does have a target.
+Compatibility-wrapper aliases are detected internally for admissibility, but are
+not standalone Core entities: their economic mapping lives on the canonical base.
+
+Compatibility wrappers (`PlanSecurity*`) are intentionally omitted from the generated
+field and admissibility tables below. Their economic fields are inherited from the
+corresponding `EquityCompensation*` mapping; the wrapper schemas remain in the source
+corpus for legacy discriminator compatibility.
 
 | entity | variant | core | payload | admissible | blockers |
 | --- | --- | --- | --- | --- | --- |
@@ -46,13 +49,6 @@ mapping lives in `X`. The core/payload counts are the wrapper's own (only
 | Financing | — | 0 | 0 | ✗ | no-payload |
 | Issuer | — | 3 | 2 | ✓ | — |
 | IssuerAuthorizedSharesAdjustment | — | 0 | 0 | ✗ | no-payload |
-| PlanSecurityAcceptance | — | 0 | 0 | ✗ | alias-of EquityCompensationAcceptance |
-| PlanSecurityCancellation | — | 0 | 0 | ✓ | alias-of EquityCompensationCancellation |
-| PlanSecurityExercise | — | 0 | 0 | ✓ | alias-of EquityCompensationExercise |
-| PlanSecurityIssuance | — | 0 | 0 | ✗ | alias-of EquityCompensationIssuance |
-| PlanSecurityRelease | — | 0 | 0 | ✓ | alias-of EquityCompensationRelease |
-| PlanSecurityRetraction | — | 0 | 0 | ✗ | alias-of EquityCompensationRetraction |
-| PlanSecurityTransfer | — | 0 | 0 | ✗ | alias-of EquityCompensationTransfer |
 | Stakeholder | — | 4 | 2 | ✓ | — |
 | StakeholderRelationshipChangeEvent | — | 3 | 2 | ✓ | — |
 | StakeholderStatusChangeEvent | — | 1 | 0 | ✗ | no-payload |
@@ -232,7 +228,6 @@ values its `const:` supplies implicitly (the reason codes we always know).
 | EquityCompensationAcceptance  | Sar | object_type | out | no-destination | kind unmappable |
 | EquityCompensationAcceptance  | Sar | security_id | core | direct |  |
 | EquityCompensationAcceptance  | Sar | date | out | no-destination | kind unmappable |
-| PlanSecurityAcceptance  | — | object_type | out | no-destination | kind unmappable |
 | StockAcceptance  | Rsa | id | out | no-destination | kind unmappable |
 | StockAcceptance  | Rsa | comments | out | no-destination | kind unmappable |
 | StockAcceptance  | Rsa | object_type | out | no-destination | kind unmappable |
@@ -310,7 +305,6 @@ values its `const:` supplies implicitly (the reason codes we always know).
 | EquityCompensationCancellation | Sar | reason_text | out | heuristic | kind computed |
 | EquityCompensationCancellation | Sar | date | core | widening |  |
 | EquityCompensationCancellation | Sar | quantity | core | widening |  |
-| PlanSecurityCancellation | — | object_type | out | no-destination | kind unmappable |
 | StockCancellation | Rsa | id | out | no-destination | kind unmappable |
 | StockCancellation | Rsa | comments | out | no-destination | kind unmappable |
 | StockCancellation | Rsa | object_type | out | no-destination | kind unmappable |
@@ -413,7 +407,6 @@ values its `const:` supplies implicitly (the reason codes we always know).
 | EquityCompensationExercise | Sar | date | core | widening |  |
 | EquityCompensationExercise | Sar | quantity | core | widening |  |
 | EquityCompensationExercise | Sar | resulting_security_ids | out | heuristic | kind computed; ⚑ possible reverse-edge (ruling B) — target is an array; confirm lossless lineage |
-| PlanSecurityExercise | — | object_type | out | no-destination | kind unmappable |
 | WarrantExercise  | — | id | out | no-destination | kind unmappable |
 | WarrantExercise  | — | comments | out | no-destination | kind unmappable |
 | WarrantExercise  | — | object_type | out | no-destination | kind unmappable |
@@ -510,7 +503,6 @@ values its `const:` supplies implicitly (the reason codes we always know).
 | EquityCompensationIssuance  | Sar | early_exercisable | out | no-destination | kind unmappable |
 | EquityCompensationIssuance  | Sar | expiration_date | core | widening |  |
 | EquityCompensationIssuance  | Sar | termination_exercise_windows | out | no-destination | kind unmappable |
-| PlanSecurityIssuance  | — | object_type | out | no-destination | kind unmappable |
 | StockIssuance  | Rsa | id | out | no-destination | kind unmappable |
 | StockIssuance  | Rsa | comments | out | no-destination | kind unmappable |
 | StockIssuance  | Rsa | object_type | out | no-destination | kind unmappable |
@@ -618,7 +610,6 @@ values its `const:` supplies implicitly (the reason codes we always know).
 | EquityCompensationRelease  | Sar | release_price | out | no-destination | kind unmappable |
 | EquityCompensationRelease  | Sar | quantity | out | no-destination | kind unmappable |
 | EquityCompensationRelease  | Sar | resulting_security_ids | out | no-destination | kind unmappable |
-| PlanSecurityRelease | — | object_type | out | no-destination | kind unmappable |
 | EquityCompensationRepricing | Option | id | out | no-destination | kind unmappable |
 | EquityCompensationRepricing | Option | comments | out | no-destination | kind unmappable |
 | EquityCompensationRepricing | Option | object_type | out | no-destination | kind unmappable |
@@ -679,7 +670,6 @@ values its `const:` supplies implicitly (the reason codes we always know).
 | EquityCompensationRetraction  | Sar | date | out | no-destination | kind unmappable |
 | EquityCompensationRetraction  | Sar | security_id | out | no-destination | kind unmappable |
 | EquityCompensationRetraction  | Sar | reason_text | out | no-destination | kind unmappable |
-| PlanSecurityRetraction  | — | object_type | out | no-destination | kind unmappable |
 | StockRetraction  | Rsa | id | out | no-destination | kind unmappable |
 | StockRetraction  | Rsa | comments | out | no-destination | kind unmappable |
 | StockRetraction  | Rsa | object_type | out | no-destination | kind unmappable |
@@ -764,7 +754,6 @@ values its `const:` supplies implicitly (the reason codes we always know).
 | EquityCompensationTransfer  | Sar | balance_security_id | out | no-destination | kind unmappable |
 | EquityCompensationTransfer  | Sar | resulting_security_ids | out | no-destination | kind unmappable |
 | EquityCompensationTransfer  | Sar | quantity | out | no-destination | kind unmappable |
-| PlanSecurityTransfer  | — | object_type | out | no-destination | kind unmappable |
 | StockTransfer | Rsa | id | out | no-destination | kind unmappable |
 | StockTransfer | Rsa | comments | out | no-destination | kind unmappable |
 | StockTransfer | Rsa | object_type | out | no-destination | kind unmappable |
