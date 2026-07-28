@@ -181,5 +181,5 @@ Use a link below to open a prefilled GitHub issue. The issue can be copied into 
 
 ## Notes / open questions
 
-- Carta has no convertible transfer transaction. The transferred amount, source/result/balance securities, date, consideration, and transaction discriminator therefore have no target.
-- `id` and `comments` are OCF scaffolding. Do not synthesize a cancellation plus issuance: that would not preserve the secondary-transfer semantics.
+- Carta has no convertible transfer transaction. Therefore, this OCF event has no Carta destination for its `date`, `amount`, source `security_id`, `resulting_security_ids`, optional `balance_security_id`, or `consideration_text`; the OCF `id`, `comments`, and `object_type` are scaffolding and are not carried over.
+- A cancellation followed by an issuance cannot represent this event without losing key causal information: it would replace one transfer event with two separate lifecycle events and fail to preserve the relationship between the source, resulting, and balance securities.

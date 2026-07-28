@@ -682,12 +682,6 @@ function shell(title: string, relative: string, body: string): string {
 </html>`;
 }
 
-function metric(value: number, label: string, tone = ""): string {
-  return `<div class="metric ${tone}"><strong>${html(value)}</strong><span>${html(
-    label
-  )}</span></div>`;
-}
-
 function filterBar(
   group: string,
   counts: DirectoryFilterCounts,
@@ -818,17 +812,6 @@ export function renderMappingExplorerIndex(data: MappingExplorerData): string {
     "Overview",
     "",
     `<section class="hero"><div class="hero-copy"><span class="eyebrow accent">OCF ↔ Carta / cap-table data</span><h1>How cap-table records move from OCF to Carta.</h1><p class="hero-lede"><strong>OCF</strong> is the Open Cap Format: the source-side records and events that describe a cap table. <strong>Carta</strong> is the destination data model in this comparison. Start with an OCF record to see where each field goes, or switch to Carta records to see what is mapped, derived, or still unmatched.</p><div class="hero-actions"><a class="button button-primary" href="#ocf-objects">Start with OCF records</a><a class="button button-quiet" href="#carta-targets">View Carta records</a></div></div><div class="hero-orbit"><div class="orbit-ring ring-one"></div><div class="orbit-ring ring-two"></div><div class="orbit-core"><span>source</span><strong>→</strong><span>destination</span></div><span class="orbit-tag tag-one">OCF</span><span class="orbit-tag tag-two">CARTA</span><span class="orbit-tag tag-three">MAP</span></div></section>
-    <section class="metrics-grid" aria-label="Coverage summary">${metric(
-      data.metrics.sourceObjects,
-      "OCF records"
-    )}${metric(data.metrics.noTargetSources, "with no Carta destination", "metric-warn")}${metric(
-      data.metrics.targetObjects,
-      "Carta definitions"
-    )}${metric(
-      data.metrics.noSourceTargets,
-      "without a standalone OCF record",
-      "metric-warn"
-    )}</section>
     <section class="map-guide" aria-labelledby="map-guide-title"><div class="map-guide-heading"><span class="eyebrow">Start here</span><h2 id="map-guide-title">Choose a side, then open a record.</h2><p>Use the tabs below to switch between the source records and the destination records. The Flow viewer shows relationships across records. It is a fixed diagram, so there are no layer controls.</p><p class="callout-copy">Legacy <code>PlanSecurity*</code> compatibility wrappers are omitted from this browseable output; their economic mapping is represented by the corresponding <code>EquityCompensation*</code> object (${html(
       data.metrics.compatibilityWrappers
     )} wrapper pages omitted).</p></div><ol class="map-guide-steps"><li class="map-guide-step"><span class="map-guide-number">1</span><div><strong>OCF records</strong><span>See a source record and where its fields go.</span></div></li><li class="map-guide-step"><span class="map-guide-number">2</span><div><strong>Carta records</strong><span>See destination definitions, support types, and gaps.</span></div></li><li class="map-guide-step"><span class="map-guide-number">3</span><div><strong>Inspect the details</strong><span>Read the field-level mapping, transformation, and open questions.</span></div></li></ol></section>
@@ -1179,7 +1162,7 @@ export function renderMappingExplorerCss(): string {
     `.orbit-core { width: 155px; height: 155px; border-radius: 50%; display: flex; flex-direction: column; justify-content: center; align-items: center; background: linear-gradient(145deg, #1e3550, #101a2d); box-shadow: 0 0 0 13px rgba(143,240,206,.05), 0 0 70px rgba(143,240,206,.18); font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: .16em; } .orbit-mark { display: block; width: 36px; height: 36px; margin-bottom: 9px; background: url("${OCT_ICON_DATA_URI}") left center / 166px 36px no-repeat; } .orbit-core strong { font-size: 23px; letter-spacing: -.04em; text-transform: none; color: var(--ink); }`,
     ".orbit-tag { position: absolute; padding: 7px 11px; border-radius: 999px; background: rgba(17,26,44,.9); border: 1px solid var(--line); font-size: 11px; font-weight: 800; letter-spacing: .1em; } .tag-one { top: 70px; left: 34px; color: var(--mint); } .tag-two { right: 15px; top: 130px; color: var(--blue); } .tag-three { bottom: 70px; left: 92px; color: var(--coral); }",
     ".metrics-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 80px; } .metric { padding: 24px; background: rgba(17,26,44,.72); border: 1px solid var(--line); border-radius: 18px; } .metric strong { display: block; font-size: 38px; line-height: 1; letter-spacing: -.07em; } .metric span { display: block; color: var(--muted); font-size: 12px; margin-top: 10px; } .metric-warn strong { color: var(--coral); }",
-    ".map-guide { display: grid; grid-template-columns: minmax(230px, .72fr) minmax(0, 1.28fr); gap: 28px; align-items: start; margin-bottom: 42px; padding: 24px 26px; background: rgba(17,26,44,.72); border: 1px solid var(--line); border-radius: 18px; } .map-guide-heading h2 { margin: 8px 0 10px; font-size: 27px; letter-spacing: -.05em; } .map-guide-heading p { margin: 0; color: var(--muted); font-size: 13px; } .map-guide-steps { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin: 0; padding: 0; list-style: none; } .map-guide-step { display: flex; gap: 10px; min-width: 0; padding: 13px; border: 1px solid var(--line); border-radius: 12px; background: rgba(255,255,255,.025); } .map-guide-number { display: grid; place-items: center; flex: 0 0 24px; width: 24px; height: 24px; border-radius: 50%; background: var(--mint); color: #08131c; font-size: 11px; font-weight: 850; } .map-guide-step strong, .map-guide-step span { display: block; } .map-guide-step strong { font-size: 13px; } .map-guide-step div > span { margin-top: 4px; color: var(--muted); font-size: 11px; line-height: 1.4; }",
+    ".map-guide { display: grid; grid-template-columns: minmax(230px, .72fr) minmax(0, 1.28fr); gap: 28px; align-items: start; margin-bottom: 42px; padding: 24px 26px; background: rgba(17,26,44,.72); border: 1px solid var(--line); border-radius: 18px; } .map-guide-heading h2 { margin: 8px 0 10px; font-size: 27px; letter-spacing: -.05em; } .map-guide-heading p { margin: 0; color: var(--muted); font-size: 13px; } .map-guide-steps { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin: 0; padding: 0; list-style: none; } .map-guide-step { display: flex; gap: 10px; min-width: 0; padding: 13px; border: 1px solid var(--line); border-radius: 12px; background: rgba(255,255,255,.025); } .map-guide-number { display: grid; place-items: center; flex: 0 0 24px; width: 24px; height: 24px; border-radius: 50%; background: var(--mint); color: #08131c; font-size: 11px; font-weight: 850; } .map-guide-step strong, .map-guide-step div > span { display: block; } .map-guide-step strong { font-size: 13px; } .map-guide-step div > span { margin-top: 4px; color: var(--muted); font-size: 11px; line-height: 1.4; }",
     ".card, .side-card, .artifact-frame, .empty-state { background: rgba(17,26,44,.72); border: 1px solid var(--line); border-radius: 24px; }",
     ".section-heading h2, .closing-band h2 { margin: 8px 0 12px; font-size: 34px; letter-spacing: -.06em; } .section-heading p, .side-card p { color: var(--muted); }",
     ".artifact-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 13px 4px 0; color: var(--muted); font-size: 12px; }",

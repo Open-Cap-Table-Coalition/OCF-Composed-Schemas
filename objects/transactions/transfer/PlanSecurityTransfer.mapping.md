@@ -76,3 +76,4 @@ Use a link below to open a prefilled GitHub issue. The issue can be copied into 
 
 - Deprecated compatibility wrapper for `EquityCompensationTransfer`; its inherited fields remain unmappable because Carta has no option/equity-compensation transfer transaction.
 - The wrapper contributes only `object_type`, which is OCF scaffolding.
+- As with `EquityCompensationTransfer`, a cancellation followed by an issuance cannot represent the inherited transfer event without losing key causal information: it would replace one transfer event with two separate lifecycle events and fail to preserve the relationship between the source, resulting, and balance securities.
