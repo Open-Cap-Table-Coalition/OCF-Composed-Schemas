@@ -48,5 +48,18 @@ npm run lint
 npm test -- --runInBand
 ```
 
+Anything that changes mapping coverage also changes the derived Core packages. After such a
+change — and always after a target-bundle refresh — additionally run:
+
+```bash
+npm run carta:refresh:check
+npm run core:check
+npm run core:validate-sample
+```
+
+`core:check` only re-derives and diffs the generated packages; the hand-maintained fixtures under
+`core*/sample/` are outside that gate and are covered solely by `core:validate-sample`. Skipping it
+is how a fully regenerated Core can still ship broken samples.
+
 For the complete mapping DSL and validation contract, read
 [`docs/mapping-validation.md`](./docs/mapping-validation.md).

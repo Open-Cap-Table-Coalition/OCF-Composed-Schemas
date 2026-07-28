@@ -9,7 +9,7 @@ required_fields:
   - id
   - object_type
 target_standard: Carta
-target_version: v1alpha1 (2026-04-30)
+target_version: "v1alpha1 (2026-06-22)"
 status: complete
 last_generated: 2026-05-18
 ---
@@ -251,15 +251,13 @@ Use a link below to open a prefilled GitHub issue. The issue can be copied into 
 - `name` selects `Name.legal_name` → `fullName`; given/family-name components are not separately represented. `INDIVIDUAL` maps to Carta `entityType=INDIVIDUAL`, while `INSTITUTION` collapses to `UNKNOWN`.
 - `current_relationship` and `current_relationships` both map to Carta's single `relationship`; the array uses `first_relationship_in_order`, and `NON_US_EMPLOYEE` remaps to `INTERNATIONAL_EMPLOYEE`.
 - `primary_contact`/`contact_info` combine into the single `email` field according to stakeholder type; only the first selected email survives. `addresses` selects the first address's `country` into Carta's single `address` object; other contact/address data and `tax_ids` are dropped.
-- `id` and `issuer_assigned_id` map to `Stakeholder.id` and `employeeId`. `current_status`, `comments`, and `object_type` have no target; `issuerId` and `group` are Carta-only fields.
+- `id` and `issuer_assigned_id` map to `Stakeholder.id` and `employeeId`. June 22 makes `Stakeholder.issuerId` required, but issuer context is not a field on OCF Stakeholder; it must be supplied by the enclosing issuer context. `current_status`, `comments`, and `object_type` have no target; `group` remains Carta-only.
 
-- [ ] `addresses[].country`: Should an OCF stakeholder address country also populate Carta `Compliance.countryOfResidency`? Investigate whether a two-hop stakeholder linkage is required and how the OCF alpha-2 value should be converted to Carta's alpha-3 code.
-  - Target: Compliance.countryOfResidency
+- [x] `addresses[].country`: Should an OCF stakeholder address country also populate Carta `Compliance.countryOfResidency`? Investigate whether a two-hop stakeholder linkage is required and how the OCF alpha-2 value should be converted to Carta's alpha-3 code.
   - Asked by: @johnscrudato
-  - Answer: Open: determine whether `Stakeholder.addresses[].country` is the intended OCF source for stakeholder residency, or whether another stakeholder-level field should be used.
-  - Answered by: —
-- [ ] `addresses[].country_subdivision`: Should an OCF stakeholder address subdivision also populate Carta `Compliance.stateOfResidency`? Investigate whether a two-hop stakeholder linkage is required and how the country-qualified ISO 3166-2 value should be constructed.
-  - Target: Compliance.stateOfResidency
+  - Answer: Moot for this target snapshot: the June 22 bundle removed the `Compliance` definition, so `countryOfResidency` no longer exists and the `Target:` pointer was dropped. Neither sub-question was decided on the merits — whether `addresses[].country` is the intended residency source, whether a two-hop stakeholder linkage is needed, and how alpha-2 → alpha-3 conversion should work all remain undetermined and must be reopened if Carta reinstates a residency field.
+  - Answered by: @johnscrudato
+- [x] `addresses[].country_subdivision`: Should an OCF stakeholder address subdivision also populate Carta `Compliance.stateOfResidency`? Investigate whether a two-hop stakeholder linkage is required and how the country-qualified ISO 3166-2 value should be constructed.
   - Asked by: @johnscrudato
-  - Answer: Open: determine whether `Stakeholder.addresses[].country_subdivision` is the intended OCF source for stakeholder residency, or whether another stakeholder-level field should be used.
-  - Answered by: —
+  - Answer: Moot for this target snapshot: the June 22 bundle removed the `Compliance` definition, so `stateOfResidency` no longer exists and the `Target:` pointer was dropped. Neither sub-question was decided on the merits — whether `addresses[].country_subdivision` is the intended residency source, whether a two-hop stakeholder linkage is needed, and how the country-qualified ISO 3166-2 value should be constructed all remain undetermined and must be reopened if Carta reinstates a residency field.
+  - Answered by: @johnscrudato

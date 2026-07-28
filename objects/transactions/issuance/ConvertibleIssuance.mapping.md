@@ -16,7 +16,7 @@ required_fields:
   - stakeholder_id
   - custom_id
 target_standard: Carta
-target_version: "v1alpha1 (2026-04-30)"
+target_version: "v1alpha1 (2026-06-22)"
 status: complete
 last_generated: 2026-05-18
 ---
@@ -199,6 +199,7 @@ fields:
     kind: rename
     target:
       - "#/$defs/ConvertibleTransactionItem/properties/securityId"
+      - "#/$defs/ConvertibleNote/properties/id"
       - "#/$defs/ConvertibleNote/properties/securityId"
   custom_id:
     kind: rename
@@ -223,8 +224,9 @@ fields:
     target: null
     reason: no-equivalent
   security_law_exemptions:
-    kind: computed
-    target: "#/$defs/Compliance/properties/federalExemption"
+    kind: unmappable
+    target: null
+    reason: target-definition-removed
   investment_amount:
     kind: rename
     target:
@@ -306,5 +308,5 @@ Use a link below to open a prefilled GitHub issue. The issue can be copied into 
 ## Notes / open questions
 
 - `ConvertibleIssuance` maps to `ConvertibleIssuanceTransaction`, `ConvertibleTransactionItem`, and `ConvertibleNote`: date, security/stakeholder identity, custom label, and investment amount populate the corresponding records.
-- `convertible_type` remaps to the note type; the first conversion right with economic terms is transformed into conversion, discount, valuation-cap, interest, and interest-period fields. Security-law exemptions are classified onto `Compliance.federalExemption`.
+- `convertible_type` remaps to the note type; the first conversion right with economic terms is transformed into conversion, discount, valuation-cap, interest, and interest-period fields. Security-law exemptions are explicitly excluded because `Compliance` was removed. The June 22 `ConvertibleNote` also requires `id`, `issuerId`, `interest`, and `noteBlock`; `id` is sourced from the security identity, while issuer context and the missing accrued-interest/note-block container remain explicit Carta-side requirements.
 - Approval dates, consideration, `pro_rata`, and `seniority` have no target. `id`, `comments`, and `object_type` are OCF scaffolding.

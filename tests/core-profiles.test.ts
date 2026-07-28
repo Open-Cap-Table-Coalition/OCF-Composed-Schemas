@@ -67,7 +67,6 @@ describe("deriveCore profiles over the real corpus", () => {
     for (const e of se) expect(re.has(e)).toBe(true); // superset — no strict entity lost
     const added = [...re].filter((e) => !se.has(e)).sort();
     expect(added).toEqual([
-      "Document",
       "EquityCompensationIssuance",
       "StockClassConversionRatioAdjustment",
       "StockIssuance",

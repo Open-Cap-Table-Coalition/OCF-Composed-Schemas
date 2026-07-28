@@ -11,7 +11,7 @@ required_fields:
   - security_id
   - reason_text
 target_standard: Carta
-target_version: "v1alpha1 (2026-04-30)"
+target_version: "v1alpha1 (2026-06-22)"
 status: complete
 last_generated: 2026-05-18
 ---
@@ -133,18 +133,20 @@ shared:
     target:
       Option:
         - "#/$defs/OptionTransactionItem/properties/securityId"
+        - "#/$defs/OptionGrant/properties/id"
         - "#/$defs/OptionGrant/properties/securityId"
       Rsu:
         - "#/$defs/RsuTransactionItem/properties/securityId"
+        - "#/$defs/RestrictedStockUnit/properties/id"
         - "#/$defs/RestrictedStockUnit/properties/securityId"
-      Sar:    "#/$defs/SarTransactionItem/properties/securityId"
+      Sar:    null
   balance_security_id: { kind: unmappable, target: null, reason: no-equivalent }
   reason_text:
     kind: computed                 # free text classified into the family's cancellation reason enum
     target:
       Option: "#/$defs/OptionCancellationTransaction/properties/reason"
       Rsu:    "#/$defs/RsuCancellationTransaction/properties/reason"
-      Sar:    "#/$defs/SarCancellationTransaction/properties/reason"
+      Sar:    null
   date:
     kind: rename
     target:
@@ -154,7 +156,7 @@ shared:
       Rsu:
         - "#/$defs/RsuCancellationTransaction/properties/effectiveDatetime"
         - "#/$defs/RestrictedStockUnit/properties/canceledDate"
-      Sar:    "#/$defs/SarCancellationTransaction/properties/effectiveDatetime"
+      Sar:    null
   quantity:
     kind: rename
     target:
@@ -164,7 +166,7 @@ shared:
       Rsu:
         - "#/$defs/RsuCancellationTransaction/properties/quantity"
         - "#/$defs/RestrictedStockUnit/properties/canceledQuantity"
-      Sar:    "#/$defs/SarCancellationTransaction/properties/quantity"
+      Sar:    null
 
 variants:
 
@@ -184,9 +186,7 @@ variants:
 
   Sar:
     when: [CSAR, SSAR]
-    primary_targets:
-      - "#/$defs/SarCancellationTransaction"
-      - "#/$defs/SarTransactionItem"
+    primary_targets: null
     fields: {}
 
  ```

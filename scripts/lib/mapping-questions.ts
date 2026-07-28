@@ -11,7 +11,7 @@ export class MappingQuestionParseError extends Error {}
 export interface MappingQuestion {
   /** Optional source-side property path, such as `security_id` or `terms[].ratio`. */
   property: string | null;
-  /** Optional Carta-side target path, such as `Compliance.countryOfResidency`. */
+  /** Optional Carta-side target path, such as `StakeholderAddress.country`. */
   target: string | null;
   question: string;
   askedBy: string;
@@ -55,7 +55,7 @@ export function isValidQuestionPropertyPath(value: string): boolean {
   return value.split(".").every((segment) => /^[A-Za-z_][A-Za-z0-9_-]*(?:\[\])?$/.test(segment));
 }
 
-/** Accept a top-level Carta object/property path, such as `Compliance.countryOfResidency`. */
+/** Accept a top-level Carta object/property path, such as `StakeholderAddress.country`. */
 export function isValidQuestionTargetPath(value: string): boolean {
   const parts = value.split(".");
   return parts.length === 2 && parts.every((part) => /^[A-Za-z_][A-Za-z0-9_-]*$/u.test(part));

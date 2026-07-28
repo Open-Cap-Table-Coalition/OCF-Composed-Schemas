@@ -11,7 +11,7 @@ required_fields:
   - price
   - quantity
 target_standard: Carta
-target_version: "v1alpha1 (2026-04-30)"
+target_version: "v1alpha1 (2026-06-22)"
 status: complete
 last_generated: 2026-05-18
 ---
@@ -145,9 +145,11 @@ shared:
     kind: computed                 # remainder identity + lineage on the post-repurchase security
     target:
       Rsa:
+        - "#/$defs/RestrictedStockAward/properties/id"
         - "#/$defs/RestrictedStockAward/properties/securityId"
         - "#/$defs/RestrictedStockAwardPrecededBy/properties/securities"
       Default:
+        - "#/$defs/Certificate/properties/id"
         - "#/$defs/Certificate/properties/securityId"
         - "#/$defs/CertificatePrecededBy/properties/securities"
 
@@ -192,3 +194,9 @@ Use a link below to open a prefilled GitHub issue. The issue can be copied into 
 
 - Join on `security_id` to `StockIssuance.issuance_type`. Carta has no stock repurchase transaction, so the event date, price, consideration, and source security reference are not retained.
 - `quantity` projects to the RSA/Certificate `returnedToTreasuryQuantity`; `balance_security_id` identifies the post-repurchase security and its reverse lineage. `id`, `comments`, and `object_type` are OCF scaffolding.
+
+- [ ] `price`: Is the June 22 `Certificate.returnedInvestedCapital` the intended home for repurchase consideration — i.e. `price × quantity`? The field is new in this bundle, is a `Money`, and sits on the same `Certificate` that already receives this transaction's `returnedToTreasuryQuantity`, which makes it a plausible target for the capital returned to the holder on repurchase. Classified `no-equivalent` pending confirmation rather than mapped on inference, because the bundle carries no description for the field and a product-price aggregate would be wrong if Carta means original invested capital instead.
+  - Target: Certificate.returnedInvestedCapital
+  - Asked by: @johnscrudato
+  - Answer: Open: confirm whether `returnedInvestedCapital` records repurchase consideration (`price × quantity`) and, if so, whether Carta expects the importer to compute the product or whether the value has independent provenance. `RestrictedStockAward` has no equivalent field, so an RSA-variant answer is needed too.
+  - Answered by: —

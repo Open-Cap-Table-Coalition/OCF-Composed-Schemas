@@ -27,8 +27,8 @@ body:
     id: target_path
     attributes:
       label: Carta target property path
-      description: Optional Carta-side target path, such as Compliance.countryOfResidency. Copy it into the mapping as Target: Object.property.
-      placeholder: Compliance.countryOfResidency
+      description: Optional Carta-side target path, such as StakeholderAddress.country. It is validated against the pinned target bundle, so it must name a definition that still exists. Copy it into the mapping as Target: Object.property.
+      placeholder: StakeholderAddress.country
 
   - type: input
     id: asked_by

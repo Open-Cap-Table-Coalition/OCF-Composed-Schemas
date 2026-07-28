@@ -11,60 +11,51 @@ describe("Carta inverse coverage", () => {
     const inverse = buildInverseCoverage(corpus);
 
     expect(inverse.metrics).toMatchObject({
-      totalDefs: 139,
-      objectDefs: 86,
+      totalDefs: 99,
+      objectDefs: 55,
       definitionRoleCounts: {
-        direct: 18,
+        direct: 15,
         deferred: 0,
-        "nested-obj": 54,
-        "value-type": 1,
-        "report-rollup": 8,
-        alternate: 2,
-        "vendor-family": 1,
+        "nested-obj": 39,
+        "value-type": 0,
+        "report-rollup": 0,
+        alternate: 0,
+        "vendor-family": 0,
         "workflow-gap": 1,
-        gap: 1,
+        gap: 0,
         review: 0,
       },
-      directSlots: 225,
+      directSlots: 205,
       typeOnlyDefs: 7,
       typeOnlyOnlyDefs: 7,
       typeOnlySlots: 29,
       implicitSlots: 1,
       deferredSlots: 0,
-      structuralSlots: 28,
-      nestedObjDefs: 54,
-      reportRollupDefs: 8,
-      curatedValueTypeEntries: 7,
-      valueTypeDefs: 1,
-      alternateDefs: 2,
-      actionableGapDefs: 3,
+      structuralSlots: 25,
+      nestedObjDefs: 39,
+      reportRollupDefs: 0,
+      curatedValueTypeEntries: 6,
+      valueTypeDefs: 0,
+      alternateDefs: 0,
+      actionableGapDefs: 1,
       reviewDefs: 0,
     });
 
     const byDef = new Map(inverse.defs.map((row) => [row.name, row]));
-    expect(byDef.get("Date")?.status).toBe("value-type");
+    expect(byDef.has("Date")).toBe(false);
     expect(byDef.get("PointOfContact")).toMatchObject({
       status: "nested-obj",
       nestedNamespace: "ocf",
       typeOnlySlots: ["userEmail", "userFullName"],
     });
-    expect(byDef.get("Vesting")?.status).toBe("alternate");
     expect(byDef.get("DividendDetails")?.status).toBe("nested-obj");
     expect(byDef.get("CertificateIssuanceTransaction")?.status).toBe("nested-obj");
-    expect(byDef.get("Interest")?.status).toBe("vendor-family");
-    expect(byDef.get("OptionPoolSummary")?.status).toBe("report-rollup");
-    expect(
-      inverse.slots.find(
-        (slot) => slot.def === "OptionPoolSummary" && slot.property === "authorizedShares"
-      )?.inverseRoles
-    ).toEqual(["state-projection"]);
     expect(
       inverse.slots.find(
         (slot) => slot.def === "OptionGrant" && slot.property === "returnedToPoolQuantity"
       )?.inverseRoles
     ).toEqual(["aggregate-projection"]);
-    expect(byDef.get("ThresholdDetails")?.status).toBe("nested-obj");
-    expect(byDef.get("OptionGrantDocuments")?.status).toBe("gap");
+    expect(byDef.get("OptionExercise")?.status).toBe("workflow-gap");
     expect(byDef.get("WarrantTransactionItem")).toMatchObject({
       status: "direct",
       directSlots: ["securityId", "securityLabel", "stakeholderId"],
@@ -97,11 +88,6 @@ describe("Carta inverse coverage", () => {
         ["securityId", "securityLabel", "stakeholderId"],
         ["cancellations", "issuance", "settlements"],
       ],
-      [
-        "SarTransactionItem",
-        ["securityId", "securityLabel", "stakeholderId"],
-        ["cancellations", "exercises", "issuance"],
-      ],
     ] as const) {
       expect(byDef.get(name)).toMatchObject({
         status: "direct",
@@ -128,20 +114,14 @@ describe("Carta inverse coverage", () => {
     });
 
     const excluded = inverse.excludedRoleRows;
-    expect(excluded).toHaveLength(61);
+    expect(excluded).toHaveLength(45);
     const excludedGroups = groupInverseExcludedRoleRows(excluded);
-    expect(excludedGroups.valueTypes).toHaveLength(7);
-    expect(excludedGroups.nestedWithMappedParent).toHaveLength(38);
-    expect(excludedGroups.nestedWithoutMappedParent).toHaveLength(16);
-    expect(excluded.find((row) => row.name === "Date")).toMatchObject({ role: "value-type" });
+    expect(excludedGroups.valueTypes).toHaveLength(6);
+    expect(excludedGroups.nestedWithMappedParent).toHaveLength(35);
+    expect(excludedGroups.nestedWithoutMappedParent).toHaveLength(4);
     expect(excluded.find((row) => row.name === "VestingSchedule")).toMatchObject({
       role: "nested-obj",
       coveredThrough: "OptionGrant, RestrictedStockAward, RestrictedStockUnit",
-    });
-    expect(excluded.find((row) => row.name === "ThresholdDetails")).toMatchObject({
-      role: "nested-obj",
-      coveredThrough: "Interest",
-      nestedNamespace: "carta",
     });
     expect(excluded.find((row) => row.name === "PointOfContact")).toMatchObject({
       role: "nested-obj",
@@ -150,18 +130,18 @@ describe("Carta inverse coverage", () => {
     });
 
     expect(inverseCoverageStory(inverse)).toEqual({
-      totalDefs: 139,
-      nonObjectDefs: 53,
-      scalarEnumDefs: 47,
+      totalDefs: 99,
+      nonObjectDefs: 44,
+      scalarEnumDefs: 38,
       otherNonObjectDefs: 0,
-      objectDefs: 86,
-      standaloneCandidateDefs: 31,
-      mappedDefs: 18,
-      fullyMappedDefs: 8,
-      partiallyMappedDefs: 10,
-      unmappedCandidateDefs: 13,
-      nonEntityDefs: 61,
-      nonEntityObjectDefs: 55,
+      objectDefs: 55,
+      standaloneCandidateDefs: 16,
+      mappedDefs: 15,
+      fullyMappedDefs: 6,
+      partiallyMappedDefs: 9,
+      unmappedCandidateDefs: 1,
+      nonEntityDefs: 45,
+      nonEntityObjectDefs: 39,
       scalarValueTypeDefs: 6,
     });
   });

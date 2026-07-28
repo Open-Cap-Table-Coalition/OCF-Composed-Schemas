@@ -6,7 +6,7 @@ ocf_kind: type
 required_fields:
   - event_id
 target_standard: Carta
-target_version: v1alpha1 (2026-04-30)
+target_version: "v1alpha1 (2026-06-22)"
 status: complete
 last_generated: 2026-06-29
 ---
@@ -50,7 +50,7 @@ Source: [`VestingEventCondition.schema.json`](./VestingEventCondition.schema.jso
 
 ```yaml
 # kind vocabulary: rename | select | split | combine | enum-remap | computed | unmappable | TODO
-# unmappable reason vocabulary: no-equivalent | excluded-from-snapshot | out-of-scope | ocf-internal
+# unmappable reason vocabulary: no-equivalent | excluded-from-snapshot | target-definition-removed | out-of-scope | ocf-internal
 status: complete
 
 fields:

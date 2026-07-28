@@ -7,7 +7,7 @@ required_fields:
   - description
   - jurisdiction
 target_standard: Carta
-target_version: v1alpha1 (2026-04-30)
+target_version: "v1alpha1 (2026-06-22)"
 status: complete
 last_generated: 2026-05-18
 ---
@@ -59,8 +59,9 @@ status: complete
 
 fields:
   description:
-    kind: computed
-    target: "#/$defs/Compliance/properties/federalExemption"
+    kind: unmappable
+    target: null
+    reason: target-definition-removed
   jurisdiction:
     kind: unmappable
     target: null
@@ -85,5 +86,5 @@ Use a link below to open a prefilled GitHub issue. The issue can be copied into 
 
 ## Notes / open questions
 
-- Free-text `description` is classified into Carta `Compliance.federalExemption` (lossy `computed` mapping). `jurisdiction` has no target on the compliance record.
+- `Compliance` and `FederalExemption` were deleted from the June 22 bundle, so both exemption properties carry `reason: target-definition-removed`. `jurisdiction` has no target in the retained bundle.
 - Issuance mappings resolve list cardinality and stakeholder-level placement; this type does not invent an issuance-local exemption field.

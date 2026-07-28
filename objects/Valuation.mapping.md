@@ -11,7 +11,7 @@ required_fields:
   - id
   - object_type
 target_standard: Carta
-target_version: v1alpha1 (2026-04-30)
+target_version: "v1alpha1 (2026-06-22)"
 status: complete
 last_generated: 2026-05-18
 ---
@@ -132,15 +132,17 @@ fields:
     target: null
     reason: no-equivalent
   price_per_share:
-    kind: rename
-    target: "#/$defs/ShareClassValuation/properties/price"
+    kind: unmappable
+    target: null
+    reason: target-definition-removed
   effective_date:
     kind: unmappable
     target: null
     reason: no-equivalent
   stock_class_id:
-    kind: rename
-    target: "#/$defs/ShareClassValuation/properties/shareClassId"
+    kind: unmappable
+    target: null
+    reason: target-definition-removed
   valuation_type:
     kind: unmappable
     target: null
@@ -175,6 +177,6 @@ Use a link below to open a prefilled GitHub issue. The issue can be copied into 
 
 ## Notes / open questions
 
-- OCF `Valuation` maps to Carta `ShareClassValuation`: `price_per_share` → `price` through the existing `Monetary` → `Money` mapping, and `stock_class_id` → `shareClassId`.
+- OCF `Valuation` has no retained Carta valuation target in the June 22 bundle; `price_per_share` and `stock_class_id` are explicitly excluded.
 - `effective_date`, approval dates, `provider`, and `valuation_type` have no target. Carta's `shareClassName` and `common` are derived from the referenced share class and have no OCF source.
-- `id`, `comments`, and `object_type` are OCF scaffolding; the target `ShareClassValuation` is a price-plus-share-class record without a date or provider field.
+- `id`, `comments`, and `object_type` are OCF scaffolding. The removed `ShareClassValuation` definition is not replaced by a retained equivalent.

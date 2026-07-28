@@ -7,7 +7,7 @@ required_fields:
   - order
   - percentage
 target_standard: Carta
-target_version: v1alpha1 (2026-04-30)
+target_version: "v1alpha1 (2026-06-22)"
 status: complete
 last_generated: 2026-06-29
 ---
@@ -76,7 +76,7 @@ Source: [`VestingStatement.schema.json`](./VestingStatement.schema.json)
 
 ```yaml
 # kind vocabulary: rename | construct | select | split | combine | enum-remap | computed | unmappable | TODO
-# unmappable reason vocabulary: no-equivalent | excluded-from-snapshot | out-of-scope | ocf-internal
+# unmappable reason vocabulary: no-equivalent | excluded-from-snapshot | target-definition-removed | out-of-scope | ocf-internal
 status: complete
 
 # Each VestingStatement projects to one Carta VestingPeriod
@@ -100,8 +100,8 @@ fields:
     transform: |
       The schedule sub-object (VestingScheduleSegment) spreads across the
       time fields of one Carta VestingPeriod:
-        length        = schedule.occurrences * schedule.period
-        lengthUnit    = schedule.period_type (DAYS -> DAY; MONTHS -> MONTH; YEARS -> YEAR)
+        length        = schedule.occurrences * schedule.period, normalized to months
+        lengthUnit    = MONTH for all supported cadence methods (required by the June 22 schema)
         vestingMethod = lookup on (schedule.period, schedule.period_type):
           (1,  DAYS)   -> DAILY
           (7,  DAYS)   -> WEEKLY

@@ -16,6 +16,5 @@
   "stakeholders_files": [{ "filepath": "files/Stakeholders.ocf.json", "md5": "a1b2c3d4e5f600112233445566778899" }],
   "stock_classes_files": [{ "filepath": "files/StockClasses.ocf.json", "md5": "b2c3d4e5f6a700112233445566778899" }],
   "stock_plans_files": [{ "filepath": "files/StockPlans.ocf.json", "md5": "c3d4e5f6a7b800112233445566778899" }],
-  "valuations_files": [{ "filepath": "files/Valuations.ocf.json", "md5": "e5f6a7b8c9da00112233445566778899" }],
   "transactions_files": [{ "filepath": "files/Transactions.ocf.json", "md5": "f6a7b8c9dab000112233445566778899" }]
 }

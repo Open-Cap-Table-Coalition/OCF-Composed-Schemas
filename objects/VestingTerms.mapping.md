@@ -8,7 +8,7 @@ required_fields:
   - id
   - statements
 target_standard: Carta
-target_version: v1alpha1 (2026-04-30)
+target_version: "v1alpha1 (2026-06-22)"
 status: complete
 last_generated: 2026-06-29
 ---
@@ -65,7 +65,7 @@ Source: [`VestingTerms.schema.json`](./VestingTerms.schema.json)
 
 ```yaml
 # kind vocabulary: rename | select | split | combine | enum-remap | computed | unmappable | TODO
-# unmappable reason vocabulary: no-equivalent | excluded-from-snapshot | out-of-scope | ocf-internal
+# unmappable reason vocabulary: no-equivalent | excluded-from-snapshot | target-definition-removed | out-of-scope | ocf-internal
 status: complete
 
 fields:
@@ -101,5 +101,5 @@ Use a link below to open a prefilled GitHub issue. The issue can be copied into 
 ## Notes / open questions
 
 - OCF `VestingTerms` maps to Carta `VestingScheduleTemplate`: `id` → `id`, and each `VestingStatement` in `statements` projects to one `VestingPeriod` in `periods[]`.
-- The per-statement projection is defined in [`VestingStatement.mapping.md`](../types/vesting/VestingStatement.mapping.md). Carta-only issuer, name, description, schedule-type, and UUID fields remain unset.
+- The per-statement projection is defined in [`VestingStatement.mapping.md`](../types/vesting/VestingStatement.mapping.md). June 22 makes `VestingScheduleTemplate.issuerId`, `name`, and `vestingScheduleType` required; issuer context, a template name, and the schedule mode are not present on OCF `VestingTerms` and remain explicit requirements for a schema-valid Carta record.
 - `object_type` is OCF scaffolding; Carta types the schedule positionally.

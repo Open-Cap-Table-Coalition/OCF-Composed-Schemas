@@ -18,29 +18,12 @@
             "type": "string",
             "description": "Identifier for the object"
           },
-          "initial_shares_reserved": {
-            "type": "string",
-            "pattern": "^[+-]?[0-9]+(\\.[0-9]{1,10})?$",
-            "description": "The initial number of shares reserved in the pool for this stock plan by the Board or equivalent body."
-          },
           "object_type": {
             "const": "STOCK_PLAN"
           },
           "plan_name": {
             "type": "string",
             "description": "Name for the stock plan"
-          },
-          "stock_class_id": {
-            "type": "string",
-            "description": "[DEPRECATED in favor of stock_class_ids] Identifier of the StockClass object this plan is composed of."
-          },
-          "stock_class_ids": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            },
-            "minItems": 1,
-            "description": "Identifiers of StockClass objects this plan is composed of"
           }
         },
         "required": [

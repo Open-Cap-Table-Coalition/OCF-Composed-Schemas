@@ -13,7 +13,7 @@ required_fields:
   - id
   - object_type
 target_standard: Carta
-target_version: v1alpha1 (2026-04-30)
+target_version: "v1alpha1 (2026-06-22)"
 status: complete
 last_generated: 2026-05-18
 ---
@@ -168,17 +168,19 @@ shared:
     kind: rename
     target:
       - "#/$defs/ShareClass/properties/name"
-      - "#/$defs/ShareClassValuation/properties/shareClassName"
       - "#/$defs/Certificate/properties/shareClassName"
       - "#/$defs/RestrictedStockAward/properties/shareClassName"
   class_type:
-    kind: computed
-    target:
-      - "#/$defs/ShareClass/properties/type"
-      - "#/$defs/ShareClassValuation/properties/common"
+    kind: enum-remap
+    target: "#/$defs/ShareClass/properties/type"
+    values:
+      COMMON: COMMON
+      PREFERRED: PREFERRED
     note: >-
-      Preserve COMMON/PREFERRED on ShareClass.type and derive the valuation read-model's
-      boolean common flag (COMMON → true, PREFERRED → false).
+      Lossless 1:1 onto ShareClassType. This was `computed` only because it additionally
+      derived the valuation read-model's boolean `common` flag (COMMON → true); that
+      `ShareClassValuation` target was removed from the June 22 bundle, leaving a straight
+      enum correspondence with no derivation.
   default_id_prefix:
     kind: rename
     target: "#/$defs/ShareClass/properties/prefix"
@@ -287,7 +289,7 @@ Use a link below to open a prefilled GitHub issue. The issue can be copied into 
 
 ## Notes / open questions
 
-- `class_type` routes `COMMON` to `ShareClass` and `PREFERRED` to `ShareClass` plus `PreferredShareClassDetails`. `id`, `name`, `par_value`, `default_id_prefix`, and the applicable class fields populate the corresponding Carta objects; `name` also populates denormalized security/valuation labels.
+- `class_type` routes `COMMON` to `ShareClass` and `PREFERRED` to `ShareClass` plus `PreferredShareClassDetails`. `id`, `name`, `par_value`, `default_id_prefix`, and the applicable class fields populate the corresponding Carta objects; `name` also populates denormalized security labels. The former `ShareClassValuation` fan-out was removed.
 - `initial_shares_authorized` maps numeric values to `authorizedShareCount`; `NOT APPLICABLE` and `UNLIMITED` remain unmappable. `seniority` is computed into Carta's rank and `pariPassu`, requiring comparison across the issuer's classes.
 - Preferred-only pricing, liquidation, participation, and the selected conversion right populate Carta rights-and-preferences leaves. The conversion-right array uses `first_ratio_conversion_right`; additional rights are not represented.
-- Approval dates, votes, OCF scaffolding, and Carta-only issuer/dividend fields have no counterpart. Carta's `participating` flag is not explicit in OCF and is left unset.
+- Approval dates, votes, OCF scaffolding, and Carta-only issuer/dividend fields have no counterpart. June 22 makes `ShareClass.issuerId` required; it is an issuer-context value not present on the OCF StockClass record. Carta's `participating` flag is not explicit in OCF and is left unset.

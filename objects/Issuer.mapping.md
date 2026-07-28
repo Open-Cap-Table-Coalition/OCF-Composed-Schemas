@@ -10,7 +10,7 @@ required_fields:
   - id
   - object_type
 target_standard: Carta
-target_version: v1alpha1 (2026-04-30)
+target_version: "v1alpha1 (2026-06-22)"
 status: complete
 last_generated: 2026-05-18
 ---
@@ -241,6 +241,6 @@ Use a link below to open a prefilled GitHub issue. The issue can be copied into 
 
 ## Notes / open questions
 
-- OCF `Issuer` maps to Carta `Issuer`, not `Corporation`: `id`, `legal_name`, and `dba` map to `id`, `legalName`, and `doingBusinessAsName`.
+- OCF `Issuer` maps to Carta `Issuer`: `id`, `legal_name`, and `dba` map to `id`, `legalName`, and `doingBusinessAsName`. (The April bundle's separate `Corporation` definition was removed in the June 22 refresh.)
 - `formation_date`, formation-country fields, `tax_ids`, `email`, `phone`, `address`, and `initial_shares_authorized` have no issuer-level Carta target. Lower-level authorized-share summaries and stakeholder contact fields are not equivalent issuer fields.
 - `comments` and `object_type` are OCF scaffolding (`ocf-internal`). Carta's `website` is target-only and has no OCF source.

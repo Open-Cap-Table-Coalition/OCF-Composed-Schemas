@@ -9,7 +9,7 @@ required_fields:
   - date
   - security_id
 target_standard: Carta
-target_version: v1alpha1 (2026-04-30)
+target_version: "v1alpha1 (2026-06-22)"
 status: complete
 last_generated: 2026-05-18
 ---
@@ -111,7 +111,7 @@ route_by_property:
 # (stakeholderAcceptanceDate), and `security_id` anchors the resolved Carta transaction
 # item plus the security object where one exists. Both therefore carry per-variant target
 # maps { Option/Rsu/Sar }. SAR has no first-class Carta security object or acceptance-date
-# field, so only its transaction-item identity can be retained.
+# field, so its acceptance record is wholly unmappable in the June 22 bundle.
 shared:
   id:          { kind: unmappable, target: null, reason: ocf-internal }
   comments:    { kind: unmappable, target: null, reason: no-equivalent }
@@ -121,11 +121,13 @@ shared:
     target:
       Option:
         - "#/$defs/OptionTransactionItem/properties/securityId"
+        - "#/$defs/OptionGrant/properties/id"
         - "#/$defs/OptionGrant/properties/securityId"
       Rsu:
         - "#/$defs/RsuTransactionItem/properties/securityId"
+        - "#/$defs/RestrictedStockUnit/properties/id"
         - "#/$defs/RestrictedStockUnit/properties/securityId"
-      Sar:    "#/$defs/SarTransactionItem/properties/securityId"
+      Sar:    null
   date:
     kind: rename
     target:
@@ -197,9 +199,8 @@ Use a link below to open a prefilled GitHub issue. The issue can be copied into 
 - **`security_id`** is the join key (`route_by_property.lookup_by.key`) and is also preserved
   on the resolved Carta aggregate: `OptionTransactionItem.securityId` plus
   `OptionGrant.securityId` for options, `RsuTransactionItem.securityId` plus
-  `RestrictedStockUnit.securityId` for RSUs, and `SarTransactionItem.securityId` for SARs.
-  The SAR path preserves the referenced instrument identity only; Carta has no SAR security
-  object and no acceptance-date field.
+  `RestrictedStockUnit.securityId` for RSUs. The SAR path has no retained Carta target because
+  the SAR transaction-item and security definitions were removed.
 - **`id`, `object_type`, `comments`: OCF scaffolding.** `id` is OCF's identifier for the
   acceptance transaction object; Carta has no acceptance object for it to become
   (`ocf-internal`). `object_type` is OCF's discriminator — neither enum member

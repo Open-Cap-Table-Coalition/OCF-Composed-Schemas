@@ -16,7 +16,7 @@ required_fields:
   - stakeholder_id
   - custom_id
 target_standard: Carta
-target_version: v1alpha1 (2026-04-30)
+target_version: "v1alpha1 (2026-06-22)"
 status: complete
 last_generated: 2026-05-18
 ---
@@ -210,9 +210,11 @@ shared:
     target:
       Rsa:
         - "#/$defs/RsaTransactionItem/properties/securityId"
+        - "#/$defs/RestrictedStockAward/properties/id"
         - "#/$defs/RestrictedStockAward/properties/securityId"
       Default:
         - "#/$defs/CertificateTransactionItem/properties/securityId"
+        - "#/$defs/Certificate/properties/id"
         - "#/$defs/Certificate/properties/securityId"
   custom_id:
     kind: rename
@@ -235,8 +237,9 @@ shared:
   stockholder_approval_date: { kind: unmappable, target: null, reason: no-equivalent }
   consideration_text:        { kind: unmappable, target: null, reason: no-equivalent }
   security_law_exemptions:
-    kind: computed                 # federal exemption classified onto stakeholder-level Compliance
-    target: "#/$defs/Compliance/properties/federalExemption"
+    kind: unmappable
+    target: null
+    reason: target-definition-removed
   stock_class_id:
     kind: rename
     target:
@@ -349,5 +352,11 @@ Use a link below to open a prefilled GitHub issue. The issue can be copied into 
 ## Notes / open questions
 
 - Route by `issuance_type`: RSA → `RsaIssuanceTransaction`/`RestrictedStockAward`; FOUNDERS_STOCK → `CertificateIssuanceTransaction`/`Certificate`. Shared identity, date, holder/class/plan references, quantity, vesting-template, price, and cost basis populate the selected family.
-- RSA board approval and vesting events map to the award; those fields have no target for founders' stock. Security-law exemptions are computed onto `Compliance.federalExemption`.
+- RSA board approval and vesting events map to the award; those fields have no target for founders' stock. Security-law exemptions are explicitly excluded because `Compliance` was removed. The retained `Certificate` and `RestrictedStockAward` definitions now require `id` and `issuerId` in addition to the fields already mapped from the issuance; `id` is the security identity and `issuerId` must come from issuer context.
 - Share-number ranges, stock legend links, stockholder approval, consideration, and unsupported issuance fields are dropped for this pinned target bundle; OCF scaffolding is not copied. Carta's separate Draft Issuer certificate input has a `legend` string, but it is not part of this issuance target and does not establish a `StockLegendTemplate` mapping.
+
+- [ ] `security_id`: Writing one OCF `security_id` into both `Certificate.id` and `Certificate.securityId` (and the RSA equivalents) asserts that the two slots hold the same value. The bundle describes them differently — `id` is "the identifier of the certificate", while `securityId` is "the UUID of the certificate. Use this to cross-reference with the List Transactions API" — so they may be distinct identifier spaces, with `securityId` server-assigned rather than client-supplied. Neither is marked `readOnly`, which is why both are currently mapped; this pattern was added across the issuance, exercise, cancellation, and repurchase mappings when June 22 made `id` required, so a single answer settles all of them.
+  - Target: Certificate.securityId
+  - Asked by: @johnscrudato
+  - Answer: Open: confirm whether an importer may supply `id` and `securityId` as the same client-chosen value, or whether `securityId` is Carta-assigned and OCF `security_id` should map to only one of the two.
+  - Answered by: —

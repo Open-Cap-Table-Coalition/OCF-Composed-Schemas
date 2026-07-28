@@ -18,6 +18,10 @@ jobs:
       - run: npm run typecheck
       - run: npm run lint
       - run: npm test
+      # Pinned-target gates run before the mapping checks: a drifted bundle or
+      # lock file invalidates every downstream mapping result.
+      - run: npm run provenance:check
+      - run: npm run carta:refresh:check
       - run: npm run mapping:validate -- --verbose
       - run: npm run mapping:question-links -- --check
       - run: npm run mapping:artifacts:check

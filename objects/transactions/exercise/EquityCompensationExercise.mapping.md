@@ -11,7 +11,7 @@ required_fields:
   - security_id
   - resulting_security_ids
 target_standard: Carta
-target_version: "v1alpha1 (2026-04-30)"
+target_version: "v1alpha1 (2026-06-22)"
 status: complete
 last_generated: 2026-05-18
 ---
@@ -130,8 +130,9 @@ route_by_property:
   exhaustive: true
 
 # shared: fields whose Carta home differs by family carry a per-variant target map
-# { Option/Rsu/Sar: pointer or pointer list }. Rsu is null on every routed field — an OCF exercise
-# against an RSU has no Carta exercise transaction to land on.
+# { Option/Rsu/Sar: pointer or pointer list }. Rsu is null on every routed field, and the
+# June 22 bundle has no exercise transaction for Rsu or Sar. Sar still resolves the
+# resulting-security fields onto Certificate (a stock-settled SAR produces a certificate).
 shared:
   id:                 { kind: unmappable, target: null, reason: ocf-internal }
   comments:           { kind: unmappable, target: null, reason: no-equivalent }
@@ -141,8 +142,9 @@ shared:
     target:
       Option:
         - "#/$defs/OptionTransactionItem/properties/securityId"
+        - "#/$defs/OptionGrant/properties/id"
         - "#/$defs/OptionGrant/properties/securityId"
-      Sar:    "#/$defs/SarTransactionItem/properties/securityId"
+      Sar:    null
       Rsu:    null
   consideration_text: { kind: unmappable, target: null, reason: no-equivalent }
   date:
@@ -151,7 +153,7 @@ shared:
       Option:
         - "#/$defs/OptionExerciseTransaction/properties/sharesAcquiredDatetime"
         - "#/$defs/Exercise/properties/exerciseDate"
-      Sar:    "#/$defs/SarExerciseTransaction/properties/sharesAcquiredDatetime"
+      Sar:    null
       Rsu:    null
   quantity:
     kind: rename
@@ -160,16 +162,18 @@ shared:
         - "#/$defs/OptionExerciseTransaction/properties/quantity"
         - "#/$defs/Exercise/properties/quantity"
         - "#/$defs/OptionGrant/properties/exercisedQuantity"
-      Sar:    "#/$defs/SarExerciseTransaction/properties/quantity"
+      Sar:    null
       Rsu:    null
   resulting_security_ids:
     kind: computed                 # result identity plus lineage on each resulting certificate
     target:
       Option:
+        - "#/$defs/Certificate/properties/id"
         - "#/$defs/Certificate/properties/securityId"
         - "#/$defs/CertificatePrecededBy/properties/securities"
         - "#/$defs/Exercise/properties/certificateId"
       Sar:
+        - "#/$defs/Certificate/properties/id"
         - "#/$defs/Certificate/properties/securityId"
         - "#/$defs/CertificatePrecededBy/properties/securities"
       Rsu:    null
@@ -190,9 +194,7 @@ variants:
 
   Sar:
     when: [CSAR, SSAR]
-    primary_targets:
-      - "#/$defs/SarExerciseTransaction"
-      - "#/$defs/SarTransactionItem"
+    primary_targets: null
     fields: {}
 
  ```
@@ -222,8 +224,8 @@ Use a link below to open a prefilled GitHub issue. The issue can be copied into 
 ## Notes / open questions
 
 - **Join-dependent.** Resolve `compensation_type` by joining `security_id` to the
-  related `EquityCompensationIssuance`; route options to `OptionExerciseTransaction`
-  and SARs to `SarExerciseTransaction`.
+  related `EquityCompensationIssuance`; route options to `OptionExerciseTransaction`.
+  RSU and SAR exercise targets are absent from the June 22 bundle.
 - **RSUs route through a different source object.** An RSU settlement is modeled
   by `EquityCompensationRelease`, which maps to Carta's RSU settlement objects;
   the `Rsu` variant is null only in this exercise mapping because Carta has no

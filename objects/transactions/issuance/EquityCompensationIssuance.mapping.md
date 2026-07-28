@@ -16,7 +16,7 @@ required_fields:
   - stakeholder_id
   - custom_id
 target_standard: Carta
-target_version: v1alpha1 (2026-04-30)
+target_version: "v1alpha1 (2026-06-22)"
 status: complete
 last_generated: 2026-06-29
 ---
@@ -198,7 +198,8 @@ Source: [`EquityCompensationIssuance.schema.json`](./EquityCompensationIssuance.
 # variant carries a per-variant target map { Option/Rsu/Sar: pointer or pointer list|null } — so
 # RSU/SAR name their own objects instead of borrowing the Option family. `null`
 # means the field has no home in that variant (for example, security-object-only
-# fields have no Carta home for SAR).
+# fields have no Carta home for SAR). The June 22 bundle removes the entire SAR
+# transaction-item/issuance family and Compliance, so those route entries are null.
 status: complete
 
 route_by_property:
@@ -218,17 +219,19 @@ shared:
       Rsu:
         - "#/$defs/RsuIssuanceTransaction/properties/issueDatetime"
         - "#/$defs/RestrictedStockUnit/properties/issueDate"
-      Sar:    "#/$defs/SarIssuanceTransaction/properties/issueDatetime"
+      Sar:    null
   security_id:
     kind: rename
     target:
       Option:
         - "#/$defs/OptionTransactionItem/properties/securityId"
+        - "#/$defs/OptionGrant/properties/id"
         - "#/$defs/OptionGrant/properties/securityId"
       Rsu:
         - "#/$defs/RsuTransactionItem/properties/securityId"
+        - "#/$defs/RestrictedStockUnit/properties/id"
         - "#/$defs/RestrictedStockUnit/properties/securityId"
-      Sar: "#/$defs/SarTransactionItem/properties/securityId"
+      Sar: null
   custom_id:
     kind: rename
     target:
@@ -238,7 +241,7 @@ shared:
       Rsu:
         - "#/$defs/RsuTransactionItem/properties/securityLabel"
         - "#/$defs/RestrictedStockUnit/properties/securityLabel"
-      Sar: "#/$defs/SarTransactionItem/properties/securityLabel"
+      Sar: null
   stakeholder_id:
     kind: rename
     target:
@@ -248,7 +251,7 @@ shared:
       Rsu:
         - "#/$defs/RsuTransactionItem/properties/stakeholderId"
         - "#/$defs/RestrictedStockUnit/properties/stakeholderId"
-      Sar: "#/$defs/SarTransactionItem/properties/stakeholderId"
+      Sar: null
   board_approval_date:
     kind: rename
     target:
@@ -258,14 +261,15 @@ shared:
   stockholder_approval_date: { kind: unmappable, target: null, reason: no-equivalent }
   consideration_text:        { kind: unmappable, target: null, reason: no-equivalent }
   security_law_exemptions:
-    kind: computed                 # federal exemption classified onto stakeholder-level Compliance
-    target: "#/$defs/Compliance/properties/federalExemption"
+    kind: unmappable
+    target: null
+    reason: target-definition-removed
   stock_plan_id:
     kind: rename
     target:
       Option: "#/$defs/OptionIssuanceTransaction/properties/equityPlanId"
       Rsu:    "#/$defs/RsuIssuanceTransaction/properties/equityPlanId"
-      Sar:    "#/$defs/SarIssuanceTransaction/properties/equityPlanId"
+      Sar:    null
   stock_class_id:
     kind: rename
     target:
@@ -275,7 +279,7 @@ shared:
       Rsu:
         - "#/$defs/RsuIssuanceTransaction/properties/shareClassId"
         - "#/$defs/RestrictedStockUnit/properties/shareClassId"
-      Sar:    "#/$defs/SarIssuanceTransaction/properties/shareClassId"
+      Sar:    null
   quantity:
     kind: rename
     target:
@@ -285,7 +289,7 @@ shared:
       Rsu:
         - "#/$defs/RsuIssuanceTransaction/properties/quantity"
         - "#/$defs/RestrictedStockUnit/properties/quantity"
-      Sar:    "#/$defs/SarIssuanceTransaction/properties/quantity"
+      Sar:    null
   vesting_template_id:
     kind: rename
     target:
@@ -295,7 +299,7 @@ shared:
       Rsu:
         - "#/$defs/RsuIssuanceTransaction/properties/vestingScheduleTemplateId"
         - "#/$defs/RestrictedStockUnit/properties/vestingScheduleTemplateId"
-      Sar:    "#/$defs/SarIssuanceTransaction/properties/vestingScheduleTemplateId"
+      Sar:    null
   vestings:
     kind: rename
     target:
@@ -303,9 +307,9 @@ shared:
       Rsu:    "#/$defs/RestrictedStockUnit/properties/vestingEvents"
       Sar:    null
     note: >-
-      SAR has no Carta security object, so OCF's explicit vesting events have no home for the
-      Sar variant — the template ref still maps via vesting_template_id →
-      SarIssuanceTransaction.vestingScheduleTemplateId. Option/RSU keep both.
+      The June 22 bundle has no retained SAR transaction or security object, so the Sar variant
+      has no home for either the explicit vesting events or the vesting template reference.
+      Option/RSU keep both.
 
   vesting_start_date:
     kind: rename
@@ -363,16 +367,14 @@ variants:
 
   Sar:
     when: [CSAR, SSAR]
-    primary_targets:
-      - "#/$defs/SarIssuanceTransaction"
-      - "#/$defs/SarTransactionItem"
+    primary_targets: null
     fields:
       compensation_type:            { kind: unmappable, target: null, reason: no-equivalent }
       option_grant_type:            { kind: unmappable, target: null, reason: no-equivalent }
       exercise_price:               { kind: unmappable, target: null, reason: no-equivalent }
-      base_price:                   { kind: rename, target: "#/$defs/SarIssuanceTransaction/properties/exercisePrice" }
+      base_price:                   { kind: unmappable, target: null, reason: target-definition-removed }
       early_exercisable:            { kind: unmappable, target: null, reason: no-equivalent }
-      expiration_date:              { kind: rename, target: "#/$defs/SarIssuanceTransaction/properties/expirationDatetime" }
+      expiration_date:              { kind: unmappable, target: null, reason: target-definition-removed }
       termination_exercise_windows: { kind: unmappable, target: null, reason: no-equivalent }
 
  ```
@@ -417,6 +419,6 @@ Use a link below to open a prefilled GitHub issue. The issue can be copied into 
 
 ## Notes / open questions
 
-- Route by `compensation_type`: Option → option issuance/item/grant, RSU → RSU issuance/item/security, and SAR → SAR issuance/item. Shared identity, dates, stakeholder/plan/class references, quantity, vesting-template, and applicable security fields follow the selected family.
-- Option-only terms include option type, exercise price, early exercise, expiration, termination windows, and vesting events; RSU and SAR leave unsupported option fields null. SAR base price maps to exercise price. Security-law exemptions are classified onto `Compliance.federalExemption`.
+- Route by `compensation_type`: Option → option issuance/item/grant, RSU → RSU issuance/item/security, and SAR → no retained Carta target. Shared identity, dates, stakeholder/plan/class references, quantity, vesting-template, and applicable security fields follow the selected family.
+- Option-only terms include option type, exercise price, early exercise, expiration, termination windows, and vesting events; RSU leaves unsupported option fields null. The retained OptionGrant and RestrictedStockUnit definitions now require `id` and `issuerId` in addition to the mapped security identity and economic fields; `id` is the security identity and `issuerId` must come from issuer context. Security-law exemptions are explicitly excluded because `Compliance` was removed.
 - Unsupported approval/consideration fields and OCF scaffolding remain unmappable. Family-specific policies in the YAML control array selection and derived targets.

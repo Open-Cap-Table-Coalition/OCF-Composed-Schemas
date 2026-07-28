@@ -52,8 +52,12 @@ type), as long as exactly one target object is unambiguously the destination:
 | --- | --- |
 | `InterestRate.rate` | `ConvertibleNote.interestRate` |
 | a conversion ratio | `ShareClassRightsAndPreferences.conversionRatio` |
-| `SecurityExemption.description` | `Compliance.federalExemption` |
 | `TerminationWindow` | `ExercisePeriods` |
+
+`SecurityExemption.description` used to belong in this table, pointing at `Compliance.federalExemption`.
+The June 22 bundle deleted `Compliance`, so it has no clear home — or any home — and is now
+`unmappable` with `reason: target-definition-removed`. A bucket-1 type whose target is deleted
+does not silently become bucket 2; it becomes an explicit, reasoned gap.
 
 > Over-applying bucket 2 to a structured type that has a clear home is the
 > **lazy-unmappable defect** — the thing this policy most wants to prevent.
@@ -108,13 +112,17 @@ Two OCF types that represent the **same concept** must map to the **same** targe
 ## How this interacts with `reason:`
 
 Once a field is `unmappable`, pick the most accurate reason
-(`no-equivalent` | `excluded-from-snapshot` | `out-of-scope` | `ocf-internal`):
+(`no-equivalent` | `excluded-from-snapshot` | `target-definition-removed` | `out-of-scope` |
+`ocf-internal`):
 
 - Bucket 2 and bucket 3 fields are `no-equivalent` (the target genuinely lacks the
   concept / a single home).
 - OCF scaffolding (`id`, `object_type`, `comments`) is always `ocf-internal`.
 - A target that exists but resolves to `true` in the pinned snapshot is
   `excluded-from-snapshot`, not `no-equivalent`.
+- A field whose target used to resolve, until a bundle refresh deleted the definition
+  outright, is `target-definition-removed`. Reserve it for that case: a sibling field that
+  never had a target keeps `no-equivalent`, because the target lacked the concept all along.
 
 ## See also
 
