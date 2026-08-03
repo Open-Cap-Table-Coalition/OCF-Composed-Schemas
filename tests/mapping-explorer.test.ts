@@ -99,6 +99,8 @@ describe("mapping explorer", () => {
     expect(index).toContain("Open Cap Table Coalition");
     expect(index).toContain("OCT-coalition-seal_horizontal%202.png");
     expect(index).toContain("Choose a side, then open a record.");
+    expect(index).toContain('class="proposal-banner"');
+    expect(index.indexOf('id="carta-core"')).toBeLessThan(index.indexOf('class="hero"'));
     expect(index).toContain("The Flow viewer shows relationships across records");
     expect(index).not.toContain('class="metrics-grid"');
     expect(index).not.toContain('class="feature-grid"');
@@ -140,6 +142,8 @@ describe("mapping explorer", () => {
     expect(css).toContain(".nav-links { display: flex; flex-wrap: wrap;");
     expect(css).toContain(".nav-row { height: auto; min-height: 72px;");
     expect(css).toContain(".map-guide { display: grid;");
+    expect(css).toContain(".proposal-banner { display: grid;");
+    expect(css).toContain(".proposal-banner .mini-chip, .proposal-main-action { width: 100%; }");
     expect(css).toContain(".map-guide-steps { display: grid; grid-template-columns: repeat(3");
     expect(css).toContain(
       ".hero-orbit { height: 390px; position: relative; display: grid; place-items: center; overflow: hidden; }"
@@ -158,10 +162,11 @@ describe("mapping explorer", () => {
       expect.arrayContaining(["Version", "Standard", "Source", "Uploaded", "SHA-256"])
     );
     expect(index).toContain('id="carta-core"');
-    expect(index).toContain("Browse proposal ↗");
-    expect(index).toContain("Read Explainer ↗");
-    expect(index).toContain("Open schema issue ↗");
-    expect(index).toContain("Target-schema notes ↗");
+    expect(index).toContain("1 · Read Carta’s proposed OCF Core ↗");
+    expect(index).toContain("2 · Read Carta’s explainer ↗");
+    expect(index).toContain("Comment on the proposal ↗");
+    expect(index).toContain("scroll below to view mappings to and from the proposed Carta schema");
+    expect(index).not.toContain("Target-schema notes ↗");
     expect(index).toContain("Version:");
     expect(index).not.toContain("Uploader:");
 
@@ -178,7 +183,7 @@ describe("mapping explorer", () => {
     const reportIndex = renderMappingExplorerIndex(
       buildMappingExplorerData(corpus, inverse, [], mappingDocuments, withReport)
     );
-    expect(reportIndex).toContain("Read Carta Report ↗");
+    expect(reportIndex).toContain("2 · Read Carta Report ↗");
   });
 
   it("renders authored mapping notes and open/closed questions", async () => {

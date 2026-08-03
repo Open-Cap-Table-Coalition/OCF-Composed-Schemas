@@ -25,6 +25,7 @@ The distinction matters because Carta Core and OCF Core are related, but they ar
 
 ## Start with the results
 
+- [Non-technical guide to reviewing Carta’s proposal and the OCF comparison](./docs/carta-proposal-review-guide.md) — a one-page walkthrough with screenshots and feedback instructions.
 - [Mapping Explorer](./docs/generated/mapping-explorer/index.html) — the canonical source/target maps, target coverage, and open mapping questions. The `main` workflow publishes this explorer to GitHub Pages.
 - [OCF-side loss inventory](./docs/core-lossy-inventory.md) — OCF fields that have a Carta home, but only through a narrowed or lossy mapping.
 - [OCF-side unmapped inventory](./docs/core-unmapped-inventory.md) — OCF fields with no Carta destination.
