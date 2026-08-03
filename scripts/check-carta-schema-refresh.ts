@@ -265,8 +265,9 @@ async function main(): Promise<number> {
   for (const expected of [
     EXPECTED_VERSION,
     EXPECTED_SHA256,
-    "2 · Read Carta’s explainer ↗",
+    "2 · Read Carta’s explainer",
     "proposal-banner",
+    "proposal-drive-icon",
   ]) {
     if (!generatedIndex.includes(expected)) {
       errors.push(`generated mapping explorer is missing: ${expected}`);
