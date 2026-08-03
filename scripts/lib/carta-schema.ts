@@ -27,6 +27,10 @@ export interface CartaSchemaResources {
 
 const TARGET_SCHEMA_README = "target-schema/README.md";
 const CARTA_SCHEMA_PATH = TARGET_BUNDLES.Carta ?? "target-schema/Carta.schema.json";
+const CARTA_SCHEMA_SOURCE_URL =
+  "https://drive.google.com/file/d/1m9MDcazr1svUk2BCqRkR38R0bCgwBql0/view?usp=share_link";
+const CARTA_EXPLAINER_SOURCE_URL =
+  "https://docs.google.com/document/d/1aomMxmO13SkVPsbLbJnUxtFN3juLZFMMUysNnpIC_eU/edit?usp=share_link";
 
 interface ProvenanceCarta {
   version?: string;
@@ -82,7 +86,7 @@ export function defaultCartaSchemaResources(): CartaSchemaResources {
   return {
     title: "Carta OCF Core proposal",
     schemaPath,
-    schemaUrl: mappingFileUrl(schemaPath),
+    schemaUrl: CARTA_SCHEMA_SOURCE_URL,
     issueUrl: cartaSchemaIssueUrl(schemaPath),
     metadata: [],
     reports: [],
@@ -122,7 +126,8 @@ export async function loadCartaSchemaResources(repoRoot: string): Promise<CartaS
     .map((file) => ({
       path: file,
       label: titleForMarkdownFile(file),
-      url: mappingFileUrl(file),
+      url:
+        file === "target-schema/Explainer.md" ? CARTA_EXPLAINER_SOURCE_URL : mappingFileUrl(file),
     }));
 
   const title =
@@ -130,7 +135,7 @@ export async function loadCartaSchemaResources(repoRoot: string): Promise<CartaS
   return {
     title,
     schemaPath,
-    schemaUrl: mappingFileUrl(schemaPath),
+    schemaUrl: CARTA_SCHEMA_SOURCE_URL,
     readmeUrl: mappingFileUrl(TARGET_SCHEMA_README),
     issueUrl: cartaSchemaIssueUrl(schemaPath, { title, version, sha256 }),
     metadata,

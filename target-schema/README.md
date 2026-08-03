@@ -8,6 +8,8 @@ re-review affected mappings) rather than silent misalignment.
 - **Standard:** Carta Cap Table Data Schema
 - **Version:** v1alpha1 (2026-06-22)
 - **Source:** Google Drive
+- **Schema source file:** [Carta Cap Table Data Schema](https://drive.google.com/file/d/1m9MDcazr1svUk2BCqRkR38R0bCgwBql0/view?usp=share_link)
+- **Explainer source file:** [Carta Cap Table Data Schema — Reader’s Guide](https://docs.google.com/document/d/1aomMxmO13SkVPsbLbJnUxtFN3juLZFMMUysNnpIC_eU/edit?usp=share_link)
 - **Last copied:** 2026-07-28
 - **Content lock:** [`../provenance.lock.json`](../provenance.lock.json) — SHA-256 `b8d54974eea8957f67ebe600097b31024a691e50d949a8a6db6227dd7a2aa06c`
 

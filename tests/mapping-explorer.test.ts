@@ -159,6 +159,17 @@ describe("mapping explorer", () => {
     const index = renderMappingExplorerIndex(explorer);
 
     expect(resources.schemaPath).toBe("target-schema/Carta.schema.json");
+    expect(resources.schemaUrl).toBe(
+      "https://drive.google.com/file/d/1m9MDcazr1svUk2BCqRkR38R0bCgwBql0/view?usp=share_link"
+    );
+    expect(resources.reports).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          path: "target-schema/Explainer.md",
+          url: "https://docs.google.com/document/d/1aomMxmO13SkVPsbLbJnUxtFN3juLZFMMUysNnpIC_eU/edit?usp=share_link",
+        }),
+      ])
+    );
     expect(resources.metadata.map((item) => item.label)).toEqual(
       expect.arrayContaining(["Version", "Standard", "Source", "Uploaded", "SHA-256"])
     );
