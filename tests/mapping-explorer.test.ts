@@ -177,11 +177,13 @@ describe("mapping explorer", () => {
     expect(index).toContain('id="carta-core"');
     expect(index).toContain("1 · Read Carta’s proposed OCF Core");
     expect(index).toContain("2 · Read Carta’s explainer");
+    expect(index).toContain('class="proposal-resource-action"');
+    expect(index).toContain('class="proposal-action-title"');
     expect(index).toContain('class="proposal-split-action"');
     expect(index).toContain('class="proposal-source-icon"');
     expect(index).toContain("proposal-drive-icon");
-    expect(index).toContain("GitHub ↗");
-    expect(index).toContain("Drive ↗");
+    expect(index).toContain("GitHub copy ↗");
+    expect(index).toContain("Carta source ↗");
     expect(index).toContain(
       "https://github.com/Open-Cap-Table-Coalition/OCF-Composed-Schemas/blob/main/target-schema/Carta.schema.json"
     );
@@ -191,9 +193,9 @@ describe("mapping explorer", () => {
     expect(index).toContain("Version:");
     expect(index).not.toContain("Uploader:");
     expect(css).toContain(
-      ".proposal-split-action { display: grid; grid-template-columns: minmax(0, 1fr) max-content; }"
+      ".proposal-split-action { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }"
     );
-    expect(css).toContain(".proposal-split-action { grid-template-columns: minmax(0, 1fr) 88px; }");
+    expect(css).toContain(".proposal-resource-action { display: grid; gap: 6px; min-width: 0; }");
 
     const withReport = {
       ...resources,
