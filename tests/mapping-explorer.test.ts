@@ -187,7 +187,9 @@ describe("mapping explorer", () => {
     expect(index).toContain(
       "https://github.com/Open-Cap-Table-Coalition/OCF-Composed-Schemas/blob/main/target-schema/Carta.schema.json"
     );
-    expect(index).toContain("Comment on the proposal ↗");
+    expect(index).toContain("3 · Comment on the proposal");
+    expect(index).toContain("Open a GitHub issue ↗");
+    expect(index).toContain('class="proposal-resource-action proposal-feedback-action"');
     expect(index).toContain("scroll below to view mappings to and from the proposed Carta schema");
     expect(index).not.toContain("Target-schema notes ↗");
     expect(index).toContain("Version:");
@@ -196,6 +198,7 @@ describe("mapping explorer", () => {
       ".proposal-split-action { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }"
     );
     expect(css).toContain(".proposal-resource-action { display: grid; gap: 6px; min-width: 0; }");
+    expect(css).toContain(".proposal-comment-button { width: 100%; min-height: 38px;");
 
     const withReport = {
       ...resources,
