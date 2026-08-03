@@ -728,6 +728,38 @@ function targetScopeLegend(data: MappingExplorerData): string {
   )}</div></aside>`;
 }
 
+function proposalSourceIcon(source: "github" | "drive"): string {
+  if (source === "github") {
+    return '<svg class="proposal-source-icon" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 .7A11.3 11.3 0 0 0 8.4 22.8c.6.1.8-.3.8-.6v-2.2c-3.3.7-4-1.4-4-1.4-.5-1.4-1.3-1.8-1.3-1.8-1.1-.7.1-.7.1-.7 1.2.1 1.8 1.2 1.8 1.2 1.1 1.8 2.8 1.3 3.5 1 .1-.8.4-1.3.8-1.6-2.7-.3-5.5-1.3-5.5-5.9 0-1.3.5-2.4 1.2-3.2-.1-.3-.5-1.6.1-3.2 0 0 1-.3 3.3 1.2a11.4 11.4 0 0 1 6 0C16.6 4.1 17.6 4.4 17.6 4.4c.6 1.6.2 2.9.1 3.2.8.9 1.2 1.9 1.2 3.2 0 4.6-2.8 5.6-5.5 5.9.4.4.8 1.1.8 2.1v3.4c0 .3.2.7.8.6A11.3 11.3 0 0 0 12 .7Z"/></svg>';
+  }
+  return '<svg class="proposal-source-icon proposal-drive-icon" viewBox="0 0 24 24" aria-hidden="true"><path fill="#0f9d58" d="M9.1 3h5.8l6.2 10.8h-5.8L9.1 3Z"/><path fill="#f4b400" d="m21.1 13.8-3.2 5.5H5.5l3.2-5.5h12.4Z"/><path fill="#4285f4" d="m5.5 19.3-3.2-5.5L8.5 3h6.4L8.7 13.8l-3.2 5.5Z"/></svg>';
+}
+
+function proposalResourceAction(
+  label: string,
+  repositoryUrl: string,
+  sourceUrl: string,
+  primary = false
+): string {
+  const style = primary ? "button-primary" : "button-quiet";
+  if (repositoryUrl === sourceUrl) {
+    return externalLink(repositoryUrl, `${label} ↗`, `button ${style} proposal-main-action`);
+  }
+  return `<div class="proposal-split-action" role="group" aria-label="${html(
+    `${label} sources`
+  )}"><a class="button ${style} proposal-main-action proposal-repo-action" href="${html(
+    repositoryUrl
+  )}" target="_blank" rel="noreferrer" aria-label="${html(
+    `${label} on GitHub (opens in a new tab)`
+  )}">${proposalSourceIcon("github")}<span>${html(
+    label
+  )}</span><span class="proposal-source-tag">GitHub ↗</span></a><a class="button ${style} proposal-drive-action" href="${html(
+    sourceUrl
+  )}" target="_blank" rel="noreferrer" aria-label="${html(
+    `${label} from Carta on Google Drive (opens in a new tab)`
+  )}">${proposalSourceIcon("drive")}<span>Drive ↗</span></a></div>`;
+}
+
 function cartaSchemaPanel(data: MappingExplorerData): string {
   const resources = data.cartaSchema;
   const metadata = resources.metadata.length
@@ -742,21 +774,22 @@ function cartaSchemaPanel(data: MappingExplorerData): string {
     : "";
   const reports = resources.reports
     .map((report) =>
-      externalLink(
-        report.url,
+      proposalResourceAction(
         report.label.toLowerCase() === "explainer"
-          ? "2 · Read Carta’s explainer ↗"
-          : `2 · Read ${report.label} ↗`,
-        "button button-quiet proposal-main-action"
+          ? "2 · Read Carta’s explainer"
+          : `2 · Read ${report.label}`,
+        mappingFileUrl(report.path),
+        report.url
       )
     )
     .join("");
   return `<section id="carta-core" class="proposal-banner" aria-labelledby="carta-core-title"><div class="proposal-banner-copy"><span class="eyebrow">Start here · schema proposal</span><h2 id="carta-core-title">Carta OCF Core proposal</h2><p>Read Carta’s plain-language explainer or browse the exact schema bundle tracked in <code>${html(
     resources.schemaPath
-  )}</code>. The links below also show its version and provide a direct feedback route.</p>${metadata}<p class="proposal-scroll-note">Then scroll below to view mappings to and from the proposed Carta schema.</p></div><div class="proposal-banner-actions"><div class="proposal-main-actions">${externalLink(
+  )}</code>. Choose the repository copy or Carta’s source file below; both show the same tracked version.</p>${metadata}<p class="proposal-scroll-note">Then scroll below to view mappings to and from the proposed Carta schema.</p></div><div class="proposal-banner-actions"><div class="proposal-main-actions">${proposalResourceAction(
+    "1 · Read Carta’s proposed OCF Core",
+    mappingFileUrl(resources.schemaPath),
     resources.schemaUrl,
-    "1 · Read Carta’s proposed OCF Core ↗",
-    "button button-primary proposal-main-action"
+    true
   )}${reports}</div><div class="proposal-feedback">${externalLink(
     resources.issueUrl,
     "Comment on the proposal ↗",
@@ -1198,7 +1231,7 @@ export function renderMappingExplorerCss(): string {
     `.orbit-core { width: 155px; height: 155px; border-radius: 50%; display: flex; flex-direction: column; justify-content: center; align-items: center; background: linear-gradient(145deg, #1e3550, #101a2d); box-shadow: 0 0 0 13px rgba(143,240,206,.05), 0 0 70px rgba(143,240,206,.18); font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: .16em; } .orbit-mark { display: block; width: 36px; height: 36px; margin-bottom: 9px; background: url("${OCT_ICON_DATA_URI}") left center / 166px 36px no-repeat; } .orbit-core strong { font-size: 23px; letter-spacing: -.04em; text-transform: none; color: var(--ink); }`,
     ".orbit-tag { position: absolute; padding: 7px 11px; border-radius: 999px; background: rgba(17,26,44,.9); border: 1px solid var(--line); font-size: 11px; font-weight: 800; letter-spacing: .1em; } .tag-one { top: 70px; left: 34px; color: var(--mint); } .tag-two { right: 15px; top: 130px; color: var(--blue); } .tag-three { bottom: 70px; left: 92px; color: var(--coral); }",
     ".metrics-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 80px; } .metric { padding: 24px; background: rgba(17,26,44,.72); border: 1px solid var(--line); border-radius: 18px; } .metric strong { display: block; font-size: 38px; line-height: 1; letter-spacing: -.07em; } .metric span { display: block; color: var(--muted); font-size: 12px; margin-top: 10px; } .metric-warn strong { color: var(--coral); }",
-    ".proposal-banner { display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(320px, .95fr); gap: 34px; align-items: center; margin: 30px 0 0; padding: 30px 34px; border: 1px solid rgba(143,240,206,.42); background: linear-gradient(120deg, rgba(143,240,206,.12), rgba(145,185,255,.1)); } .proposal-banner-copy, .proposal-banner-actions { min-width: 0; } .proposal-banner h2 { margin: 7px 0 9px; font-size: 32px; line-height: 1.08; letter-spacing: -.05em; overflow-wrap: anywhere; } .proposal-banner p { max-width: 660px; margin: 0; color: var(--muted); font-size: 14px; } .proposal-banner .chip-row { max-width: 100%; margin-top: 16px; } .proposal-scroll-note { margin-top: 13px !important; font-size: 12px !important; } .proposal-main-actions { display: grid; gap: 10px; } .proposal-main-action { width: 100%; min-height: 46px; } .proposal-feedback { display: flex; justify-content: flex-end; margin-top: 12px; } .proposal-comment-button { padding: 7px 10px; font-size: 10px; } .map-guide { display: grid; grid-template-columns: minmax(230px, .72fr) minmax(0, 1.28fr); gap: 28px; align-items: start; margin-bottom: 42px; padding: 24px 26px; background: rgba(17,26,44,.72); border: 1px solid var(--line); border-radius: 18px; } .map-guide-heading h2 { margin: 8px 0 10px; font-size: 27px; letter-spacing: -.05em; } .map-guide-heading p { margin: 0; color: var(--muted); font-size: 13px; } .map-guide-steps { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin: 0; padding: 0; list-style: none; } .map-guide-step { display: flex; gap: 10px; min-width: 0; padding: 13px; border: 1px solid var(--line); border-radius: 12px; background: rgba(255,255,255,.025); } .map-guide-number { display: grid; place-items: center; flex: 0 0 24px; width: 24px; height: 24px; border-radius: 50%; background: var(--mint); color: #08131c; font-size: 11px; font-weight: 850; } .map-guide-step strong, .map-guide-step div > span { display: block; } .map-guide-step strong { font-size: 13px; } .map-guide-step div > span { margin-top: 4px; color: var(--muted); font-size: 11px; line-height: 1.4; }",
+    ".proposal-banner { display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(320px, .95fr); gap: 34px; align-items: center; margin: 30px 0 0; padding: 30px 34px; border: 1px solid rgba(143,240,206,.42); background: linear-gradient(120deg, rgba(143,240,206,.12), rgba(145,185,255,.1)); } .proposal-banner-copy, .proposal-banner-actions { min-width: 0; } .proposal-banner h2 { margin: 7px 0 9px; font-size: 32px; line-height: 1.08; letter-spacing: -.05em; overflow-wrap: anywhere; } .proposal-banner p { max-width: 660px; margin: 0; color: var(--muted); font-size: 14px; } .proposal-banner .chip-row { max-width: 100%; margin-top: 16px; } .proposal-scroll-note { margin-top: 13px !important; font-size: 12px !important; } .proposal-main-actions { display: grid; gap: 10px; } .proposal-split-action { display: grid; grid-template-columns: minmax(0, 1fr) max-content; } .proposal-split-action .button { min-height: 46px; } .proposal-main-action { width: 100%; min-width: 0; min-height: 46px; } .proposal-repo-action { justify-content: flex-start; gap: 9px; padding-inline: 13px; } .proposal-repo-action > span:not(.proposal-source-tag) { min-width: 0; } .proposal-source-tag { margin-left: auto; font-size: 9px; opacity: .72; white-space: nowrap; } .proposal-drive-action { gap: 7px; margin-left: -1px; padding-inline: 11px; white-space: nowrap; } .proposal-source-icon { flex: 0 0 auto; width: 16px; height: 16px; } .proposal-drive-icon { width: 18px; height: 18px; } .proposal-feedback { display: flex; justify-content: flex-end; margin-top: 12px; } .proposal-comment-button { padding: 7px 10px; font-size: 10px; } .map-guide { display: grid; grid-template-columns: minmax(230px, .72fr) minmax(0, 1.28fr); gap: 28px; align-items: start; margin-bottom: 42px; padding: 24px 26px; background: rgba(17,26,44,.72); border: 1px solid var(--line); border-radius: 18px; } .map-guide-heading h2 { margin: 8px 0 10px; font-size: 27px; letter-spacing: -.05em; } .map-guide-heading p { margin: 0; color: var(--muted); font-size: 13px; } .map-guide-steps { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin: 0; padding: 0; list-style: none; } .map-guide-step { display: flex; gap: 10px; min-width: 0; padding: 13px; border: 1px solid var(--line); border-radius: 12px; background: rgba(255,255,255,.025); } .map-guide-number { display: grid; place-items: center; flex: 0 0 24px; width: 24px; height: 24px; border-radius: 50%; background: var(--mint); color: #08131c; font-size: 11px; font-weight: 850; } .map-guide-step strong, .map-guide-step div > span { display: block; } .map-guide-step strong { font-size: 13px; } .map-guide-step div > span { margin-top: 4px; color: var(--muted); font-size: 11px; line-height: 1.4; }",
     ".card, .side-card, .artifact-frame, .empty-state { background: rgba(17,26,44,.72); border: 1px solid var(--line); border-radius: 24px; }",
     ".section-heading h2, .closing-band h2 { margin: 8px 0 12px; font-size: 34px; letter-spacing: -.06em; } .section-heading p, .side-card p { color: var(--muted); }",
     ".artifact-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 13px 4px 0; color: var(--muted); font-size: 12px; }",
@@ -1247,6 +1280,6 @@ export function renderMappingExplorerCss(): string {
     ".notes-panel { border-color: rgba(42,48,200,.28); border-radius: 0; background: #f1f1ff; } .notes-list p { color: var(--ink); } .question-panel { border-color: rgba(42,48,200,.28); border-radius: 0; background: #f1f1ff; } .question-panel-heading h2 { font-size: 24px; } .question-state { color: var(--primary); background: #fff; border: 1px solid rgba(42,48,200,.24); font-weight: 400; } .question-row { border-radius: 0; background: #fff; } .question-open, .question-closed { border-color: rgba(42,48,200,.24); } .question-body p { font-weight: 400; } .question-chip { color: var(--primary); border-color: rgba(42,48,200,.24); }",
     ".directory-legend { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: end; gap: 20px; max-width: 760px; margin: -8px 0 26px auto; padding: 15px 18px; border: 1px solid rgba(42,48,200,.22); background: #f1f1ff; } .directory-legend p { margin: 5px 0 0; color: var(--muted); font-size: 12px; line-height: 1.55; } .directory-legend strong { color: var(--ink); font-weight: 500; } .legend-links { white-space: nowrap; font-size: 11px; text-transform: uppercase; letter-spacing: .08em; } .legend-links a { color: var(--primary); text-decoration: none; } .legend-links a:hover { color: var(--ink); }",
     "@media (max-width: 900px) { .directory-legend { max-width: none; margin-left: 0; } }",
-    "@media (max-width: 620px) { .proposal-banner { margin-top: 0; padding: 28px 20px; box-shadow: none; } .proposal-banner h2 { font-size: 26px; } .proposal-banner .mini-chip, .proposal-main-action { width: 100%; } .hero { padding: 76px 20px 84px; } .hero h1 { font-size: 38px; letter-spacing: .1em; } .direction-tabs { grid-template-columns: 1fr; } .directory-legend { grid-template-columns: 1fr; gap: 10px; } .legend-links { white-space: normal; } }",
+    "@media (max-width: 620px) { .proposal-banner { margin-top: 0; padding: 28px 20px; box-shadow: none; } .proposal-banner h2 { font-size: 26px; } .proposal-banner .mini-chip, .proposal-main-action { width: 100%; } .proposal-split-action { grid-template-columns: minmax(0, 1fr) 88px; } .proposal-repo-action { font-size: 10px; letter-spacing: .07em; } .proposal-source-tag { display: none; } .proposal-drive-action { padding-inline: 8px; font-size: 9px; letter-spacing: .05em; } .hero { padding: 76px 20px 84px; } .hero h1 { font-size: 38px; letter-spacing: .1em; } .direction-tabs { grid-template-columns: 1fr; } .directory-legend { grid-template-columns: 1fr; gap: 10px; } .legend-links { white-space: normal; } }",
   ].join("\n");
 }

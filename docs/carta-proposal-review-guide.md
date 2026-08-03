@@ -4,7 +4,7 @@ You do not need to understand code. Open the [OCF ↔ Carta Mapping Explorer](ht
 
 ## View Carta’s proposal
 
-At the top of the page, find **Carta OCF Core proposal**. Select **1 · Read Carta’s proposed OCF Core** for the exact schema, then **2 · Read Carta’s explainer** for the plain-language tour. Scroll below the proposal to view mappings to and from the proposed Carta schema. You can read everything without editing or downloading anything.
+At the top of the page, find **Carta OCF Core proposal**. Select **1 · Read Carta’s proposed OCF Core** for the exact schema, then **2 · Read Carta’s explainer** for the plain-language tour. For either file, choose **GitHub** for the pinned repository copy or **Drive** for Carta’s source. Scroll below the proposal to view mappings to and from the proposed Carta schema. You can read everything without editing or downloading anything.
 
 ![Carta proposal panel with links to the schema, explainer, and feedback form](./assets/carta-proposal-review-guide/01-carta-proposal.jpg)
 

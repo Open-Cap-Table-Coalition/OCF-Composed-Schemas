@@ -157,6 +157,7 @@ describe("mapping explorer", () => {
     const resources = await loadCartaSchemaResources(process.cwd());
     const explorer = buildMappingExplorerData(corpus, inverse, [], mappingDocuments, resources);
     const index = renderMappingExplorerIndex(explorer);
+    const css = renderMappingExplorerCss();
 
     expect(resources.schemaPath).toBe("target-schema/Carta.schema.json");
     expect(resources.schemaUrl).toBe(
@@ -174,13 +175,25 @@ describe("mapping explorer", () => {
       expect.arrayContaining(["Version", "Standard", "Source", "Uploaded", "SHA-256"])
     );
     expect(index).toContain('id="carta-core"');
-    expect(index).toContain("1 · Read Carta’s proposed OCF Core ↗");
-    expect(index).toContain("2 · Read Carta’s explainer ↗");
+    expect(index).toContain("1 · Read Carta’s proposed OCF Core");
+    expect(index).toContain("2 · Read Carta’s explainer");
+    expect(index).toContain('class="proposal-split-action"');
+    expect(index).toContain('class="proposal-source-icon"');
+    expect(index).toContain("proposal-drive-icon");
+    expect(index).toContain("GitHub ↗");
+    expect(index).toContain("Drive ↗");
+    expect(index).toContain(
+      "https://github.com/Open-Cap-Table-Coalition/OCF-Composed-Schemas/blob/main/target-schema/Carta.schema.json"
+    );
     expect(index).toContain("Comment on the proposal ↗");
     expect(index).toContain("scroll below to view mappings to and from the proposed Carta schema");
     expect(index).not.toContain("Target-schema notes ↗");
     expect(index).toContain("Version:");
     expect(index).not.toContain("Uploader:");
+    expect(css).toContain(
+      ".proposal-split-action { display: grid; grid-template-columns: minmax(0, 1fr) max-content; }"
+    );
+    expect(css).toContain(".proposal-split-action { grid-template-columns: minmax(0, 1fr) 88px; }");
 
     const withReport = {
       ...resources,
